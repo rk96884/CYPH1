@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cyph1.co.uk/sitemap-index.xml

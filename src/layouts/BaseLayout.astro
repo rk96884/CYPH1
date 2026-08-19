@@ -1,0 +1,11 @@
+---
+import "../styles/global.css";
+import { brand } from "../data/brand";
+interface Props { title?: string; description?: string; }
+const { title = `${brand.name} — ${brand.proposition}`, description = "CYPH/1 is premium at-home beauty technology, informed by the hair-growth cycle. Join early access." } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html><html lang="en-GB"><head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={description}/><meta name="theme-color" content="#0b0710"/>
+  <link rel="canonical" href={canonical}/><meta property="og:type" content="website"/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><meta property="og:site_name" content={brand.name}/><meta name="twitter:card" content="summary"/><title>{title}</title>
+</head><body><a class="skip-link" href="#main">Skip to content</a><slot/></body></html>
