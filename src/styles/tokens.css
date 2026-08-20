@@ -1,0 +1,91 @@
+/**
+ * CYPH/1 approved design tokens
+ * Consolidated 20 August 2026.
+ *
+ * Imported globally by BaseLayout.astro.
+ * Raw tokens describe approved values; semantic tokens describe their role.
+ */
+
+:root {
+  /* Colour — raw */
+  --cyph-color-obsidian: #080711;
+  --cyph-color-carbon-ink: #0b0710;
+  --cyph-color-aubergine: #21132b;
+  --cyph-color-deep-plum: #321b40;
+  --cyph-color-signal-lavender: #a77af4;
+  --cyph-color-metallic-lavender: #d9c6f2;
+  --cyph-color-soft-white: #f7f3f8;
+  --cyph-color-mist: #b8adbf;
+  --cyph-color-alloy: #776a80;
+  --cyph-color-success: #69d5b0;
+  --cyph-color-warning: #f2c66d;
+  --cyph-color-error: #ff8a9a;
+
+  /* Conditional champagne-metal extension */
+  --cyph-color-champagne-highlight: #e7c9a7;
+  --cyph-color-rose-alloy: #c99378;
+  --cyph-color-burnished-gold: #9a6748;
+  --cyph-color-deep-bronze: #5c392c;
+
+  /* Colour — semantic */
+  --cyph-surface-canvas: var(--cyph-color-obsidian);
+  --cyph-surface-base: var(--cyph-color-carbon-ink);
+  --cyph-surface-raised: var(--cyph-color-aubergine);
+  --cyph-surface-emphasis: var(--cyph-color-deep-plum);
+  --cyph-surface-editorial: var(--cyph-color-soft-white);
+  --cyph-text-primary: var(--cyph-color-soft-white);
+  --cyph-text-secondary: var(--cyph-color-mist);
+  --cyph-text-on-light: var(--cyph-color-carbon-ink);
+  --cyph-accent-primary: var(--cyph-color-signal-lavender);
+  --cyph-accent-highlight: var(--cyph-color-metallic-lavender);
+  --cyph-border-structural: var(--cyph-color-alloy);
+  --cyph-focus-ring: var(--cyph-color-signal-lavender);
+
+  /* Typography */
+  --cyph-font-display: "Michroma", "Arial Narrow", sans-serif;
+  --cyph-font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --cyph-font-weight-regular: 400;
+  --cyph-font-weight-medium: 500;
+  --cyph-font-weight-semibold: 600;
+  --cyph-leading-display: 0.95;
+  --cyph-leading-body: 1.6;
+  --cyph-tracking-display: 0.02em;
+  --cyph-tracking-label: 0.16em;
+
+  /* Spacing — 4px base */
+  --cyph-space-1: 0.25rem;
+  --cyph-space-2: 0.5rem;
+  --cyph-space-3: 0.75rem;
+  --cyph-space-4: 1rem;
+  --cyph-space-6: 1.5rem;
+  --cyph-space-8: 2rem;
+  --cyph-space-12: 3rem;
+  --cyph-space-16: 4rem;
+  --cyph-space-24: 6rem;
+  --cyph-space-32: 8rem;
+
+  /* Fluid layout */
+  --cyph-layout-gutter: clamp(1.25rem, 4vw, 4rem);
+  --cyph-layout-section: clamp(4.5rem, 10vw, 9rem);
+  --cyph-layout-section-compact: clamp(3rem, 7vw, 6rem);
+  --cyph-layout-cluster: clamp(1.5rem, 4vw, 3rem);
+  --cyph-layout-container: 80rem;
+  --cyph-layout-reading: 44rem;
+  --cyph-layout-display: 56.25rem;
+
+  /* Graphic language */
+  --cyph-line-structural: 1px;
+  --cyph-line-emphasis: 2px;
+  --cyph-radius-structural: 0;
+  --cyph-radius-control: 0.25rem;
+  --cyph-motion-standard: 200ms;
+  --cyph-motion-editorial: 420ms;
+  --cyph-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cyph-motion-standard: 1ms;
+    --cyph-motion-editorial: 1ms;
+  }
+}

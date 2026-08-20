@@ -1,2 +1,5 @@
 import { defineConfig } from "astro/config";
-export default defineConfig({ site: "https://cyph1.co.uk", trailingSlash: "always", build: { format: "directory" } });
+const base = process.env.BASE_PATH || "/";
+
+export default defineConfig({ site: "https://www.cyph1.co.uk", base, trailingSlash: "always", build: { format: "directory" } });
+

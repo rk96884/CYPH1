@@ -1,11 +1,19 @@
 ---
+import "../styles/tokens.css";
 import "../styles/global.css";
 import { brand } from "../data/brand";
+import { withBase } from "../utils/base-path";
 interface Props { title?: string; description?: string; }
 const { title = `${brand.name} — ${brand.proposition}`, description = "CYPH/1 is premium at-home beauty technology, informed by the hair-growth cycle. Join early access." } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const favicon = withBase("brand/generated/cyph1-favicon.svg");
+const michromaFont = withBase("fonts/michroma-latin.woff2");
+const manropeFont = withBase("fonts/manrope-latin.woff2");
+const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") format("woff2");font-style:normal;font-weight:400;font-display:swap}@font-face{font-family:Manrope;src:url("${manropeFont}") format("woff2");font-style:normal;font-weight:400 600;font-display:swap}`;
 ---
 <!doctype html><html lang="en-GB"><head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={description}/><meta name="theme-color" content="#0b0710"/>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width"/><meta name="description" content={description}/><meta name="theme-color" content="#080711"/>
+  <link rel="icon" href={favicon} type="image/svg+xml"/><link rel="preload" href={michromaFont} as="font" type="font/woff2" crossorigin/><link rel="preload" href={manropeFont} as="font" type="font/woff2" crossorigin/><style is:global set:html={fontFaces}/>
   <link rel="canonical" href={canonical}/><meta property="og:type" content="website"/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><meta property="og:site_name" content={brand.name}/><meta name="twitter:card" content="summary"/><title>{title}</title>
 </head><body><a class="skip-link" href="#main">Skip to content</a><slot/></body></html>
+
