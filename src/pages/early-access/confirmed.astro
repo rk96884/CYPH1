@@ -1,0 +1,7 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+---
+<BaseLayout title="Early access confirmed — CYPH/1" description="Your CYPH/1 early-access email has been confirmed."><Header/><main id="main" class="legal-page"><div class="container prose"><p class="eyebrow">Early access</p><h1>You’re in.</h1><p>Your email has been confirmed. We’ll keep you informed about CYPH/1 product development and launch information.</p><p><a class="button" href={withBase("")}>Return to CYPH/1</a></p></div></main><Footer/></BaseLayout>

@@ -17,6 +17,8 @@ pnpm-debug.log*
 .env.*
 !.env.example
 *.local
+.dev.vars
+.wrangler/
 
 # Test and coverage output
 coverage/

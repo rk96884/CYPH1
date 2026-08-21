@@ -38,6 +38,15 @@ Files in `public/brand/generated/` are produced by `scripts/build-logo-variants.
 - `cyph1-mark-dark.svg` — dark monochrome follicle mark
 - `cyph1-favicon.svg` — metallic mark on near-black
 
+The large-format website wordmark is produced by `scripts/build-clean-wordmark.mjs`:
+
+- `cyph1-wordmark-clean-metallic.svg` — cleaned metallic wordmark for prominent display
+- `cyph1-wordmark-clean-flat.svg` — cleaned white/lavender comparison variant
+- `cyph1-lockup-clean-metallic.svg` — cleaned metallic wordmark with descriptor
+- `cyph1-lockup-clean-flat.svg` — cleaned white/lavender header lock-up with descriptor
+
+These variants retain the seven complete source silhouettes and omit the small automatic-trace fragments that previously produced irregular edges when enlarged. The supplied source remains unchanged.
+
 All variants preserve the supplied path geometry. Regenerate them after replacing the approved source by running `node scripts/build-logo-variants.mjs`.
 
 ## Usage

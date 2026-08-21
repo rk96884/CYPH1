@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PUBLIC_SIGNUP_API_URL: ${{ vars.PUBLIC_SIGNUP_API_URL }}
+      PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6

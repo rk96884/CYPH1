@@ -1,0 +1,11 @@
+name = "cyph1-early-access"
+main = "src/index.js"
+compatibility_date = "2026-08-20"
+
+[vars]
+ALLOWED_ORIGIN = "https://www.cyph1.co.uk"
+BREVO_LIST_ID = "3"
+BREVO_TEMPLATE_ID = "1"
+CONFIRM_REDIRECT_URL = "https://www.cyph1.co.uk/early-access/confirmed/"
+
+# Add BREVO_API_KEY and TURNSTILE_SECRET_KEY as encrypted Worker secrets.

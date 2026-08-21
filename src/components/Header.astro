@@ -1,4 +1,5 @@
 ---
 import BrandMark from "./BrandMark.astro";
+import { withBase } from "../utils/base-path";
 ---
-<header class="site-header"><div class="container header-inner"><BrandMark/><nav aria-label="Primary navigation"><a href="#cycle">The cycle</a><a href="#principles">Our approach</a><a class="button button-small" href="#early-access">Join early access</a></nav></div></header>
+<header class="site-header"><div class="container header-inner"><BrandMark/><nav aria-label="Primary navigation"><a href={withBase("#cycle")}>The cycle</a><a href={withBase("#principles")}>Our approach</a><a class="button button-small" href={withBase("#early-access")}>Join early access</a></nav></div></header>
