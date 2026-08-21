@@ -47,7 +47,8 @@
   --cyph-font-weight-regular: 400;
   --cyph-font-weight-medium: 500;
   --cyph-font-weight-semibold: 600;
-  --cyph-leading-display: 0.95;
+  --cyph-leading-display: 1;
+  --cyph-leading-heading: 1.15;
   --cyph-leading-body: 1.6;
   --cyph-tracking-display: 0.02em;
   --cyph-tracking-label: 0.16em;
