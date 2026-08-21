@@ -20,4 +20,10 @@ h1,h2{margin:0;font-family:var(--cyph-font-display);font-weight:400;letter-spaci
 .phase-illustration{height:9.25rem;margin:var(--cyph-space-4) 0 var(--cyph-space-3)}.skin-cutaway{stroke:rgb(191 163 255 / .48);stroke-width:1}.epidermis{fill:none;stroke:var(--cyph-color-champagne-highlight);stroke-width:1.25}.follicle{fill:rgb(9 6 17 / .52);stroke:rgb(191 163 255 / .7);stroke-width:1}.hair-fill{stroke:#d7ba77;stroke-linejoin:round;stroke-width:.8}.hair-bulb{fill:#d7ba77;stroke:#f0dbac;stroke-width:.8}.gland{fill:rgb(167 122 244 / .32);stroke:rgb(191 163 255 / .7);stroke-width:1}.vessel,.papilla{fill:none;stroke-linecap:round;stroke-width:1}.vessel-one{stroke:#a77af4}.vessel-two{stroke:#d7ba77}.papilla{stroke:#f3c5cc}.shed-motion{fill:none;stroke:var(--cyph-accent-primary);stroke-dasharray:2 3;stroke-linecap:round;stroke-width:1}.diagram-rule{stroke:rgb(119 106 128 / .38);stroke-width:1}
 @media(max-width:760px){.phase-illustration{height:auto;margin-inline:auto}}
 .label-cycle{top:5%;left:50%;transform:translateX(-50%)}.label-phase{top:50%;right:1%;bottom:auto;transform:translateY(-50%)}.label-one{bottom:5%;left:50%;transform:translateX(-50%)}
+.phase-grid .phase-label{color:var(--cyph-text-primary)}
+.phase-grid .phase-description{margin-top:var(--cyph-space-3);line-height:1.55}
+.phase-card-meta{display:flex;align-items:baseline;justify-content:space-between;line-height:1}
+.phase-card-meta span,.phase-card-meta small{color:var(--cyph-accent-primary);font-size:.68rem}
+.phase-card-meta small{position:static;line-height:inherit}
+.product-teaser img{-webkit-mask-image:linear-gradient(135deg,transparent 0,#000 12%),linear-gradient(225deg,transparent 0,#000 12%),linear-gradient(to bottom,#000 78%,transparent 100%);-webkit-mask-composite:source-in,source-in;mask-image:linear-gradient(135deg,transparent 0,#000 12%),linear-gradient(225deg,transparent 0,#000 12%),linear-gradient(to bottom,#000 78%,transparent 100%);mask-composite:intersect,intersect}
 
