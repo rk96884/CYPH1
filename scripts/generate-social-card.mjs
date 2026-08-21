@@ -17,7 +17,8 @@ const background = Buffer.from(`
     <circle cx="1015" cy="210" r="190" fill="none" stroke="#ad70ff" stroke-opacity=".18"/>
     <circle cx="1015" cy="210" r="125" fill="none" stroke="#d7b6ff" stroke-opacity=".12"/>
     <path d="M80 532 H1120" stroke="#d7b6ff" stroke-opacity=".22"/>
-    <text x="86" y="486" fill="url(#accent)" font-family="Arial, sans-serif" font-size="22" letter-spacing="7">TARGET THE GROWTH.</text>
+    <text x="86" y="474" fill="url(#accent)" font-family="Arial, sans-serif" font-size="22" letter-spacing="7">TARGET THE GROWTH.</text>
+    <text x="87" y="507" fill="#d5c9dd" font-family="Arial, sans-serif" font-size="15" letter-spacing="2.4">AT-HOME IPL, INFORMED BY THE HAIR-GROWTH CYCLE.</text>
     <text x="1118" y="486" text-anchor="end" fill="#d5c9dd" font-family="Arial, sans-serif" font-size="15" letter-spacing="4">CYCLE. PHASE. ONE.</text>
   </svg>
 `);
