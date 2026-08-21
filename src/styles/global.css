@@ -36,4 +36,5 @@ h1,h2{margin:0;font-family:var(--cyph-font-display);font-weight:400;letter-spaci
 .hero-copy,.split-heading>*,.section-intro>*,.access-panel>*{min-width:0}
 @media(max-width:760px){.product-teaser figcaption,.teaser-orbit{right:0}}
 @media(max-width:360px){.hero h1,.split-heading h2,.section-intro h2,.access-panel h2{font-size:2.15rem}.cycle-object,.product-teaser{max-width:calc(100vw - (2 * var(--cyph-layout-gutter)));overflow:clip}}
+@media(max-width:760px){.site-header nav>a:not(.button){display:none}.header-inner{gap:var(--cyph-space-4)}.brand-mark{width:clamp(7.25rem,34vw,8.5rem)}.site-header .button-small{padding-inline:var(--cyph-space-4);font-size:.65rem}.legal-page{padding-top:8rem}.prose h1{font-size:clamp(1.75rem,8vw,2.6rem);overflow-wrap:anywhere}.prose h2{font-size:clamp(1.15rem,5.5vw,1.45rem);overflow-wrap:anywhere}}
 

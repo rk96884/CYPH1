@@ -73,6 +73,8 @@ Representative foreground/background pairs were calculated using WCAG relative l
 - Increased the consent checkbox target.
 - Darkened purple labels on light panels to meet AA contrast.
 - Constrained headings and decorative graphics at 320 CSS pixels to prevent horizontal overflow.
+- Restored the compact mobile header after a later touch-target rule overrode its navigation breakpoint.
+- Added a narrow-screen scale cap for long legal-page headings such as “Accessibility”.
 - Corrected accessibility feedback contact details.
 
 ## Known limitations and follow-up
