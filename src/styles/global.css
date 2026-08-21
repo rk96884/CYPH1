@@ -29,3 +29,11 @@ h1,h2{margin:0;font-family:var(--cyph-font-display);font-weight:400;letter-spaci
 .phase-grid h3,.principle-grid h3{line-height:1.12}
 .prose h1{line-height:1.02}
 .prose h2{line-height:var(--cyph-leading-heading)}
+.brand-mark,.site-header nav>a:not(.button),.site-footer nav a{display:inline-flex;min-height:2.75rem;align-items:center}
+.brand-story .section-index,.principles .section-index{color:#6e4c82}
+.consent-control input{width:1.5rem;height:1.5rem;margin:0}
+.text-link{display:inline-flex;min-height:2.75rem;align-items:center}
+.hero-copy,.split-heading>*,.section-intro>*,.access-panel>*{min-width:0}
+@media(max-width:760px){.product-teaser figcaption,.teaser-orbit{right:0}}
+@media(max-width:360px){.hero h1,.split-heading h2,.section-intro h2,.access-panel h2{font-size:2.15rem}.cycle-object,.product-teaser{max-width:calc(100vw - (2 * var(--cyph-layout-gutter)));overflow:clip}}
+
