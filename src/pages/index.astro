@@ -36,6 +36,15 @@ const structuredData = [
     const challenge = form.querySelector("[data-turnstile-container]");
     let turnstileToken = "";
     const setStatus = (message: string, state = "") => { if (status instanceof HTMLElement) { status.textContent = message; status.dataset.state = state; } };
+    const isCloudflarePreview = window.location.hostname === "cyph1-preview.pages.dev" || window.location.hostname.endsWith(".cyph1-preview.pages.dev");
+    if (isCloudflarePreview) {
+      form.dataset.preview = "true";
+      form.querySelectorAll("input, button").forEach((control) => {
+        if (control instanceof HTMLInputElement || control instanceof HTMLButtonElement) control.disabled = true;
+      });
+      setStatus("Early-access submission is disabled in this preview. Test the live integration on www.cyph1.co.uk.", "preview");
+      return;
+    }
     if (signupApiUrl && turnstileSiteKey && challenge instanceof HTMLElement) {
       let challengeStarted = false;
       window.cyphTurnstileReady = () => {
