@@ -3,5 +3,4 @@ import BrandMark from "./BrandMark.astro";
 import { withBase } from "../utils/base-path";
 const year = new Date().getFullYear();
 ---
-<footer class="site-footer"><div class="container footer-grid"><div><BrandMark/><p>Premium consumer beauty technology.<br/>United Kingdom.</p></div><nav aria-label="Legal"><a href={withBase("privacy/")}>Privacy</a><a href={withBase("accessibility/")}>Accessibility</a></nav><p class="copyright">© {year} CYPH/1. All rights reserved.</p></div></footer>
-
+<footer class="site-footer"><div class="container footer-grid"><div><BrandMark/><p>Premium consumer beauty technology.<br/>United Kingdom.</p></div><nav aria-label="Legal and site information"><a href={withBase("terms/")}>Website terms</a><a href={withBase("privacy/")}>Privacy</a><a href={withBase("accessibility/")}>Accessibility</a></nav><p class="copyright">© {year} CYPH/1. All rights reserved.</p></div></footer>

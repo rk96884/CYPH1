@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 const pages = [
   ["Home", "dist/index.html"],
+  ["Website Terms", "dist/terms/index.html"],
   ["Privacy", "dist/privacy/index.html"],
   ["Accessibility", "dist/accessibility/index.html"],
   ["Confirmation", "dist/early-access/confirmed/index.html"],
@@ -55,4 +56,3 @@ if (failures.length) {
 }
 
 console.log("\nAccessibility audit passed with no structural failures.");
-

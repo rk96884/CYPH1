@@ -1,0 +1,59 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { withBase } from "../utils/base-path";
+---
+<BaseLayout title="Website Terms — CYPH/1" description="Terms for using the CYPH/1 pre-launch website." robots="noindex, follow">
+  <Header/>
+  <main id="main" class="legal-page">
+    <div class="container prose">
+      <p class="eyebrow">Legal</p>
+      <h1>Website Terms</h1>
+      <p>These terms apply when you use the CYPH/1 pre-launch website. By continuing to use the website, you agree to these terms.</p>
+
+      <h2>Who operates this website</h2>
+      <p>This website is operated by Rishi Khosla trading as CYPH/1.</p>
+      <address>
+        Cycle Phase One<br/>
+        Unit 171614, PO Box 7169<br/>
+        Poole, BH15 9EL<br/>
+        United Kingdom
+      </address>
+      <p>Email: <a href="mailto:info@cyph1.co.uk">info@cyph1.co.uk</a></p>
+
+      <h2>Pre-launch information</h2>
+      <p>CYPH/1 is in pre-launch and product validation. Website content is provided for general information about the developing brand and its intended product category. It does not confirm that a product, specification, price, launch date or commercial offer has been finalised.</p>
+      <p>Joining the early-access list is not an order or pre-order. The website does not accept payments or create any obligation to buy or supply a product.</p>
+      <p>If you join the early-access list, we will use your email address to send the updates described when you register. You can unsubscribe at any time using the link in an email or by contacting us. Please read our <a href={withBase("privacy/")}>Privacy Notice</a> for information about how we collect, use and protect your personal information.</p>
+
+      <h2>Concept imagery and visualisations</h2>
+      <p>Concept imagery and visualisations are illustrative brand and product-direction material only. They do not depict a final CYPH/1 product or confirm its appearance, features or specifications.</p>
+
+      <h2>Informational content</h2>
+      <p>Hair-growth-cycle and IPL content is general educational information. It is not medical advice and should not be used as a substitute for advice from an appropriately qualified professional. Any future product must be used in accordance with its approved instructions and safety information.</p>
+      <p>We aim to keep website information clear and accurate, but pre-launch information may change as product validation continues.</p>
+
+      <h2>Intellectual property</h2>
+      <p>Unless stated otherwise, the website’s branding, copy, graphics, illustrations and other original content belong to CYPH/1 or are used with permission. You may view the website for personal, non-commercial use. You must not reproduce, modify or commercially exploit its content without prior written permission.</p>
+      <p>CYPH/1 is not represented on this website as a registered trademark.</p>
+
+      <h2>External links</h2>
+      <p>Links to third-party websites are provided for convenience or reference. We do not control those websites and are not responsible for their content, availability or privacy practices.</p>
+
+      <h2>Website availability</h2>
+      <p>We may change, suspend or withdraw any part of this pre-launch website without notice. We do not guarantee that the website will always be available or free from errors, although we take reasonable steps to operate it securely.</p>
+
+      <h2>Liability</h2>
+      <p>Nothing in these terms excludes or limits liability where doing so would be unlawful. Subject to that, we are not responsible for loss arising solely from reliance on provisional pre-launch information or from circumstances outside our reasonable control.</p>
+
+      <h2>Governing law</h2>
+      <p>These terms are governed by the laws of England and Wales. The courts of England and Wales will have jurisdiction, subject to any mandatory rights you may have as a consumer in another part of the United Kingdom.</p>
+
+      <h2>Changes to these terms</h2>
+      <p>We may update these terms as CYPH/1 develops. The latest version will be published on this page.</p>
+      <p>Last updated: 22 August 2026.</p>
+    </div>
+  </main>
+  <Footer/>
+</BaseLayout>
