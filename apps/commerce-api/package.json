@@ -2,5 +2,16 @@
   "name": "@cyph1/commerce-api",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed:development": "node scripts/seed-development.mjs",
+    "db:verify": "node scripts/verify-schema.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  }
 }

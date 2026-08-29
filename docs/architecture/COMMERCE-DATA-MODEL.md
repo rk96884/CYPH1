@@ -28,6 +28,7 @@
 | `currency` | Initial value `GBP` |
 | `tax_code` | Approved tax classification |
 | `fulfilment_sku` | External fulfilment mapping |
+| `shipping_weight_grams` | Approved packaged unit weight used for shipping quotes |
 | `content_version` | Claims/content approval reference |
 | timestamps | Creation and update audit |
 
@@ -78,6 +79,19 @@ Purchase must not require marketing consent.
 
 Store delivery/contact data required for fulfilment. The order also stores an immutable address snapshot so subsequent customer edits do not alter historical orders.
 
+### Shipping destinations and rates
+
+Shipping is country-led with reusable zone defaults:
+
+- `shipping_zones` groups destinations such as UK, EU and supported global regions.
+- `shipping_zone_countries` maps each ISO country code to exactly one zone and records whether that destination is disabled, test-only, active or restricted.
+- `shipping_methods` defines customer-facing services such as tracked standard or express.
+- `shipping_rates` provides effective-dated zone defaults, with optional country-specific overrides for the same method.
+
+Rates store integer minor units and currency, optional order-value and packaged-weight bands, an optional free-shipping threshold, status and version. A country override takes precedence over its zone default. No matching active rate means the destination cannot be quoted; the system must never silently fall back to a generic worldwide price.
+
+UK-only shipping remains the initial operational default. EU and global countries must remain disabled until their fulfilment, customs, tax, product-compliance and delivery-message requirements are approved.
+
 ### `orders`
 
 | Field | Purpose |
@@ -95,6 +109,10 @@ Store delivery/contact data required for fulfilment. The order also stores an im
 | `total_minor` | Final amount due |
 | `delivery_address_snapshot` | Immutable structured snapshot |
 | `billing_address_snapshot` | Only where required |
+| `shipping_rate_id` | Internal rate used to produce the quote |
+| `shipping_country_code` | ISO destination used for rate selection |
+| `shipping_method_snapshot` | Immutable service name/key snapshot |
+| `shipping_rate_snapshot` | Immutable zone, country override, thresholds and rate-version evidence |
 | `version` | Optimistic concurrency value |
 | timestamps | Created, updated, paid, cancelled |
 
@@ -110,6 +128,7 @@ Constraint: totals are non-negative and `total = subtotal - discount + tax + del
 | `sku_snapshot` | Purchased SKU |
 | `name_snapshot` | Purchased name |
 | `unit_price_minor` | Purchased unit price |
+| `unit_weight_grams` | Packaged unit-weight snapshot used by the quote |
 | `quantity` | Positive integer |
 | `tax_minor` | Line tax snapshot |
 | `line_total_minor` | Final line total |

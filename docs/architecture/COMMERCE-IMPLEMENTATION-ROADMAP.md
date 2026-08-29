@@ -49,7 +49,7 @@ Evolve the existing `cyph1.co.uk` Astro website into a commerce-capable storefro
 
 ### 1.2 Create relational schema
 
-- Add versioned migrations for products, inventory, customers, orders, order items, payments, refunds, webhook events and audit events.
+- Add versioned migrations for products, inventory, customers, country-led shipping zones/rates, orders, order items, payments, refunds, webhook events and audit events.
 - Add constraints, indexes and timestamps defined in the data-model document.
 - Add seed data that is unmistakably non-production and inaccessible publicly.
 
@@ -59,10 +59,11 @@ Evolve the existing `cyph1.co.uk` Astro website into a commerce-capable storefro
 
 - Money uses integer minor units and ISO currency codes.
 - Add server-side basket calculation.
+- Add server-side shipping eligibility and rate calculation with zone defaults and country overrides.
 - Implement order and payment state machines.
 - Add idempotent command handling and audit events.
 
-**Acceptance:** Unit tests cover totals, invalid transitions, retries and duplicate commands.
+**Acceptance:** Unit tests cover totals, shipping eligibility/overrides, invalid transitions, retries and duplicate commands.
 
 ## Milestone 2 — Mollie test-mode vertical slice
 

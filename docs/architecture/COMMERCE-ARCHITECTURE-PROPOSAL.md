@@ -64,12 +64,15 @@ The storefront should provide approved product information, configurable pricing
 
 The browser must never provide an authoritative price, discount, tax, delivery charge or stock state. It may submit product and quantity selections; the commerce API calculates and validates the final total.
 
+Shipping eligibility is resolved by ISO destination country. Countries map to reusable zones for default pricing, while explicit country overrides handle exceptional rates or restrictions. A missing active country/method rate is an unsupported destination, never permission to apply a generic global fallback. The selected method and calculation inputs are snapshotted on the order so later rate changes do not alter its history.
+
 ## 5. Commerce API
 
 The API is the boundary between the website and operational systems. It should:
 
 - return the current purchasable catalogue;
 - validate baskets and calculate price, tax, promotions and delivery;
+- select eligible shipping methods using destination country, packaged weight, order value and effective-dated rates;
 - reserve stock where required;
 - create an internal order before payment begins;
 - select and invoke the configured payment adapter;
@@ -186,6 +189,7 @@ Customers must be able to purchase without marketing consent.
 - Customer and delivery snapshot.
 - Line-item and price snapshots.
 - Subtotal, discount, tax, delivery, total and currency.
+- Shipping destination, selected method and immutable rate-calculation snapshot.
 - Order and fulfilment states, timestamps and audit trail.
 
 ### Payment, refund and dispute
