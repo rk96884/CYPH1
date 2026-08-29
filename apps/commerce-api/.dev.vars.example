@@ -1,0 +1,11 @@
+# Local commerce API configuration. Copy to .dev.vars only when the API
+# runtime is selected. The real .dev.vars file is ignored by Git.
+
+# Master server-side gate. It must remain false during foundation work.
+COMMERCE_ENABLED=false
+
+# No provider may be contacted while disabled.
+PAYMENT_PROVIDER=disabled
+
+# Prevents fulfilment requests during foundation and test work.
+FULFILMENT_MODE=disabled
