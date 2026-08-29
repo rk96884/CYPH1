@@ -1,6 +1,15 @@
 /**
  * Framework-neutral commerce domain boundary.
  *
- * Domain types and rules will be introduced in their dedicated roadmap issue.
+ * This entry point exposes domain types and rules without framework, database,
+ * storefront or payment-provider dependencies.
  */
-export const commerceCoreVersion = "0.0.0" as const;
+export * from "./audit.js";
+export * from "./basket.js";
+export * from "./errors.js";
+export * from "./idempotency.js";
+export * from "./money.js";
+export * from "./shipping.js";
+export * from "./state-machine.js";
+
+export const commerceCoreVersion = "0.1.0" as const;
