@@ -7,5 +7,10 @@ export default defineConfig({
   base,
   trailingSlash: "always",
   build: { format: "directory" },
-  integrations: [sitemap({ filter: (page) => !page.includes("/early-access/confirmed/") && !page.includes("/privacy/") })],
+  integrations: [sitemap({
+    filter: (page) =>
+      !page.includes("/early-access/confirmed/") &&
+      !page.includes("/privacy/") &&
+      !page.includes("/terms/"),
+  })],
 });
