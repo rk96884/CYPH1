@@ -3,13 +3,22 @@
 Runtime-neutral scaffold for the future server-side commerce boundary.
 
 The API is deliberately non-deployable at this stage. It has no HTTP framework
-or payment SDK. Those dependencies require an approved implementation ADR.
+and exposes no public checkout endpoint. Its provider-neutral payment boundary
+uses a native-HTTP Mollie test adapter, which cannot accept a live API key.
 
 ## Safety defaults
 
 - `COMMERCE_ENABLED=false`
 - `PAYMENT_PROVIDER=disabled`
 - `FULFILMENT_MODE=disabled`
+
+The adapter registry is selected exclusively from server-side configuration.
+For isolated Mollie testing, use `PAYMENT_PROVIDER=mollie-test`, a `test_` API
+key and an explicit comma-separated `PAYMENT_CALLBACK_ORIGINS` allowlist. Keep
+`COMMERCE_ENABLED=false`; no public commerce flow exists in this milestone.
+
+Webhook verification and event normalisation intentionally fail closed until
+Milestone 2.2 implements authenticated raw-body processing.
 
 Configuration fails closed: missing or unrecognised values never enable commerce.
 

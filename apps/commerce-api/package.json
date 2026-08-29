@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node scripts/test.mjs",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed:development": "node scripts/seed-development.mjs",
     "db:verify": "node scripts/verify-schema.mjs"
   },
   "dependencies": {
+    "@cyph1/commerce-core": "0.0.0",
     "pg": "^8.23.0"
   },
   "devDependencies": {

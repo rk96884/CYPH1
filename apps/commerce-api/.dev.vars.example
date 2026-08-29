@@ -9,3 +9,9 @@ PAYMENT_PROVIDER=disabled
 
 # Prevents fulfilment requests during foundation and test work.
 FULFILMENT_MODE=disabled
+
+# Milestone 2.1 test-only payment adapter. Leave unset while PAYMENT_PROVIDER
+# remains disabled. Never commit the real key or substitute a live_ credential.
+# PAYMENT_PROVIDER=mollie-test
+# MOLLIE_API_KEY=test_replace_with_local_secret
+# PAYMENT_CALLBACK_ORIGINS=https://checkout.example.cyph1.co.uk,https://api.example.cyph1.co.uk
