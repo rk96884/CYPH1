@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CYPH/1 — Know the cycle — batch 01</title>
+  <style>
+    @font-face{font-family:Michroma;src:url("../../../public/fonts/michroma-latin.woff2") format("woff2");font-display:swap}
+    @font-face{font-family:Manrope;src:url("../../../public/fonts/manrope-latin.woff2") format("woff2");font-display:swap}
+    :root{--obsidian:#080711;--carbon:#0b0710;--aubergine:#21132b;--plum:#321b40;--lavender:#a77af4;--metallic:#d9c6f2;--white:#f7f3f8;--mist:#b8adbf;--alloy:#776a80;--gold:#e6c685;--bronze:#9b6a35}
+    *{box-sizing:border-box}
+    body{margin:0;background:#111018;color:var(--white);font-family:Manrope,Arial,sans-serif}
+    header{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:18px 28px;background:rgba(8,7,17,.96);border-bottom:1px solid #342d3b}
+    header h1{margin:0;font:400 15px/1.3 Michroma,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+    header p{margin:0;color:var(--mist);font-size:13px}
+    main{padding:36px;max-width:1600px;margin:auto}
+    section+section{margin-top:64px}
+    .section-heading{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:20px}
+    h2{margin:0;font:400 22px/1.2 Michroma,sans-serif;text-transform:uppercase}
+    .section-heading p{max-width:600px;margin:0;color:var(--mist);font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;align-items:start}
+    .asset{margin:0}
+    .frame{position:relative;container-type:inline-size;aspect-ratio:4/5;overflow:hidden;background:var(--aubergine);border:1px solid #4f4458;padding:7.5%;display:flex;flex-direction:column}
+    .frame.video{aspect-ratio:9/16}
+    figcaption{padding:9px 2px;color:var(--mist);font-size:12px}
+    .frame::before{content:"";position:absolute;width:70%;aspect-ratio:1;border:1px solid rgba(167,122,244,.22);border-radius:50%;left:-32%;top:-16%}
+    .frame::after{content:"";position:absolute;width:56%;aspect-ratio:1;border:1px solid rgba(217,198,242,.12);border-radius:50%;left:-25%;top:-9%}
+    .topline{position:relative;z-index:2;display:flex;justify-content:space-between;gap:12px;color:var(--lavender);font-size:10px;letter-spacing:.17em;text-transform:uppercase}
+    .label-swap{display:grid;align-items:start}
+    .label-swap span{grid-area:1/1;white-space:nowrap}
+    .label-swap .label-url{opacity:0;transform:translateY(5px);color:var(--metallic)}
+    .video .label-swap .label-primary{animation:label-out 420ms cubic-bezier(.2,0,0,1) 2.4s forwards}
+    .video .label-swap .label-url{animation:label-in 420ms cubic-bezier(.2,0,0,1) 2.4s forwards}
+    .brand-logo{display:block;width:clamp(82px,31.5cqw,152px);height:auto}
+    .centre{position:relative;z-index:2;margin:auto 0;display:grid;gap:18px}
+    .frame:not(.video) .centre{gap:10px}
+    .display{max-width:100%;margin:0;font:400 clamp(22px,9.2cqw,44px)/1.08 Michroma,sans-serif;letter-spacing:.015em;text-transform:uppercase;overflow-wrap:break-word}
+    .display em{color:var(--lavender);font-style:normal}
+    .body{max-width:29em;margin:0;color:var(--mist);font-size:clamp(11px,3.8cqw,17px);line-height:1.55;overflow-wrap:anywhere}
+    .footerline{position:relative;z-index:2;display:flex;align-items:end;justify-content:space-between;gap:15px;color:var(--mist);font-size:9px;letter-spacing:.11em;text-transform:uppercase}
+    .footerline>span:last-child{color:var(--gold)}
+    .rule{width:44px;height:2px;background:var(--lavender);margin-bottom:3px}
+    .phase-row{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px}
+    .phase-row>span{min-width:0;padding-top:8px;border-top:1px solid rgba(184,173,191,.38);font:400 clamp(6px,2.2cqw,8px)/1.4 Michroma,sans-serif;text-align:center;color:var(--metallic);overflow-wrap:anywhere}
+    .phase-row .key{display:grid;gap:2px}
+    .phase-row .key b,.phase-row .key small{font:inherit;letter-spacing:.06em}
+    .phase-row .key b{color:var(--lavender)}
+    .diagram{position:relative;z-index:2;display:block;width:auto;height:31cqw;max-width:100%;max-height:150px;margin:0 auto;color:var(--metallic)}
+    .diagram .skin{fill:url(#skin)}
+    .diagram .epidermis,.diagram .follicle,.diagram .gland,.diagram .vessel,.diagram .papilla,.diagram .motion,.diagram .base{fill:none;stroke:currentColor;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}
+    .diagram .epidermis{stroke:var(--gold)}
+    .diagram .gland{stroke:var(--lavender)}
+    .diagram .vessel{stroke:var(--gold)}
+    .diagram .hair{fill:url(#hair)}
+    .diagram .bulb{fill:var(--gold);stroke:var(--white);stroke-width:.8}
+    .diagram .base{stroke:rgba(119,106,128,.55)}
+    .number{display:grid;gap:3px;color:var(--lavender);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+    .phase-index{color:var(--lavender)}
+    .phase-label{color:var(--metallic)}
+    .phase-name{max-width:100%;margin:0;font:400 clamp(19px,7.8cqw,38px)/1.08 Michroma,sans-serif;text-transform:uppercase;overflow-wrap:break-word}
+    .phase-sub{margin:0;color:var(--white);font-weight:600;font-size:13px}
+    .qualification{padding-left:12px;border-left:2px solid var(--lavender);color:var(--mist);font-size:10px;line-height:1.5}
+    .story .frame{padding:10%}
+    .story .brand-logo{width:clamp(94px,36.2cqw,175px)}
+    .story .display{font-size:clamp(22px,9.6cqw,42px)}
+    .story .diagram{height:35cqw;max-height:170px}
+    @keyframes label-out{to{opacity:0;transform:translateY(-5px)}}
+    @keyframes label-in{to{opacity:1;transform:translateY(0)}}
+    @media(prefers-reduced-motion:reduce){.video .label-swap .label-primary,.video .label-swap .label-url{animation:none}.video .label-swap{gap:4px}.video .label-swap span{grid-area:auto}.video .label-swap .label-url{opacity:1;transform:none;font-size:.82em}}
+    @media(max-width:700px){header{position:static;display:block}header p{margin-top:6px}main{padding:20px}.section-heading{display:block}.section-heading p{margin-top:10px}}
+    @media print{header{display:none}body{background:#fff}.asset{break-inside:avoid}main{max-width:none}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CYPH/1 / Know the cycle / Batch 01</h1>
+    <p>Creative proof — not for publication until review checklist is complete</p>
+  </header>
+  <main>
+    <section>
+      <div class="section-heading">
+        <h2>SF-01 storyboard</h2>
+        <p>9:16 short-form video, 15–20 seconds. Restrained opacity and line progression only; all information remains available without motion.</p>
+      </div>
+      <div class="grid story" id="storyboard"><p class="render-status">Loading storyboard frames…</p></div>
+    </section>
+    <section>
+      <div class="section-heading">
+        <h2>CA-01 carousel</h2>
+        <p>4:5 Instagram carousel. Six slides using direct labels and the approved phase notation. Adaptable to Pinterest after approval.</p>
+      </div>
+      <div class="grid" id="carousel"><p class="render-status">Loading carousel slides…</p></div>
+    </section>
+  </main>
+  <script>
+    const phaseData={
+      Anagen:{number:"01",subtitle:"Active growth",bottom:92,bulb:91,top:8,papilla:97,detached:false,copy:"The follicle is producing the hair shaft."},
+      Catagen:{number:"02",subtitle:"Transition",bottom:78,bulb:76,top:12,papilla:93,detached:false,copy:"Active growth stops as the follicle enters transition."},
+      Telogen:{number:"03",subtitle:"Rest",bottom:65,bulb:63,top:10,papilla:90,detached:false,copy:"The existing hair is no longer actively growing."},
+      Exogen:{number:"04",subtitle:"Release + shedding",bottom:70,bulb:68,top:-8,papilla:94,detached:true,copy:"The existing hair is released and shed."}
+    };
+    const diagram=(name,uid)=>{const p=phaseData[name],start=p.detached?40:p.bulb;return `<svg class="diagram" viewBox="0 0 180 128" role="img" aria-label="Stylised cutaway illustration of a hair follicle during ${name}"><defs><linearGradient id="skin-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a376d"/><stop offset="1" stop-color="#281733"/></linearGradient><linearGradient id="hair-${uid}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9b6a35"/><stop offset="1" stop-color="#e6c685"/></linearGradient></defs><path fill="url(#skin-${uid})" d="M14 40 Q28 29 47 34 Q66 39 90 34 Q114 29 133 34 Q152 39 166 40 L166 93 Q162 116 139 120 L41 120 Q18 116 14 93 Z"/><path class="epidermis" d="M15 41 Q30 31 48 36 Q67 41 90 36 Q113 31 132 36 Q150 41 165 41"/><path class="follicle" d="M82 39 C76 54 73 ${p.bottom-13} 77 ${p.bottom} C80 ${p.bottom+9} 94 ${p.bottom+9} 98 ${p.bottom} C102 ${p.bottom-13} 99 54 94 39"/><path fill="url(#hair-${uid})" d="M86 ${start} C85 57 91 24 111 ${p.top} C96 29 90 58 91 ${start} Z"/><ellipse class="bulb" cx="88" cy="${p.bulb}" rx="${name==='Anagen'?9:6}" ry="${name==='Anagen'?8:5}"/><path class="gland" d="M76 51 C65 43 58 49 60 56 C65 55 71 56 77 61"/><path class="vessel" d="M37 108 C48 94 57 102 67 90"/><path class="vessel" d="M143 108 C132 94 122 102 110 90"/><path class="papilla" d="M84 ${p.papilla+4} Q88 ${p.papilla-5} 92 ${p.papilla+4}"/>${p.detached?'<path class="motion" d="M116 12 Q126 6 135 4"/>':''}<line class="base" x1="24" y1="121" x2="156" y2="121"/></svg>`};
+    const frameHeader=(label="KNOW THE CYCLE",transitionUrl=false)=>`<div class="topline">${transitionUrl?`<span class="label-swap"><span class="label-primary">${label}</span><span class="label-url">CYPH1.CO.UK</span></span>`:`<span>${label}</span>`}<img class="brand-logo" src="../../../public/brand/generated/cyph1-lockup-clean-flat.svg" alt="CYPH/1"></div>`;
+    const foot=(right="CYCLE. PHASE. ONE.")=>`<div class="footerline"><span class="rule"></span><span>${right}</span></div>`;
+    const asset=(html,caption,video=false)=>`<figure class="asset"><div class="frame${video?' video':''}">${html}</div><figcaption>${caption}</figcaption></figure>`;
+    const story=[
+      asset(`${frameHeader('KNOW THE CYCLE',true)}<div class="centre"><p class="display">Hair does not grow <em>all at once.</em></p><p class="body">A repeating cycle shapes the story.</p></div>${foot()}`,'Frame 01 — 00:00–00:04 — opening hook',true),
+      asset(`${frameHeader('KNOW THE CYCLE',true)}<div class="centre">${diagram('Anagen','story-a')}<p class="display">The cycle is commonly described in <em>four stages.</em></p></div>${foot('GENERAL EDUCATION')}`,'Frame 02 — 00:04–00:08 — introduce the model',true),
+      asset(`${frameHeader('01—04 / THE PHASES',true)}<div class="centre"><p class="display">Anagen.<br>Catagen.<br>Telogen.<br><em>Exogen.</em></p><div class="phase-row"><span>01</span><span>02</span><span>03</span><span>04</span></div></div>${foot('SOURCE: CYPH1.CO.UK')}`,'Frame 03 — 00:08–00:14 — name the stages',true),
+      asset(`${frameHeader('KNOW THE CYCLE',true)}<div class="centre"><p class="display">Know<br>the <em>cycle.</em></p><p class="body">Learn more and join early access at cyph1.co.uk</p></div>${foot('CYCLE. PHASE. ONE.')}`,'Frame 04 — 00:14–00:18 — destination and CTA',true)
+    ];
+    document.querySelector('#storyboard').innerHTML=story.join('');
+    const phaseSlide=(name,index)=>{const p=phaseData[name];return asset(`${frameHeader()}<div class="centre"><span class="number"><span class="phase-index">${p.number}</span><span class="phase-label">${name}</span></span>${diagram(name,'carousel-'+index)}<h3 class="phase-name">${name}</h3><p class="phase-sub">${p.subtitle}</p><p class="body">${p.copy}</p>${name==='Exogen'?'<p class="qualification">Some sources treat exogen as part of telogen.</p>':''}</div>${foot()}`,`Slide ${index+2} — ${name}`)};
+    const carousel=[
+      asset(`${frameHeader()}<div class="centre"><p class="display">Hair grows<br>in <em>cycles.</em></p><p class="body">Meet one commonly used four-stage model.</p><div class="phase-row"><span class="key"><b>01</b><small>ANAGEN</small></span><span class="key"><b>02</b><small>CATAGEN</small></span><span class="key"><b>03</b><small>TELOGEN</small></span><span class="key"><b>04</b><small>EXOGEN</small></span></div></div>${foot('SWIPE TO BEGIN')}`,'Slide 01 — cover'),
+      ...Object.keys(phaseData).map((name,index)=>phaseSlide(name,index)),
+      asset(`${frameHeader()}<div class="centre"><p class="display">Know<br>the <em>cycle.</em></p><p class="body">Read the full, sourced guide and join CYPH/1 early access.</p><p class="qualification">General hair-cycle and IPL education. No final CYPH/1 product performance claims are being made.</p></div>${foot('CYPH1.CO.UK')}`,'Slide 06 — source destination and CTA')
+    ];
+    document.querySelector('#carousel').innerHTML=carousel.join('');
+  </script>
+</body>
+</html>

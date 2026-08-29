@@ -1,0 +1,431 @@
+author: ""
+brandUpdateTime: ""
+campaignType: template
+fields: {}
+fieldsHistory: []
+firstLoadSocialIcons: false
+fonts: []
+id: 75b32282-159a-4dd0-b8f4-02350980208c
+name: "CYPH/1 Early Access — Confirm subscription"
+subject: "Confirm your CYPH/1 early access"
+ui:
+  showDeleteOption: false
+user-hash: 0b3f034efdaf964ef46180694a336667
+version: 3.0.1
+body:
+  id: 1b29cde5-abd8-4c88-9a7a-29e8008f2fba
+  type: body
+  layout:
+    320px:
+      width: 100%
+    default:
+      align: left
+      background-color: '#090611'
+      direction: ltr
+      wrapper-width: 100%
+  content:
+    - content-type: wrapper
+      id: 84775993-d0bb-41bc-80a8-3cf5f66e133f
+      stylable: false
+      title: Wrapper
+      type: rows
+      layout:
+        320px:
+          width: 100%
+        default:
+          align: left
+          background-color: '#090611'
+          valign: top
+      content:
+        - align: top
+          dist: '12'
+          gutter: 0px
+          id: 518c0033-f7ea-48c1-b691-610ce23f34f5
+          moduleName: viewInBrowser
+          stylable: false
+          thumbnail: /assets/img/editor/grid_12.svg
+          title: Section
+          type: grid-row
+          layout:
+            320px:
+              display: rows
+              width: 100%
+            default:
+              align: center
+              background-color: '#090611'
+              display: none
+              full-width: true
+              padding-bottom: 8px
+              padding-top: 8px
+              valign: top
+              width: 100%
+          content:
+            - id: 39e8123d-60f6-47f5-a2b2-717f2579f64d
+              isEmpty: false
+              label: 'Drop content here'
+              stylable: false
+              title: Column
+              type: grid-column
+              layout:
+                320px: []
+                default:
+                  padding-left: 0px
+                  padding-right: 0px
+                  valign: top
+              content:
+                - id: 91da48c6-18b7-4ffb-8a81-08b255ed419a
+                  stylable: false
+                  title: Webversion
+                  type: text
+                  layout:
+                    320px:
+                      padding-left: 20px
+                      padding-right: 20px
+                      width: 100%
+                    default:
+                      align: center
+                      line-height: 16px
+                      padding-left: 30px
+                      padding-right: 30px
+                      text-align: center
+                      width: 100%
+                  content: '<p><a href="{{ mirror }}" style="color:#BFA3FF;font-family:Arial,Helvetica,sans-serif;font-size:11px;text-decoration:underline;">View in browser</a></p>'
+        - align: top
+          dist: '12'
+          gutter: 30px
+          id: adf525cf-0a58-47f2-a421-ac5a3c95244e
+          moduleName: grid-row12
+          stylable: false
+          thumbnail: /assets/img/editor/grid_12.svg
+          title: Brand header
+          type: grid-row
+          layout:
+            320px:
+              display: rows
+              padding-left: 24px
+              padding-right: 24px
+              width: 100%
+            default:
+              align: center
+              background-color: '#090611'
+              padding-bottom: 28px
+              padding-top: 36px
+              valign: top
+              width: 100%
+          content:
+            - id: fc85a749-fd74-4476-a09b-beb93e9ea351
+              isEmpty: false
+              stylable: false
+              title: Column
+              type: grid-column
+              layout:
+                320px: {}
+                default:
+                  padding-left: 0px
+                  padding-right: 0px
+                  valign: top
+              content:
+                - attributes:
+                    isLogoInsertedViaEditor: true
+                  id: 0e1fcb07-71f5-4465-885c-94cd54087a53
+                  moduleName: brand-logo
+                  title: Logo
+                  type: image
+                  layout:
+                    320px:
+                      max-width: 220px
+                      width: 190px
+                    default:
+                      align: center
+                      canvas-height: 133px
+                      valign: top
+                      width: 220px
+                  content:
+                    alt: 'CYPH/1 — Cycle. Phase. One.'
+                    src: 'https://img.mailinblue.com/11937763/images/content_library/original/6a88b872b34d7279d8cfdd92.png'
+        - align: top
+          dist: '12'
+          gutter: 30px
+          id: b930f759-4249-4cc5-ba00-e01542e4744e
+          moduleName: grid-row12
+          stylable: false
+          thumbnail: /assets/img/editor/grid_12.svg
+          title: Introduction
+          type: grid-row
+          layout:
+            320px:
+              display: rows
+              padding-left: 24px
+              padding-right: 24px
+              width: 100%
+            default:
+              align: center
+              background-color: '#21112E'
+              padding-bottom: 12px
+              padding-left: 42px
+              padding-right: 42px
+              padding-top: 40px
+              valign: top
+              width: 100%
+          content:
+            - id: bd637b27-4170-42ac-a2d9-615f32e6999e
+              isEmpty: false
+              stylable: false
+              title: Column
+              type: grid-column
+              layout:
+                320px: {}
+                default:
+                  padding-left: 0px
+                  padding-right: 0px
+                  valign: top
+              content:
+                - id: 738ef8bb-d545-46e0-bf5c-a2250a9f8ad8
+                  moduleName: text-title
+                  title: Title
+                  type: text
+                  layout:
+                    320px:
+                      width: 100%
+                    default:
+                      align: center
+                      padding-top: 0px
+                      text-align: center
+                      text-valign: top
+                      valign: top
+                      width: 100%
+                  content: '<p style="color:#A36FF2;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;margin:0 0 16px;text-align:center;text-transform:uppercase;">The first 100</p><h1 class="default-heading1" style="color:#F7F3FA;font-family:Arial,Helvetica,sans-serif;font-size:34px;font-weight:400;letter-spacing:1px;line-height:1.2;margin:0;text-align:center;">Confirm your early access</h1>'
+        - align: top
+          dist: '12'
+          gutter: 30px
+          id: 5d68b909-1bf9-4a91-87dd-5836ca4dc513
+          moduleName: grid-row12
+          stylable: false
+          thumbnail: /assets/img/editor/grid_12.svg
+          title: Message
+          type: grid-row
+          layout:
+            320px:
+              display: rows
+              padding-left: 24px
+              padding-right: 24px
+              width: 100%
+            default:
+              align: center
+              background-color: '#21112E'
+              padding-bottom: 18px
+              padding-left: 42px
+              padding-right: 42px
+              padding-top: 12px
+              valign: top
+              width: 100%
+          content:
+            - id: 0e27e819-5ba1-4efc-8cd7-ae6428807a93
+              isEmpty: false
+              stylable: false
+              title: Column
+              type: grid-column
+              layout:
+                320px: {}
+                default:
+                  padding-left: 0px
+                  padding-right: 0px
+                  valign: top
+              content:
+                - id: 7751faa0-d839-4a89-8abd-213485866336
+                  title: Text
+                  type: text
+                  layout:
+                    320px:
+                      width: 100%
+                    default:
+                      align: left
+                      padding-bottom: 0px
+                      padding-top: 0px
+                      text-align: left
+                      text-valign: top
+                      valign: top
+                      width: 100%
+                  content: '<p style="color:#E6DDEB;margin:0 0 14px;">Thanks for your interest in CYPH/1.</p><p style="color:#E6DDEB;margin:0 0 14px;">Please confirm that you’d like to receive product-development updates and launch information by email.</p><p style="color:#BDAFC5;margin:0;">You can unsubscribe at any time.</p>'
+        - align: top
+          dist: '12'
+          gutter: 0px
+          id: 52f1596d-946c-4773-b58d-bb0e2730c128
+          moduleName: header
+          stylable: false
+          thumbnail: /assets/img/editor/element-header.svg
+          title: Confirmation button
+          type: grid-row
+          layout:
+            320px:
+              display: rows
+              padding-left: 24px
+              padding-right: 24px
+              width: 100%
+            default:
+              align: center
+              background-color: '#21112E'
+              padding-bottom: 42px
+              padding-left: 42px
+              padding-right: 42px
+              padding-top: 16px
+              valign: top
+              width: 100%
+          content:
+            - id: a97abe31-8c1e-442b-93ec-e1d883eaf2a7
+              isEmpty: false
+              label: 'Drop content here'
+              stylable: false
+              title: Column
+              type: grid-column
+              layout:
+                320px: []
+                default:
+                  padding-left: 0px
+                  padding-right: 0px
+                  valign: top
+              content:
+                - id: 64bf57ba-fb09-4dd6-9c0e-dcc7376a2c69
+                  stylable: false
+                  title: Row
+                  type: rows
+                  layout:
+                    320px:
+                      width: 100%
+                    default:
+                      align: left
+                      valign: top
+                      width: 100%
+                  content:
+                    - id: 3d7e966b-51dd-4585-b106-79970fce7fee
+                      text: '<p>Confirm my email</p>'
+                      title: Button
+                      type: text-button
+                      layout:
+                        320px:
+                          width: 100%
+                        default:
+                          align: center
+                          background-color: '#A36FF2'
+                          item-height: 50px
+                          margin-bottom: 0px
+                          margin-top: 0px
+                          padding-bottom: 15px
+                          padding-top: 15px
+                          text-align: center
+                          text-valign: top
+                          type: absoluteLink
+                          valign: top
+                      content:
+                        href: '{{ params.DOIurl }}'
+                        text: '<p style="color:#090611;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">Confirm my email</p>'
+                        title: 'Confirm CYPH/1 early access'
+        - align: top
+          dist: '12'
+          gutter: 30px
+          id: 9c8f8c95-bae9-4f6a-95ff-71f2c19f1749
+          moduleName: grid-row12
+          stylable: false
+          thumbnail: /assets/img/editor/grid_12.svg
+          title: Footer
+          type: grid-row
+          layout:
+            320px:
+              display: rows
+              padding-left: 24px
+              padding-right: 24px
+              width: 100%
+            default:
+              align: center
+              background-color: '#090611'
+              padding-bottom: 36px
+              padding-left: 42px
+              padding-right: 42px
+              padding-top: 30px
+              valign: top
+              width: 100%
+          content:
+            - id: 8fdfc3e8-59ac-4726-a343-5fcf9c500f4d
+              isEmpty: false
+              stylable: false
+              title: Column
+              type: grid-column
+              layout:
+                320px: {}
+                default:
+                  padding-left: 0px
+                  padding-right: 0px
+                  valign: top
+              content:
+                - id: 1b9d259d-ffad-4f74-928b-56e8176edc32
+                  title: Text
+                  type: text
+                  layout:
+                    320px:
+                      width: 100%
+                    default:
+                      align: center
+                      padding-bottom: 0px
+                      padding-top: 0px
+                      text-align: center
+                      text-valign: top
+                      valign: top
+                      width: 100%
+                  content: '<p style="color:#BDAFC5;font-size:12px;margin:0 0 14px;text-align:center;">If you didn’t request this, you can safely ignore this email.</p><p style="color:#D7BA77;font-size:11px;font-weight:700;letter-spacing:2px;margin:0 0 18px;text-align:center;text-transform:uppercase;">CYPH/1 · Cycle. Phase. One.</p><p style="color:#7F7288;font-size:10px;line-height:1.6;margin:0;text-align:center;">Cycle Phase One<br>Unit 171614, PO Box 7169<br>Poole, BH15 9EL, United Kingdom<br><a href="https://www.cyph1.co.uk/privacy/" style="color:#BFA3FF;text-decoration:underline;">Privacy Notice</a></p>'
+media:
+  320px:
+    max-width: 600
+    min-width: 0
+styles:
+  default:
+    properties:
+      color: '#E6DDEB'
+      font-family: 'Arial,Helvetica,sans-serif'
+      font-size: 16px
+      line-height: '1.55'
+    title: Paragraph
+  default-button:
+    properties:
+      background-color: '#A36FF2'
+      border-radius: 2px
+      border-width: 0px
+      color: '#090611'
+      font-family: 'Arial,Helvetica,sans-serif'
+      font-size: 13px
+      font-weight: '700'
+      remove-vml-button: optional
+      width: 100%
+    title: Button
+  default-heading1:
+    properties:
+      color: '#F7F3FA'
+      font-family: 'Arial,Helvetica,sans-serif'
+      font-size: 34px
+      font-weight: '400'
+    title: 'Heading 1'
+  default-heading2:
+    properties:
+      color: '#F7F3FA'
+      font-family: 'Arial,Helvetica,sans-serif'
+      font-size: 28px
+      font-weight: '400'
+    title: 'Heading 2'
+  default-heading3:
+    properties:
+      color: '#F7F3FA'
+      font-family: 'Arial,Helvetica,sans-serif'
+      font-size: 22px
+      font-weight: '400'
+    title: 'Heading 3'
+  default-heading4:
+    properties:
+      color: '#F7F3FA'
+      font-family: 'Arial,Helvetica,sans-serif'
+      font-size: 18px
+      font-weight: '400'
+    title: 'Heading 4'
+  default-link:
+    properties:
+      color: '#BFA3FF'
+      text-decoration: underline
+    title: Link
