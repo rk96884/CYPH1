@@ -154,6 +154,13 @@ Unique constraints: `(provider, provider_payment_id)` and `idempotency_key`.
 
 Store payment reference, amount, currency, reason, normalised state, provider refund ID, idempotency key and timestamps. The sum of completed refunds must not exceed the captured payment.
 
+### `webhook_deliveries`
+
+Store each unmodified raw request body, its SHA-256 digest, provider,
+verification outcome and correlation ID. A delivery is retained even when
+authenticated provider lookup fails, allowing safe retry and audit without
+treating the untrusted body as a business event.
+
 ### `webhook_events`
 
 | Field | Purpose |
@@ -170,6 +177,13 @@ Store payment reference, amount, currency, reason, normalised state, provider re
 | timestamps | Received and processed |
 
 Unique constraint: `(provider, provider_event_id)` where the provider supplies a stable event ID.
+
+### `outbox_events`
+
+Store a unique event key, normalised event type, aggregate identity and safe
+payload in the same transaction as payment and order transitions. A separate
+publisher may deliver pending events later; inserting the same provider event
+again cannot enqueue downstream work twice.
 
 ### `fulfilments`
 

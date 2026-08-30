@@ -12,7 +12,10 @@ const tscExecutable = join(repositoryRoot, "node_modules", "typescript", "bin", 
 
 try {
   execFileSync(nodeExecutable, [tscExecutable, "-p", join(packageRoot, "tsconfig.json"), "--rootDir", repositoryRoot, "--noEmit", "false", "--outDir", outputDirectory], { stdio: "inherit" });
-  execFileSync(nodeExecutable, ["--test", join(outputDirectory, "apps", "commerce-api", "src", "payments", "payments.test.js")], { stdio: "inherit" });
+  execFileSync(nodeExecutable, ["--test",
+    join(outputDirectory, "apps", "commerce-api", "src", "payments", "payments.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "webhooks", "webhooks.test.js"),
+  ], { stdio: "inherit" });
 } finally {
   rmSync(outputDirectory, { recursive: true, force: true });
 }

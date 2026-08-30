@@ -31,8 +31,8 @@ try {
   const expectedTables = [
     "products", "inventory_levels", "customers", "customer_consents", "addresses",
     "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates",
-    "orders", "order_items", "payments", "refunds", "webhook_events", "fulfilments",
-    "audit_events", "schema_migrations",
+    "orders", "order_items", "payments", "refunds", "webhook_deliveries", "webhook_events", "fulfilments",
+    "outbox_events", "audit_events", "schema_migrations",
   ];
   const tableResult = await client.query(
     "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = ANY($1)",

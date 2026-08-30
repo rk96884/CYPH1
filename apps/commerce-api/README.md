@@ -17,8 +17,15 @@ For isolated Mollie testing, use `PAYMENT_PROVIDER=mollie-test`, a `test_` API
 key and an explicit comma-separated `PAYMENT_CALLBACK_ORIGINS` allowlist. Keep
 `COMMERCE_ENABLED=false`; no public commerce flow exists in this milestone.
 
-Webhook verification and event normalisation intentionally fail closed until
-Milestone 2.2 implements authenticated raw-body processing.
+Classic Mollie payment webhooks are parsed from their unmodified raw request
+bytes. Because classic notifications are not signed, the body is treated only
+as an untrusted payment reference; the adapter authenticates the resource by
+retrieving its current state through Mollie's authorised API before producing
+a provider-neutral event. Unknown references receive a safe acknowledgement.
+
+Webhook receipts retain the raw body and SHA-256 digest. Payment, order and
+exactly-once outbox changes are committed transactionally. No public webhook
+route is exposed until the private server runtime is introduced.
 
 Configuration fails closed: missing or unrecognised values never enable commerce.
 

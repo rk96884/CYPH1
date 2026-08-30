@@ -93,6 +93,7 @@ export type VerifyWebhookInput = Readonly<{
 export type VerifiedWebhook = Readonly<{
   outcome: "actionable" | "irrelevant" | "invalid" | "malformed";
   provider: string;
+  providerEventId?: string;
   payload?: unknown;
 }>;
 

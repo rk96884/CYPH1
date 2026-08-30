@@ -88,6 +88,41 @@ test("Mollie adapter cannot be configured with a live key", () => {
   assert.throws(() => new MollieTestPaymentProvider({ apiKey: "live_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"] }), /test API key/);
 });
 
+test("classic Mollie webhook authenticates by retrieving the referenced payment", async () => {
+  let requestedUrl = "";
+  const provider = new MollieTestPaymentProvider({
+    apiKey: "test_example_key", allowedCallbackOrigins: ["https://api.cyph1.co.uk"],
+    fetch: async (url) => {
+      requestedUrl = String(url);
+      return response({ id: "tr_webhook1", status: "paid", createdAt: "2026-08-29T12:00:00Z", paidAt: "2026-08-29T12:01:00Z", amount: { currency: "GBP", value: "120.00" }, metadata: { orderId: "order_1" } });
+    },
+  });
+  const verified = await provider.verifyWebhook({
+    rawBody: new TextEncoder().encode("id=tr_webhook1"),
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    endpointUrl: "https://api.cyph1.co.uk/webhooks/mollie",
+  });
+  assert.equal(requestedUrl, "https://api.mollie.com/v2/payments/tr_webhook1");
+  assert.equal(verified.outcome, "actionable");
+  const events = await provider.normaliseWebhook(verified);
+  assert.deepEqual(events.map((event) => ({ id: event.eventId, type: event.type, amount: event.amount?.value })), [
+    { id: "payment:tr_webhook1:paid", type: "payment.paid", amount: 12_000 },
+  ]);
+});
+
+test("classic Mollie webhook rejects malformed bodies and unapproved endpoints before API access", async () => {
+  let calls = 0;
+  const provider = new MollieTestPaymentProvider({
+    apiKey: "test_example_key", allowedCallbackOrigins: ["https://api.cyph1.co.uk"],
+    fetch: async () => { calls += 1; return response({}); },
+  });
+  const malformed = await provider.verifyWebhook({ rawBody: new TextEncoder().encode("id=tr_1&extra=true"), headers: { "Content-Type": "application/x-www-form-urlencoded" }, endpointUrl: "https://api.cyph1.co.uk/webhooks/mollie" });
+  const invalid = await provider.verifyWebhook({ rawBody: new TextEncoder().encode("id=tr_1"), headers: { "Content-Type": "application/x-www-form-urlencoded" }, endpointUrl: "https://attacker.example/webhook" });
+  assert.equal(malformed.outcome, "malformed");
+  assert.equal(invalid.outcome, "invalid");
+  assert.equal(calls, 0);
+});
+
 test("server-side factory remains disabled by default and fails closed on incomplete Mollie configuration", () => {
   const disabled = createPaymentProviderRegistry({});
   assert.throws(() => disabled.getConfiguredProvider(), /not configured/);

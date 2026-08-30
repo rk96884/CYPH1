@@ -10,7 +10,8 @@ type MollieAmount = { currency: string; value: string };
 type MolliePayment = {
   id: string; status: string; createdAt: string; expiresAt?: string;
   authorisedAt?: string; paidAt?: string; canceledAt?: string; expiredAt?: string;
-  amount: MollieAmount; amountRefunded?: MollieAmount; metadata?: { orderId?: string };
+  amount: MollieAmount; amountRefunded?: MollieAmount;
+  metadata?: { orderId?: string; orderNumber?: string; correlationId?: string };
   _links?: { checkout?: { href?: string } };
 };
 type MollieRefund = { id: string; status: string; amount: MollieAmount; createdAt: string };
@@ -50,6 +51,17 @@ const refundStatus = (status: string): NormalisedRefund["status"] => {
   if (status === "refunded") return "completed";
   if (["failed", "canceled"].includes(status)) return "failed";
   throw new PaymentProviderError("unknown_provider_error", "Mollie returned an unsupported refund status.");
+};
+
+const webhookEventType = (status: string): PaymentEvent["type"] => {
+  const events: Record<string, PaymentEvent["type"]> = {
+    open: "payment.pending", pending: "payment.pending", authorised: "payment.authorised",
+    paid: "payment.paid", failed: "payment.failed", canceled: "payment.cancelled",
+    expired: "payment.expired",
+  };
+  const event = events[status];
+  if (!event) throw new PaymentProviderError("unknown_provider_error", "Mollie returned an unsupported webhook status.");
+  return event;
 };
 
 const providerError = (status: number): PaymentProviderError => {
@@ -182,11 +194,54 @@ export class MollieTestPaymentProvider implements PaymentProvider {
     return Object.freeze({ provider: this.key, providerPaymentId: input.providerPaymentId, providerRefundId: refund.id, amount: parseAmount(refund.amount), status: refundStatus(refund.status), createdAt: refund.createdAt });
   }
 
-  async verifyWebhook(_input: VerifyWebhookInput): Promise<VerifiedWebhook> {
-    throw new PaymentProviderError("configuration_error", "Mollie webhook verification is reserved for Milestone 2.2.");
+  async verifyWebhook(input: VerifyWebhookInput): Promise<VerifiedWebhook> {
+    let endpoint: URL;
+    try { endpoint = new URL(input.endpointUrl); }
+    catch { return Object.freeze({ outcome: "malformed", provider: this.key }); }
+    if (endpoint.protocol !== "https:" || !this.#allowedOrigins.has(endpoint.origin)) {
+      return Object.freeze({ outcome: "invalid", provider: this.key });
+    }
+    const contentType = Object.entries(input.headers).find(([name]) => name.toLowerCase() === "content-type")?.[1] ?? "";
+    if (!contentType.toLowerCase().startsWith("application/x-www-form-urlencoded") || input.rawBody.byteLength === 0 || input.rawBody.byteLength > 1024) {
+      return Object.freeze({ outcome: "malformed", provider: this.key });
+    }
+    let body: string;
+    try { body = new TextDecoder("utf-8", { fatal: true }).decode(input.rawBody); }
+    catch { return Object.freeze({ outcome: "malformed", provider: this.key }); }
+    const parameters = new URLSearchParams(body);
+    if ([...parameters.keys()].some((key) => key !== "id") || parameters.getAll("id").length !== 1) {
+      return Object.freeze({ outcome: "malformed", provider: this.key });
+    }
+    const paymentId = parameters.get("id") ?? "";
+    if (!/^tr_[A-Za-z0-9]+$/.test(paymentId)) return Object.freeze({ outcome: "malformed", provider: this.key });
+
+    let payment: MolliePayment;
+    try { payment = await this.#request<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`, { method: "GET" }, "webhook-authentication"); }
+    catch (error) {
+      if (error instanceof PaymentProviderError && error.category === "not_found") {
+        return Object.freeze({ outcome: "irrelevant", provider: this.key, providerEventId: `unknown:${paymentId}` });
+      }
+      throw error;
+    }
+    if (payment.id !== paymentId) return Object.freeze({ outcome: "invalid", provider: this.key });
+    return Object.freeze({
+      outcome: "actionable", provider: this.key,
+      providerEventId: `payment:${payment.id}:${payment.status}`,
+      payload: payment,
+    });
   }
 
-  async normaliseWebhook(_input: VerifiedWebhook): Promise<readonly PaymentEvent[]> {
-    throw new PaymentProviderError("configuration_error", "Mollie webhook normalisation is reserved for Milestone 2.2.");
+  async normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]> {
+    if (input.provider !== this.key || input.outcome !== "actionable" || !input.providerEventId || !input.payload) return Object.freeze([]);
+    const payment = input.payload as MolliePayment;
+    if (!payment.id || !payment.status || !payment.createdAt || !payment.amount) {
+      throw new PaymentProviderError("unknown_provider_error", "Verified Mollie webhook payload is incomplete.");
+    }
+    const occurredAt = payment.paidAt ?? payment.authorisedAt ?? payment.canceledAt ?? payment.expiredAt ?? payment.createdAt;
+    return Object.freeze([Object.freeze({
+      eventId: input.providerEventId, provider: this.key,
+      providerPaymentId: payment.id, type: webhookEventType(payment.status),
+      occurredAt, amount: parseAmount(payment.amount),
+    })]);
   }
 }
