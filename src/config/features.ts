@@ -7,4 +7,5 @@ const enabled = (value: string | undefined): boolean => value === "true";
  */
 export const features = Object.freeze({
   commerceUi: enabled(import.meta.env.PUBLIC_COMMERCE_UI_ENABLED),
+  commerceOperationsUi: enabled(import.meta.env.PUBLIC_COMMERCE_OPERATIONS_UI_ENABLED),
 });

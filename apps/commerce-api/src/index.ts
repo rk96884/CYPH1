@@ -11,6 +11,10 @@ export { FulfilmentError, FulfilmentService } from "./fulfilment/service.js";
 export { ManualTestFulfilmentProvider } from "./fulfilment/manual-test.js";
 export { PostgresFulfilmentRepository } from "./fulfilment/postgres.js";
 export { PostgresFulfilmentOutboxConsumer } from "./fulfilment/outbox.js";
+export { OperationsError, OperationsService, operationPermissions } from "./operations/service.js";
+export { PostgresOperationsRepository } from "./operations/postgres.js";
+export { handleOperationsRequest } from "./operations/handler.js";
+export type { OperationPermission, OperationsPrincipal, OperationsRepository } from "./operations/service.js";
 export type {
   CheckoutAddress,
   CheckoutOrder,

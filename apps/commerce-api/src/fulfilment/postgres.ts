@@ -44,7 +44,13 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
         ON CONFLICT (idempotency_key) DO NOTHING RETURNING id`,
       [orderId, provider, idempotencyKey, JSON.stringify(request)]);
       if (inserted.rowCount !== 1) {
-        const existing = await client.query("SELECT id, provider_reference FROM fulfilments WHERE idempotency_key = $1", [idempotencyKey]);
+        const existing = await client.query("SELECT id, provider_reference, status FROM fulfilments WHERE idempotency_key = $1 FOR UPDATE", [idempotencyKey]);
+        if (existing.rows[0].status === "failed" && !existing.rows[0].provider_reference) {
+          await client.query("UPDATE fulfilments SET status='created', failure_code=NULL WHERE id=$1", [existing.rows[0].id]);
+          await client.query("UPDATE orders SET fulfilment_status='queued' WHERE id=$1", [orderId]);
+          await this.audit(client, "fulfilment", existing.rows[0].id, "fulfilment.retry_reserved", correlationId, { orderId });
+          return Object.freeze({ outcome: "reserved" as const, fulfilmentId: existing.rows[0].id, request });
+        }
         return Object.freeze({ outcome: "duplicate" as const, fulfilmentId: existing.rows[0].id, request, ...(existing.rows[0].provider_reference ? { providerReference: existing.rows[0].provider_reference } : {}) });
       }
       await client.query("UPDATE orders SET fulfilment_status = 'queued' WHERE id = $1", [orderId]);

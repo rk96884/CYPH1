@@ -12,6 +12,7 @@ export default defineConfig({
       !page.includes("/early-access/confirmed/") &&
       !page.includes("/privacy/") &&
       !page.includes("/terms/") &&
-      !page.includes("/private-commerce/"),
+      !page.includes("/private-commerce/") &&
+      !page.includes("/private-operations/"),
   })],
 });

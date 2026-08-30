@@ -24,6 +24,17 @@ cross the boundary. `FULFILMENT_PROVIDER=manual-test` is restricted to
 external side effect. No production 3PL is configured or approved.
 
 The adapter registry is selected exclusively from server-side configuration.
+
+## Operations boundary
+
+Milestone 3.2 provides a runtime-neutral `handleOperationsRequest` function,
+`OperationsService` and PostgreSQL repository. Authentication middleware must
+construct the trusted `OperationsPrincipal`; request headers or browser fields
+must never be translated directly into permissions. Independent permissions
+cover order reading, refund creation, fulfilment retry and reconciliation
+export. See `docs/operations/COMMERCE-OPERATIONS.md` for the protected-origin
+deployment and operator workflow.
+
 For isolated Mollie testing, use `PAYMENT_PROVIDER=mollie-test`, a `test_` API
 key and an explicit comma-separated `PAYMENT_CALLBACK_ORIGINS` allowlist. Keep
 `COMMERCE_ENABLED=false` for normal deployments; no public commerce flow exists

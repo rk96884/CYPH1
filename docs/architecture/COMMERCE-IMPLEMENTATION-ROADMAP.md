@@ -122,6 +122,13 @@ Implementation baseline completed:
 - Add manual review and safe retry tools.
 - Add reconciliation export.
 
+Implementation baseline completed:
+
+- Runtime-neutral handler with a trusted identity-middleware principal boundary and separate least-privilege permissions.
+- Protected order search/details, audit timelines, provider-authoritative idempotent refunds, failed paid-event retries and bounded reconciliation CSV.
+- Durable operator-command and audit records, formula-safe exports without customer/address data, and a separately gated no-index console route.
+- The console is omitted from ordinary builds and is not authentication; it must share a protected origin with the API behind verified upstream identity.
+
 ### 3.3 Transactional communication
 
 - Add order confirmation, dispatch, cancellation and refund templates.
