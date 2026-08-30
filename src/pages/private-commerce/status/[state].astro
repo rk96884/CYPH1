@@ -1,0 +1,41 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BrandMark from "../../../components/BrandMark.astro";
+import { privateCommercePresentation } from "../../../config/private-commerce";
+
+export function getStaticPaths() {
+  const presentation = privateCommercePresentation();
+  if (!presentation) return [];
+  return ["pending", "cancelled", "error", "success"].map((state) => ({ params: { state }, props: { productSlug: presentation.productSlug } }));
+}
+
+const state = Astro.params.state ?? "error";
+const { productSlug } = Astro.props;
+const messages = {
+  pending: ["Payment confirmation pending", "Your browser return is not proof of payment. This test order remains pending until an authenticated Mollie webhook updates it."],
+  success: ["Payment status received", "This page is still non-authoritative. Confirm the internal order status and verified webhook before treating the test as paid."],
+  cancelled: ["Test checkout cancelled", "No successful payment has been inferred from the browser return. You may return to the private test product and try again."],
+  error: ["Checkout test interrupted", "The checkout could not be completed. Review the commerce API and Mollie test logs before retrying."],
+} as const;
+const message = messages[state as keyof typeof messages] ?? messages.error;
+---
+<BaseLayout title={`${message[0]} — CYPH/1 private test`} description={message[1]} robots="noindex, nofollow, noarchive">
+  <header class="private-header container"><BrandMark/><span>Private test environment</span></header>
+  <main id="main" class="private-status container">
+    <p class="eyebrow">Mollie test mode</p>
+    <h1>{message[0]}</h1>
+    <p>{message[1]}</p>
+    <p class="order-reference" data-order-reference></p>
+    <a class="text-link" href={`../../${productSlug}/`}>Return to the private test product</a>
+  </main>
+  <script>
+    const output = document.querySelector("[data-order-reference]");
+    const order = new URLSearchParams(window.location.search).get("order");
+    if (output instanceof HTMLElement && order && /^[0-9a-f-]{36}$/i.test(order)) output.textContent = `Internal order: ${order}`;
+  </script>
+</BaseLayout>
+<style>
+  .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
+  .private-header span{color:var(--cyph-color-warning);font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase}
+  .private-status{min-height:70svh;padding-block:var(--cyph-layout-section)}h1{max-width:12ch;font-size:clamp(2.4rem,7vw,6rem);line-height:1.05}.private-status>p{max-width:42rem;color:var(--cyph-text-secondary)}.order-reference{font-family:ui-monospace,monospace;font-size:.75rem}
+</style>

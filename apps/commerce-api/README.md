@@ -1,9 +1,11 @@
 # CYPH/1 Commerce API
 
-Runtime-neutral scaffold for the future server-side commerce boundary.
+Runtime-neutral server-side commerce boundary.
 
-The API is deliberately non-deployable at this stage. It has no HTTP framework
-and exposes no public checkout endpoint. Its provider-neutral payment boundary
+The package still has no public HTTP listener. It now provides a framework-neutral
+private checkout handler and PostgreSQL repository for a protected integration
+runtime. The normal site build emits no storefront route, and the API remains
+disabled unless its independent server gates are explicitly enabled. Its provider-neutral payment boundary
 uses a native-HTTP Mollie test adapter, which cannot accept a live API key.
 
 ## Safety defaults
@@ -15,7 +17,9 @@ uses a native-HTTP Mollie test adapter, which cannot accept a live API key.
 The adapter registry is selected exclusively from server-side configuration.
 For isolated Mollie testing, use `PAYMENT_PROVIDER=mollie-test`, a `test_` API
 key and an explicit comma-separated `PAYMENT_CALLBACK_ORIGINS` allowlist. Keep
-`COMMERCE_ENABLED=false`; no public commerce flow exists in this milestone.
+`COMMERCE_ENABLED=false` for normal deployments; no public commerce flow exists
+in this milestone. The private test runtime must be protected upstream and pass
+its exact preview origin to the checkout handler. CORS is not authentication.
 
 Classic Mollie payment webhooks are parsed from their unmodified raw request
 bytes. Because classic notifications are not signed, the body is treated only
@@ -26,6 +30,15 @@ a provider-neutral event. Unknown references receive a safe acknowledgement.
 Webhook receipts retain the raw body and SHA-256 digest. Payment, order and
 exactly-once outbox changes are committed transactionally. No public webhook
 route is exposed until the private server runtime is introduced.
+
+Private checkout commands are recorded in `checkout_sessions`. The request
+fingerprint, internal order and hosted checkout URL make browser retries durable
+and reject reuse of an idempotency key for different basket/address data. Order,
+payment and completed checkout-session state are committed atomically.
+
+`PRIVATE_CHECKOUT_UNIT_TAX_MINOR` is an explicit integration-fixture input only.
+It is not an approved VAT calculation. Production tax treatment, product price,
+stock and fulfilment configuration remain launch-gate inputs.
 
 Configuration fails closed: missing or unrecognised values never enable commerce.
 

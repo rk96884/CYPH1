@@ -89,6 +89,12 @@ Evolve the existing `cyph1.co.uk` Astro website into a commerce-capable storefro
 - Add pending, success, cancellation and error states.
 - Make the redirect page non-authoritative.
 
+Implementation note: the route is generated only when the private presentation
+flag and all test identifiers are present at build time. Normal builds contain
+no commerce pages. The API has a separate server-side enablement gate, an exact
+origin allowlist and durable PostgreSQL idempotency. Private test fixture values
+are not approved product, price, tax, stock or fulfilment data.
+
 **Acceptance:** Test-mode checkout completes end to end without changing the public site or creating live charges.
 
 ## Milestone 3 — fulfilment and operations

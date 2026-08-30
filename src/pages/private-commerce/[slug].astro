@@ -1,0 +1,93 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BrandMark from "../../components/BrandMark.astro";
+import { privateCommercePresentation } from "../../config/private-commerce";
+
+export function getStaticPaths() {
+  const presentation = privateCommercePresentation();
+  return presentation ? [{ params: { slug: presentation.productSlug }, props: { presentation } }] : [];
+}
+
+const { presentation } = Astro.props;
+---
+<BaseLayout title={`Private checkout test — ${presentation.productName}`} description="Private CYPH/1 test checkout." robots="noindex, nofollow, noarchive">
+  <header class="private-header container"><BrandMark/><span>Private test environment</span></header>
+  <main id="main" class="private-commerce container">
+    <section aria-labelledby="private-product-title">
+      <p class="eyebrow">Internal integration test</p>
+      <h1 id="private-product-title">{presentation.productName}</h1>
+      <p class="private-warning"><strong>Not a retail offer.</strong> Mollie test mode only. Do not enter real personal or payment information.</p>
+      <p>Product content, specifications and retail pricing remain unapproved. The commerce API will independently retrieve the private fixture and calculate the authoritative test total.</p>
+    </section>
+    <form class="private-checkout-form" data-private-checkout data-api-url={presentation.apiUrl} novalidate>
+      <input type="hidden" name="productSlug" value={presentation.productSlug}/>
+      <input type="hidden" name="shippingRateId" value={presentation.shippingRateId}/>
+      <fieldset>
+        <legend>Test basket</legend>
+        <label>Quantity <input name="quantity" type="number" min="1" max="10" value="1" required/></label>
+      </fieldset>
+      <fieldset>
+        <legend>Test contact and delivery details</legend>
+        <label>Email address <input name="email" type="email" value="test@example.invalid" autocomplete="off" required/></label>
+        <label>Recipient name <input name="recipientName" value="Test Customer" autocomplete="off" required/></label>
+        <label>Address line 1 <input name="line1" value="1 Test Street" autocomplete="off" required/></label>
+        <label>Town or city <input name="locality" value="London" autocomplete="off" required/></label>
+        <label>Postcode <input name="postalCode" value="SW1A 1AA" autocomplete="off" required/></label>
+        <label>Country <input name="countryCode" value="GB" maxlength="2" readonly/></label>
+      </fieldset>
+      <button class="button" type="submit">Continue to Mollie test checkout</button>
+      <p class="form-status" data-checkout-status role="status" aria-live="polite"></p>
+    </form>
+  </main>
+  <script>
+    const form = document.querySelector("[data-private-checkout]");
+    const status = document.querySelector("[data-checkout-status]");
+    if (form instanceof HTMLFormElement && status instanceof HTMLElement) {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        const button = form.querySelector("button[type='submit']");
+        if (!(button instanceof HTMLButtonElement)) return;
+        const data = new FormData(form);
+        button.disabled = true;
+        status.dataset.state = "";
+        status.textContent = "Validating the test basket…";
+        try {
+          const response = await fetch(`${form.dataset.apiUrl}/checkout`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
+            body: JSON.stringify({
+              productSlug: data.get("productSlug"), quantity: Number(data.get("quantity")),
+              shippingRateId: data.get("shippingRateId"), email: data.get("email"),
+              correlationId: crypto.randomUUID(),
+              deliveryAddress: {
+                recipientName: data.get("recipientName"), line1: data.get("line1"), locality: data.get("locality"),
+                postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
+              },
+            }),
+          });
+          const result = await response.json();
+          if (!response.ok || typeof result.checkoutUrl !== "string") throw new Error("Checkout could not be started.");
+          status.textContent = "Opening Mollie test checkout…";
+          window.location.assign(result.checkoutUrl);
+        } catch {
+          status.dataset.state = "error";
+          status.textContent = "The private test checkout could not be started. Please retry or inspect the commerce API logs.";
+          button.disabled = false;
+        }
+      });
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
+  .private-header span{color:var(--cyph-color-warning);font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase}
+  .private-commerce{display:grid;grid-template-columns:minmax(0,.8fr) minmax(20rem,1fr);gap:var(--cyph-layout-cluster);padding-block:var(--cyph-layout-section-compact)}
+  h1{font-size:clamp(2rem,5vw,4rem);line-height:1.1}.private-commerce section>p{max-width:38rem;color:var(--cyph-text-secondary)}
+  .private-warning{padding:var(--cyph-space-4);border-left:2px solid var(--cyph-color-warning);background:rgb(242 198 109/.08)}
+  fieldset{display:grid;gap:var(--cyph-space-4);margin:0 0 var(--cyph-space-6);border:1px solid var(--cyph-border-structural);padding:var(--cyph-space-6)}
+  legend{padding-inline:var(--cyph-space-2);font-family:var(--cyph-font-display);font-size:.85rem;text-transform:uppercase}
+  label{display:grid;gap:var(--cyph-space-2);color:var(--cyph-text-secondary);font-size:.8rem}input{min-height:2.75rem;border:1px solid var(--cyph-border-structural);border-radius:var(--cyph-radius-control);padding:var(--cyph-space-3);color:var(--cyph-text-primary);background:rgb(8 7 17/.55)}
+  @media(max-width:760px){.private-commerce{grid-template-columns:1fr}.private-header span{max-width:10rem;text-align:right}}
+</style>

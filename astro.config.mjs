@@ -11,6 +11,7 @@ export default defineConfig({
     filter: (page) =>
       !page.includes("/early-access/confirmed/") &&
       !page.includes("/privacy/") &&
-      !page.includes("/terms/"),
+      !page.includes("/terms/") &&
+      !page.includes("/private-commerce/"),
   })],
 });

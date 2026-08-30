@@ -32,7 +32,7 @@ try {
     "products", "inventory_levels", "customers", "customer_consents", "addresses",
     "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates",
     "orders", "order_items", "payments", "refunds", "webhook_deliveries", "webhook_events", "fulfilments",
-    "outbox_events", "audit_events", "schema_migrations",
+    "outbox_events", "checkout_sessions", "audit_events", "schema_migrations",
   ];
   const tableResult = await client.query(
     "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename = ANY($1)",
@@ -78,6 +78,12 @@ try {
       (order_id, product_id, sku_snapshot, name_snapshot, unit_price_minor, unit_weight_grams, quantity, tax_minor, line_total_minor)
      VALUES ($1, $2, 'VERIFY-PRODUCT', 'Verification product', 1000, 100, 0, 0, 0)`,
     [order.rows[0].id, product.rows[0].id],
+  );
+
+  await expectConstraintFailure(
+    "invalid checkout fingerprint",
+    `INSERT INTO checkout_sessions (idempotency_key, request_fingerprint)
+     VALUES ('verify-invalid-fingerprint', 'not-a-sha256-fingerprint')`,
   );
 
   await client.query("ROLLBACK");
