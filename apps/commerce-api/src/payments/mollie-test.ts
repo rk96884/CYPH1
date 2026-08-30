@@ -21,6 +21,7 @@ export type MollieTestAdapterConfig = Readonly<{
   allowedCallbackOrigins: readonly string[];
   fetch?: Fetch;
   apiBaseUrl?: string;
+  requestTimeoutMs?: number;
 }>;
 
 const requireText = (value: string, field: string): string => {
@@ -79,6 +80,7 @@ export class MollieTestPaymentProvider implements PaymentProvider {
   readonly #fetch: Fetch;
   readonly #apiBaseUrl: string;
   readonly #allowedOrigins: ReadonlySet<string>;
+  readonly #requestTimeoutMs: number;
 
   constructor(readonly config: MollieTestAdapterConfig) {
     if (!config.apiKey.startsWith("test_") || config.apiKey.length < 10) {
@@ -87,6 +89,10 @@ export class MollieTestPaymentProvider implements PaymentProvider {
     this.#fetch = config.fetch ?? globalThis.fetch;
     this.#apiBaseUrl = (config.apiBaseUrl ?? "https://api.mollie.com/v2").replace(/\/$/, "");
     this.#allowedOrigins = new Set(config.allowedCallbackOrigins.map((origin) => new URL(origin).origin));
+    this.#requestTimeoutMs = config.requestTimeoutMs ?? 10_000;
+    if (!Number.isSafeInteger(this.#requestTimeoutMs) || this.#requestTimeoutMs < 1 || this.#requestTimeoutMs > 30_000) {
+      throw new PaymentProviderError("configuration_error", "Mollie request timeout must be between 1 and 30000 milliseconds.");
+    }
     if (this.#allowedOrigins.size === 0) throw new PaymentProviderError("configuration_error", "At least one callback origin is required.");
   }
 
@@ -100,9 +106,12 @@ export class MollieTestPaymentProvider implements PaymentProvider {
 
   async #request<Result>(path: string, init: RequestInit, correlationId: string): Promise<Result> {
     let response: Response;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.#requestTimeoutMs);
     try {
       response = await this.#fetch(`${this.#apiBaseUrl}${path}`, {
         ...init,
+        signal: controller.signal,
         headers: {
           Authorization: `Bearer ${this.config.apiKey}`,
           "Content-Type": "application/json",
@@ -112,6 +121,8 @@ export class MollieTestPaymentProvider implements PaymentProvider {
       });
     } catch {
       throw new PaymentProviderError("network_error", "Mollie could not be reached.", true);
+    } finally {
+      clearTimeout(timeout);
     }
     if (!response.ok) throw providerError(response.status);
     try { return await response.json() as Result; }

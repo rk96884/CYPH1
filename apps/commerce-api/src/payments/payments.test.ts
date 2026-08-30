@@ -84,6 +84,17 @@ test("Mollie HTTP failures map to safe retry categories", async () => {
     error instanceof PaymentProviderError && error.category === "provider_unavailable" && error.retryable && !error.message.includes("sensitive"));
 });
 
+test("Mollie requests time out and surface an ambiguous retryable network error", async () => {
+  const provider = new MollieTestPaymentProvider({
+    apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"], requestTimeoutMs: 5,
+    fetch: async (_url, init) => await new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), { once: true });
+    }),
+  });
+  await assert.rejects(() => provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" }), (error: unknown) =>
+    error instanceof PaymentProviderError && error.category === "network_error" && error.retryable);
+});
+
 test("Mollie adapter cannot be configured with a live key", () => {
   assert.throws(() => new MollieTestPaymentProvider({ apiKey: "live_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"] }), /test API key/);
 });

@@ -249,6 +249,17 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     });
   }
 
+  async markResolutionRequired(orderId: string): Promise<void> {
+    const result = await this.pool.query(
+      `UPDATE checkout_sessions
+          SET state = 'resolution_required', failure_code = 'ambiguous_provider_outcome'
+        WHERE order_id = $1 AND state = 'reserved'
+        RETURNING idempotency_key`,
+      [orderId],
+    );
+    if (result.rowCount !== 1) throw new Error("Checkout session was not reserved for resolution.");
+  }
+
   private async shippingSnapshot(client: Queryable, rateId: string, countryCode: string) {
     const result = await client.query(
       `SELECT m.method_key, m.name, m.description, r.rate_minor, r.currency,

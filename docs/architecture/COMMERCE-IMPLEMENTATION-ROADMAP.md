@@ -157,6 +157,20 @@ Implementation baseline completed:
 - The GitHub quality workflow now runs strict project checks, commerce tests, the public build, structural accessibility, performance-budget and generated-link audits.
 - `docs/operations/COMMERCE-LAUNCH-READINESS.md` records current evidence and all outstanding engineering, security, legal, financial and operational gates without treating CI as launch approval.
 
+### 4.2 Provider failure and ambiguous-checkout resilience
+
+- Bound provider requests with an explicit timeout and safe retry classification.
+- Preserve ambiguous checkout attempts for reconciliation rather than cancelling an order that may have a provider-side payment.
+- Block duplicate attempts through the existing idempotency boundary.
+- Document the provider-outage, investigation and recovery procedure.
+
+Implementation baseline completed:
+
+- Retryable provider failures move the checkout session to `resolution_required`; definitive failures still abandon the draft order.
+- Mollie test requests have a bounded timeout and expose only a safe retryable network category.
+- Automated tests cover both ambiguous and definitive failure paths without live provider calls.
+- `docs/operations/PAYMENT-PROVIDER-OUTAGE.md` defines fail-closed reconciliation and recovery.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

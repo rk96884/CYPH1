@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { money, type PaymentProvider, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type PaymentProvider, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
 import { CheckoutError, CheckoutService, type CheckoutOrder, type CheckoutRepository, type CheckoutResult } from "./service.js";
 
 class MemoryCheckoutRepository implements CheckoutRepository {
   readonly orders: CheckoutOrder[] = [];
   readonly completed = new Map<string, CheckoutResult>();
+  readonly abandoned: string[] = [];
+  readonly resolutionRequired: string[] = [];
 
   async getProduct() {
     return {
@@ -35,7 +37,8 @@ class MemoryCheckoutRepository implements CheckoutRepository {
       checkoutUrl: input.checkoutUrl, replayed: false,
     });
   }
-  async abandonOrder() {}
+  async abandonOrder(orderId: string) { this.abandoned.push(orderId); }
+  async markResolutionRequired(orderId: string) { this.resolutionRequired.push(orderId); }
 }
 
 const provider = (capture: Array<Readonly<{ amount: number; lines: number }>>): PaymentProvider => ({
@@ -113,4 +116,31 @@ test("private products require the explicit private-test boundary", async () => 
     new MemoryCheckoutRepository(), provider([]), urls, false,
   );
   await assert.rejects(() => service.initiate(request()), (error: unknown) => error instanceof CheckoutError && error.code === "unavailable");
+});
+
+test("ambiguous retryable provider failures are held for resolution without cancelling the order", async () => {
+  const repository = new MemoryCheckoutRepository();
+  const failing = provider([]);
+  failing.createCheckout = async () => { throw new PaymentProviderError("network_error", "timed out", true); };
+  const service = new CheckoutService(
+    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
+    repository, failing, urls, true,
+  );
+  await assert.rejects(() => service.initiate(request()), (error: unknown) => error instanceof CheckoutError && error.code === "provider_error");
+  assert.equal(repository.orders.length, 1);
+  assert.deepEqual(repository.resolutionRequired, [repository.orders[0]?.id]);
+  assert.deepEqual(repository.abandoned, []);
+});
+
+test("definitive non-retryable provider failures abandon the draft order", async () => {
+  const repository = new MemoryCheckoutRepository();
+  const failing = provider([]);
+  failing.createCheckout = async () => { throw new PaymentProviderError("validation_error", "rejected"); };
+  const service = new CheckoutService(
+    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
+    repository, failing, urls, true,
+  );
+  await assert.rejects(() => service.initiate(request()), (error: unknown) => error instanceof CheckoutError && error.code === "provider_error");
+  assert.deepEqual(repository.abandoned, [repository.orders[0]?.id]);
+  assert.deepEqual(repository.resolutionRequired, []);
 });

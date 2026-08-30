@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import {
   calculateBasket,
   money,
+  PaymentProviderError,
   quoteShipping,
   transitionOrder,
   type PaymentProvider,
@@ -86,6 +87,7 @@ export interface CheckoutRepository {
     checkoutUrl: string;
   }>): Promise<void>;
   abandonOrder(orderId: string): Promise<void>;
+  markResolutionRequired(orderId: string): Promise<void>;
 }
 
 export class CheckoutError extends Error {
@@ -251,7 +253,11 @@ export class CheckoutService {
       transitionOrder("draft", "pending_payment");
       return Object.freeze({ orderId, orderNumber, status: "pending_payment", checkoutUrl: checkout.checkoutUrl, replayed: false });
     } catch (error) {
-      await this.repository.abandonOrder(orderId);
+      if (error instanceof PaymentProviderError && error.retryable) {
+        await this.repository.markResolutionRequired(orderId);
+      } else {
+        await this.repository.abandonOrder(orderId);
+      }
       if (error instanceof CheckoutError) throw error;
       throw new CheckoutError("provider_error", "Checkout could not be started. Please try again.");
     }
