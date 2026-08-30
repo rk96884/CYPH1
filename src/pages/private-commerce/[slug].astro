@@ -87,7 +87,7 @@ const { presentation } = Astro.props;
   .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
   .private-header span{color:var(--cyph-color-warning);font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase}
   .private-commerce{display:grid;grid-template-columns:minmax(0,.8fr) minmax(20rem,1fr);gap:var(--cyph-layout-cluster);padding-block:var(--cyph-layout-section-compact)}
-  h1{font-size:clamp(2rem,5vw,4rem);line-height:1.1}.private-commerce section>p{max-width:38rem;color:var(--cyph-text-secondary)}
+  .private-commerce>section{min-width:0}h1{max-width:100%;font-size:clamp(2rem,3.35vw,3.25rem);line-height:1.1;overflow-wrap:normal;word-break:normal}.private-commerce section>p{max-width:38rem;color:var(--cyph-text-secondary)}
   .private-warning{padding:var(--cyph-space-4);border-left:2px solid var(--cyph-color-warning);background:rgb(242 198 109/.08)}
   fieldset{display:grid;gap:var(--cyph-space-4);margin:0 0 var(--cyph-space-6);border:1px solid var(--cyph-border-structural);padding:var(--cyph-space-6)}
   legend{padding-inline:var(--cyph-space-2);font-family:var(--cyph-font-display);font-size:.85rem;text-transform:uppercase}
