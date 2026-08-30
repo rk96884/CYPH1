@@ -6,6 +6,7 @@
  */
 export * from "./audit.js";
 export * from "./basket.js";
+export * from "./communication.js";
 export * from "./errors.js";
 export * from "./fulfilment.js";
 export * from "./idempotency.js";

@@ -58,12 +58,15 @@ export class PostgresOperationsRepository implements OperationsRepository {
   async completeRefund(input: Readonly<{ refundId: string; providerRefundId: string; status: "pending" | "completed" | "failed"; operatorId: string; correlationId: string }>) {
     await this.transaction(async (client) => {
       const status = input.status === "failed" ? "failed" : input.status;
-      const refund = await client.query("UPDATE refunds SET provider_refund_id=$2, status=$3 WHERE id=$1 RETURNING payment_id, amount_minor, currency, idempotency_key", [input.refundId, input.providerRefundId, status]);
+      const refund = await client.query(`UPDATE refunds SET provider_refund_id=$2, status=$3 WHERE id=$1 RETURNING payment_id, amount_minor, currency, idempotency_key,
+        (SELECT order_id FROM payments WHERE id=refunds.payment_id) order_id`, [input.refundId, input.providerRefundId, status]);
       if (refund.rowCount !== 1) throw new OperationsError("not_found", "Refund reservation was not found.");
       if (status === "completed") await this.updateRefundedState(client, refund.rows[0].payment_id);
       const result = { providerRefundId: input.providerRefundId, status, amount: { value: Number(refund.rows[0].amount_minor), currency: refund.rows[0].currency } };
       await client.query("UPDATE operator_commands SET status='completed', result=$2::jsonb WHERE idempotency_key=$1", [refund.rows[0].idempotency_key, JSON.stringify(result)]);
       await this.audit(client, "refund", input.refundId, `refund.${status}`, input.operatorId, input.correlationId, result);
+      if (status === "completed") await client.query(`INSERT INTO outbox_events (event_key,event_type,aggregate_type,aggregate_id,payload)
+        VALUES ($1,'refund.completed','refund',$2,$3::jsonb) ON CONFLICT (event_key) DO NOTHING`, [`refund:${input.refundId}:completed`, input.refundId, JSON.stringify({ orderId: refund.rows[0].order_id, refundId: input.refundId, amountMinor: Number(refund.rows[0].amount_minor), currency: refund.rows[0].currency, correlationId: input.correlationId })]);
     });
   }
 

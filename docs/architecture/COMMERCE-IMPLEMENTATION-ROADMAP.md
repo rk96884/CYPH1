@@ -135,6 +135,13 @@ Implementation baseline completed:
 - Keep marketing consent independent of purchase messages.
 - Prevent duplicate sends through idempotent events.
 
+Implementation baseline completed:
+
+- Provider-neutral order confirmation, dispatch, cancellation and refund templates with a disabled-by-default manual test adapter.
+- Independent communication-delivery ledger over the transactional outbox, using semantic deduplication keys and bounded retries without competing with fulfilment processing.
+- Purchase messages resolve the order customer directly and do not consult or modify marketing-consent records.
+- Refund completion emits its communication event atomically with the refund, payment and order updates.
+
 **Acceptance:** An operator can fulfil, refund and reconcile a test order without database editing.
 
 ## Milestone 4 — quality and launch readiness
