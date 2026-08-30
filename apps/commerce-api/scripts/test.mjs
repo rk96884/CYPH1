@@ -17,6 +17,7 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "webhooks", "webhooks.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "checkout", "checkout.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "checkout", "handler.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "fulfilment", "fulfilment.test.js"),
   ], { stdio: "inherit" });
 } finally {
   rmSync(outputDirectory, { recursive: true, force: true });

@@ -73,7 +73,7 @@ test("private checkout recalculates authoritative totals and creates a pending h
   const repository = new MemoryCheckoutRepository();
   const captured: Array<Readonly<{ amount: number; lines: number }>> = [];
   const service = new CheckoutService(
-    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test" },
+    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
     repository, provider(captured), urls, true,
   );
   const result = await service.initiate(request());
@@ -90,7 +90,7 @@ test("checkout retries replay the stored hosted session without another provider
   const repository = new MemoryCheckoutRepository();
   const captured: Array<Readonly<{ amount: number; lines: number }>> = [];
   const service = new CheckoutService(
-    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test" },
+    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
     repository, provider(captured), urls, true,
   );
   await service.initiate(request());
@@ -101,7 +101,7 @@ test("checkout retries replay the stored hosted session without another provider
 
 test("checkout fails closed when commerce is disabled", async () => {
   const service = new CheckoutService(
-    { commerceEnabled: false, paymentProvider: "disabled", fulfilmentMode: "disabled" },
+    { commerceEnabled: false, paymentProvider: "disabled", fulfilmentMode: "disabled", fulfilmentProvider: "disabled" },
     new MemoryCheckoutRepository(), provider([]), urls, true,
   );
   await assert.rejects(() => service.initiate(request()), (error: unknown) => error instanceof CheckoutError && error.code === "disabled");
@@ -109,7 +109,7 @@ test("checkout fails closed when commerce is disabled", async () => {
 
 test("private products require the explicit private-test boundary", async () => {
   const service = new CheckoutService(
-    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test" },
+    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
     new MemoryCheckoutRepository(), provider([]), urls, false,
   );
   await assert.rejects(() => service.initiate(request()), (error: unknown) => error instanceof CheckoutError && error.code === "unavailable");

@@ -106,6 +106,7 @@ At minimum:
 - `PUBLIC_COMMERCE_UI_ENABLED=false` — compile/deployment-time UI gate, never sufficient alone.
 - `PAYMENT_PROVIDER=mollie-test` — server-only configured adapter.
 - `FULFILMENT_MODE=disabled` — prevents accidental fulfilment in foundation work.
+- `FULFILMENT_PROVIDER=disabled` — no adapter receives order or customer data by default.
 
 Production must fail closed when required configuration is absent. Preview deployments must always use test providers.
 

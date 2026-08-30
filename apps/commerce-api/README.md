@@ -13,6 +13,15 @@ uses a native-HTTP Mollie test adapter, which cannot accept a live API key.
 - `COMMERCE_ENABLED=false`
 - `PAYMENT_PROVIDER=disabled`
 - `FULFILMENT_MODE=disabled`
+- `FULFILMENT_PROVIDER=disabled`
+
+## Fulfilment boundary
+
+Milestone 3.1 adds a provider-neutral fulfilment service and durable outbox
+consumer. Only a database order in `paid` state with a `captured` payment can
+cross the boundary. `FULFILMENT_PROVIDER=manual-test` is restricted to
+`FULFILMENT_MODE=test`; it creates deterministic references and performs no
+external side effect. No production 3PL is configured or approved.
 
 The adapter registry is selected exclusively from server-side configuration.
 For isolated Mollie testing, use `PAYMENT_PROVIDER=mollie-test`, a `test_` API

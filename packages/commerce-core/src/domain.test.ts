@@ -3,6 +3,7 @@ import test from "node:test";
 import { createAuditEvent } from "./audit.js";
 import { calculateBasket } from "./basket.js";
 import { CommerceDomainError } from "./errors.js";
+import { assertFulfilmentRequest, orderFulfilmentStatusFor, transitionFulfilment } from "./fulfilment.js";
 import { executeIdempotent, InMemoryIdempotencyStore } from "./idempotency.js";
 import { money } from "./money.js";
 import { quoteShipping, type ShippingRate } from "./shipping.js";
@@ -56,6 +57,25 @@ test("order and payment lifecycle rules handle repeats and stale events", () => 
   assert.deepEqual(transitionPayment("pending", "captured"), { status: "captured", outcome: "applied" });
   assert.deepEqual(transitionPayment("captured", "pending"), { status: "captured", outcome: "ignored" });
   assert.deepEqual(transitionPayment("captured", "failed"), { status: "captured", outcome: "requires_review" });
+});
+
+test("fulfilment lifecycle applies forward events and safely ignores repeats", () => {
+  assert.deepEqual(transitionFulfilment("accepted", "dispatched"), { status: "dispatched", outcome: "applied" });
+  assert.deepEqual(transitionFulfilment("dispatched", "accepted"), { status: "dispatched", outcome: "ignored" });
+  assert.deepEqual(transitionFulfilment("delivered", "cancelled"), { status: "delivered", outcome: "requires_review" });
+  assert.equal(orderFulfilmentStatusFor("accepted"), "processing");
+  assert.equal(orderFulfilmentStatusFor("failed"), "unfulfilled");
+});
+
+test("fulfilment requests require positive quantities and ISO country codes", () => {
+  const valid = {
+    idempotencyKey: "fulfilment:event-1", orderId: "order-1", orderNumber: "CYPH1-1",
+    deliveryAddress: { recipientName: "Test", line1: "1 Test Street", locality: "London", postalCode: "SW1A 1AA", countryCode: "GB" },
+    lines: [{ sku: "TEST-SKU", quantity: 1 }],
+  };
+  assert.doesNotThrow(() => assertFulfilmentRequest(valid));
+  assert.throws(() => assertFulfilmentRequest({ ...valid, lines: [{ sku: "TEST-SKU", quantity: 0 }] }), CommerceDomainError);
+  assert.throws(() => assertFulfilmentRequest({ ...valid, deliveryAddress: { ...valid.deliveryAddress, countryCode: "gb" } }), CommerceDomainError);
 });
 
 test("idempotent execution replays a completed result and rejects key reuse", async () => {

@@ -7,6 +7,10 @@ export { PostgresTransactionRunner } from "./webhooks/postgres.js";
 export { CheckoutError, CheckoutService } from "./checkout/service.js";
 export { PostgresCheckoutRepository } from "./checkout/postgres.js";
 export { handleCheckoutRequest } from "./checkout/handler.js";
+export { FulfilmentError, FulfilmentService } from "./fulfilment/service.js";
+export { ManualTestFulfilmentProvider } from "./fulfilment/manual-test.js";
+export { PostgresFulfilmentRepository } from "./fulfilment/postgres.js";
+export { PostgresFulfilmentOutboxConsumer } from "./fulfilment/outbox.js";
 export type {
   CheckoutAddress,
   CheckoutOrder,
@@ -19,4 +23,5 @@ export type {
   CommerceConfig,
   FulfilmentMode,
   PaymentProviderKey,
+  FulfilmentProviderKey,
 } from "./config.js";

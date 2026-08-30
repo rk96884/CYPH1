@@ -105,6 +105,16 @@ are not approved product, price, tax, stock or fulfilment data.
 - Require verified payment before fulfilment.
 - Handle acceptance, dispatch, tracking, cancellation and return states.
 
+Implementation baseline completed:
+
+- Provider-neutral contract with an explicitly non-production `manual-test` adapter.
+- Disabled-by-default configuration; test adapter cannot run outside test mode.
+- Verified `payment.paid` outbox events are the only automatic trigger, followed by
+  a fresh database check for both `orders.status = 'paid'` and a captured payment.
+- Durable request and provider-event idempotency, dispatch/tracking persistence,
+  cancellation and return transitions, audit events and manual-review routing.
+- No approved 3PL integration or production customer-data transfer has been added.
+
 ### 3.2 Operations interface
 
 - Add protected order search and timelines.
