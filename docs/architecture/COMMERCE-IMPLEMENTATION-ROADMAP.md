@@ -146,6 +146,17 @@ Implementation baseline completed:
 
 ## Milestone 4 — quality and launch readiness
 
+### 4.1 Automated quality gates
+
+- Enforce commerce tests, structural accessibility, link integrity and performance budgets in pull requests.
+- Maintain a launch-readiness register that separates automated evidence from manual and accountable approvals.
+- Keep production commerce disabled while any launch gate is outstanding.
+
+Implementation baseline completed:
+
+- The GitHub quality workflow now runs strict project checks, commerce tests, the public build, structural accessibility, performance-budget and generated-link audits.
+- `docs/operations/COMMERCE-LAUNCH-READINESS.md` records current evidence and all outstanding engineering, security, legal, financial and operational gates without treating CI as launch approval.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

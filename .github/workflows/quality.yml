@@ -33,6 +33,9 @@ jobs:
       - name: Check Astro and TypeScript
         run: npm run check
 
+      - name: Run commerce unit and integration tests
+        run: npm run test:commerce
+
       - name: Build proposed site
         run: npm run build
 
@@ -41,4 +44,7 @@ jobs:
 
       - name: Run performance budget audit
         run: node scripts/audit-performance.mjs
+
+      - name: Run generated-site link audit
+        run: node scripts/audit-links.mjs
 
