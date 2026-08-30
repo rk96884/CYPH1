@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import BrandMark from "../../components/BrandMark.astro";
 import { privateOperationsPresentation } from "../../config/private-operations";
 const presentation=privateOperationsPresentation();
 export function getStaticPaths(){const value=privateOperationsPresentation();return value?[{params:{slug:value.slug},props:{presentation:value}}]:[];}
@@ -8,6 +9,7 @@ if (!configured) throw new Error("Private operations presentation is not configu
 ---
 <BaseLayout title="CYPH/1 private operations" description="Restricted commerce operations console." robots="noindex, nofollow, noarchive">
   <main id="main" class="ops" data-api={configured.apiUrl}>
+    <div class="ops-bar"><BrandMark/><span>Restricted operations</span></div>
     <header><p class="eyebrow">PRIVATE COMMERCE / OPERATIONS</p><h1>ORDER<br/>CONTROL.</h1><p>This presentation route is not authentication. Access must be enforced at the API and hosting edge.</p></header>
     <section aria-labelledby="search-title"><h2 id="search-title">Find an order</h2><form id="search"><label for="query">Order number</label><div class="input-action"><input id="query" name="q" autocomplete="off" enterkeyhint="search" required/><button>Search</button></div></form><p id="message" role="status" aria-live="polite"></p><div id="results" aria-label="Order search results"></div></section>
     <section id="details" hidden aria-labelledby="details-title"><h2 id="details-title" tabindex="-1">Order timeline</h2><div id="summary"></div><ol id="timeline"></ol>
@@ -15,6 +17,15 @@ if (!configured) throw new Error("Private operations presentation is not configu
     </section>
     <section aria-labelledby="export-title"><h2 id="export-title">Reconciliation</h2><form id="export"><label>From <input type="date" name="from" required/></label><label>To <input type="date" name="to" required/></label><button>Download CSV</button></form></section>
   </main>
+  <style>
+    .ops input[type="date"] {
+      background-position: right 1.3rem center;
+    }
+
+    .ops input[type="date"]::-webkit-calendar-picker-indicator {
+      transform: translateX(30px);
+    }
+  </style>
   <script>
     const root=document.querySelector('.ops');const api=root?.getAttribute('data-api')??'';const message=document.querySelector('#message');let orderId='';
     const say=(text:string)=>{if(message)message.textContent=text;};
@@ -24,4 +35,4 @@ if (!configured) throw new Error("Private operations presentation is not configu
     document.querySelector('#export')?.addEventListener('submit',(event)=>{event.preventDefault();const values=new FormData(event.currentTarget as HTMLFormElement);const from=new Date(`${values.get('from')}T00:00:00Z`).toISOString(),to=new Date(`${values.get('to')}T00:00:00Z`).toISOString();location.href=`${api}/operations/reconciliation.csv?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;});
   </script>
 </BaseLayout>
-<style>.ops{min-height:100vh;background:#080711;color:#f7f3fb;padding:clamp(1.25rem,6vw,6rem);font-family:Manrope,sans-serif}.ops header,.ops section{max-width:70rem;margin:0 auto clamp(3rem,8vw,4rem);overflow-wrap:anywhere}.eyebrow,label{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#a371f7}.ops h1{font:400 clamp(2.75rem,10vw,8rem)/1.02 Michroma,sans-serif;margin:1rem 0}.ops h2,.ops h3{font-family:Michroma,sans-serif;font-weight:400;line-height:1.2}.ops form{display:grid;gap:.75rem;max-width:42rem}.input-action{display:grid;grid-template-columns:minmax(0,1fr) auto}.ops input,.ops select,.ops button{min-width:0;min-height:2.75rem;font:inherit;font-size:1rem;padding:.9rem;border:1px solid #76598c;background:#21142d;color:#f7f3fb}.ops button{cursor:pointer;background:#a371f7;color:#080711}.ops form[aria-busy="true"]{opacity:.7}.ops #results{display:grid;gap:.5rem;margin-top:1rem}.ops #timeline{border-left:1px solid #76598c;padding-left:2rem;display:grid;gap:1rem}@media(max-width:520px){.input-action{grid-template-columns:1fr}.ops #timeline{padding-left:1.25rem}.ops header,.ops section{margin-bottom:3rem}}</style>
+<style>.ops{min-height:100vh;background:#080711;color:#f7f3fb;padding:clamp(1.25rem,3vw,2.5rem) clamp(1.25rem,6vw,6rem) clamp(2rem,6vw,6rem);font-family:Manrope,sans-serif}.ops-bar{display:flex;align-items:center;justify-content:space-between;max-width:70rem;margin:0 auto clamp(3rem,8vw,5rem);padding-bottom:var(--cyph-space-5);border-bottom:1px solid #76598c}.ops-bar span{color:#f2c66d;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}.ops header,.ops section{max-width:70rem;margin:0 auto clamp(3rem,8vw,4rem);overflow-wrap:anywhere}.eyebrow,label{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#a371f7}.ops h1{font:400 clamp(2.75rem,10vw,8rem)/1.02 Michroma,sans-serif;margin:1rem 0}.ops h2,.ops h3{font-family:Michroma,sans-serif;font-weight:400;line-height:1.2}.ops section>h2+form{margin-top:1.25rem}.ops form{display:grid;gap:.75rem;max-width:42rem}.input-action{display:grid;grid-template-columns:minmax(0,1fr) auto}.ops #export label{display:grid;grid-template-columns:1fr;gap:.45rem;text-align:left}.ops input,.ops select,.ops button{min-width:0;min-height:2.75rem;font:inherit;font-size:1rem;padding:.9rem;border:1px solid #76598c;background:#21142d;color:#f7f3fb}.ops input[type="date"]{width:100%;padding-right:2.75rem;color-scheme:dark;text-align:left;background-color:#21142d;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f7f3fb' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M16 3v4M8 3v4M3 10h18'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;background-size:1.1rem}.ops input[type="date"]::-webkit-calendar-picker-indicator{width:1.5rem;height:1.5rem;margin-left:auto;opacity:0;cursor:pointer}.ops button{cursor:pointer;background:#a371f7;color:#080711}.ops form[aria-busy="true"]{opacity:.7}.ops #results{display:grid;gap:.5rem;margin-top:1rem}.ops #timeline{border-left:1px solid #76598c;padding-left:2rem;display:grid;gap:1rem}@media(max-width:520px){.ops-bar{align-items:flex-start;gap:var(--cyph-space-4)}.ops-bar span{max-width:8rem;text-align:right}.input-action{grid-template-columns:1fr}.ops #timeline{padding-left:1.25rem}.ops header,.ops section{margin-bottom:3rem}}</style>
