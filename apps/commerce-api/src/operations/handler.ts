@@ -1,8 +1,14 @@
 import { OperationsError, type OperationPermission, type OperationsPrincipal, type OperationsService, type RefundReason } from "./service.js";
 
-const headers = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
+const securityHeaders = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "Permissions-Policy": "camera=(), microphone=(), geolocation=()" };
+const headers = { "Content-Type": "application/json; charset=utf-8", ...securityHeaders };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
 const allowed = (principal: OperationsPrincipal | undefined, permission: OperationPermission): principal is OperationsPrincipal => !!principal?.permissions.includes(permission);
+const validPrincipal = (principal: OperationsPrincipal | undefined): principal is OperationsPrincipal => {
+  if (!principal || !principal.id.trim() || principal.id.length > 254) return false;
+  const known: readonly OperationPermission[] = ["orders:read", "refunds:create", "fulfilment:retry", "reconciliation:export"];
+  return new Set(principal.permissions).size === principal.permissions.length && principal.permissions.every((permission) => known.includes(permission));
+};
 const safeCsv = (value: unknown): string => {
   let text = value == null ? "" : value instanceof Date ? value.toISOString() : String(value);
   if (/^[=+\-@]/.test(text)) text = `'${text}`;
@@ -14,7 +20,7 @@ const csv = (rows: readonly Readonly<Record<string, unknown>>[]): string => {
 };
 
 export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal): Promise<Response> => {
-  if (!principal) return json({ message: "Authentication required." }, 401);
+  if (!validPrincipal(principal)) return json({ message: "Authentication required." }, 401);
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
@@ -42,7 +48,7 @@ export const handleOperationsRequest = async (request: Request, service: Operati
       const from=url.searchParams.get("from")??"", to=url.searchParams.get("to")??"";
       const start=Date.parse(from),end=Date.parse(to); if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start||end-start>31*86400000)return json({message:"A valid range of no more than 31 days is required."},400);
       const body=csv(await service.reconciliation(new Date(start).toISOString(),new Date(end).toISOString()));
-      return new Response(body,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":"attachment; filename=cyph1-reconciliation.csv","Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
+      return new Response(body,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":"attachment; filename=cyph1-reconciliation.csv",...securityHeaders}});
     }
     return json({ message: "Not found." }, 404);
   } catch(error) {

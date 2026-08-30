@@ -184,6 +184,20 @@ Implementation baseline completed:
 - Automated tests cover partial/full refund requests, stable fulfilment command keys and ordered/duplicate/out-of-order disputes.
 - `docs/operations/REFUNDS-RETURNS-AND-DISPUTES.md` defines the sandbox exercise and reconciliation procedure.
 
+### 4.4 Threat model, secrets and access baseline
+
+- Document commerce assets, trust boundaries, threats, controls and residual launch actions.
+- Reject secret-like browser environment names at runtime and audit tracked source in CI.
+- Validate trusted operator principals before applying least-privilege permissions.
+- Provide an accountable deployment secret and account-access review worksheet.
+
+Implementation baseline completed:
+
+- `docs/architecture/COMMERCE-THREAT-MODEL.md` records the dated engineering threat model.
+- Commerce configuration rejects secret-like `PUBLIC_` variables and CI runs `npm run audit:commerce-security`.
+- Operations endpoints reject malformed principals and return restrictive response headers.
+- `docs/operations/COMMERCE-ACCESS-AND-SECRETS-REVIEW.md` keeps real account, MFA, role and rotation review explicitly outstanding for accountable completion.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

@@ -4,6 +4,7 @@ import { PaymentProviderError, money, type CreateCheckoutInput, type PaymentProv
 import { MollieTestPaymentProvider } from "./mollie-test.js";
 import { ConfiguredPaymentProviderRegistry } from "./registry.js";
 import { createPaymentProviderRegistry } from "./factory.js";
+import { loadCommerceConfig } from "../config.js";
 
 const checkoutInput = (overrides: Partial<CreateCheckoutInput> = {}): CreateCheckoutInput => ({
   orderId: "order_1", orderNumber: "CYPH-0001", amount: money(12_000, "GBP"),
@@ -141,4 +142,10 @@ test("server-side factory remains disabled by default and fails closed on incomp
   assert.throws(() => createPaymentProviderRegistry({
     PAYMENT_PROVIDER: "mollie-test", MOLLIE_API_KEY: "live_example_key", PAYMENT_CALLBACK_ORIGINS: "https://checkout.cyph1.co.uk",
   }), /test API key/);
+});
+
+test("commerce configuration rejects secret-like public variables", () => {
+  assert.throws(() => loadCommerceConfig({ ["PUBLIC_" + "MOLLIE_API_KEY"]: "test_secret" }), /must not use the PUBLIC_ prefix/);
+  assert.throws(() => loadCommerceConfig({ ["PUBLIC_" + "DATABASE_URL"]: "postgresql:\/\/example" }), /must not use the PUBLIC_ prefix/);
+  assert.doesNotThrow(() => loadCommerceConfig({ PUBLIC_COMMERCE_UI_ENABLED: "false" }));
 });

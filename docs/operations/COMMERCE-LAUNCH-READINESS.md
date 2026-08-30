@@ -18,6 +18,8 @@ This register separates evidence that can be produced by the repository from bus
 | Duplicate payment events | Webhook integration test covers repeated and stale events | Covered |
 | Transactional communication duplication | Independent semantic delivery keys and provider idempotency key | Baseline covered; provider-specific test outstanding |
 | Public commerce isolation | Ordinary build omits private routes unless explicit presentation flags are supplied | Covered; deployment configuration review remains mandatory |
+| Secret namespace and tracked-source audit | Runtime rejects secret-like `PUBLIC_` names; `npm run audit:commerce-security` scans tracked source in CI | Automated baseline covered; deployed inventories remain outstanding |
+| Operations principal shape | Handler rejects empty, duplicate or unknown permission claims before route authorisation | Covered; upstream identity mapping review remains outstanding |
 
 ## Engineering tests still required
 
@@ -31,7 +33,7 @@ This register separates evidence that can be produced by the repository from bus
 
 ## Security and access review
 
-- [ ] Threat model reviewed and dated.
+- [x] Engineering threat model documented and dated; accountable pre-launch re-review remains required.
 - [ ] Production and preview secret inventories reviewed; no secret is exposed through `PUBLIC_` variables, source, logs or build artefacts.
 - [ ] Operations identity middleware and least-privilege role mappings independently reviewed.
 - [ ] Database, Render, Cloudflare, GitHub and payment-provider access owners reviewed with multi-factor authentication enabled.

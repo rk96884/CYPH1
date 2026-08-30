@@ -36,6 +36,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Audit commerce secret boundaries
+        run: npm run audit:commerce-security
+
       - name: Build proposed site
         run: npm run build
 

@@ -11,6 +11,17 @@ export type CommerceConfig = Readonly<{
 
 type Environment = Readonly<Record<string, string | undefined>>;
 
+const secretName = /(SECRET|TOKEN|PASSWORD|PRIVATE_KEY|API_KEY|DATABASE_URL)/i;
+
+export const assertServerSecretBoundary = (environment: Environment): void => {
+  const exposed = Object.keys(environment).filter((name) =>
+    name.startsWith("PUBLIC_") && secretName.test(name) && environment[name]?.trim(),
+  );
+  if (exposed.length > 0) {
+    throw new Error(`Server secrets must not use the PUBLIC_ prefix: ${exposed.sort().join(", ")}.`);
+  }
+};
+
 const isPaymentProvider = (value: string): value is PaymentProviderKey =>
   value === "disabled" || value === "mollie-test";
 
@@ -21,6 +32,7 @@ const isFulfilmentProvider = (value: string): value is FulfilmentProviderKey =>
   value === "disabled" || value === "manual-test";
 
 export const loadCommerceConfig = (environment: Environment): CommerceConfig => {
+  assertServerSecretBoundary(environment);
   const paymentProvider = environment.PAYMENT_PROVIDER ?? "disabled";
   const fulfilmentMode = environment.FULFILMENT_MODE ?? "disabled";
   const fulfilmentProvider = environment.FULFILMENT_PROVIDER ?? "disabled";

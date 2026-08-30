@@ -22,6 +22,13 @@ test("operations handler rejects unauthenticated and unauthorised callers",async
   assert.equal((await handleOperationsRequest(new Request("https://ops.test/operations/orders"),service,{id:"viewer",permissions:[]})).status,403);
 });
 
+test("operations handler rejects malformed trusted-principal input",async()=>{
+  assert.equal((await handleOperationsRequest(new Request("https://ops.test/operations/orders"),service,{id:" ",permissions:["orders:read"]})).status,401);
+  assert.equal((await handleOperationsRequest(new Request("https://ops.test/operations/orders"),service,{id:"operator",permissions:["orders:read","orders:read"]})).status,401);
+  const forged={id:"operator",permissions:["orders:read","admin:all"]} as unknown as Parameters<typeof handleOperationsRequest>[2];
+  assert.equal((await handleOperationsRequest(new Request("https://ops.test/operations/orders"),service,forged)).status,401);
+});
+
 test("permission-controlled refund uses provider contract",async()=>{
   const response=await handleOperationsRequest(new Request("https://ops.test/operations/orders/o1/refunds",{method:"POST",headers:{"content-type":"application/json","idempotency-key":"refund-1"},body:JSON.stringify({amountMinor:500,reason:"customer_request"})}),service,{id:"operator@example.test",permissions:["refunds:create"]});
   assert.equal(response.status,201); assert.equal(state.completed,"re_1");
@@ -32,6 +39,8 @@ test("reconciliation requires bounded dates and escapes spreadsheet formulae",as
   const local=new OperationsService(rows,{getConfiguredProvider:()=>provider,getProvider:()=>provider});
   const response=await handleOperationsRequest(new Request("https://ops.test/operations/reconciliation.csv?from=2026-01-01&to=2026-01-02"),local,{id:"finance",permissions:["reconciliation:export"]});
   assert.equal(response.status,200); assert.match(await response.text(),/"'=unsafe"/);
+  assert.equal(response.headers.get("X-Frame-Options"),"DENY");
+  assert.equal(response.headers.get("Referrer-Policy"),"no-referrer");
 });
 
 test("retryable refund failures are held for reconciliation and not marked definitively failed",async()=>{
