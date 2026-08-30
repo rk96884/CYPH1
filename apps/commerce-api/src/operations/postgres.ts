@@ -41,7 +41,7 @@ export class PostgresOperationsRepository implements OperationsRepository {
         throw new OperationsError("conflict", "The refund request is already being processed or previously failed.");
       }
       const payment = await client.query(`SELECT p.id, p.provider, p.provider_payment_id, p.amount_minor, p.currency,
-        COALESCE((SELECT sum(r.amount_minor) FROM refunds r WHERE r.payment_id = p.id AND r.status IN ('created','pending','completed')), 0) AS reserved_minor
+        COALESCE((SELECT sum(r.amount_minor) FROM refunds r WHERE r.payment_id = p.id AND r.status IN ('created','pending','completed','resolution_required')), 0) AS reserved_minor
         FROM payments p JOIN orders o ON o.id = p.order_id WHERE p.order_id = $1 AND p.status IN ('captured','partially_refunded') ORDER BY p.created_at DESC LIMIT 1 FOR UPDATE OF p`, [input.orderId]);
       if (payment.rowCount !== 1 || !payment.rows[0].provider_payment_id) throw new OperationsError("conflict", "No captured provider payment is available for refund.");
       const row = payment.rows[0]; const refundableMinor = Number(row.amount_minor) - Number(row.reserved_minor);
@@ -75,6 +75,15 @@ export class PostgresOperationsRepository implements OperationsRepository {
       const refund = await client.query("UPDATE refunds SET status='failed' WHERE id=$1 AND status='created' RETURNING idempotency_key", [input.refundId]);
       if (refund.rowCount === 1) await client.query("UPDATE operator_commands SET status='failed', failure_code=$2 WHERE idempotency_key=$1", [refund.rows[0].idempotency_key, input.failureCode]);
       await this.audit(client, "refund", input.refundId, "refund.failed", input.operatorId, input.correlationId, { failureCode: input.failureCode });
+    });
+  }
+
+  async markRefundResolutionRequired(input: Readonly<{ refundId: string; operatorId: string; correlationId: string }>) {
+    await this.transaction(async (client) => {
+      const refund = await client.query("UPDATE refunds SET status='resolution_required' WHERE id=$1 AND status='created' RETURNING idempotency_key", [input.refundId]);
+      if (refund.rowCount !== 1) throw new OperationsError("conflict", "Refund was not available for resolution marking.");
+      await client.query("UPDATE operator_commands SET status='failed', failure_code='ambiguous_provider_outcome' WHERE idempotency_key=$1", [refund.rows[0].idempotency_key]);
+      await this.audit(client, "refund", input.refundId, "refund.resolution_required", input.operatorId, input.correlationId, { failureCode: "ambiguous_provider_outcome" });
     });
   }
 

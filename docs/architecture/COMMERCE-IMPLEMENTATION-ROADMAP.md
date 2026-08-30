@@ -171,6 +171,19 @@ Implementation baseline completed:
 - Automated tests cover both ambiguous and definitive failure paths without live provider calls.
 - `docs/operations/PAYMENT-PROVIDER-OUTAGE.md` defines fail-closed reconciliation and recovery.
 
+### 4.3 Refund, cancellation, return and dispute resilience
+
+- Exercise partial and full refunds with explicit amounts and idempotency.
+- Preserve ambiguous refund requests for provider reconciliation and continue reserving their value.
+- Enforce the pre-dispatch cancellation and post-dispatch return boundaries.
+- Reject unsafe out-of-order dispute transitions for manual review.
+
+Implementation baseline completed:
+
+- Retryable refund failures enter `resolution_required` rather than becoming eligible for an unsafe replacement refund.
+- Automated tests cover partial/full refund requests, stable fulfilment command keys and ordered/duplicate/out-of-order disputes.
+- `docs/operations/REFUNDS-RETURNS-AND-DISPUTES.md` defines the sandbox exercise and reconciliation procedure.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

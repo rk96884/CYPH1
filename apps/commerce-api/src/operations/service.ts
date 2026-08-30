@@ -17,6 +17,7 @@ export interface OperationsRepository {
   reserveRefund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<RefundReservation>;
   completeRefund(input: Readonly<{ refundId: string; providerRefundId: string; status: "pending" | "completed" | "failed"; operatorId: string; correlationId: string }>): Promise<void>;
   failRefund(input: Readonly<{ refundId: string; failureCode: string; operatorId: string; correlationId: string }>): Promise<void>;
+  markRefundResolutionRequired(input: Readonly<{ refundId: string; operatorId: string; correlationId: string }>): Promise<void>;
   retryOutbox(input: Readonly<{ eventId: string; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<Readonly<{ replayed: boolean; eventId: string }>>;
   reconciliationRows(from: string, to: string, limit: number): Promise<readonly Readonly<Record<string, unknown>>[]>;
 }
@@ -50,7 +51,11 @@ export class OperationsService {
       await this.repository.completeRefund({ refundId: reservation.refundId, providerRefundId: result.providerRefundId, status: result.status, operatorId: input.operatorId, correlationId });
       return result;
     } catch (error) {
-      await this.repository.failRefund({ refundId: reservation.refundId, failureCode: error instanceof PaymentProviderError ? error.category : "provider_error", operatorId: input.operatorId, correlationId });
+      if (error instanceof PaymentProviderError && error.retryable) {
+        await this.repository.markRefundResolutionRequired({ refundId: reservation.refundId, operatorId: input.operatorId, correlationId });
+      } else {
+        await this.repository.failRefund({ refundId: reservation.refundId, failureCode: error instanceof PaymentProviderError ? error.category : "provider_error", operatorId: input.operatorId, correlationId });
+      }
       if (error instanceof OperationsError) throw error;
       throw new OperationsError("provider_error", "The refund provider could not complete the request.");
     }

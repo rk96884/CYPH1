@@ -62,3 +62,16 @@ test("cancellation is pre-dispatch and returns are post-dispatch", async () => {
   assert.deepEqual(await service.requestReturn(repository.reference, "return-2"), { outcome: "requested" });
   await assert.rejects(() => service.requestCancellation(repository.reference!, "cancel-2"), (error: unknown) => error instanceof FulfilmentError && error.code === "requires_review");
 });
+
+test("cancellation and return commands use stable provider idempotency keys", async () => {
+  const repository = new MemoryRepository(); repository.reference = "manual-CYPH1-0001"; repository.status = "accepted";
+  const keys: string[] = [];
+  const provider = new ManualTestFulfilmentProvider();
+  provider.cancel = async (_reference, key) => { keys.push(key); };
+  provider.requestReturn = async (_reference, key) => { keys.push(key); };
+  const service = new FulfilmentService(true, provider, repository);
+  await service.requestCancellation(repository.reference, "operator-command-1");
+  repository.status = "dispatched";
+  await service.requestReturn(repository.reference, "operator-command-2");
+  assert.deepEqual(keys, ["cancel:operator-command-1", "return:operator-command-2"]);
+});

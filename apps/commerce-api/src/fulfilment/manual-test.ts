@@ -6,6 +6,6 @@ export class ManualTestFulfilmentProvider implements FulfilmentProvider {
   async create(request: CreateFulfilmentRequest) {
     return Object.freeze({ providerReference: `manual-${request.orderNumber}`, status: "accepted" as const });
   }
-  async cancel(): Promise<void> {}
-  async requestReturn(): Promise<void> {}
+  async cancel(_providerReference: string, _idempotencyKey: string): Promise<void> {}
+  async requestReturn(_providerReference: string, _idempotencyKey: string): Promise<void> {}
 }

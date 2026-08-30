@@ -59,6 +59,13 @@ test("order and payment lifecycle rules handle repeats and stale events", () => 
   assert.deepEqual(transitionPayment("captured", "failed"), { status: "captured", outcome: "requires_review" });
 });
 
+test("disputes apply in order and unsafe out-of-order resolution requires review", () => {
+  assert.deepEqual(transitionPayment("captured", "dispute_opened"), { status: "dispute_opened", outcome: "applied" });
+  assert.deepEqual(transitionPayment("dispute_opened", "dispute_opened"), { status: "dispute_opened", outcome: "ignored" });
+  assert.deepEqual(transitionPayment("dispute_opened", "dispute_resolved"), { status: "dispute_resolved", outcome: "applied" });
+  assert.deepEqual(transitionPayment("captured", "dispute_resolved"), { status: "captured", outcome: "requires_review" });
+});
+
 test("fulfilment lifecycle applies forward events and safely ignores repeats", () => {
   assert.deepEqual(transitionFulfilment("accepted", "dispatched"), { status: "dispatched", outcome: "applied" });
   assert.deepEqual(transitionFulfilment("dispatched", "accepted"), { status: "dispatched", outcome: "ignored" });
