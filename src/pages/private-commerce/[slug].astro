@@ -16,10 +16,10 @@ const { presentation } = Astro.props;
     <section aria-labelledby="private-product-title">
       <p class="eyebrow">Internal integration test</p>
       <h1 id="private-product-title">{presentation.productName}</h1>
-      <p class="private-warning"><strong>Not a retail offer.</strong> Mollie test mode only. Do not enter real personal or payment information.</p>
+      <p id="private-checkout-warning" class="private-warning"><strong>Not a retail offer.</strong> Mollie test mode only. Do not enter real personal or payment information.</p>
       <p>Product content, specifications and retail pricing remain unapproved. The commerce API will independently retrieve the private fixture and calculate the authoritative test total.</p>
     </section>
-    <form class="private-checkout-form" data-private-checkout data-api-url={presentation.apiUrl} novalidate>
+    <form class="private-checkout-form" data-private-checkout data-api-url={presentation.apiUrl} aria-describedby="private-checkout-warning" novalidate>
       <input type="hidden" name="productSlug" value={presentation.productSlug}/>
       <input type="hidden" name="shippingRateId" value={presentation.shippingRateId}/>
       <fieldset>
@@ -36,7 +36,7 @@ const { presentation } = Astro.props;
         <label>Country <input name="countryCode" value="GB" maxlength="2" readonly/></label>
       </fieldset>
       <button class="button" type="submit">Continue to Mollie test checkout</button>
-      <p class="form-status" data-checkout-status role="status" aria-live="polite"></p>
+      <p class="form-status" data-checkout-status role="status" aria-live="polite" tabindex="-1"></p>
     </form>
   </main>
   <script>
@@ -50,6 +50,7 @@ const { presentation } = Astro.props;
         if (!(button instanceof HTMLButtonElement)) return;
         const data = new FormData(form);
         button.disabled = true;
+        form.setAttribute("aria-busy", "true");
         status.dataset.state = "";
         status.textContent = "Validating the test basket…";
         try {
@@ -74,6 +75,8 @@ const { presentation } = Astro.props;
           status.dataset.state = "error";
           status.textContent = "The private test checkout could not be started. Please retry or inspect the commerce API logs.";
           button.disabled = false;
+          form.removeAttribute("aria-busy");
+          status.focus();
         }
       });
     }
@@ -88,6 +91,8 @@ const { presentation } = Astro.props;
   .private-warning{padding:var(--cyph-space-4);border-left:2px solid var(--cyph-color-warning);background:rgb(242 198 109/.08)}
   fieldset{display:grid;gap:var(--cyph-space-4);margin:0 0 var(--cyph-space-6);border:1px solid var(--cyph-border-structural);padding:var(--cyph-space-6)}
   legend{padding-inline:var(--cyph-space-2);font-family:var(--cyph-font-display);font-size:.85rem;text-transform:uppercase}
-  label{display:grid;gap:var(--cyph-space-2);color:var(--cyph-text-secondary);font-size:.8rem}input{min-height:2.75rem;border:1px solid var(--cyph-border-structural);border-radius:var(--cyph-radius-control);padding:var(--cyph-space-3);color:var(--cyph-text-primary);background:rgb(8 7 17/.55)}
-  @media(max-width:760px){.private-commerce{grid-template-columns:1fr}.private-header span{max-width:10rem;text-align:right}}
+  label{display:grid;gap:var(--cyph-space-2);color:var(--cyph-text-secondary);font-size:.8rem}input{width:100%;min-width:0;min-height:2.75rem;border:1px solid var(--cyph-border-structural);border-radius:var(--cyph-radius-control);padding:var(--cyph-space-3);font-size:1rem;color:var(--cyph-text-primary);background:rgb(8 7 17/.55)}
+  .form-status:focus{outline:none}.form-status[data-state="error"]{color:var(--cyph-color-error)}
+  @media(max-width:760px){.private-commerce{grid-template-columns:1fr}.private-header span{max-width:10rem;text-align:right}.private-checkout-form,fieldset{min-width:0}}
+  @media(max-width:420px){.private-header{align-items:flex-start;gap:var(--cyph-space-4)}.private-header span{max-width:8rem}.private-commerce{padding-block:var(--cyph-space-8)}fieldset{padding:var(--cyph-space-4)}}
 </style>

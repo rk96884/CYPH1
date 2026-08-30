@@ -37,5 +37,6 @@ const message = messages[state as keyof typeof messages] ?? messages.error;
 <style>
   .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
   .private-header span{color:var(--cyph-color-warning);font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase}
-  .private-status{min-height:70svh;padding-block:var(--cyph-layout-section)}h1{max-width:12ch;font-size:clamp(2.4rem,7vw,6rem);line-height:1.05}.private-status>p{max-width:42rem;color:var(--cyph-text-secondary)}.order-reference{font-family:ui-monospace,monospace;font-size:.75rem}
+  .private-status{min-height:70svh;padding-block:var(--cyph-layout-section)}h1{max-width:12ch;font-size:clamp(2.4rem,7vw,6rem);line-height:1.08}.private-status>p{max-width:42rem;color:var(--cyph-text-secondary)}.order-reference{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:.75rem}
+  @media(max-width:420px){.private-header{align-items:flex-start;gap:var(--cyph-space-4)}.private-header span{max-width:8rem;text-align:right}.private-status{padding-block:var(--cyph-space-8)}}
 </style>

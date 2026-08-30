@@ -51,3 +51,18 @@ jobs:
       - name: Run generated-site link audit
         run: node scripts/audit-links.mjs
 
+      - name: Build private accessibility fixture
+        env:
+          PUBLIC_COMMERCE_UI_ENABLED: "true"
+          PUBLIC_COMMERCE_TEST_PRODUCT_SLUG: integration-test-fixture
+          PUBLIC_COMMERCE_TEST_PRODUCT_NAME: INTEGRATION TEST FIXTURE — NOT FOR SALE
+          PUBLIC_COMMERCE_API_URL: https://private-api.example
+          PUBLIC_COMMERCE_TEST_SHIPPING_RATE_ID: 00000000-0000-0000-0000-000000000000
+          PUBLIC_COMMERCE_OPERATIONS_UI_ENABLED: "true"
+          PUBLIC_COMMERCE_OPERATIONS_SLUG: operations-test
+          PUBLIC_COMMERCE_OPERATIONS_API_URL: https://private-api.example
+        run: npm run build
+
+      - name: Audit private commerce accessibility
+        run: npm run audit:private-commerce-a11y
+

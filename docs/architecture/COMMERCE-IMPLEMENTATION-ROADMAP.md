@@ -198,6 +198,20 @@ Implementation baseline completed:
 - Operations endpoints reject malformed principals and return restrictive response headers.
 - `docs/operations/COMMERCE-ACCESS-AND-SECRETS-REVIEW.md` keeps real account, MFA, role and rotation review explicitly outstanding for accountable completion.
 
+### 4.5 Private interface accessibility baseline
+
+- Test the generated private checkout, status and operations routes for structural accessibility.
+- Keep forms usable at narrow mobile widths without input zoom or horizontal overflow.
+- Announce asynchronous results and move focus when errors or hidden order details are revealed.
+- Preserve keyboard focus styling, reduced-motion behaviour and non-indexable private routes.
+
+Implementation baseline completed:
+
+- Private controls use explicit constraints, mobile-safe sizing and responsive layouts.
+- Checkout and operations status changes use live regions; failed checkout and revealed order details receive programmatic focus.
+- CI builds an isolated private fixture and audits landmarks, labels, numeric constraints, status announcements, indexing directives and mobile-source safeguards.
+- Manual keyboard, screen-reader, 200%/400% zoom, mobile-device and reduced-motion checks remain an accountable launch-readiness action; automated structure does not constitute manual sign-off.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
