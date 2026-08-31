@@ -1,0 +1,31 @@
+name: Commerce staging monitor
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commerce-staging-monitor
+  cancel-in-progress: true
+
+jobs:
+  health-and-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      COMMERCE_STAGING_ORIGIN: ${{ secrets.COMMERCE_STAGING_ORIGIN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Check generic health and database readiness
+        run: node scripts/check-commerce-staging.mjs

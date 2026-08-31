@@ -36,6 +36,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Test staging monitor behaviour
+        run: npm run test:staging-monitor
+
       - name: Audit commerce secret boundaries
         run: npm run audit:commerce-security
 

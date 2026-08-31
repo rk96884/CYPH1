@@ -65,6 +65,15 @@ Example synthetic entry:
 ### Synthetic checks
 
 - Render performs the continuous liveness check against `/health`.
+- `.github/workflows/commerce-staging-monitor.yml` checks the direct Render
+  origin's generic `/health` and `/ready` responses hourly and can also be run
+  manually. It does not access `/operations/*` or bypass Cloudflare Access.
+- Store the origin only as the GitHub Actions repository secret
+  `COMMERCE_STAGING_ORIGIN`, using the HTTPS Render origin with no path or query.
+  Do not use the Cloudflare-protected operations hostname for this secret.
+- Ensure the accountable operator has GitHub Actions failure notifications
+  enabled. A failed scheduled run is the staging alert; review the failed step
+  before changing infrastructure.
 - After a deploy or database change, an approved operator checks `/ready` and
   one read-only `/operations/orders` request through Cloudflare Access.
 - The direct Render-origin `/operations/orders` request must continue to return
@@ -101,6 +110,27 @@ and controlled-launch measurements rather than inventing targets.
    protected and direct-origin verification checks.
 8. Record cause, impact, remediation and follow-up owner without copying secret
    or personal values.
+
+## Controlled staging incident drill
+
+Run this exercise manually after the monitor secret and first successful
+scheduled check are verified. Use synthetic data only.
+
+1. Record the drill start time and notify the accountable staging operator.
+2. Temporarily suspend the Render staging service. Do not alter Cloudflare
+   Access, production configuration or database data.
+3. Manually run **Commerce staging monitor** and confirm it fails on a generic
+   endpoint without printing the configured origin or credentials.
+4. Confirm the accountable operator receives or can see the failed Actions run.
+5. Resume the same Render service and wait for it to report `live`.
+6. Re-run the monitor and confirm both checks pass.
+7. Verify one authenticated, read-only `/operations/orders` request through
+   Cloudflare Access and confirm the direct origin still rejects
+   `/operations/*` without an assertion.
+8. Record the end time, detection result, recovery result and any follow-up.
+
+Do not simulate an incident by deleting secrets, weakening Access, altering the
+database or enabling payment/fulfilment configuration.
 
 ## Recovery verification
 

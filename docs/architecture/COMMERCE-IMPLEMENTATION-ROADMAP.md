@@ -239,6 +239,26 @@ Implementation baseline completed:
 - Automated tests verify bounded route classification and the absence of path, query, identity and secret-like values from log entries.
 - `docs/operations/COMMERCE-STAGING-OBSERVABILITY.md` defines staging monitoring, severity classification, incident handling and recovery verification without weakening Access.
 
+### 4.8 Automated staging monitor and recovery drill
+
+- Check the generic Render liveness and database-readiness responses on a
+  schedule without bypassing Cloudflare Access.
+- Keep the Render origin in GitHub Actions secrets and exclude it from monitor
+  output.
+- Use native Actions failure notifications for staging alerts.
+- Exercise a reversible Render-service suspension and recovery without touching
+  production, payments, Access policy or database data.
+
+Implementation baseline completed:
+
+- A scheduled and manually dispatchable workflow checks exact `/health` and
+  `/ready` responses with bounded timeouts.
+- Unit tests cover origin validation, successful checks and fail-closed
+  responses.
+- The staging runbook defines notification setup and a controlled incident
+  drill. Secret configuration, first scheduled success and the manual drill
+  remain accountable actions.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
