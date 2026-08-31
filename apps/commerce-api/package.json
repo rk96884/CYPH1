@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "test": "node scripts/test.mjs",
+    "build:runtime": "tsc -p tsconfig.runtime.json",
+    "start:operations": "node ../../build/commerce-api/apps/commerce-api/src/runtime/operations-server.js",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed:development": "node scripts/seed-development.mjs",
     "db:verify": "node scripts/verify-schema.mjs"
   },
   "dependencies": {
     "@cyph1/commerce-core": "0.0.0",
+    "jose": "^6.2.10",
     "pg": "^8.23.0"
   },
   "devDependencies": {

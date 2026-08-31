@@ -19,7 +19,7 @@ This register separates evidence that can be produced by the repository from bus
 | Transactional communication duplication | Independent semantic delivery keys and provider idempotency key | Baseline covered; provider-specific test outstanding |
 | Public commerce isolation | Ordinary build omits private routes unless explicit presentation flags are supplied | Covered; deployment configuration review remains mandatory |
 | Secret namespace and tracked-source audit | Runtime rejects secret-like `PUBLIC_` names; `npm run audit:commerce-security` scans tracked source in CI | Automated baseline covered; deployed inventories remain outstanding |
-| Operations principal shape | Handler rejects empty, duplicate or unknown permission claims before route authorisation | Covered; upstream identity mapping review remains outstanding |
+| Operations identity boundary | Access adapter verifies signature, issuer and audience and maps verified email to server-side grants; runtime forwards only `/operations/*` | Automated baseline covered; deployed Access policy and role review remain outstanding |
 
 ## Engineering tests still required
 

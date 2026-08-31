@@ -5,6 +5,7 @@ node_modules/
 # Astro and generated output
 .astro/
 dist/
+build/
 
 # Local package-manager logs
 npm-debug.log*

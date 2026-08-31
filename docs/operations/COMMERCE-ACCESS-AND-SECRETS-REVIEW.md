@@ -12,7 +12,7 @@ Record owners and completion dates without copying credentials, recovery codes, 
 | Render commerce API | `DATABASE_URL` | Render encrypted environment | [ ] | [ ] | [ ] |
 | Mollie test | `MOLLIE_API_KEY` | API runtime secret store | [ ] | [ ] | [ ] |
 | Cloudflare early-access Worker | Brevo API and Turnstile secret keys | Worker encrypted secrets | [ ] | [ ] | [ ] |
-| Identity proxy | Session/JWT verification material | Protected API runtime | [ ] | [ ] | [ ] |
+| Cloudflare Access | Team domain, application audience and operator grant map | Protected Render operations runtime | [ ] | [ ] | [ ] |
 | Future fulfilment provider | API/webhook credentials | API runtime secret store | [ ] | [ ] | [ ] |
 | Future transactional email provider | API/webhook credentials | Consumer runtime secret store | [ ] | [ ] | [ ] |
 
@@ -41,6 +41,10 @@ Map verified identity-provider groups to only these application permissions:
 | `reconciliation:export` | Finance/reconciliation |  |  |
 
 Do not accept an operator ID or permission list from browser JSON, headers under user control, query parameters or local storage. The authentication middleware must verify the upstream identity and construct the principal internally.
+
+Use `docs/operations/PROTECTED-COMMERCE-STAGING.md` for the deployment and
+negative-access checks. Record the actual operator and reviewer here without
+copying the Access assertion, audience value or account recovery details.
 
 ## Review procedure
 

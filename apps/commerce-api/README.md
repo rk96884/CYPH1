@@ -1,10 +1,11 @@
 # CYPH/1 Commerce API
 
-Runtime-neutral server-side commerce boundary.
+Server-side commerce boundary with a protected operations staging runtime.
 
-The package still has no public HTTP listener. It now provides a framework-neutral
-private checkout handler and PostgreSQL repository for a protected integration
-runtime. The normal site build emits no storefront route, and the API remains
+The package provides framework-neutral handlers plus a deliberately narrow Node
+listener for protected operations staging. That listener exposes generic health
+checks and `/operations/*` only; it does not expose checkout or webhook routes.
+The normal site build emits no storefront route, and the API remains
 disabled unless its independent server gates are explicitly enabled. Its provider-neutral payment boundary
 uses a native-HTTP Mollie test adapter, which cannot accept a live API key.
 
@@ -34,6 +35,19 @@ must never be translated directly into permissions. Independent permissions
 cover order reading, refund creation, fulfilment retry and reconciliation
 export. See `docs/operations/COMMERCE-OPERATIONS.md` for the protected-origin
 deployment and operator workflow.
+
+The staging listener verifies the `Cf-Access-Jwt-Assertion` signature, issuer
+and application audience against Cloudflare Access JWKS. It then maps the
+verified email only to the server-side `OPERATIONS_ACCESS_GRANTS` allowlist.
+Missing, invalid and ungranted assertions fail closed. Build and start it with:
+
+```bash
+npm run build:runtime --workspace @cyph1/commerce-api
+npm run start:operations --workspace @cyph1/commerce-api
+```
+
+See `docs/operations/PROTECTED-COMMERCE-STAGING.md` before deploying it. A
+successful build is not authorisation to enable public or live commerce.
 
 For isolated Mollie testing, use `PAYMENT_PROVIDER=mollie-test`, a `test_` API
 key and an explicit comma-separated `PAYMENT_CALLBACK_ORIGINS` allowlist. Keep

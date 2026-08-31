@@ -9,6 +9,7 @@ The pre-launch site is a static Astro build with no dependency on a commerce pla
 - **Canonical domain:** `https://www.cyph1.co.uk/`, configured in `astro.config.mjs` and served over enforced HTTPS.
 - **DNS:** Cloudflare DNS points `www` to the GitHub Pages host. The apex domain should redirect to the canonical `www` URL.
 - **Early-access API:** a separate Cloudflare Worker. Hosting the static site does not contain or expose the Brevo API key or Turnstile secret.
+- **Private operations staging:** a separate Render Node service behind a Cloudflare Access-protected custom hostname. It is not part of the public Pages deployment and exposes no checkout route.
 
 This split keeps the known-good production host stable while providing isolated previews for proposed changes. The generated `dist/` directory can be moved to any static host later without changing the site architecture.
 
@@ -53,6 +54,14 @@ Cloudflare creates a unique URL for each pull request. Preview responses are no-
 | `PUBLIC_TURNSTILE_SITE_KEY` | Public | GitHub repository variable and Cloudflare Pages environment variable | Browser-side Turnstile widget key |
 | `BREVO_API_KEY` | Secret | Cloudflare Worker encrypted secret only | Brevo API authentication |
 | `TURNSTILE_SECRET_KEY` | Secret | Cloudflare Worker encrypted secret only | Server-side Turnstile verification |
+| `CLOUDFLARE_ACCESS_TEAM_DOMAIN` | Private configuration | Render operations staging environment | Exact Access issuer and JWKS origin |
+| `CLOUDFLARE_ACCESS_AUDIENCE` | Private configuration | Render operations staging environment | Exact protected application audience |
+| `OPERATIONS_ACCESS_GRANTS` | Private configuration | Render operations staging environment | Verified operator email to least-privilege permission mapping |
+
+The private staging build/start settings and verification procedure are in
+`docs/operations/PROTECTED-COMMERCE-STAGING.md`. Do not attach its hostname to
+the public GitHub Pages site or treat Cloudflare Access as a substitute for the
+application's JWT validation.
 
 Use `.env.example` as the local public-variable template. `.env`, `.env.*`, `.dev.vars`, generated output and provider state are excluded by `.gitignore`. Never add private values to repository variables prefixed with `PUBLIC_`, source files, workflow YAML, screenshots, issues or logs.
 

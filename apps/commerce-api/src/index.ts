@@ -14,11 +14,20 @@ export { PostgresFulfilmentOutboxConsumer } from "./fulfilment/outbox.js";
 export { OperationsError, OperationsService, operationPermissions } from "./operations/service.js";
 export { PostgresOperationsRepository } from "./operations/postgres.js";
 export { handleOperationsRequest } from "./operations/handler.js";
+export {
+  createCloudflareAccessAuthenticator,
+  loadCloudflareAccessConfig,
+} from "./access/cloudflare-access.js";
+export { createProtectedOperationsHandler } from "./access/protected-operations.js";
 export { TransactionalCommunicationConsumer } from "./communications/service.js";
 export { ManualTestCommunicationProvider } from "./communications/manual-test.js";
 export { renderTransactionalMessage } from "./communications/templates.js";
 export { PostgresCommunicationRepository } from "./communications/postgres.js";
 export type { OperationPermission, OperationsPrincipal, OperationsRepository } from "./operations/service.js";
+export type {
+  CloudflareAccessAuthenticator,
+  CloudflareAccessConfig,
+} from "./access/cloudflare-access.js";
 export type {
   CheckoutAddress,
   CheckoutOrder,

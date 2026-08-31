@@ -212,6 +212,20 @@ Implementation baseline completed:
 - CI builds an isolated private fixture and audits landmarks, labels, numeric constraints, status announcements, indexing directives and mobile-source safeguards.
 - Manual keyboard, screen-reader, 200%/400% zoom, mobile-device and reduced-motion checks remain an accountable launch-readiness action; automated structure does not constitute manual sign-off.
 
+### 4.6 Protected staging identity boundary
+
+- Add a dedicated operations-only Node staging listener with generic health and database readiness checks.
+- Verify Cloudflare Access JWT signature, issuer and exact application audience before constructing an operator principal.
+- Map a verified email to least-privilege permissions using server-side configuration only.
+- Keep checkout, webhooks, live payments and the public site outside this runtime.
+
+Implementation baseline completed:
+
+- The staging listener exposes `/operations/*` only and limits request bodies; unknown routes return `404`.
+- Cloudflare Access assertions use remote JWKS and RS256 verification. Missing, invalid and ungranted identities fail closed.
+- Forged browser permission headers cannot affect the server-side grant map.
+- Render and Cloudflare setup, MFA/account ownership and an independent role review remain accountable manual work.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

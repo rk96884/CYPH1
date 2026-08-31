@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +11,7 @@ const nodeExecutable = process.execPath;
 const tscExecutable = join(repositoryRoot, "node_modules", "typescript", "bin", "tsc");
 
 try {
+  symlinkSync(join(repositoryRoot, "node_modules"), join(outputDirectory, "node_modules"), process.platform === "win32" ? "junction" : "dir");
   execFileSync(nodeExecutable, [tscExecutable, "-p", join(packageRoot, "tsconfig.json"), "--rootDir", repositoryRoot, "--noEmit", "false", "--outDir", outputDirectory], { stdio: "inherit" });
   execFileSync(nodeExecutable, ["--test",
     join(outputDirectory, "apps", "commerce-api", "src", "payments", "payments.test.js"),
@@ -19,6 +20,8 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "checkout", "handler.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "fulfilment", "fulfilment.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "operations.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "access", "access.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "runtime", "http.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "communications", "communications.test.js"),
   ], { stdio: "inherit" });
 } finally {
