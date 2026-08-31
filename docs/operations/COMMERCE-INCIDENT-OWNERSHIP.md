@@ -79,7 +79,7 @@ approved. Those values require staffing and business approval before launch.
 ## Notification verification checklist
 
 - [x] GitHub repository owner watches **Actions** failures for this repository.
-- [ ] A deliberately failed monitor run produces a visible GitHub notification.
+- [x] A deliberately failed monitor run produces a visible GitHub notification.
 - [x] Render owner notifications are enabled for failed deploys and service
       failures.
 - [ ] A Render notification channel is tested without exposing a secret or
@@ -97,9 +97,8 @@ demonstrated a healthy baseline, expected failures during Render suspension and
 successful recovery after an operator-assisted Render restart. The evidence is
 recorded in `docs/operations/COMMERCE-STAGING-OBSERVABILITY.md`.
 
-This proves staging detection and recovery visibility. It does not prove that
-email notifications are enabled, provide a production on-call arrangement or
-approve public commerce.
+This proves staging detection and recovery visibility. It does not provide a
+production on-call arrangement or approve public commerce.
 
 The notification settings were reviewed on **31 August 2026**. GitHub Actions
 email notifications were already configured for failed workflows, and Render
@@ -107,3 +106,9 @@ email notifications were already configured for service and deploy failures.
 The monitor exposes a manual-only `simulate_failure` input so the GitHub route
 can be tested without suspending Render or changing a secret. Keep this input
 disabled during routine and scheduled checks.
+
+Also on **31 August 2026**, a manual monitor run with `simulate_failure`
+enabled failed at the intended test step and produced the expected GitHub
+Actions email notification to the repository owner. No Render health request
+was required for this test. This verifies the GitHub failure-notification
+route; the separate Render notification-channel test remains outstanding.
