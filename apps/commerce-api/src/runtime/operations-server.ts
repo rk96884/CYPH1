@@ -6,6 +6,7 @@ import { PostgresOperationsRepository } from "../operations/postgres.js";
 import { OperationsService } from "../operations/service.js";
 import { createPaymentProviderRegistry } from "../payments/factory.js";
 import { createOperationsRuntime, requestHeaders } from "./http.js";
+import { createRequestId, createRuntimeRequestLog, writeRuntimeRequestLog } from "./observability.js";
 
 const environment = process.env;
 const databaseUrl = environment.DATABASE_URL?.trim();
@@ -44,13 +45,22 @@ const readBody = async (request: IncomingMessage): Promise<ArrayBuffer | undefin
   return body.buffer;
 };
 
-const send = async (response: Response, target: ServerResponse): Promise<void> => {
+const send = async (response: Response, target: ServerResponse, requestId: string): Promise<void> => {
   target.statusCode = response.status;
   response.headers.forEach((value, name) => target.setHeader(name, value));
+  target.setHeader("X-Request-ID", requestId);
   target.end(Buffer.from(await response.arrayBuffer()));
 };
 
+const requestPathname = (url: string | undefined): string => {
+  try { return new URL(url ?? "/", "https://operations.invalid").pathname; }
+  catch { return "/invalid-request-target"; }
+};
+
 const server = createServer(async (incoming, outgoing) => {
+  const requestId = createRequestId();
+  const startedAt = performance.now();
+  let status = 500;
   try {
     const body = await readBody(incoming);
     const request = new Request(`https://operations.invalid${incoming.url ?? "/"}`, {
@@ -58,13 +68,23 @@ const server = createServer(async (incoming, outgoing) => {
       headers: requestHeaders(incoming.headers),
       ...(body ? { body } : {}),
     });
-    await send(await runtime(request), outgoing);
+    const response = await runtime(request);
+    status = response.status;
+    await send(response, outgoing, requestId);
   } catch (error) {
-    const status = error instanceof RangeError ? 413 : 500;
+    status = error instanceof RangeError ? 413 : 500;
     await send(new Response(JSON.stringify({ message: status === 413 ? "Request body is too large." : "The request could not be completed." }), {
       status,
       headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
-    }), outgoing);
+    }), outgoing, requestId);
+  } finally {
+    writeRuntimeRequestLog(createRuntimeRequestLog({
+      requestId,
+      method: incoming.method ?? "UNKNOWN",
+      pathname: requestPathname(incoming.url),
+      status,
+      durationMs: performance.now() - startedAt,
+    }));
   }
 });
 

@@ -22,6 +22,7 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "operations.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "access", "access.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "http.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "runtime", "observability.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "communications", "communications.test.js"),
   ], { stdio: "inherit" });
 } finally {

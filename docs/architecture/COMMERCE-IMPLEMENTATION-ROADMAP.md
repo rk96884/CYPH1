@@ -226,6 +226,19 @@ Implementation baseline completed:
 - Forged browser permission headers cannot affect the server-side grant map.
 - Render and Cloudflare setup, MFA/account ownership and an independent role review remain accountable manual work.
 
+### 4.7 Staging observability and incident response
+
+- Emit privacy-safe structured logs with server-generated request correlation.
+- Keep route labels bounded and exclude identities, IPs, assertions, bodies, query strings and order references.
+- Document Render health monitoring, Cloudflare Access review and fail-closed incident recovery.
+- Preserve manual ownership of provider alerts, retention and production service objectives.
+
+Implementation baseline completed:
+
+- The operations listener emits one JSON event per request and returns the same correlation value in `X-Request-ID`.
+- Automated tests verify bounded route classification and the absence of path, query, identity and secret-like values from log entries.
+- `docs/operations/COMMERCE-STAGING-OBSERVABILITY.md` defines staging monitoring, severity classification, incident handling and recovery verification without weakening Access.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

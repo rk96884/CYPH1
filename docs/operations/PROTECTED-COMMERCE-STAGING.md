@@ -89,6 +89,11 @@ Before using synthetic order records:
 7. Inspect Render and Cloudflare logs for credentials, assertions, addresses or
    exported order data; none should be retained unnecessarily.
 
+Use `COMMERCE-STAGING-OBSERVABILITY.md` for structured request-log fields,
+provider monitoring setup, alert classification and incident recovery. The
+runtime returns its server-generated correlation value in `X-Request-ID`; do
+not copy Access assertions or personal data into incident records.
+
 Use synthetic records only. Do not enter real customer, address, payment or
 product data during this staging issue.
 
