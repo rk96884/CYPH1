@@ -95,6 +95,9 @@ and controlled-launch measurements rather than inventing targets.
 
 ## Incident procedure
 
+Accountability and alert routing are defined in
+`docs/operations/COMMERCE-INCIDENT-OWNERSHIP.md`.
+
 1. Record UTC start time, reporter, affected route label and `X-Request-ID`.
 2. Do not paste assertions, credentials, personal data or full raw logs into an
    issue or chat.
@@ -186,3 +189,11 @@ environment until a later drill demonstrates reliable automatic recovery.
 
 Production monitoring, on-call ownership, retention, escalation contacts and
 numeric service objectives remain launch-gate decisions.
+
+### Non-disruptive notification test
+
+The **Commerce staging monitor** manual dispatch exposes a
+`simulate_failure` input. Enabling it deliberately fails the workflow before
+any staging health request is made, allowing the GitHub Actions notification
+route to be verified without suspending Render or changing a secret. Leave the
+input disabled for routine manual checks; scheduled runs cannot enable it.

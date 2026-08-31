@@ -263,6 +263,26 @@ Implementation baseline completed:
   recovery characteristic. Production alert ownership and service objectives
   remain launch-gate decisions.
 
+### 4.9 Staging incident ownership and alert routing
+
+- Assign accountability for monitor acknowledgement, Render recovery,
+  Cloudflare Access review and database verification.
+- Document primary signal routes and a privacy-safe escalation procedure.
+- Keep personal contact details in a private register rather than source
+  control.
+- Treat backup ownership, production on-call coverage and service objectives as
+  launch gates.
+
+Implementation baseline completed:
+
+- `docs/operations/COMMERCE-INCIDENT-OWNERSHIP.md` assigns the current staging
+  responsibilities to the project-owner role and records that no independent
+  backup exists yet.
+- GitHub Actions, Render, Cloudflare Access and database-readiness signals have
+  explicit response actions and fail-closed escalation rules.
+- A manual checklist preserves provider notification verification and
+  production staffing as accountable work rather than asserting completion.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

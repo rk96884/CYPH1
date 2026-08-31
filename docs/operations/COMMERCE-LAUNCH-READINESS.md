@@ -22,6 +22,7 @@ This register separates evidence that can be produced by the repository from bus
 | Operations identity boundary | Access adapter verifies signature, issuer and audience and maps verified email to server-side grants; runtime forwards only `/operations/*` | Automated baseline and protected staging boundary manually verified; production review remains outstanding |
 | Staging request observability | Server-generated request correlation and bounded privacy-safe JSON request events | Automated field/omission tests covered; provider alerts and production retention remain manual launch gates |
 | Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
+| Staging incident ownership | Role-based staging response and escalation runbook covering GitHub, Render, Cloudflare Access and database signals | Project owner is accountable for staging; notification-channel tests, independent backup and production ownership remain outstanding |
 
 ## Engineering tests still required
 
@@ -58,7 +59,8 @@ The following require accountable human sign-off and cannot be completed by auto
 
 ## Operational runbooks required
 
-- [ ] Commerce incident response.
+- [x] Staging commerce incident ownership and alert-routing baseline documented;
+      production incident ownership and notification verification remain open.
 - [ ] Payment-provider outage and ambiguous-payment handling.
 - [ ] Daily payment/order/refund reconciliation.
 - [ ] Fulfilment outage and manual-review processing.
