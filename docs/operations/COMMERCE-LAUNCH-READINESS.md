@@ -65,7 +65,8 @@ The following require accountable human sign-off and cannot be completed by auto
 - [ ] Daily payment/order/refund reconciliation.
 - [ ] Fulfilment outage and manual-review processing.
 - [ ] Personal-data incident escalation.
-- [ ] Controlled rollback and commerce-disable procedure.
+- [x] Controlled rollback and commerce-disable engineering procedure
+      documented; staging rehearsal and production approval remain open.
 
 ## Launch rule
 

@@ -86,6 +86,11 @@ Use a source-controlled rollback so the repository and live site remain consiste
 
 If the workflow itself failed without a source change, open **Actions → Deploy to GitHub Pages**, select the failed run and choose **Re-run all jobs**. A manual **Run workflow** deployment is also available from that workflow's page.
 
+Commerce incidents require additional controls because stopping new checkout
+must not discard in-flight payment or order state. Use
+`COMMERCE-DISABLE-AND-ROLLBACK.md` for the server-side disable sequence,
+webhook/reconciliation safeguards and database rollback rule.
+
 ## Ownership
 
 - **Source, workflows and GitHub Pages:** repository owner `rk96884`.

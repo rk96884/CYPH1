@@ -283,6 +283,25 @@ Implementation baseline completed:
 - A manual checklist preserves provider notification verification and
   production staffing as accountable work rather than asserting completion.
 
+### 4.10 Controlled commerce disable and rollback baseline
+
+- Separate customer checkout containment from webhook, reconciliation and
+  protected-operations recovery.
+- Document the existing build-time presentation and server-side commerce gates.
+- Require source-controlled application reverts and prohibit ad-hoc database
+  reversal or record deletion.
+- Define recovery verification and privacy-safe evidence requirements.
+
+Implementation baseline completed:
+
+- `docs/operations/COMMERCE-DISABLE-AND-ROLLBACK.md` defines the containment,
+  source rollback, data-safety and re-enable sequence using existing controls.
+- The procedure records that the current Render operations listener is not a
+  checkout kill switch and must not be suspended for an unrelated checkout
+  incident.
+- Independent checkout and webhook gating in the eventual customer runtime,
+  plus a controlled staging rehearsal, remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
