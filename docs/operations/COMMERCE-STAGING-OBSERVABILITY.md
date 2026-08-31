@@ -111,5 +111,24 @@ and controlled-launch measurements rather than inventing targets.
 - The direct Render origin rejects `/operations/*` without an assertion.
 - Logs contain the expected request metadata and no prohibited data.
 
+## Staging verification record
+
+Verified on **31 August 2026** against the protected Render staging service:
+
+- the operations runtime built and deployed successfully from `main`;
+- Render reported the service as live on the configured staging hostname;
+- expected Render root probes were classified as `unknown` and returned `404`;
+- an authenticated `GET` request to the bounded `operations` route returned
+  `200` with outcome `success`;
+- the successful request emitted a server-generated request ID and a measured
+  duration;
+- the browser response included the matching `X-Request-ID` header; and
+- the reviewed structured entry contained no personal data, request content,
+  headers, query strings or credentials.
+
+This confirms the protected staging request-correlation and privacy-minimised
+logging baseline. It does not approve production commerce or define production
+alert thresholds.
+
 Production monitoring, on-call ownership, retention, escalation contacts and
 numeric service objectives remain launch-gate decisions.
