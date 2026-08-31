@@ -21,7 +21,7 @@ This register separates evidence that can be produced by the repository from bus
 | Secret namespace and tracked-source audit | Runtime rejects secret-like `PUBLIC_` names; `npm run audit:commerce-security` scans tracked source in CI | Automated baseline covered; deployed inventories remain outstanding |
 | Operations identity boundary | Access adapter verifies signature, issuer and audience and maps verified email to server-side grants; runtime forwards only `/operations/*` | Automated baseline and protected staging boundary manually verified; production review remains outstanding |
 | Staging request observability | Server-generated request correlation and bounded privacy-safe JSON request events | Automated field/omission tests covered; provider alerts and production retention remain manual launch gates |
-| Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Repository baseline covered; secret setup, notification verification and controlled incident drill remain manual |
+| Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
 
 ## Engineering tests still required
 

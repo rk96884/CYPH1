@@ -255,9 +255,13 @@ Implementation baseline completed:
   `/ready` responses with bounded timeouts.
 - Unit tests cover origin validation, successful checks and fail-closed
   responses.
-- The staging runbook defines notification setup and a controlled incident
-  drill. Secret configuration, first scheduled success and the manual drill
-  remain accountable actions.
+- The repository secret was configured and the monitor produced a successful
+  healthy baseline in GitHub Actions.
+- A controlled Render suspension produced the expected failed monitor runs;
+  after an operator-assisted Render restart, the recovery run passed.
+- The staging runbook records the drill evidence and the manual-restart
+  recovery characteristic. Production alert ownership and service objectives
+  remain launch-gate decisions.
 
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.

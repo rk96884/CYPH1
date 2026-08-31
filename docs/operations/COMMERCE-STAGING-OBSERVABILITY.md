@@ -123,6 +123,9 @@ scheduled check are verified. Use synthetic data only.
    endpoint without printing the configured origin or credentials.
 4. Confirm the accountable operator receives or can see the failed Actions run.
 5. Resume the same Render service and wait for it to report `live`.
+   If resuming does not start the runtime, use Render's manual **Restart
+   service** action, wait for the service to return to `live`, and record that
+   intervention in the drill evidence.
 6. Re-run the monitor and confirm both checks pass.
 7. Verify one authenticated, read-only `/operations/orders` request through
    Cloudflare Access and confirm the direct origin still rejects
@@ -159,6 +162,27 @@ Verified on **31 August 2026** against the protected Render staging service:
 This confirms the protected staging request-correlation and privacy-minimised
 logging baseline. It does not approve production commerce or define production
 alert thresholds.
+
+### Controlled monitor and recovery drill
+
+Completed on **31 August 2026** using the Render staging service and synthetic
+generic health checks only:
+
+- workflow run **#1** established a successful healthy baseline;
+- the Render staging service was suspended without changing Cloudflare Access,
+  database data, payment configuration or production services;
+- workflow runs **#2** and **#3** failed as expected while the service was
+  unavailable, demonstrating visible outage detection;
+- resuming the service required the operator to use Render's manual restart
+  action before the runtime returned to `live`;
+- workflow run **#4** succeeded after recovery, confirming that both generic
+  liveness and database-readiness checks had recovered; and
+- the exercise introduced no Access bypass and exposed no origin, credential,
+  customer or payment data in the recorded evidence.
+
+**Outcome:** staging failure detection and post-restart recovery verification
+are proven. Render recovery should be treated as operator-assisted for this
+environment until a later drill demonstrates reliable automatic recovery.
 
 Production monitoring, on-call ownership, retention, escalation contacts and
 numeric service objectives remain launch-gate decisions.
