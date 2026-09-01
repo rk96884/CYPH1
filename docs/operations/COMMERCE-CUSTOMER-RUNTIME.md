@@ -108,6 +108,25 @@ not approve checkout, payment processing, product publication or public
 launch. All three commerce exposure gates must remain false until a separately
 reviewed staging rehearsal is authorised.
 
+### Custom-domain verification
+
+Verified on 1 September 2026 after the locked-down deployment checks above.
+
+- custom origin: `https://commerce-staging.cyph1.co.uk`;
+- Cloudflare DNS: `CNAME` from `commerce-staging.cyph1.co.uk` to
+  `cyph1-commerce-customer-staging.onrender.com`, set to DNS only;
+- Render custom-domain status: verified;
+- Render TLS status: certificate issued;
+- `GET /health`: `200` with `{"status":"ok"}`;
+- `GET /ready`: `200` with `{"status":"ready"}`.
+
+The direct Render subdomain remains enabled as an operational fallback. The
+custom-domain checks confirm public DNS resolution, HTTPS termination, process
+liveness and PostgreSQL readiness only. They do not approve a storefront,
+checkout, payment processing or launch. `CHECKOUT_HTTP_ENABLED`,
+`PAYMENT_WEBHOOKS_ENABLED` and `COMMERCE_ENABLED` remained `false` throughout
+verification.
+
 ## Controlled staging rehearsal
 
 The following remains a launch-readiness task and needs explicit approval
