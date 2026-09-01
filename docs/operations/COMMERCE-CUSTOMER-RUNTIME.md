@@ -1,6 +1,6 @@
 # Commerce customer runtime
 
-**Status:** Pre-production engineering baseline; no deployment or commerce approval  
+**Status:** Locked-down staging runtime deployed; no checkout, payment or commerce approval
 **Scope:** Customer checkout initiation, Mollie test webhook ingestion and runtime containment
 
 ## Boundary
@@ -77,6 +77,36 @@ or equivalent; do not replace the protected operations service.
 5. Confirm the credential is a Mollie test key and no live payment provider is
    configured.
 6. Record privacy-safe deployment and request evidence only.
+
+## Locked-down staging deployment evidence
+
+Verified on 1 September 2026 against source commit `64ac621`.
+
+- Render service: `cyph1-commerce-customer-staging`;
+- public origin: `https://cyph1-commerce-customer-staging.onrender.com`;
+- database: Render PostgreSQL internal connection, with `DATABASE_SSL=false` as
+  required for the internal URL;
+- `CHECKOUT_HTTP_ENABLED=false`;
+- `PAYMENT_WEBHOOKS_ENABLED=false`;
+- `COMMERCE_ENABLED=false`;
+- `PAYMENT_PROVIDER=disabled`;
+- `FULFILMENT_MODE=disabled` and `FULFILMENT_PROVIDER=disabled`.
+
+The following boundary checks were completed successfully after deployment:
+
+| Request | Verified result |
+| --- | --- |
+| `GET /health` | `200` with `{"status":"ok"}` |
+| `GET /ready` | `200` with `{"status":"ready"}` |
+| `/checkout` | `404` with `{"message":"Not found."}` |
+| `/webhooks/mollie` | `404` with `{"message":"Not found."}` |
+| `/operations/orders` | `404` with `{"message":"Not found."}` |
+
+This evidence confirms process liveness, PostgreSQL readiness, disabled
+customer commerce routes and isolation from the operations surface. It does
+not approve checkout, payment processing, product publication or public
+launch. All three commerce exposure gates must remain false until a separately
+reviewed staging rehearsal is authorised.
 
 ## Controlled staging rehearsal
 
