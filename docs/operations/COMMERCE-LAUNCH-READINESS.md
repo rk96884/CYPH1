@@ -23,6 +23,7 @@ This register separates evidence that can be produced by the repository from bus
 | Staging request observability | Server-generated request correlation and bounded privacy-safe JSON request events | Automated field/omission tests covered; provider alerts and production retention remain manual launch gates |
 | Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
 | Staging incident ownership | Role-based staging response and escalation runbook covering GitHub, Render, Cloudflare Access and database signals | Project owner is accountable for staging; notification-channel tests, independent backup and production ownership remain outstanding |
+| Customer runtime route isolation | Separate runtime exposes generic health/readiness plus independently gated checkout and Mollie webhook routes; operations paths remain absent | Automated baseline covered; protected staging deployment and containment rehearsal outstanding |
 
 ## Engineering tests still required
 
@@ -66,7 +67,8 @@ The following require accountable human sign-off and cannot be completed by auto
 - [ ] Fulfilment outage and manual-review processing.
 - [ ] Personal-data incident escalation.
 - [x] Controlled rollback and commerce-disable engineering procedure
-      documented; staging rehearsal and production approval remain open.
+      documented; customer runtime now has independent checkout/webhook gates,
+      but staging rehearsal and production approval remain open.
 
 ## Launch rule
 

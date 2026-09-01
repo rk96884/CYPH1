@@ -7,6 +7,7 @@
     "test": "node scripts/test.mjs",
     "build:runtime": "tsc -p tsconfig.runtime.json",
     "start:operations": "node ../../build/commerce-api/apps/commerce-api/src/runtime/operations-server.js",
+    "start:customer": "node ../../build/commerce-api/apps/commerce-api/src/runtime/customer-server.js",
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed:development": "node scripts/seed-development.mjs",
     "db:verify": "node scripts/verify-schema.mjs"

@@ -1,10 +1,13 @@
 # CYPH/1 Commerce API
 
-Server-side commerce boundary with a protected operations staging runtime.
+Server-side commerce boundary with separate protected-operations and customer
+runtime entry points.
 
-The package provides framework-neutral handlers plus a deliberately narrow Node
-listener for protected operations staging. That listener exposes generic health
-checks and `/operations/*` only; it does not expose checkout or webhook routes.
+The package provides framework-neutral handlers plus deliberately narrow Node
+listeners. The protected-operations listener exposes generic health checks and
+`/operations/*` only. The customer listener exposes generic health checks plus
+independently gated `/checkout` and `/webhooks/mollie` routes; it never exposes
+operations routes.
 The normal site build emits no storefront route, and the API remains
 disabled unless its independent server gates are explicitly enabled. Its provider-neutral payment boundary
 uses a native-HTTP Mollie test adapter, which cannot accept a live API key.
@@ -75,6 +78,26 @@ It is not an approved VAT calculation. Production tax treatment, product price,
 stock and fulfilment configuration remain launch-gate inputs.
 
 Configuration fails closed: missing or unrecognised values never enable commerce.
+
+## Customer runtime boundary
+
+The customer listener is a pre-production engineering boundary, not approval to
+sell a product or accept live payments. Build it with `build:runtime` and start
+it separately from protected operations:
+
+```bash
+npm run build:runtime --workspace @cyph1/commerce-api
+npm run start:customer --workspace @cyph1/commerce-api
+```
+
+`CHECKOUT_HTTP_ENABLED` and `PAYMENT_WEBHOOKS_ENABLED` accept only the exact
+values `true` or `false` and default to false. Checkout additionally remains
+subject to `COMMERCE_ENABLED` and its configured dependencies. This permits new
+checkout initiation to be contained while verified payment notifications for
+in-flight attempts remain available. `CUSTOMER_RUNTIME_ORIGIN` must be the
+public HTTPS origin of this listener; it is used when verifying the receiving
+webhook endpoint and is never inferred from an untrusted request header. See
+`docs/operations/COMMERCE-CUSTOMER-RUNTIME.md` before any deployment.
 
 ## Database
 

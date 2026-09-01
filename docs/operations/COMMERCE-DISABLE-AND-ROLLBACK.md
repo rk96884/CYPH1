@@ -13,7 +13,8 @@ also prevent an in-flight payment from being recorded.
 
 The current public pre-launch deployment contains no commerce routes. The
 current Render staging listener exposes only generic health/readiness and
-protected `/operations/*` routes; it does not expose checkout or webhooks.
+protected `/operations/*` routes. A separate customer runtime now exists in
+source but is not approved or configured for deployment.
 
 ## Existing controls
 
@@ -21,6 +22,8 @@ protected `/operations/*` routes; it does not expose checkout or webhooks.
 | --- | --- | --- |
 | `PUBLIC_COMMERCE_UI_ENABLED=false` or omitted | Omits the private checkout route and its browser code from the Astro build | Build-time; rebuild and redeploy the static site |
 | `COMMERCE_ENABLED=false` | Makes `CheckoutService.initiate` fail closed even when a presentation route exists | Server-side environment change followed by runtime restart/redeploy |
+| `CHECKOUT_HTTP_ENABLED=false` | Removes the customer runtime checkout route without disabling webhook ingestion | Server-side environment change followed by runtime restart/redeploy |
+| `PAYMENT_WEBHOOKS_ENABLED=true` | Keeps the verified payment notification route available independently of checkout initiation | Server-side environment change; use only on an explicitly deployed and reviewed customer runtime |
 | `PAYMENT_PROVIDER=disabled` | Prevents the payment dependency from satisfying commerce enablement | Server-side environment change |
 | `FULFILMENT_MODE=disabled` and `FULFILMENT_PROVIDER=disabled` | Prevent the fulfilment dependencies from satisfying commerce enablement | Server-side environment change |
 | Remove an operator from `OPERATIONS_ACCESS_GRANTS` | Denies that identity at the application boundary | Server-side environment change |
@@ -33,14 +36,17 @@ controls. A safe disablement always includes the server-side commerce gate.
 ## Immediate containment
 
 1. Record the UTC start time, affected environment, deployed commit and reason.
-2. Set `COMMERCE_ENABLED=false` in the affected commerce runtime and apply the
-   provider's required restart or redeploy.
+2. Set `CHECKOUT_HTTP_ENABLED=false` and `COMMERCE_ENABLED=false` in the
+   affected customer runtime and apply the provider's required restart or
+   redeploy. The route gate contains exposure; the commerce gate provides the
+   independent service-level denial.
 3. Confirm new checkout initiation receives the disabled/not-found response and
    cannot create an order or provider payment.
 4. Set `PUBLIC_COMMERCE_UI_ENABLED=false` or remove it from the public build
    environment, rebuild and redeploy. Confirm no checkout route, button or
    commerce client bundle is published.
-5. Leave verified webhook ingestion, reconciliation and protected operations
+5. Leave `PAYMENT_WEBHOOKS_ENABLED=true`, verified webhook ingestion,
+   reconciliation and protected operations
    available for in-flight attempts unless those components are themselves
    compromised. If the future deployment combines checkout and webhook routes,
    use a deployment that gates checkout initiation independently before launch.
@@ -119,8 +125,9 @@ Record only privacy-safe evidence:
 
 ## Current limitations
 
-This runbook does not approve production commerce. Before production launch,
-the deployed customer runtime must demonstrate that checkout initiation can be
+This runbook does not approve production commerce. The source boundary now
+supports independent checkout and payment-webhook exposure, but a deployed
+customer staging runtime must demonstrate that checkout initiation can be
 disabled without disabling authenticated payment webhooks or reconciliation.
 A controlled disable, rollback and recovery rehearsal must then be performed in
 staging and recorded in the launch-readiness register.

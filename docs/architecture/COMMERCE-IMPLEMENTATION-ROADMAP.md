@@ -302,6 +302,33 @@ Implementation baseline completed:
 - Independent checkout and webhook gating in the eventual customer runtime,
   plus a controlled staging rehearsal, remain launch gates.
 
+### 4.11 Customer commerce runtime safety boundary
+
+- Introduce a customer-facing runtime that is deployed independently from the
+  Cloudflare Access-protected operations service.
+- Keep checkout initiation and payment-webhook ingestion behind separate,
+  strict server-side route-exposure controls.
+- Preserve the existing `COMMERCE_ENABLED` dependency gate beneath checkout
+  exposure so a presentation or routing change cannot enable commerce alone.
+- Expose only generic health/readiness responses and bounded request bodies;
+  do not expose operations routes or diagnostic detail.
+- Document staging configuration, containment and evidence requirements before
+  the runtime can be deployed.
+
+Implementation baseline completed:
+
+- `customer-server.ts` composes the existing checkout and verified Mollie
+  webhook pipelines behind independent `CHECKOUT_HTTP_ENABLED` and
+  `PAYMENT_WEBHOOKS_ENABLED` controls, both disabled by default.
+- The checkout path remains independently subject to `COMMERCE_ENABLED` and
+  the configured payment/fulfilment dependencies.
+- Customer runtime and raw-webhook handler tests cover default denial,
+  independent exposure, generic readiness failure, body limits and safe
+  provider-failure responses.
+- `docs/operations/COMMERCE-CUSTOMER-RUNTIME.md` records the deployment and
+  containment contract. A protected staging deployment and controlled
+  checkout-disable/webhook-continuity rehearsal remain outstanding.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
