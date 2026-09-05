@@ -138,6 +138,45 @@ verification.
 
 ## Controlled staging rehearsal
 
+The synthetic database fixture is installed separately from migrations and
+normal deployment. It contains a private £1 test item, ten synthetic inventory
+units and a £1 UK test-delivery rate. These are integration values only—not
+product, pricing, inventory, tax, fulfilment or shipping decisions.
+
+Install it only against the named Render development/staging database, after
+reviewing the target URL:
+
+```powershell
+$env:DATABASE_URL = "<Render external database URL>"
+$env:DATABASE_SSL = "true"
+$env:ALLOW_PRIVATE_CHECKOUT_STAGING_SEED = "true"
+$env:PRIVATE_CHECKOUT_STAGING_SEED_CONFIRM = "integration-test-fixture"
+npm run db:seed:private-checkout-staging
+Remove-Item Env:DATABASE_URL
+Remove-Item Env:DATABASE_SSL
+Remove-Item Env:ALLOW_PRIVATE_CHECKOUT_STAGING_SEED
+Remove-Item Env:PRIVATE_CHECKOUT_STAGING_SEED_CONFIRM
+```
+
+Expected output:
+
+```text
+Installed private checkout staging fixture: integration-test-fixture
+Shipping rate: 00000000-0000-4000-8000-000000000703
+```
+
+Staging evidence recorded on 5 September 2026: the guarded command completed
+against the named Render non-production database and returned both expected
+lines above. No database URL, credential or customer data is retained in this
+record. This confirms fixture installation only; it does not evidence a Mollie
+checkout, webhook, payment or refund rehearsal.
+
+The command refuses production mode, requires two explicit guard values and
+rejects database names that do not contain `development`, `staging` or `test`.
+It verifies the complete fixture before committing and rolls back on failure.
+It is idempotent, but must not be added to Render's build, pre-deploy or start
+commands.
+
 The following remains a launch-readiness task and needs explicit approval
 before execution:
 
