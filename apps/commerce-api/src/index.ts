@@ -8,7 +8,13 @@ export { PostgresTransactionRunner } from "./webhooks/postgres.js";
 export { CheckoutError, CheckoutService } from "./checkout/service.js";
 export { PostgresCheckoutRepository } from "./checkout/postgres.js";
 export { handleCheckoutRequest } from "./checkout/handler.js";
-export { createCustomerRuntime, customerRequestUrl, loadCustomerRouteGates, loadCustomerRuntimeOrigin } from "./runtime/customer-http.js";
+export {
+  createCustomerRuntime,
+  customerRequestUrl,
+  loadCustomerRouteGates,
+  loadCustomerRuntimeOrigin,
+  loadPrivateCheckoutFixtureEnabled,
+} from "./runtime/customer-http.js";
 export type { CustomerRouteGates } from "./runtime/customer-http.js";
 export { FulfilmentError, FulfilmentService } from "./fulfilment/service.js";
 export { ManualTestFulfilmentProvider } from "./fulfilment/manual-test.js";

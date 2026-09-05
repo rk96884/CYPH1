@@ -99,6 +99,12 @@ public HTTPS origin of this listener; it is used when verifying the receiving
 webhook endpoint and is never inferred from an untrusted request header. See
 `docs/operations/COMMERCE-CUSTOMER-RUNTIME.md` before any deployment.
 
+The private, not-for-sale development fixture remains unavailable unless
+`PRIVATE_CHECKOUT_FIXTURE_ENABLED=true`. That switch fails startup unless the
+checkout route, commerce gate, Mollie test adapter and manual test fulfilment
+boundary are all explicitly enabled. It must be returned to `false` after a
+controlled staging rehearsal.
+
 ## Database
 
 The schema is maintained as immutable, ordered PostgreSQL migrations in

@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createCustomerRuntime, customerRequestUrl, loadCustomerRouteGates, loadCustomerRuntimeOrigin } from "./customer-http.js";
+import {
+  createCustomerRuntime,
+  customerRequestUrl,
+  loadCustomerRouteGates,
+  loadCustomerRuntimeOrigin,
+  loadPrivateCheckoutFixtureEnabled,
+} from "./customer-http.js";
 
 const response = (name: string) => async (): Promise<Response> => new Response(name, { status: 200 });
 
@@ -55,6 +61,26 @@ test("customer readiness fails closed without diagnostic disclosure", async () =
 test("invalid route gate values fail closed at startup", () => {
   assert.throws(() => loadCustomerRouteGates({ CHECKOUT_HTTP_ENABLED: "yes" }), /must be either true or false/);
   assert.throws(() => loadCustomerRouteGates({ PAYMENT_WEBHOOKS_ENABLED: "TRUE" }), /must be either true or false/);
+});
+
+test("private checkout fixture access is disabled by default and requires the complete test boundary", () => {
+  assert.equal(loadPrivateCheckoutFixtureEnabled({}), false);
+  assert.equal(loadPrivateCheckoutFixtureEnabled({
+    PRIVATE_CHECKOUT_FIXTURE_ENABLED: "true",
+    CHECKOUT_HTTP_ENABLED: "true",
+    COMMERCE_ENABLED: "true",
+    PAYMENT_PROVIDER: "mollie-test",
+    FULFILMENT_MODE: "test",
+    FULFILMENT_PROVIDER: "manual-test",
+  }), true);
+  assert.throws(
+    () => loadPrivateCheckoutFixtureEnabled({ PRIVATE_CHECKOUT_FIXTURE_ENABLED: "true" }),
+    /requires reviewed test configuration/,
+  );
+  assert.throws(
+    () => loadPrivateCheckoutFixtureEnabled({ PRIVATE_CHECKOUT_FIXTURE_ENABLED: "TRUE" }),
+    /must be either true or false/,
+  );
 });
 
 test("customer request URLs use only the configured public HTTPS origin", () => {

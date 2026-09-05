@@ -48,6 +48,24 @@ export const loadCustomerRouteGates = (environment: Environment): CustomerRouteG
   paymentWebhooksEnabled: strictBoolean(environment.PAYMENT_WEBHOOKS_ENABLED, "PAYMENT_WEBHOOKS_ENABLED"),
 });
 
+export const loadPrivateCheckoutFixtureEnabled = (environment: Environment): boolean => {
+  const enabled = strictBoolean(environment.PRIVATE_CHECKOUT_FIXTURE_ENABLED, "PRIVATE_CHECKOUT_FIXTURE_ENABLED");
+  if (!enabled) return false;
+
+  const required = [
+    ["CHECKOUT_HTTP_ENABLED", "true"],
+    ["COMMERCE_ENABLED", "true"],
+    ["PAYMENT_PROVIDER", "mollie-test"],
+    ["FULFILMENT_MODE", "test"],
+    ["FULFILMENT_PROVIDER", "manual-test"],
+  ] as const;
+  const invalid = required.filter(([name, value]) => environment[name] !== value).map(([name]) => name);
+  if (invalid.length > 0) {
+    throw new Error(`PRIVATE_CHECKOUT_FIXTURE_ENABLED requires reviewed test configuration: ${invalid.join(", ")}.`);
+  }
+  return true;
+};
+
 export const createCustomerRuntime = (input: Readonly<{
   checkout: Handler;
   paymentWebhook: Handler;

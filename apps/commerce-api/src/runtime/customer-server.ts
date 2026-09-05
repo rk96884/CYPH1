@@ -8,7 +8,13 @@ import { createPaymentProviderRegistry } from "../payments/factory.js";
 import { handlePaymentWebhookRequest } from "../webhooks/handler.js";
 import { PostgresTransactionRunner } from "../webhooks/postgres.js";
 import { PaymentWebhookProcessor } from "../webhooks/processor.js";
-import { createCustomerRuntime, customerRequestUrl, loadCustomerRouteGates, loadCustomerRuntimeOrigin } from "./customer-http.js";
+import {
+  createCustomerRuntime,
+  customerRequestUrl,
+  loadCustomerRouteGates,
+  loadCustomerRuntimeOrigin,
+  loadPrivateCheckoutFixtureEnabled,
+} from "./customer-http.js";
 import { requestHeaders } from "./http.js";
 import { createRequestId } from "./observability.js";
 
@@ -18,6 +24,7 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required.");
 const port = Number(environment.PORT ?? "3000");
 if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) throw new Error("PORT must be a valid TCP port.");
 const gates = loadCustomerRouteGates(environment);
+const privateCheckoutFixtureEnabled = loadPrivateCheckoutFixtureEnabled(environment);
 const runtimeOrigin = loadCustomerRuntimeOrigin(environment);
 
 const pool = new pg.Pool({
@@ -49,7 +56,7 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
       new PostgresCheckoutRepository(pool, unitTaxMinor),
       paymentProvider,
       { orderStatusBaseUrl, cancellationBaseUrl, webhookUrl },
-      false,
+      privateCheckoutFixtureEnabled,
     );
     checkout = (request) => handleCheckoutRequest(request, service, { allowedOrigin });
   }

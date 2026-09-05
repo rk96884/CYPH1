@@ -26,11 +26,20 @@ default to false. Invalid values stop startup.
 | `CHECKOUT_HTTP_ENABLED` | `false` | Controls whether `/checkout` is routed |
 | `PAYMENT_WEBHOOKS_ENABLED` | `false` | Controls whether `/webhooks/mollie` is routed |
 | `COMMERCE_ENABLED` | `false` | Independently controls checkout initiation inside `CheckoutService` |
+| `PRIVATE_CHECKOUT_FIXTURE_ENABLED` | `false` | Allows only the private, not-for-sale fixture through the service boundary |
 
 Setting `CHECKOUT_HTTP_ENABLED=true` does not override `COMMERCE_ENABLED` or
 the payment and fulfilment dependency checks. Disabling checkout must use both
 the route-exposure and commerce-service gates. Webhook ingestion may remain
 available for in-flight payments while checkout is contained.
+
+`PRIVATE_CHECKOUT_FIXTURE_ENABLED=true` is valid only with
+`CHECKOUT_HTTP_ENABLED=true`, `COMMERCE_ENABLED=true`,
+`PAYMENT_PROVIDER=mollie-test`, `FULFILMENT_MODE=test` and
+`FULFILMENT_PROVIDER=manual-test`. Any incomplete or differently cased
+configuration fails startup. The switch does not publish a catalogue item or
+permit an active product; it admits the deliberately private fixture solely for
+the controlled rehearsal below.
 
 ## Required server-only configuration
 
@@ -134,15 +143,18 @@ before execution:
 
 1. Enable the webhook route in the reviewed test environment.
 2. Enable checkout routing and the underlying commerce gate for the synthetic
-   test fixture only.
+   test fixture only by setting `PRIVATE_CHECKOUT_FIXTURE_ENABLED=true` with
+   the complete test configuration documented above.
 3. Create a synthetic sandbox checkout and record its safe correlation IDs.
 4. Set `CHECKOUT_HTTP_ENABLED=false` and `COMMERCE_ENABLED=false`, then
    redeploy/restart.
 5. Confirm new checkout initiation is unavailable while the Mollie test webhook
    route remains reachable and processes the in-flight notification
    idempotently.
-6. Reconcile the synthetic order, then restore all gates to false unless the
-   accountable owner authorises continued staging use.
+6. Reconcile the synthetic order, then restore `CHECKOUT_HTTP_ENABLED`,
+   `COMMERCE_ENABLED`, `PAYMENT_WEBHOOKS_ENABLED` and
+   `PRIVATE_CHECKOUT_FIXTURE_ENABLED` to `false` unless the accountable owner
+   authorises continued staging use.
 
 Do not use a real customer identity, address, product, price or payment method
 for this exercise.
