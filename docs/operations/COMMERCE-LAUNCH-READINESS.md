@@ -11,7 +11,7 @@ This register separates evidence that can be produced by the repository from bus
 | --- | --- | --- |
 | Public-site build and type safety | `npm run check` and `npm run build` | Automated in CI |
 | Commerce domain and API behaviour | `npm run test:commerce` | Automated in CI |
-| Structural accessibility | Public and private generated-page audits, plus `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md` | Automated in CI; accountable private-interface manual review outstanding |
+| Structural accessibility | Public and private generated-page audits, plus `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md` | Automated baseline and local private-interface manual matrix passed; native settings, physical-device and production assistive-technology checks remain outstanding |
 | Internal links and contact links | `scripts/audit-links.mjs` against generated pages | Automated in CI |
 | First-party payload and JavaScript budget | `scripts/audit-performance.mjs` | Automated in CI; field performance outstanding |
 | Database migrations and constraints | Checksum-aware migration runner and `npm run db:verify` | Verified against development Render PostgreSQL; must be repeated per environment |

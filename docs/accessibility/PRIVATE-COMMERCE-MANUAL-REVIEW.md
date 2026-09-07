@@ -2,7 +2,7 @@
 
 **Scope:** Private checkout, checkout status states and restricted operations UI  
 **Standard:** WCAG 2.2 AA practical pre-launch review  
-**Status:** Visual, keyboard and screen-reader reviews passed; remaining manual checks outstanding
+**Status:** Local manual matrix passed; native settings and physical-device smoke tests remain outstanding
 
 This review complements the structural audit. It does not approve production
 commerce and must use synthetic test data only.
@@ -57,11 +57,11 @@ until it is corrected and retested.
 | --- | :---: | :---: | :---: | --- |
 | Keyboard only | [x] | [x] | [x] | Every control is reachable and operable in a logical order; focus is clearly visible; there is no keyboard trap. |
 | Screen reader | [x] | [x] | [x] | Page title, landmark, headings, labels, warnings, validation and status changes are announced meaningfully and without harmful repetition. |
-| 200% zoom | [ ] | [ ] | [ ] | Content and controls remain available without overlap, clipping or two-dimensional page scrolling. |
-| 400% zoom | [ ] | [ ] | [ ] | At a 1280 CSS-pixel viewport, content reflows to the equivalent of 320 CSS pixels without loss of information or operation. |
-| Mobile reflow | [ ] | [ ] | [ ] | At 320, 375 and 768 CSS pixels, content remains readable and controls do not overflow the viewport. |
-| Reduced motion | [ ] | [ ] | [ ] | With the operating-system preference enabled, no non-essential animation or smooth scrolling remains. |
-| High contrast | [ ] | [ ] | [ ] | In Windows Contrast Themes, text, inputs, buttons, boundaries and keyboard focus remain distinguishable. |
+| 200% zoom | [x] | [x] | [x] | Content and controls remain available without overlap, clipping or two-dimensional page scrolling. |
+| 400% zoom | [x] | [x] | [x] | At a 1280 CSS-pixel viewport, content reflows to the equivalent of 320 CSS pixels without loss of information or operation. |
+| Mobile reflow | [x] | [x] | [x] | At 320, 375 and 768 CSS pixels, content remains readable and controls do not overflow the viewport. |
+| Reduced motion | [x] | [x] | [x] | With reduced motion emulated, no non-essential animation or smooth scrolling remains. Repeat with the native operating-system preference before launch. |
+| High contrast | [x] | [x] | [x] | With forced colours emulated, text, inputs, buttons, boundaries and keyboard focus remain distinguishable. Repeat with Windows Contrast Themes before launch. |
 
 ## Interaction details
 
@@ -129,3 +129,5 @@ commit and software versions.
 | --- | --- | --- | --- |
 | 7 September 2026 | Project owner | Local production fixture in Microsoft Edge | Visual and keyboard checks passed across checkout, all four status states and operations. Operations header-divider spacing was aligned with the other private pages. Operations failures were given an explicit `Error:` prefix and the accessible error colour; successful outcomes received the success colour. Structural audit passed after remediation. At this review stage, screen-reader, 200%/400% zoom, physical-mobile, reduced-motion and high-contrast checks remained open. |
 | 7 September 2026 | Project owner | Local production fixture with NVDA | Screen-reader checks passed across checkout, all four status states and operations. Page structure, form controls and outcome messages were announced as expected; the labelled native date inputs remained the accessible controls and the decorative calendar graphics did not require separate names. NVDA and browser version numbers remain to be added to the evidence record. |
+| 7 September 2026 | Project owner | Local production fixture in Microsoft Edge | All six private routes passed at 200% and 400% browser zoom and at responsive viewport widths of 320, 375 and 768 CSS pixels. Content and controls remained available without overlap, clipping or horizontal page scrolling. Reduced-motion and high-contrast checks remain open. |
+| 7 September 2026 | Project owner | Local production fixture using Edge Rendering emulation | All six private routes passed with `prefers-reduced-motion: reduce` and `forced-colors: active`. The SVG brand mark was initially suppressed in forced colours; a system-coloured `CYPH/1` text fallback was added and aligned with the header divider, then approved across all routes. Native Windows settings and a physical-device smoke test remain launch follow-ups. |

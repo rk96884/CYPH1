@@ -211,7 +211,11 @@ Implementation baseline completed:
 - Checkout and operations status changes use live regions; failed checkout and revealed order details receive programmatic focus.
 - CI builds an isolated private fixture and audits landmarks, labels, numeric constraints, status announcements, indexing directives and mobile-source safeguards.
 - `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md` defines the exact isolated fixture, route matrix, assistive-technology checks, pass criteria and evidence record.
-- Manual keyboard, screen-reader, 200%/400% zoom, mobile-device and reduced-motion checks remain an accountable launch-readiness action; automated structure does not constitute manual sign-off.
+- Local keyboard, NVDA screen-reader, 200%/400% zoom, responsive-reflow,
+  reduced-motion and forced-colours checks passed on 7 September 2026 after
+  remediation. Native operating-system settings, a physical-device smoke test
+  and production assistive-technology checks remain accountable launch actions;
+  automated structure does not constitute final launch sign-off.
 
 ### 4.6 Protected staging identity boundary
 
