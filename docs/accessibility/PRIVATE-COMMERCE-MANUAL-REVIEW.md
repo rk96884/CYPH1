@@ -2,7 +2,7 @@
 
 **Scope:** Private checkout, checkout status states and restricted operations UI  
 **Standard:** WCAG 2.2 AA practical pre-launch review  
-**Status:** Visual and keyboard review passed; remaining manual checks outstanding
+**Status:** Visual, keyboard and screen-reader reviews passed; remaining manual checks outstanding
 
 This review complements the structural audit. It does not approve production
 commerce and must use synthetic test data only.
@@ -56,7 +56,7 @@ until it is corrected and retested.
 | Check | Checkout | Four status states | Operations | Pass criteria |
 | --- | :---: | :---: | :---: | --- |
 | Keyboard only | [x] | [x] | [x] | Every control is reachable and operable in a logical order; focus is clearly visible; there is no keyboard trap. |
-| Screen reader | [ ] | [ ] | [ ] | Page title, landmark, headings, labels, warnings, validation and status changes are announced meaningfully and without harmful repetition. |
+| Screen reader | [x] | [x] | [x] | Page title, landmark, headings, labels, warnings, validation and status changes are announced meaningfully and without harmful repetition. |
 | 200% zoom | [ ] | [ ] | [ ] | Content and controls remain available without overlap, clipping or two-dimensional page scrolling. |
 | 400% zoom | [ ] | [ ] | [ ] | At a 1280 CSS-pixel viewport, content reflows to the equivalent of 320 CSS pixels without loss of information or operation. |
 | Mobile reflow | [ ] | [ ] | [ ] | At 320, 375 and 768 CSS pixels, content remains readable and controls do not overflow the viewport. |
@@ -127,4 +127,5 @@ commit and software versions.
 
 | Date | Reviewer | Environment | Result |
 | --- | --- | --- | --- |
-| 7 September 2026 | Project owner | Local production fixture in Microsoft Edge | Visual and keyboard checks passed across checkout, all four status states and operations. Operations header-divider spacing was aligned with the other private pages. Operations failures were given an explicit `Error:` prefix and the accessible error colour; successful outcomes received the success colour. Structural audit passed after remediation. Screen-reader, 200%/400% zoom, physical-mobile, reduced-motion and high-contrast checks remain open. |
+| 7 September 2026 | Project owner | Local production fixture in Microsoft Edge | Visual and keyboard checks passed across checkout, all four status states and operations. Operations header-divider spacing was aligned with the other private pages. Operations failures were given an explicit `Error:` prefix and the accessible error colour; successful outcomes received the success colour. Structural audit passed after remediation. At this review stage, screen-reader, 200%/400% zoom, physical-mobile, reduced-motion and high-contrast checks remained open. |
+| 7 September 2026 | Project owner | Local production fixture with NVDA | Screen-reader checks passed across checkout, all four status states and operations. Page structure, form controls and outcome messages were announced as expected; the labelled native date inputs remained the accessible controls and the decorative calendar graphics did not require separate names. NVDA and browser version numbers remain to be added to the evidence record. |
