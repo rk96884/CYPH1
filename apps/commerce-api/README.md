@@ -105,6 +105,14 @@ checkout route, commerce gate, Mollie test adapter and manual test fulfilment
 boundary are all explicitly enabled. It must be returned to `false` after a
 controlled staging rehearsal.
 
+An enabled checkout route also requires explicit
+`CHECKOUT_ADMISSION_MAX_CONCURRENT`, `CHECKOUT_ADMISSION_WINDOW_REQUESTS` and
+`CHECKOUT_ADMISSION_WINDOW_SECONDS` values. The per-process controller bounds
+concurrent and rolling-window checkout initiation only. It deliberately does
+not limit payment webhooks, health/readiness or protected operations. Treat it
+as a last-resort application guard, not a replacement for reviewed edge rate
+limiting on the public custom domain.
+
 ## Database
 
 The schema is maintained as immutable, ordered PostgreSQL migrations in

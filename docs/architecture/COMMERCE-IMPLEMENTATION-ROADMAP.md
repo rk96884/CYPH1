@@ -460,6 +460,28 @@ Implementation baseline completed:
 - First update review, removal of the temporary exception, deployed
   Render/PostgreSQL review and production ownership remain launch gates.
 
+### 4.18 Checkout abuse and rate-limit protection
+
+- Bound concurrent and rolling-window checkout initiation without applying the
+  limit to payment webhooks, health/readiness or protected operations.
+- Reject missing or unsafe configuration at startup and return a generic,
+  retryable saturation response before database/provider work.
+- Avoid trusting forwarded client-IP headers or storing a new customer
+  identifier solely for rate limiting.
+- Define the Cloudflare edge, direct-origin and bounded staging-test gates.
+
+Implementation baseline completed:
+
+- The customer runtime now requires explicit admission limits whenever checkout
+  routing is enabled and applies them to `POST /checkout` only.
+- Unit tests cover configuration bounds, rolling-window recovery, concurrent
+  saturation, CORS, non-POST requests and capacity release after failure.
+- `docs/operations/CHECKOUT-ABUSE-AND-RATE-LIMITING.md` documents the layered
+  boundary, limitations, monitoring and controlled synthetic exercise.
+- Cloudflare policy configuration, direct-origin restriction, capacity-based
+  thresholds, provider-safe load evidence and production alert ownership remain
+  launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

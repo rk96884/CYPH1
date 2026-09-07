@@ -17,6 +17,11 @@ import {
 } from "./customer-http.js";
 import { requestHeaders } from "./http.js";
 import { createRequestId } from "./observability.js";
+import {
+  CheckoutAdmissionController,
+  loadCheckoutAdmissionConfig,
+  withCheckoutAdmission,
+} from "./checkout-admission.js";
 
 const environment = process.env;
 const databaseUrl = environment.DATABASE_URL?.trim();
@@ -58,7 +63,12 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
       { orderStatusBaseUrl, cancellationBaseUrl, webhookUrl },
       privateCheckoutFixtureEnabled,
     );
-    checkout = (request) => handleCheckoutRequest(request, service, { allowedOrigin });
+    const admission = new CheckoutAdmissionController(loadCheckoutAdmissionConfig(environment));
+    checkout = withCheckoutAdmission(
+      (request) => handleCheckoutRequest(request, service, { allowedOrigin }),
+      admission,
+      allowedOrigin,
+    );
   }
   if (gates.paymentWebhooksEnabled) {
     const processor = new PaymentWebhookProcessor(paymentProvider, new PostgresTransactionRunner(pool));

@@ -28,6 +28,12 @@ default to false. Invalid values stop startup.
 | `COMMERCE_ENABLED` | `false` | Independently controls checkout initiation inside `CheckoutService` |
 | `PRIVATE_CHECKOUT_FIXTURE_ENABLED` | `false` | Allows only the private, not-for-sale fixture through the service boundary |
 
+When `CHECKOUT_HTTP_ENABLED=true`, the runtime also requires explicit
+`CHECKOUT_ADMISSION_MAX_CONCURRENT`, `CHECKOUT_ADMISSION_WINDOW_REQUESTS` and
+`CHECKOUT_ADMISSION_WINDOW_SECONDS` values. See
+`CHECKOUT-ABUSE-AND-RATE-LIMITING.md`. The application controller limits only
+checkout initiation; it never limits payment webhooks or health/readiness.
+
 Setting `CHECKOUT_HTTP_ENABLED=true` does not override `COMMERCE_ENABLED` or
 the payment and fulfilment dependency checks. Disabling checkout must use both
 the route-exposure and commerce-service gates. Webhook ingestion may remain
@@ -55,6 +61,7 @@ authorised test deployment requires reviewed values for:
 - `PRIVATE_CHECKOUT_UNIT_TAX_MINOR` (integration fixture only);
 - `PAYMENT_CALLBACK_ORIGINS`;
 - `MOLLIE_API_KEY` using a `test_` credential only.
+- the three `CHECKOUT_ADMISSION_*` values whenever checkout routing is enabled.
 
 None may use the `PUBLIC_` prefix. Do not copy secrets into GitHub issues,
 screenshots, logs or this runbook.

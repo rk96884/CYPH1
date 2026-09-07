@@ -32,7 +32,7 @@ Protect order and contact data, provider and database credentials, authoritative
 | Test system creates live side effect | Test-only Mollie key enforcement; manual fulfilment/communication adapters; disabled defaults | Separate deployment accounts/credentials and keep production gate closed |
 | Database compromise or data loss | Private connection, least privilege, migrations and audit records | Backup restore rehearsal, retention approval and database access review |
 | Dependency or CI compromise | Locked dependencies and read-only quality-workflow token | Dependency review and protected-branch/ruleset review |
-| Denial of service or abusive checkout | Fail-closed provider handling | Add rate limiting and load/soak evidence before public checkout |
+| Denial of service or abusive checkout | Explicit per-process checkout admission, bounded bodies, idempotency and fail-closed provider handling | Configure Cloudflare checkout-only policy, prevent direct-origin bypass and obtain load/soak evidence before public checkout |
 
 ## Data minimisation
 
