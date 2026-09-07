@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@cyph1/commerce-core": "0.0.0",
-    "jose": "^6.2.10",
+    "jose": "^6.2.11",
     "pg": "^8.23.0"
   },
   "devDependencies": {
