@@ -27,6 +27,7 @@ This register separates evidence that can be produced by the repository from bus
 | Database recovery verification | Guarded source/restore comparison checks migration history and aggregate row counts without reading personal-data fields | Engineering command and isolated-restore runbook covered; first logical restore, paid Render PITR and off-platform schedule remain outstanding |
 | Dependency vulnerability baseline | Locked install plus fail-closed production audit and narrowly matched, expiring build-tool exception; weekly npm and GitHub Actions update monitoring | Production audit clean; temporary Astro language-server exception expires 8 October 2026; deployed runtime review and ownership remain outstanding |
 | Checkout abuse boundary | Explicit per-process concurrency and rolling-window admission protects checkout without limiting webhooks | Automated application baseline covered; Cloudflare policy, direct-origin restriction, staging burst evidence and production thresholds remain outstanding |
+| Read-only staging performance | Bounded exact-response health/readiness probe with request, concurrency, timeout and p95 limits | Harness covered in CI; first 40-request staging probe passed on 7 September 2026 with p95 198 ms and post-probe monitor run #50 passed; resource evidence and production capacity interpretation outstanding |
 
 ## Engineering tests still required
 

@@ -487,6 +487,33 @@ Implementation baseline completed:
   thresholds, provider-safe load evidence and production alert ownership remain
   launch gates.
 
+### 4.19 Read-only staging performance and resilience probe
+
+- Provide a bounded load signal without creating orders or contacting commerce
+  providers.
+- Enforce exact health/readiness responses, timeouts, concurrency and request
+  ceilings, and an explicit synthetic-run confirmation.
+- Record percentile latency and failures without logging response bodies or
+  identifiers.
+- Preserve separately approved checkout, webhook and provider exercises as
+  launch gates.
+
+Implementation baseline completed:
+
+- `scripts/check-commerce-staging-load.mjs` performs 2–200 alternating read-only
+  health/readiness requests with no more than ten concurrent requests.
+- The probe fails on any unexpected response and on an explicit p95 threshold;
+  its configuration and runner have deterministic unit coverage in CI.
+- `docs/operations/COMMERCE-PERFORMANCE-AND-RESILIENCE.md` defines the controlled
+  staging procedure, acceptance criteria, evidence fields and deferred work.
+- The first read-only staging run passed on 7 September 2026: 40 requests at
+  concurrency 4 produced zero invalid responses, p50 63 ms, p95 198 ms and a
+  240 ms maximum against a 2,000 ms p95 threshold. Commerce staging monitor run
+  #50 passed immediately afterwards against `c90ac74`.
+- Checkout-specific burst and webhook-continuity exercises, longer soak tests,
+  provider resource evidence and production capacity approval remain
+  outstanding.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
