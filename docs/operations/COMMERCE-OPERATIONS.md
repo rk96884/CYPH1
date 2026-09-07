@@ -30,7 +30,10 @@ The route is `/private-operations/<slug>/`, carries `noindex`, and is excluded f
 - Search recent orders by order number and inspect their audit timeline, payments, refunds and fulfilments.
 - Submit a partial or full refund using an approved reason and unique idempotency key. The API rechecks the provider's authoritative refundable balance.
 - Requeue only a failed `payment.paid` outbox event. Reprocessing uses the original fulfilment/provider idempotency key.
-- Export up to 5,000 reconciliation rows over no more than 31 days. The export excludes customer/address data and neutralises spreadsheet formula prefixes.
+- Export up to 5,000 reconciliation rows over no more than 31 days. The export
+  includes every payment attempt plus checkout and refund exception totals for
+  orders, payments or refunds active in the selected interval. It excludes
+  customer/address data and neutralises spreadsheet formula prefixes.
 
 Every mutation records the operator, correlation ID and a non-sensitive summary in `audit_events`. Durable `operator_commands` reject idempotency-key reuse with different request content.
 

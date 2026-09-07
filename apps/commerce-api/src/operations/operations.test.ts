@@ -35,10 +35,12 @@ test("permission-controlled refund uses provider contract",async()=>{
 });
 
 test("reconciliation requires bounded dates and escapes spreadsheet formulae",async()=>{
-  const rows={...repository,reconciliationRows:async()=>[{order_number:"=unsafe",created_at:"2026-01-01",order_status:"paid"}]};
+  const rows={...repository,reconciliationRows:async()=>[{order_number:"=unsafe",order_created_at:"2026-01-01",order_status:"paid",customer_email:"private@example.test"}]};
   const local=new OperationsService(rows,{getConfiguredProvider:()=>provider,getProvider:()=>provider});
   const response=await handleOperationsRequest(new Request("https://ops.test/operations/reconciliation.csv?from=2026-01-01&to=2026-01-02"),local,{id:"finance",permissions:["reconciliation:export"]});
-  assert.equal(response.status,200); assert.match(await response.text(),/"'=unsafe"/);
+  assert.equal(response.status,200); const body=await response.text(); assert.match(body,/"'=unsafe"/);
+  assert.match(body,/"checkout_state"/); assert.match(body,/"resolution_required_refund_minor"/);
+  assert.doesNotMatch(body,/private@example\.test/);
   assert.equal(response.headers.get("X-Frame-Options"),"DENY");
   assert.equal(response.headers.get("Referrer-Policy"),"no-referrer");
 });

@@ -105,13 +105,38 @@ export class PostgresOperationsRepository implements OperationsRepository {
   }
 
   async reconciliationRows(from: string, to: string, limit: number) {
-    const result = await this.pool.query(`SELECT o.order_number, o.created_at, o.status AS order_status, o.fulfilment_status, o.currency, o.total_minor,
-      p.provider, p.provider_payment_id, p.status AS payment_status, p.amount_minor,
-      COALESCE((SELECT sum(r.amount_minor) FROM refunds r WHERE r.payment_id=p.id AND r.status='completed'),0) AS refunded_minor,
+    const result = await this.pool.query(`SELECT
+      o.order_number, o.created_at AS order_created_at, o.status AS order_status,
+      o.fulfilment_status, o.currency, o.total_minor,
+      cs.state AS checkout_state, cs.failure_code AS checkout_failure_code,
+      p.provider, p.provider_payment_id, p.created_at AS payment_created_at,
+      p.status AS payment_status, p.amount_minor,
+      COALESCE(ra.refunded_minor, 0) AS refunded_minor,
+      COALESCE(ra.open_refund_minor, 0) AS open_refund_minor,
+      COALESCE(ra.resolution_required_refund_minor, 0) AS resolution_required_refund_minor,
+      COALESCE(ra.failed_refund_minor, 0) AS failed_refund_minor,
+      COALESCE(ra.refund_count, 0) AS refund_count,
       f.provider_reference AS fulfilment_reference, f.status AS fulfilment_record_status
-      FROM orders o LEFT JOIN LATERAL (SELECT * FROM payments WHERE order_id=o.id ORDER BY created_at DESC LIMIT 1) p ON true
-      LEFT JOIN LATERAL (SELECT * FROM fulfilments WHERE order_id=o.id ORDER BY created_at DESC LIMIT 1) f ON true
-      WHERE o.created_at >= $1::timestamptz AND o.created_at < $2::timestamptz ORDER BY o.created_at LIMIT $3`, [from, to, limit]);
+      FROM orders o
+      LEFT JOIN checkout_sessions cs ON cs.order_id = o.id
+      LEFT JOIN payments p ON p.order_id = o.id
+      LEFT JOIN LATERAL (
+        SELECT
+          COALESCE(sum(r.amount_minor) FILTER (WHERE r.status = 'completed'), 0) AS refunded_minor,
+          COALESCE(sum(r.amount_minor) FILTER (WHERE r.status IN ('created', 'pending')), 0) AS open_refund_minor,
+          COALESCE(sum(r.amount_minor) FILTER (WHERE r.status = 'resolution_required'), 0) AS resolution_required_refund_minor,
+          COALESCE(sum(r.amount_minor) FILTER (WHERE r.status IN ('failed', 'cancelled')), 0) AS failed_refund_minor,
+          count(r.id) AS refund_count,
+          bool_or(r.created_at >= $1::timestamptz AND r.created_at < $2::timestamptz) AS has_activity
+        FROM refunds r WHERE r.payment_id = p.id
+      ) ra ON true
+      LEFT JOIN LATERAL (
+        SELECT * FROM fulfilments WHERE order_id = o.id ORDER BY created_at DESC LIMIT 1
+      ) f ON true
+      WHERE (o.created_at >= $1::timestamptz AND o.created_at < $2::timestamptz)
+         OR (p.created_at >= $1::timestamptz AND p.created_at < $2::timestamptz)
+         OR COALESCE(ra.has_activity, false)
+      ORDER BY o.created_at, p.created_at NULLS FIRST LIMIT $3`, [from, to, limit]);
     return Object.freeze(result.rows);
   }
 

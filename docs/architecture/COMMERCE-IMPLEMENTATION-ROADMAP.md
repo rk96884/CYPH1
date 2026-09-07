@@ -351,6 +351,25 @@ Implementation baseline completed:
 - A Mollie sandbox timeout, webhook-continuity and ambiguous-refund exercise
   remains outstanding until the reviewed test organisation/key are available.
 
+### 4.13 Daily payment, order and refund reconciliation
+
+- Compare every provider payment/refund with local order and payment state.
+- Surface ambiguous checkouts/refunds and multiple payment attempts explicitly.
+- Keep customer identity, addresses and payment credentials out of the export.
+- Define exception ownership, close criteria and privacy-safe evidence.
+
+Implementation baseline completed:
+
+- The protected reconciliation CSV now returns every payment attempt, retains
+  orders without a payment, and includes activity on older orders when a payment
+  or refund was created in the selected interval.
+- Checkout state plus completed, open, ambiguous and failed refund totals are
+  exported explicitly without customer/address fields.
+- `docs/operations/DAILY-PAYMENT-RECONCILIATION.md` defines UTC intervals,
+  provider matching, exception classes, clean-close criteria and evidence.
+- Mollie sandbox balancing, finance approval, production schedule and independent
+  review remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

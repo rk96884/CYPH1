@@ -64,7 +64,9 @@ The following require accountable human sign-off and cannot be completed by auto
       production incident ownership and notification verification remain open.
 - [x] Payment-provider outage and ambiguous-payment engineering procedure
       documented; Mollie sandbox exercise and production ownership remain open.
-- [ ] Daily payment/order/refund reconciliation.
+- [x] Daily payment/order/refund reconciliation engineering procedure and
+      exception-capable export documented; Mollie sandbox exercise, finance
+      approval and production ownership remain open.
 - [ ] Fulfilment outage and manual-review processing.
 - [ ] Personal-data incident escalation.
 - [x] Controlled rollback and commerce-disable engineering procedure

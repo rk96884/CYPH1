@@ -15,7 +15,13 @@ const safeCsv = (value: unknown): string => {
   return `"${text.replace(/"/g, '""')}"`;
 };
 const csv = (rows: readonly Readonly<Record<string, unknown>>[]): string => {
-  const columns = ["order_number","created_at","order_status","fulfilment_status","currency","total_minor","provider","provider_payment_id","payment_status","amount_minor","refunded_minor","fulfilment_reference","fulfilment_record_status"];
+  const columns = [
+    "order_number", "order_created_at", "order_status", "fulfilment_status", "currency", "total_minor",
+    "checkout_state", "checkout_failure_code", "provider", "provider_payment_id", "payment_created_at",
+    "payment_status", "amount_minor", "refunded_minor", "open_refund_minor",
+    "resolution_required_refund_minor", "failed_refund_minor", "refund_count",
+    "fulfilment_reference", "fulfilment_record_status",
+  ];
   return [columns.map(safeCsv).join(","), ...rows.map((row) => columns.map((column) => safeCsv(row[column])).join(","))].join("\r\n");
 };
 
