@@ -62,7 +62,8 @@ The following require accountable human sign-off and cannot be completed by auto
 
 - [x] Staging commerce incident ownership and alert-routing baseline documented;
       production incident ownership and notification verification remain open.
-- [ ] Payment-provider outage and ambiguous-payment handling.
+- [x] Payment-provider outage and ambiguous-payment engineering procedure
+      documented; Mollie sandbox exercise and production ownership remain open.
 - [ ] Daily payment/order/refund reconciliation.
 - [ ] Fulfilment outage and manual-review processing.
 - [ ] Personal-data incident escalation.

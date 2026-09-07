@@ -329,6 +329,28 @@ Implementation baseline completed:
   containment contract. A protected staging deployment and controlled
   checkout-disable/webhook-continuity rehearsal remain outstanding.
 
+### 4.12 Payment-provider outage and ambiguous-payment handling
+
+- Separate definitive rejection from an outcome that may have succeeded at the
+  provider.
+- Contain new checkout without interrupting verified webhooks for in-flight
+  payments.
+- Prevent replacement payment/refund attempts until the original provider state
+  is authoritative and reconciled.
+- Define privacy-safe evidence, recovery checks and re-enable ownership.
+
+Implementation baseline completed:
+
+- `docs/operations/PAYMENT-PROVIDER-OUTAGE.md` maps existing checkout, webhook
+  and refund failure states to explicit operator decisions and escalation.
+- The procedure preserves `resolution_required` records, provider idempotency
+  evidence and immutable payment/audit history; ad-hoc database resolution is
+  prohibited.
+- Checkout containment retains independently gated verified webhook processing,
+  followed by a bounded reconciliation window and deliberate re-enable step.
+- A Mollie sandbox timeout, webhook-continuity and ambiguous-refund exercise
+  remains outstanding until the reviewed test organisation/key are available.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
