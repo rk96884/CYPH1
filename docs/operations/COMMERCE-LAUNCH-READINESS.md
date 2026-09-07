@@ -11,7 +11,7 @@ This register separates evidence that can be produced by the repository from bus
 | --- | --- | --- |
 | Public-site build and type safety | `npm run check` and `npm run build` | Automated in CI |
 | Commerce domain and API behaviour | `npm run test:commerce` | Automated in CI |
-| Structural accessibility | `scripts/audit-accessibility.mjs` across generated public pages | Automated in CI; manual assistive-technology testing outstanding |
+| Structural accessibility | Public and private generated-page audits, plus `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md` | Automated in CI; accountable private-interface manual review outstanding |
 | Internal links and contact links | `scripts/audit-links.mjs` against generated pages | Automated in CI |
 | First-party payload and JavaScript budget | `scripts/audit-performance.mjs` | Automated in CI; field performance outstanding |
 | Database migrations and constraints | Checksum-aware migration runner and `npm run db:verify` | Verified against development Render PostgreSQL; must be repeated per environment |
@@ -30,8 +30,9 @@ This register separates evidence that can be produced by the repository from bus
 
 ## Engineering tests still required
 
-- Keyboard-only, screen-reader and zoom testing of every private commerce state at small mobile, large mobile, tablet, laptop and wide desktop widths.
-- Reduced-motion verification for private commerce UI.
+- Complete and retain the keyboard-only, screen-reader, 200%/400% zoom,
+  mobile-device, reduced-motion and high-contrast evidence in
+  `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md`.
 - Checkout provider timeout, ambiguous response and abandoned-session exercises against the provider sandbox.
 - Full and partial refund, cancellation, return and dispute scenarios against provider and fulfilment sandboxes.
 - Database interruption, worker restart, retry exhaustion and provider-outage exercises.
