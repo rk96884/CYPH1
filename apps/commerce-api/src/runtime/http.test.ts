@@ -39,9 +39,29 @@ test("runtime readiness fails closed without exposing database details", async (
   assert.deepEqual(await response.json(), { status: "unavailable" });
 });
 
+test("operations liveness remains available and readiness recovers after a database interruption", async () => {
+  let databaseAvailable = true;
+  let readinessChecks = 0;
+  const runtime = createOperationsRuntime(async () => new Response("protected"), async () => {
+    readinessChecks += 1;
+    if (!databaseAvailable) throw new Error("synthetic database interruption");
+  });
+
+  assert.equal((await runtime(new Request("https://runtime.invalid/ready"))).status, 200);
+  databaseAvailable = false;
+  const unavailable = await runtime(new Request("https://runtime.invalid/ready"));
+  assert.equal(unavailable.status, 503);
+  assert.deepEqual(await unavailable.json(), { status: "unavailable" });
+  assert.equal((await runtime(new Request("https://runtime.invalid/health"))).status, 200);
+  databaseAvailable = true;
+  const recovered = await runtime(new Request("https://runtime.invalid/ready"));
+  assert.equal(recovered.status, 200);
+  assert.deepEqual(await recovered.json(), { status: "ready" });
+  assert.equal(readinessChecks, 3);
+});
+
 test("incoming header conversion preserves repeated values", () => {
   const headers = requestHeaders({ "cf-access-jwt-assertion": "token", "x-example": ["one", "two"] });
   assert.equal(headers.get("cf-access-jwt-assertion"), "token");
   assert.equal(headers.get("x-example"), "one, two");
 });
-

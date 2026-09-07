@@ -58,6 +58,31 @@ test("customer readiness fails closed without diagnostic disclosure", async () =
   assert.equal(result.headers.get("x-frame-options"), "DENY");
 });
 
+test("customer liveness remains available and readiness recovers after a database interruption", async () => {
+  let databaseAvailable = true;
+  let readinessChecks = 0;
+  const runtime = createCustomerRuntime({
+    checkout: response("checkout"), paymentWebhook: response("webhook"),
+    readiness: async () => {
+      readinessChecks += 1;
+      if (!databaseAvailable) throw new Error("synthetic database interruption");
+    },
+    gates: { checkoutEnabled: false, paymentWebhooksEnabled: false },
+  });
+
+  assert.equal((await runtime(new Request("https://example.test/ready"))).status, 200);
+  databaseAvailable = false;
+  const unavailable = await runtime(new Request("https://example.test/ready"));
+  assert.equal(unavailable.status, 503);
+  assert.deepEqual(await unavailable.json(), { status: "unavailable" });
+  assert.equal((await runtime(new Request("https://example.test/health"))).status, 200);
+  databaseAvailable = true;
+  const recovered = await runtime(new Request("https://example.test/ready"));
+  assert.equal(recovered.status, 200);
+  assert.deepEqual(await recovered.json(), { status: "ready" });
+  assert.equal(readinessChecks, 3);
+});
+
 test("invalid route gate values fail closed at startup", () => {
   assert.throws(() => loadCustomerRouteGates({ CHECKOUT_HTTP_ENABLED: "yes" }), /must be either true or false/);
   assert.throws(() => loadCustomerRouteGates({ PAYMENT_WEBHOOKS_ENABLED: "TRUE" }), /must be either true or false/);

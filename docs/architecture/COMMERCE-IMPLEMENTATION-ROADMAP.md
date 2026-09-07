@@ -514,6 +514,28 @@ Implementation baseline completed:
   provider resource evidence and production capacity approval remain
   outstanding.
 
+### 4.20 Database interruption and runtime recovery baseline
+
+- Fail dependency readiness closed without disclosing database diagnostics.
+- Keep process liveness independent from database readiness.
+- Recheck the dependency on every readiness request so recovery does not depend
+  on cached failure state.
+- Define a reversible managed staging exercise without risking the current
+  development database.
+
+Implementation baseline completed:
+
+- Customer and operations runtime tests cover healthy, interrupted and recovered
+  readiness while liveness remains available.
+- Both runtimes already issue a fresh PostgreSQL readiness query per request and
+  return only generic `ready` or `unavailable` states.
+- `docs/operations/DATABASE-INTERRUPTION-AND-RUNTIME-RECOVERY.md` records the
+  expected transitions, stop conditions, recovery validation and evidence
+  fields.
+- PostgreSQL driver/network recovery, alert delivery, schema/invariant checks
+  and restart-free recovery against an isolated managed database remain
+  deferred until a suitable paid staging target is approved.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
