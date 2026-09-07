@@ -49,8 +49,13 @@ screenshots or support messages. Rotate credentials immediately if exposed.
 ## Backup policy
 
 Render Hobby provides a three-day point-in-time recovery window for paid
-Postgres instances. Before launch, add a nightly encrypted `pg_dump` in custom
-format to an approved storage account outside Render.
+Postgres instances. Render Free Postgres provides no managed backups or
+point-in-time recovery and expires after 30 days; workspace plan and database
+compute plan are separate. Before launch, add a nightly encrypted `pg_dump` in
+custom format to an approved storage account outside Render.
+
+Follow `DATABASE-BACKUP-AND-RESTORE-REHEARSAL.md` for the guarded logical backup,
+isolated restore and privacy-safe comparison procedure.
 
 Minimum controls:
 

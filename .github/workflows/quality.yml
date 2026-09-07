@@ -39,6 +39,9 @@ jobs:
       - name: Test staging monitor behaviour
         run: npm run test:staging-monitor
 
+      - name: Test database restore verifier safeguards
+        run: npm run test:database-restore
+
       - name: Audit commerce secret boundaries
         run: npm run audit:commerce-security
 

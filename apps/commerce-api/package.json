@@ -11,7 +11,9 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed:development": "node scripts/seed-development.mjs",
     "db:seed:private-checkout-staging": "node scripts/seed-private-checkout-staging.mjs",
-    "db:verify": "node scripts/verify-schema.mjs"
+    "db:verify": "node scripts/verify-schema.mjs",
+    "db:verify:restore": "node scripts/verify-restored-database.mjs",
+    "test:restore-verifier": "node --test scripts/verify-restored-database.test.mjs"
   },
   "dependencies": {
     "@cyph1/commerce-core": "0.0.0",

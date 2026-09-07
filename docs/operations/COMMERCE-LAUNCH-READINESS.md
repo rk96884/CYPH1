@@ -24,6 +24,7 @@ This register separates evidence that can be produced by the repository from bus
 | Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
 | Staging incident ownership | Role-based staging response and escalation runbook covering GitHub, Render, Cloudflare Access and database signals | Project owner is accountable for staging; notification-channel tests, independent backup and production ownership remain outstanding |
 | Customer runtime route isolation | Separate runtime exposes generic health/readiness plus independently gated checkout and Mollie webhook routes; operations paths remain absent | Automated baseline, protected staging deployment, guarded synthetic fixture and read-only route-gate verifier covered; Mollie checkout-disable/webhook-continuity rehearsal outstanding |
+| Database recovery verification | Guarded source/restore comparison checks migration history and aggregate row counts without reading personal-data fields | Engineering command and isolated-restore runbook covered; first logical restore, paid Render PITR and off-platform schedule remain outstanding |
 
 ## Engineering tests still required
 
@@ -33,7 +34,8 @@ This register separates evidence that can be produced by the repository from bus
 - Full and partial refund, cancellation, return and dispute scenarios against provider and fulfilment sandboxes.
 - Database interruption, worker restart, retry exhaustion and provider-outage exercises.
 - Load and soak tests using synthetic records only; no production personal data.
-- Restore rehearsal from a Render backup or approved database export.
+- First isolated logical restore, paid Render PITR rehearsal and off-platform
+  backup-schedule verification.
 
 ## Security and access review
 

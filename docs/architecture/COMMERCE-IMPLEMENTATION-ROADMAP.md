@@ -415,6 +415,29 @@ Implementation baseline completed:
   communication templates and a synthetic tabletop exercise remain launch
   gates.
 
+### 4.16 Database backup and restore rehearsal
+
+- Create a logical backup without changing or locking the staging application.
+- Restore only into a separately named empty database and prohibit destructive
+  restore flags against useful data.
+- Compare migration history and aggregate row counts without reading personal
+  data, then run the transactional schema verifier.
+- Record privacy-safe recovery evidence and clean up the temporary copy.
+
+Implementation baseline completed:
+
+- `docs/operations/DATABASE-BACKUP-AND-RESTORE-REHEARSAL.md` documents the Free
+  Postgres limitations, guarded backup/restore steps and production paid-plan
+  gates.
+- `db:verify:restore` rejects an unguarded, same-database or incorrectly named
+  target and compares 23 table counts plus immutable migration checksums in
+  read-only repeatable-read transactions.
+- The workstation currently lacks PostgreSQL client tools and the Render Free
+  plan cannot create managed backups or a second Free target; the first local
+  isolated restore therefore remains a manual milestone step.
+- Paid Render PITR, encrypted off-platform scheduling and a missing-backup alert
+  remain production launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
