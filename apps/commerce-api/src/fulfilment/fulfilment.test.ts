@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { CreateFulfilmentRequest, FulfilmentProviderEvent, FulfilmentStatus } from "../../../../packages/commerce-core/src/index.js";
 import { ManualTestFulfilmentProvider } from "./manual-test.js";
+import { PostgresFulfilmentOutboxConsumer, defaultFulfilmentAutomaticRetryLimit } from "./outbox.js";
 import { FulfilmentError, FulfilmentService, type FulfilmentRepository } from "./service.js";
 
 const request: CreateFulfilmentRequest = {
@@ -30,6 +31,15 @@ class MemoryRepository implements FulfilmentRepository {
 test("fulfilment remains disabled unless explicitly enabled", async () => {
   const service = new FulfilmentService(false, new ManualTestFulfilmentProvider(), new MemoryRepository());
   await assert.rejects(() => service.requestForPaidOrder("order-1", "paid-1"), (error: unknown) => error instanceof FulfilmentError && error.code === "disabled");
+});
+
+test("fulfilment automatic retries have a bounded configuration", () => {
+  assert.equal(defaultFulfilmentAutomaticRetryLimit, 3);
+  const pool = {} as ConstructorParameters<typeof PostgresFulfilmentOutboxConsumer>[0];
+  const service = {} as ConstructorParameters<typeof PostgresFulfilmentOutboxConsumer>[1];
+  assert.throws(() => new PostgresFulfilmentOutboxConsumer(pool, service, 0), /between 1 and 10/);
+  assert.throws(() => new PostgresFulfilmentOutboxConsumer(pool, service, 11), /between 1 and 10/);
+  assert.doesNotThrow(() => new PostgresFulfilmentOutboxConsumer(pool, service, 3));
 });
 
 test("verified paid order creates one idempotent manual-test fulfilment", async () => {

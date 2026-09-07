@@ -67,7 +67,9 @@ The following require accountable human sign-off and cannot be completed by auto
 - [x] Daily payment/order/refund reconciliation engineering procedure and
       exception-capable export documented; Mollie sandbox exercise, finance
       approval and production ownership remain open.
-- [ ] Fulfilment outage and manual-review processing.
+- [x] Fulfilment outage, bounded automatic retry and manual-review engineering
+      procedure documented; provider-specific sandbox exercise and production
+      ownership remain open.
 - [ ] Personal-data incident escalation.
 - [x] Controlled rollback and commerce-disable engineering procedure
       documented; customer runtime now has independent checkout/webhook gates,

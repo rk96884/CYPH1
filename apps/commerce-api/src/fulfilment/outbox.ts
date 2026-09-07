@@ -3,9 +3,19 @@ import { FulfilmentService } from "./service.js";
 
 type ClaimedEvent = Readonly<{ id: string; event_key: string; payload: Readonly<{ orderId?: string; correlationId?: string }> }>;
 
+export const defaultFulfilmentAutomaticRetryLimit = 3;
+
 /** Claims verified payment events without holding a transaction across a provider call. */
 export class PostgresFulfilmentOutboxConsumer {
-  constructor(private readonly pool: pg.Pool, private readonly service: FulfilmentService) {}
+  constructor(
+    private readonly pool: pg.Pool,
+    private readonly service: FulfilmentService,
+    private readonly automaticRetryLimit = defaultFulfilmentAutomaticRetryLimit,
+  ) {
+    if (!Number.isSafeInteger(automaticRetryLimit) || automaticRetryLimit < 1 || automaticRetryLimit > 10) {
+      throw new Error("Fulfilment automatic retry limit must be between 1 and 10.");
+    }
+  }
 
   async runOnce(): Promise<"processed" | "idle" | "failed"> {
     const event = await this.claim();
@@ -28,8 +38,10 @@ export class PostgresFulfilmentOutboxConsumer {
       const result = await client.query<ClaimedEvent>(`
         SELECT id, event_key, payload FROM outbox_events
          WHERE aggregate_type = 'payment' AND event_type = 'payment.paid'
-           AND processing_status IN ('pending', 'failed') AND available_at <= now()
-         ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1`);
+           AND (processing_status = 'pending'
+             OR (processing_status = 'failed' AND attempt_count < $1))
+           AND available_at <= now()
+         ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1`, [this.automaticRetryLimit]);
       if (result.rowCount !== 1) { await client.query("COMMIT"); return undefined; }
       await client.query(`UPDATE outbox_events SET processing_status = 'processing',
         attempt_count = attempt_count + 1, last_error_code = NULL WHERE id = $1`, [result.rows[0]!.id]);

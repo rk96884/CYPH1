@@ -370,6 +370,27 @@ Implementation baseline completed:
 - Mollie sandbox balancing, finance approval, production schedule and independent
   review remain launch gates.
 
+### 4.14 Fulfilment outage and manual-review processing
+
+- Stop unbounded automatic provider retries while retaining a controlled,
+  permission-gated recovery path.
+- Distinguish definite provider absence from an ambiguous creation outcome.
+- Route unsafe fulfilment transitions and state mismatches to manual review.
+- Preserve payment/webhook reconciliation during a fulfilment-only outage.
+
+Implementation baseline completed:
+
+- Failed fulfilment outbox events now stop automatic processing after three
+  attempts; an explicit `fulfilment:retry` operation can requeue one event after
+  provider reconciliation.
+- Stable provider idempotency, paid/captured revalidation and existing event
+  identity/state-machine controls remain in force for every retry.
+- `docs/operations/FULFILMENT-OUTAGE-AND-MANUAL-REVIEW.md` defines containment,
+  exception classes, retry evidence, state mismatch, recovery and privacy-safe
+  records.
+- Provider selection, provider-specific security/privacy review and sandbox
+  outage exercise remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

@@ -47,3 +47,6 @@ temporary environment variables from the shell afterwards.
 
 Do not enable the fulfilment consumer in production until a provider-specific
 security, privacy, retry and operational review is approved.
+
+Failure containment, bounded retry and manual-review decisions are defined in
+`FULFILMENT-OUTAGE-AND-MANUAL-REVIEW.md`.
