@@ -325,6 +325,8 @@ Implementation baseline completed:
 - Customer runtime and raw-webhook handler tests cover default denial,
   independent exposure, generic readiness failure, body limits and safe
   provider-failure responses.
+- A read-only staging verifier checks the disabled, active and checkout-contained
+  route states without creating a checkout or submitting a webhook.
 - `docs/operations/COMMERCE-CUSTOMER-RUNTIME.md` records the deployment and
   containment contract. A protected staging deployment and controlled
   checkout-disable/webhook-continuity rehearsal remain outstanding.

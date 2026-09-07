@@ -198,6 +198,46 @@ before execution:
 Do not use a real customer identity, address, product, price or payment method
 for this exercise.
 
+### Route-gate verification
+
+The repository includes a read-only verifier for each deliberate route state.
+It sends only `GET` requests, so it cannot create a checkout or submit a webhook.
+Run it after each corresponding Render configuration deployment:
+
+```powershell
+$env:CUSTOMER_RUNTIME_ORIGIN = "https://commerce-staging.cyph1.co.uk"
+
+$env:CUSTOMER_ROUTE_GATE_MODE = "disabled"
+npm run verify:customer-route-gates
+
+$env:CUSTOMER_ROUTE_GATE_MODE = "active"
+npm run verify:customer-route-gates
+
+$env:CUSTOMER_ROUTE_GATE_MODE = "contained"
+npm run verify:customer-route-gates
+
+Remove-Item Env:CUSTOMER_ROUTE_GATE_MODE
+Remove-Item Env:CUSTOMER_RUNTIME_ORIGIN
+```
+
+Expected status pairs are:
+
+| Mode | `/checkout` | `/webhooks/mollie` |
+| --- | --- | --- |
+| `disabled` | `404` | `404` |
+| `active` | `405` with `Allow: POST` | `405` with `Allow: POST` |
+| `contained` | `404` | `405` with `Allow: POST` |
+
+The `contained` result proves only that the HTTP gates are independent. The
+rehearsal is not complete until an authenticated Mollie test notification for
+the in-flight synthetic payment is processed idempotently and reconciled.
+
+On **7 September 2026**, the verifier ran against
+`https://commerce-staging.cyph1.co.uk` in `disabled` mode and confirmed
+`/checkout` and `/webhooks/mollie` both returned the exact expected `404`
+response. No checkout or webhook request was submitted. The `active` and
+`contained` deployment checks remain pending the reviewed Mollie test account.
+
 ## Rollback
 
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md`. Never suspend the protected
