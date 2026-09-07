@@ -65,7 +65,8 @@ payment data or raw database exports through an alert channel.
 
 - Treat an authentication bypass, leaked credential/assertion or suspected
   personal-data exposure as **Critical**. Suspend the affected service or
-  remove its Allow policy and begin the security incident process.
+  remove its Allow policy and begin
+  `docs/operations/PERSONAL-DATA-INCIDENT-ESCALATION.md` immediately.
 - Treat persistent unavailability, database failure or an unexpected allowed
   identity as **High**. Keep mutations disabled until independently verified.
 - Treat failed deploys and recurring monitor failures as **Medium**, escalating

@@ -391,6 +391,28 @@ Implementation baseline completed:
 - Provider selection, provider-specific security/privacy review and sandbox
   outage exercise remain launch gates.
 
+### 4.15 Personal-data incident escalation
+
+- Define a controller-awareness clock, immediate containment and evidence
+  preservation procedure for suspected personal-data breaches.
+- Assess likelihood and severity of risk to people and route the notification
+  decision to an authorised privacy/legal owner.
+- Preserve a restricted breach register while keeping identities, secrets and
+  raw incident evidence out of source control.
+- Define recovery, processor escalation, closure and a synthetic exercise.
+
+Implementation baseline completed:
+
+- `docs/operations/PERSONAL-DATA-INCIDENT-ESCALATION.md` maps the current data
+  and processor surface to containment, assessment, notification and recovery.
+- The procedure records the current ICO likely-risk, high-risk and 72-hour
+  baselines while requiring the accountable owner to verify current guidance.
+- Every confirmed breach must be documented, including a justified decision not
+  to report; source-controlled evidence remains privacy-minimised.
+- Legal/privacy approval, named primary and backup owners, processor contacts,
+  communication templates and a synthetic tabletop exercise remain launch
+  gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

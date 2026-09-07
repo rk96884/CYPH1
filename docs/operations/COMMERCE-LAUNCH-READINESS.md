@@ -70,7 +70,9 @@ The following require accountable human sign-off and cannot be completed by auto
 - [x] Fulfilment outage, bounded automatic retry and manual-review engineering
       procedure documented; provider-specific sandbox exercise and production
       ownership remain open.
-- [ ] Personal-data incident escalation.
+- [x] Personal-data incident escalation engineering procedure documented;
+      privacy/legal approval, named owners, processor contacts and a synthetic
+      tabletop exercise remain open.
 - [x] Controlled rollback and commerce-disable engineering procedure
       documented; customer runtime now has independent checkout/webhook gates,
       but staging rehearsal and production approval remain open.
