@@ -438,6 +438,28 @@ Implementation baseline completed:
 - Paid Render PITR, encrypted off-platform scheduling and a missing-backup alert
   remain production launch gates.
 
+### 4.17 Dependency and runtime supply-chain security
+
+- Enforce severity thresholds for production and build dependencies in CI.
+- Monitor npm packages and GitHub Actions for reviewed updates without
+  auto-merging commerce changes.
+- Define vulnerability triage, time-bounded exceptions and rollback handling.
+- Preserve an accountable deployed-runtime and platform review as a launch gate.
+
+Implementation baseline completed:
+
+- The quality workflow now runs locked installation followed by production and
+  complete-tree npm vulnerability thresholds before building.
+- Dependabot checks npm and GitHub Actions weekly and keeps major updates
+  separate from grouped minor/patch changes.
+- `docs/operations/DEPENDENCY-AND-RUNTIME-SECURITY.md` defines review,
+  vulnerability response, exceptions and platform evidence.
+- The first production audit passed on 7 September 2026. Four unfixed
+  `fast-uri` advisories in the development-only Astro language-server chain are
+  covered by an exact, fail-closed exception expiring 8 October 2026.
+- First update review, removal of the temporary exception, deployed
+  Render/PostgreSQL review and production ownership remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

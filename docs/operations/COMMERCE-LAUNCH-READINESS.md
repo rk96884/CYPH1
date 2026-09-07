@@ -25,6 +25,7 @@ This register separates evidence that can be produced by the repository from bus
 | Staging incident ownership | Role-based staging response and escalation runbook covering GitHub, Render, Cloudflare Access and database signals | Project owner is accountable for staging; notification-channel tests, independent backup and production ownership remain outstanding |
 | Customer runtime route isolation | Separate runtime exposes generic health/readiness plus independently gated checkout and Mollie webhook routes; operations paths remain absent | Automated baseline, protected staging deployment, guarded synthetic fixture and read-only route-gate verifier covered; Mollie checkout-disable/webhook-continuity rehearsal outstanding |
 | Database recovery verification | Guarded source/restore comparison checks migration history and aggregate row counts without reading personal-data fields | Engineering command and isolated-restore runbook covered; first logical restore, paid Render PITR and off-platform schedule remain outstanding |
+| Dependency vulnerability baseline | Locked install plus fail-closed production audit and narrowly matched, expiring build-tool exception; weekly npm and GitHub Actions update monitoring | Production audit clean; temporary Astro language-server exception expires 8 October 2026; deployed runtime review and ownership remain outstanding |
 
 ## Engineering tests still required
 
@@ -45,7 +46,9 @@ This register separates evidence that can be produced by the repository from bus
 - [ ] Database, Render, Cloudflare, GitHub and payment-provider access owners reviewed with multi-factor authentication enabled.
 - [ ] Webhook endpoint allowlists, signature/authenticity checks and raw-body handling reviewed per provider.
 - [ ] Logging and exports reviewed to exclude unnecessary personal data and payment credentials.
-- [ ] Dependency and container/runtime vulnerability review completed.
+- [x] Automated dependency vulnerability baseline and update monitoring
+      documented; deployed runtime review, alert ownership and pre-launch repeat
+      remain outstanding.
 
 ## Business and regulatory approval
 

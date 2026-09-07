@@ -30,6 +30,12 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Audit production and build dependencies
+        run: npm run audit:dependencies
+
+      - name: Test dependency-audit policy
+        run: npm run test:dependency-audit
+
       - name: Check Astro and TypeScript
         run: npm run check
 
