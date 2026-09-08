@@ -40,6 +40,8 @@ test("fulfilment automatic retries have a bounded configuration", () => {
   assert.throws(() => new PostgresFulfilmentOutboxConsumer(pool, service, 0), /between 1 and 10/);
   assert.throws(() => new PostgresFulfilmentOutboxConsumer(pool, service, 11), /between 1 and 10/);
   assert.doesNotThrow(() => new PostgresFulfilmentOutboxConsumer(pool, service, 3));
+  assert.throws(() => new PostgresFulfilmentOutboxConsumer(pool, service, 3, 29), /between 30 and 3600/);
+  assert.throws(() => new PostgresFulfilmentOutboxConsumer(pool, service, 3, 3601), /between 30 and 3600/);
 });
 
 test("verified paid order creates one idempotent manual-test fulfilment", async () => {

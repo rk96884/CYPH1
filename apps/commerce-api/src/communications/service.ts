@@ -5,6 +5,8 @@ export interface CommunicationRepository {
   markSent(deliveryId: string, provider: string, providerReference: string): Promise<void>;
   markFailed(deliveryId: string, errorCode: string): Promise<void>;
 }
+export const defaultCommunicationAutomaticRetryLimit = 3;
+export const defaultCommunicationClaimLeaseSeconds = 300;
 export class TransactionalCommunicationConsumer {
   constructor(private readonly enabled: boolean, private readonly repository: CommunicationRepository, private readonly provider: TransactionalCommunicationProvider) {}
   async consumeOne() {

@@ -29,6 +29,7 @@ This register separates evidence that can be produced by the repository from bus
 | Checkout abuse boundary | Explicit per-process concurrency and rolling-window admission protects checkout without limiting webhooks | Automated application baseline covered; Cloudflare policy, direct-origin restriction, staging burst evidence and production thresholds remain outstanding |
 | Read-only staging performance | Bounded exact-response health/readiness probe with request, concurrency, timeout and p95 limits | Harness covered in CI; first 40-request staging probe passed on 7 September 2026 with p95 198 ms and post-probe monitor run #50 passed; resource evidence and production capacity interpretation outstanding |
 | Database interruption recovery | Customer and operations readiness transition tests plus managed exercise runbook | Local healthy/unavailable/recovered transitions covered; isolated managed database, alert, pool recovery and invariant evidence outstanding |
+| Worker restart and exhaustion | Durable claim leases, bounded retries and terminal exhaustion for fulfilment and communications | Engineering baseline and Render development migration covered; managed restart rehearsal, provider idempotency and alert ownership outstanding |
 
 ## Engineering tests still required
 

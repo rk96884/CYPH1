@@ -536,6 +536,29 @@ Implementation baseline completed:
   and restart-free recovery against an isolated managed database remain
   deferred until a suitable paid staging target is approved.
 
+### 4.21 Worker restart and retry-exhaustion resilience
+
+- Lease durable fulfilment and communication claims so a worker crash cannot
+  leave work permanently processing.
+- Reclaim expired work only below a bounded automatic retry ceiling.
+- Move exhausted claims to an explicit terminal failure for manual review.
+- Preserve stable provider idempotency keys across recovery.
+
+Implementation baseline completed:
+
+- Migration `0010_worker_claim_leases.sql` adds claim timestamps and safely
+  releases legacy processing rows for recovery.
+- Fulfilment and communication claims use a bounded five-minute default lease
+  and three-attempt default; invalid limits fail at construction.
+- Expired final-attempt claims become `retry_exhausted`, while successful and
+  failed completions clear their lease timestamps.
+- `docs/operations/WORKER-RESTART-AND-RETRY-EXHAUSTION.md` defines migration,
+  verification, managed rehearsal and provider-idempotency gates.
+- Migration `0010` was applied idempotently and schema-verified on Render
+  development PostgreSQL on 8 September 2026.
+- A timed synthetic worker restart/exhaustion rehearsal, provider idempotency
+  evidence and terminal-failure alert ownership remain outstanding.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

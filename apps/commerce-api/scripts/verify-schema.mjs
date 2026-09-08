@@ -43,6 +43,12 @@ try {
   if (missing.length > 0) throw new Error(`Missing database tables: ${missing.join(", ")}`);
   console.log(`Verified ${expectedTables.length} required tables.`);
 
+  const leaseColumns = await client.query(`SELECT table_name,column_name FROM information_schema.columns
+    WHERE table_schema='public' AND (table_name,column_name) IN
+      (('outbox_events','processing_started_at'),('communication_deliveries','processing_started_at'))`);
+  if (leaseColumns.rowCount !== 2) throw new Error("Missing worker claim lease columns.");
+  console.log("Verified worker claim lease columns.");
+
   await client.query("BEGIN");
   await expectConstraintFailure(
     "lowercase currency",
