@@ -31,6 +31,9 @@ test("structured request logs omit paths, queries, headers and identities", () =
   });
   const serialised = JSON.stringify(entry);
   assert.doesNotMatch(serialised, /customer|example|token|secret|Cf-Access/i);
+  assert.deepEqual(Object.keys(entry), [
+    "timestamp", "level", "event", "requestId", "method", "route", "status", "outcome", "durationMs",
+  ]);
 });
 
 test("server failures are emitted as error outcomes", () => {

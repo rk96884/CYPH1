@@ -559,6 +559,28 @@ Implementation baseline completed:
 - A timed synthetic worker restart/exhaustion rehearsal, provider idempotency
   evidence and terminal-failure alert ownership remain outstanding.
 
+### 4.22 Privacy-safe logging and reconciliation exports
+
+- Keep operational request logs on an exact metadata allowlist and prevent
+  paths, queries, identities, payloads and credentials entering diagnostics.
+- Keep reconciliation output on an explicit ordered column allowlist rather
+  than exporting arbitrary repository or database fields.
+- Test prohibited personal, Access, credential and provider-payload canaries.
+- Document secure handling and the deployed privacy decisions that remain
+  launch gates.
+
+Implementation baseline completed:
+
+- Runtime logging tests now assert the exact structured field set as well as
+  bounded routes and prohibited-value omission.
+- The reconciliation column contract is exported as an immutable allowlist;
+  tests assert its exact header and ignore injected customer, address, Access,
+  credential and provider-payload fields.
+- `docs/operations/LOGGING-AND-EXPORT-DATA-BOUNDARIES.md` records purposes,
+  exclusions, handling rules and escalation.
+- Render/Cloudflare access, processor geography, retention, deletion, privacy
+  documentation and production approval remain accountable launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

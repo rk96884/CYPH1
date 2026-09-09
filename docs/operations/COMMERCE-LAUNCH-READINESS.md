@@ -30,6 +30,7 @@ This register separates evidence that can be produced by the repository from bus
 | Read-only staging performance | Bounded exact-response health/readiness probe with request, concurrency, timeout and p95 limits | Harness covered in CI; first 40-request staging probe passed on 7 September 2026 with p95 198 ms and post-probe monitor run #50 passed; resource evidence and production capacity interpretation outstanding |
 | Database interruption recovery | Customer and operations readiness transition tests plus managed exercise runbook | Local healthy/unavailable/recovered transitions covered; isolated managed database, alert, pool recovery and invariant evidence outstanding |
 | Worker restart and exhaustion | Durable claim leases, bounded retries and terminal exhaustion for fulfilment and communications | Engineering baseline and Render development migration covered; managed restart rehearsal, provider idempotency and alert ownership outstanding |
+| Logging and reconciliation-export minimisation | Exact request-log field set plus fixed reconciliation CSV column allowlist and prohibited-data canaries | Automated engineering boundary covered; deployed processors, access, retention, deletion and production privacy approval remain outstanding |
 
 ## Engineering tests still required
 
@@ -50,7 +51,10 @@ This register separates evidence that can be produced by the repository from bus
 - [ ] Operations identity middleware and least-privilege role mappings independently reviewed.
 - [ ] Database, Render, Cloudflare, GitHub and payment-provider access owners reviewed with multi-factor authentication enabled.
 - [ ] Webhook endpoint allowlists, signature/authenticity checks and raw-body handling reviewed per provider.
-- [ ] Logging and exports reviewed to exclude unnecessary personal data and payment credentials.
+- [x] Engineering logging and reconciliation-export allowlists reviewed and
+      regression-tested to exclude unnecessary personal data and payment
+      credentials; deployed processor, access, retention and production privacy
+      reviews remain outstanding.
 - [x] Automated dependency vulnerability baseline and update monitoring
       documented; deployed runtime review, alert ownership and pre-launch repeat
       remain outstanding.

@@ -52,6 +52,9 @@ separate finance control.
 5. Confirm expected columns are present. The export intentionally excludes
    names, emails, delivery addresses and payment credentials.
 
+The authoritative column allowlist and handling boundary are documented in
+`LOGGING-AND-EXPORT-DATA-BOUNDARIES.md`.
+
 The interval includes an order when its order, any payment attempt, or any refund
 was created during the selected window. Each payment attempt is a separate row.
 An order without a payment is retained so failed or ambiguous checkout creation

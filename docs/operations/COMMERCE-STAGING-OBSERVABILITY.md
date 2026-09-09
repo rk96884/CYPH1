@@ -166,6 +166,9 @@ This confirms the protected staging request-correlation and privacy-minimised
 logging baseline. It does not approve production commerce or define production
 alert thresholds.
 
+The exact engineering allowlists, export exclusions and production review gates
+are recorded in `LOGGING-AND-EXPORT-DATA-BOUNDARIES.md`.
+
 ### Controlled monitor and recovery drill
 
 Completed on **31 August 2026** using the Render staging service and synthetic

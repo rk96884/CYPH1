@@ -14,15 +14,18 @@ const safeCsv = (value: unknown): string => {
   if (/^[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replace(/"/g, '""')}"`;
 };
+export const reconciliationCsvColumns = Object.freeze([
+  "order_number", "order_created_at", "order_status", "fulfilment_status", "currency", "total_minor",
+  "checkout_state", "checkout_failure_code", "provider", "provider_payment_id", "payment_created_at",
+  "payment_status", "amount_minor", "refunded_minor", "open_refund_minor",
+  "resolution_required_refund_minor", "failed_refund_minor", "refund_count",
+  "fulfilment_reference", "fulfilment_record_status",
+] as const);
 const csv = (rows: readonly Readonly<Record<string, unknown>>[]): string => {
-  const columns = [
-    "order_number", "order_created_at", "order_status", "fulfilment_status", "currency", "total_minor",
-    "checkout_state", "checkout_failure_code", "provider", "provider_payment_id", "payment_created_at",
-    "payment_status", "amount_minor", "refunded_minor", "open_refund_minor",
-    "resolution_required_refund_minor", "failed_refund_minor", "refund_count",
-    "fulfilment_reference", "fulfilment_record_status",
-  ];
-  return [columns.map(safeCsv).join(","), ...rows.map((row) => columns.map((column) => safeCsv(row[column])).join(","))].join("\r\n");
+  return [
+    reconciliationCsvColumns.map(safeCsv).join(","),
+    ...rows.map((row) => reconciliationCsvColumns.map((column) => safeCsv(row[column])).join(",")),
+  ].join("\r\n");
 };
 
 export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal): Promise<Response> => {

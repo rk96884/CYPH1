@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { money, PaymentProviderError, type PaymentProvider } from "../../../../packages/commerce-core/src/index.js";
-import { handleOperationsRequest } from "./handler.js";
+import { handleOperationsRequest, reconciliationCsvColumns } from "./handler.js";
 import { OperationsService, type OperationsRepository } from "./service.js";
 
 const provider: PaymentProvider = {
@@ -35,12 +35,18 @@ test("permission-controlled refund uses provider contract",async()=>{
 });
 
 test("reconciliation requires bounded dates and escapes spreadsheet formulae",async()=>{
-  const rows={...repository,reconciliationRows:async()=>[{order_number:"=unsafe",order_created_at:"2026-01-01",order_status:"paid",customer_email:"private@example.test"}]};
+  const rows={...repository,reconciliationRows:async()=>[{
+    order_number:"=unsafe",order_created_at:"2026-01-01",order_status:"paid",
+    customer_name:"Private Customer",customer_email:"private@example.test",
+    delivery_address:"1 Private Street",access_assertion:"secret-access-assertion",
+    payment_credential:"secret-payment-credential",raw_provider_payload:"secret-provider-payload",
+  }]};
   const local=new OperationsService(rows,{getConfiguredProvider:()=>provider,getProvider:()=>provider});
   const response=await handleOperationsRequest(new Request("https://ops.test/operations/reconciliation.csv?from=2026-01-01&to=2026-01-02"),local,{id:"finance",permissions:["reconciliation:export"]});
   assert.equal(response.status,200); const body=await response.text(); assert.match(body,/"'=unsafe"/);
   assert.match(body,/"checkout_state"/); assert.match(body,/"resolution_required_refund_minor"/);
-  assert.doesNotMatch(body,/private@example\.test/);
+  assert.equal(body.split("\r\n")[0],reconciliationCsvColumns.map((column)=>`"${column}"`).join(","));
+  assert.doesNotMatch(body,/Private Customer|private@example\.test|Private Street|secret-access|secret-payment|secret-provider/);
   assert.equal(response.headers.get("X-Frame-Options"),"DENY");
   assert.equal(response.headers.get("Referrer-Policy"),"no-referrer");
 });
