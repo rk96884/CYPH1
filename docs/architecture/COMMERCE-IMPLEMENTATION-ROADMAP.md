@@ -581,6 +581,34 @@ Implementation baseline completed:
 - Render/Cloudflare access, processor geography, retention, deletion, privacy
   documentation and production approval remain accountable launch gates.
 
+### 4.23 Deployed staging secrets and access inventory
+
+- Compare deployed variable names with the documented service contracts without
+  copying secret values.
+- Review account membership, multi-factor authentication, external access and
+  least-privilege configuration across current staging processors.
+- Protect the default source branch against destructive history changes.
+- Review registrar recovery, renewal and DNS integrity controls.
+
+Implementation baseline completed:
+
+- Render operations/customer staging variable names, disabled commerce gates,
+  database boundary and account 2FA were reviewed on 10 September 2026.
+- Cloudflare membership, Access policy, DNS records, Worker secret names,
+  tokens and account 2FA were reviewed without retaining identity or secret
+  values.
+- GitHub account/repository access, Actions variables, environment, workflow
+  permissions and external integrations were reviewed; the active `Protect
+  main` ruleset now blocks force-pushes and branch deletion.
+- Brevo users, API/SMTP key names, sender/domain configuration, webhooks and
+  integrations were reviewed.
+- Cloudflare Registrar recovery/renewal controls were reviewed and DNSSEC was
+  confirmed active on 11 September 2026.
+- The tracked-source audit and ordinary production-build scan passed; private
+  commerce routes and credential patterns were absent from the public build.
+- Mollie access, production separation, credential rotation provenance and an
+  independent least-privilege review remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

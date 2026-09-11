@@ -18,7 +18,7 @@ This register separates evidence that can be produced by the repository from bus
 | Duplicate payment events | Webhook integration test covers repeated and stale events | Covered |
 | Transactional communication duplication | Independent semantic delivery keys and provider idempotency key | Baseline covered; provider-specific test outstanding |
 | Public commerce isolation | Ordinary build omits private routes unless explicit presentation flags are supplied | Covered; deployment configuration review remains mandatory |
-| Secret namespace and tracked-source audit | Runtime rejects secret-like `PUBLIC_` names; `npm run audit:commerce-security` scans tracked source in CI | Automated baseline covered; deployed inventories remain outstanding |
+| Secret namespace and tracked-source audit | Runtime rejects secret-like `PUBLIC_` names; `npm run audit:commerce-security` scans tracked source in CI | Automated baseline and current Render, Cloudflare, GitHub, Brevo and registrar staging inventories reviewed; Mollie, rotation provenance, independent review and production inventories remain outstanding |
 | Operations identity boundary | Access adapter verifies signature, issuer and audience and maps verified email to server-side grants; runtime forwards only `/operations/*` | Automated baseline and protected staging boundary manually verified; production review remains outstanding |
 | Staging request observability | Server-generated request correlation and bounded privacy-safe JSON request events | Automated field/omission tests covered; provider alerts and production retention remain manual launch gates |
 | Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
@@ -31,6 +31,7 @@ This register separates evidence that can be produced by the repository from bus
 | Database interruption recovery | Customer and operations readiness transition tests plus managed exercise runbook | Local healthy/unavailable/recovered transitions covered; isolated managed database, alert, pool recovery and invariant evidence outstanding |
 | Worker restart and exhaustion | Durable claim leases, bounded retries and terminal exhaustion for fulfilment and communications | Engineering baseline and Render development migration covered; managed restart rehearsal, provider idempotency and alert ownership outstanding |
 | Logging and reconciliation-export minimisation | Exact request-log field set plus fixed reconciliation CSV column allowlist and prohibited-data canaries | Automated engineering boundary covered; deployed processors, access, retention, deletion and production privacy approval remain outstanding |
+| Deployed staging secrets and access | Variable-name inventories, account membership, MFA, external integrations, protected source history and registrar controls | Current Render, Cloudflare, GitHub, Brevo and domain checks passed on 10–11 September 2026; DNSSEC active; Mollie, independent review and production separation remain outstanding |
 
 ## Engineering tests still required
 
@@ -48,6 +49,10 @@ This register separates evidence that can be produced by the repository from bus
 
 - [x] Engineering threat model documented and dated; accountable pre-launch re-review remains required.
 - [ ] Production and preview secret inventories reviewed; no secret is exposed through `PUBLIC_` variables, source, logs or build artefacts.
+- [x] Current staging account and variable-name inventories reviewed for Render,
+      Cloudflare, GitHub, Brevo and the registrar; Mollie, credential rotation,
+      independent least-privilege review and all production inventories remain
+      outstanding.
 - [ ] Operations identity middleware and least-privilege role mappings independently reviewed.
 - [ ] Database, Render, Cloudflare, GitHub and payment-provider access owners reviewed with multi-factor authentication enabled.
 - [ ] Webhook endpoint allowlists, signature/authenticity checks and raw-body handling reviewed per provider.
