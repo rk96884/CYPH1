@@ -117,3 +117,11 @@ was required for this test. This verifies the GitHub failure-notification
 route at that date. The two independently labelled runtime jobs require the
 verification recorded in `COMMERCE-STAGING-OBSERVABILITY.md`; the separate
 Render notification-channel test remains outstanding.
+
+On **12 September 2026**, the customer and operations jobs were each failed
+independently through their manual simulation input. The unaffected job passed
+in each exercise, both expected GitHub notifications were received, and a final
+healthy run passed both jobs. The legacy single-origin repository secret was
+then removed. This verifies target-specific GitHub alert routing; production
+backup ownership and the separate Render notification-channel test remain
+outstanding.

@@ -224,3 +224,23 @@ manual checks; scheduled runs cannot enable them.
 
 Record only run numbers, job outcomes, commit and notification result. Do not
 record either secret value or full Render origin.
+
+### Dual-runtime verification record — 12 September 2026
+
+- Both runtime-specific repository secrets were configured without copying
+  their values into source control.
+- A healthy manual run passed both customer and operations health/readiness
+  jobs.
+- A customer-only simulated failure failed before its request, while the
+  operations job passed and the expected failure notification was received.
+- An operations-only simulated failure failed before its request, while the
+  customer job passed and the expected failure notification was received.
+- A final run with both simulations disabled passed both jobs.
+- The obsolete `COMMERCE_STAGING_ORIGIN` repository secret was removed only
+  after successful replacement verification.
+
+**Outcome:** independent staging health, readiness, target identification,
+notification and recovery visibility are verified for both runtimes. No
+checkout, webhook, operations or provider mutation route was exercised.
+Production alert ownership, independent cover and service objectives remain
+launch gates.

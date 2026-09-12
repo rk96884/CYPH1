@@ -629,8 +629,13 @@ Implementation baseline completed:
   target-specific failures.
 - `docs/operations/COMMERCE-STAGING-OBSERVABILITY.md` defines safe secret
   migration, independent failure checks and final healthy verification.
-- GitHub secret configuration, the three controlled workflow runs and
-  notification confirmation remain manual completion steps.
+- Both runtime-specific GitHub secrets were configured and the obsolete
+  single-origin secret removed on 12 September 2026.
+- The healthy dual-runtime run, customer-only simulated failure,
+  operations-only simulated failure, both notification paths and final healthy
+  recovery run produced the expected results.
+- Production alert ownership, service objectives and independent notification
+  cover remain launch gates.
 
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
