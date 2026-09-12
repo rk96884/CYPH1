@@ -657,6 +657,29 @@ Implementation baseline completed:
   verification, approved communications, retention and alternate-system access
   remain launch gates.
 
+### 4.26 Disabled-state deployment recovery rehearsal
+
+- Re-deploy the approved customer staging source revision without changing any
+  commerce enablement control.
+- Verify the exact disabled checkout and webhook route state before and after
+  deployment using read-only requests.
+- Verify both staging runtimes before and after the replacement deployment.
+- Keep source rollback and Mollie webhook-continuity exercises explicitly open.
+
+Implementation baseline completed:
+
+- `docs/operations/COMMERCE-DISABLED-STATE-RECOVERY-REHEARSAL.md` defines a
+  bounded staging drill that cannot create a checkout, webhook or database
+  record.
+- The drill requires the latest approved commit, unchanged fail-closed Render
+  variables, exact route-gate checks and dual-runtime monitor evidence.
+- Exercise `CDR-DRILL-001` passed on 12 September 2026: monitor runs `#85` and
+  `#87` passed, commit `9e36f9e` was redeployed unchanged, and both customer
+  commerce routes returned the exact disabled response before and after the
+  deployment.
+- A source-controlled faulty-release rollback and the Mollie
+  checkout-disable/webhook-continuity exercise remain outstanding.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

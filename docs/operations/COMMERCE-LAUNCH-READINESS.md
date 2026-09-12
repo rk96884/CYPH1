@@ -34,6 +34,7 @@ This register separates evidence that can be produced by the repository from bus
 | Deployed staging secrets and access | Variable-name inventories, account membership, MFA, external integrations, protected source history and registrar controls | Current Render, Cloudflare, GitHub, Brevo and domain checks passed on 10–11 September 2026; DNSSEC active; Mollie, independent review and production separation remain outstanding |
 | Dual-runtime staging monitor | Separate exact-response customer and operations health/readiness jobs with bounded labels and independent manual failure inputs | Automated baseline and independent healthy/failure/notification/recovery staging sequence passed on 12 September 2026; legacy single-origin secret removed; production ownership and objectives remain outstanding |
 | Personal-data incident tabletop | Five-inject synthetic scenario covering awareness, containment, processor escalation, changing risk and phased reporting | `PDI-TTX-001` passed on 12 September 2026 without live action or real data; legal/privacy ownership, restricted registers, processor routes, communications, retention and production approval remain outstanding |
+| Disabled-state deployment recovery | Latest-commit customer staging redeploy with unchanged fail-closed controls, read-only route checks and dual-runtime monitoring | `CDR-DRILL-001` passed on 12 September 2026 using commit `9e36f9e`, monitor runs `#85` and `#87`, and exact disabled route checks; source rollback and Mollie webhook-continuity exercises remain outstanding |
 
 ## Engineering tests still required
 
@@ -96,7 +97,8 @@ The following require accountable human sign-off and cannot be completed by auto
       owners, restricted registers and verified processor contacts remain open.
 - [x] Controlled rollback and commerce-disable engineering procedure
       documented; customer runtime now has independent checkout/webhook gates,
-      but staging rehearsal and production approval remain open.
+      and the disabled-state deployment drill passed; source rollback, Mollie
+      webhook continuity and production approval remain open.
 
 ## Launch rule
 
