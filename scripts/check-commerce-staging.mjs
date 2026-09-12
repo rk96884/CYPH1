@@ -14,7 +14,15 @@ export const parseStagingOrigin = (value) => {
   return origin;
 };
 
-export const checkCommerceStaging = async ({ origin, fetchImpl = fetch, timeoutMs = 10_000 }) => {
+export const parseStagingTarget = (value) => {
+  if (value !== "customer" && value !== "operations") {
+    throw new Error("COMMERCE_STAGING_TARGET must be customer or operations.");
+  }
+  return value;
+};
+
+export const checkCommerceStaging = async ({ target, origin, fetchImpl = fetch, timeoutMs = 10_000 }) => {
+  const checkedTarget = parseStagingTarget(target);
   const results = [];
   for (const endpoint of expectedResponses) {
     const response = await fetchImpl(new URL(endpoint.path, origin), {
@@ -23,14 +31,14 @@ export const checkCommerceStaging = async ({ origin, fetchImpl = fetch, timeoutM
       signal: AbortSignal.timeout(timeoutMs),
       headers: { Accept: "application/json" },
     });
-    if (!response.ok) throw new Error(`${endpoint.label} check returned HTTP ${response.status}.`);
+    if (!response.ok) throw new Error(`${checkedTarget} ${endpoint.label} check returned HTTP ${response.status}.`);
     let body;
     try { body = await response.json(); }
-    catch { throw new Error(`${endpoint.label} check did not return JSON.`); }
+    catch { throw new Error(`${checkedTarget} ${endpoint.label} check did not return JSON.`); }
     if (JSON.stringify(body) !== JSON.stringify(endpoint.body)) {
-      throw new Error(`${endpoint.label} check returned an unexpected response.`);
+      throw new Error(`${checkedTarget} ${endpoint.label} check returned an unexpected response.`);
     }
-    results.push({ endpoint: endpoint.label, status: response.status });
+    results.push({ target: checkedTarget, endpoint: endpoint.label, status: response.status });
   }
   return results;
 };
@@ -38,9 +46,10 @@ export const checkCommerceStaging = async ({ origin, fetchImpl = fetch, timeoutM
 const isDirectRun = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isDirectRun) {
   try {
+    const target = parseStagingTarget(process.env.COMMERCE_STAGING_TARGET);
     const origin = parseStagingOrigin(process.env.COMMERCE_STAGING_ORIGIN);
-    const results = await checkCommerceStaging({ origin });
-    for (const result of results) console.log(`${result.endpoint}: HTTP ${result.status}`);
+    const results = await checkCommerceStaging({ target, origin });
+    for (const result of results) console.log(`${result.target} ${result.endpoint}: HTTP ${result.status}`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Staging check failed.");
     process.exitCode = 1;

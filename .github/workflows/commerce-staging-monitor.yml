@@ -5,8 +5,13 @@ on:
     - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
-      simulate_failure:
-        description: "Fail this manual run to verify GitHub Actions notifications"
+      simulate_customer_failure:
+        description: "Fail the customer check before any request"
+        required: false
+        type: boolean
+        default: false
+      simulate_operations_failure:
+        description: "Fail the operations check before any request"
         required: false
         type: boolean
         default: false
@@ -19,11 +24,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  health-and-readiness:
+  customer-health-and-readiness:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     env:
-      COMMERCE_STAGING_ORIGIN: ${{ secrets.COMMERCE_STAGING_ORIGIN }}
+      COMMERCE_STAGING_TARGET: customer
+      COMMERCE_STAGING_ORIGIN: ${{ secrets.COMMERCE_CUSTOMER_STAGING_ORIGIN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -33,12 +39,37 @@ jobs:
         with:
           node-version: 24
 
-      - name: Simulate monitor failure for notification testing
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_failure }}
+      - name: Simulate customer monitor failure
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_customer_failure }}
         shell: bash
         run: |
-          echo "Intentional manual failure: testing the staging monitor notification route."
+          echo "Intentional customer monitor failure: testing the notification route."
           exit 1
 
-      - name: Check generic health and database readiness
+      - name: Check customer health and database readiness
+        run: node scripts/check-commerce-staging.mjs
+
+  operations-health-and-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      COMMERCE_STAGING_TARGET: operations
+      COMMERCE_STAGING_ORIGIN: ${{ secrets.COMMERCE_OPERATIONS_STAGING_ORIGIN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Simulate operations monitor failure
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_operations_failure }}
+        shell: bash
+        run: |
+          echo "Intentional operations monitor failure: testing the notification route."
+          exit 1
+
+      - name: Check operations health and database readiness
         run: node scripts/check-commerce-staging.mjs

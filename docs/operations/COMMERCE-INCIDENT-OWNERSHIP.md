@@ -33,7 +33,7 @@ blocker for production commerce.
 
 | Signal | Primary route | Required operator action |
 | --- | --- | --- |
-| Scheduled `/health` or `/ready` failure | GitHub Actions **Commerce staging monitor** failure and repository-owner notification | Open the failed run, identify which generic check failed and begin staging triage. |
+| Scheduled `/health` or `/ready` failure | Independently labelled customer or operations job in GitHub Actions **Commerce staging monitor**, plus repository-owner notification | Open the failed run, identify the affected runtime and generic endpoint, and begin staging triage. |
 | Failed Render deploy or service failure | Render workspace owner notification and service event/log view | Confirm the deployed commit, service state and generic health result. |
 | Unexpected Access allow/deny activity | Cloudflare Access audit logs | Confirm the identity is expected; fail closed if access may be unauthorised. |
 | Database readiness failure | Failed `/ready` check plus Render/PostgreSQL state | Prevent mutations, restore connectivity and run schema verification before recovery sign-off. |
@@ -104,12 +104,16 @@ production on-call arrangement or approve public commerce.
 The notification settings were reviewed on **31 August 2026**. GitHub Actions
 email notifications were already configured for failed workflows, and Render
 email notifications were already configured for service and deploy failures.
-The monitor exposes a manual-only `simulate_failure` input so the GitHub route
-can be tested without suspending Render or changing a secret. Keep this input
+The monitor exposes manual-only `simulate_customer_failure` and
+`simulate_operations_failure` inputs so each labelled GitHub route can be
+tested without suspending Render or changing a secret. Keep both inputs
 disabled during routine and scheduled checks.
 
-Also on **31 August 2026**, a manual monitor run with `simulate_failure`
+Also on **31 August 2026**, a manual monitor run with the former single-target
+`simulate_failure`
 enabled failed at the intended test step and produced the expected GitHub
 Actions email notification to the repository owner. No Render health request
 was required for this test. This verifies the GitHub failure-notification
-route; the separate Render notification-channel test remains outstanding.
+route at that date. The two independently labelled runtime jobs require the
+verification recorded in `COMMERCE-STAGING-OBSERVABILITY.md`; the separate
+Render notification-channel test remains outstanding.

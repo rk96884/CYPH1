@@ -65,12 +65,15 @@ Example synthetic entry:
 ### Synthetic checks
 
 - Render performs the continuous liveness check against `/health`.
-- `.github/workflows/commerce-staging-monitor.yml` checks the direct Render
-  origin's generic `/health` and `/ready` responses hourly and can also be run
-  manually. It does not access `/operations/*` or bypass Cloudflare Access.
-- Store the origin only as the GitHub Actions repository secret
-  `COMMERCE_STAGING_ORIGIN`, using the HTTPS Render origin with no path or query.
-  Do not use the Cloudflare-protected operations hostname for this secret.
+- `.github/workflows/commerce-staging-monitor.yml` independently checks both
+  direct Render origins' generic `/health` and `/ready` responses hourly and can
+  also be run manually. It does not access checkout, webhook or `/operations/*`
+  routes and does not bypass Cloudflare Access.
+- Store the customer origin only as the GitHub Actions repository secret
+  `COMMERCE_CUSTOMER_STAGING_ORIGIN` and the operations origin only as
+  `COMMERCE_OPERATIONS_STAGING_ORIGIN`. Each value must be an HTTPS Render
+  origin with no path or query. Do not use either custom hostname and do not
+  store a Cloudflare Access assertion.
 - Ensure the accountable operator has GitHub Actions failure notifications
   enabled. A failed scheduled run is the staging alert; review the failed step
   before changing infrastructure.
@@ -195,8 +198,29 @@ numeric service objectives remain launch-gate decisions.
 
 ### Non-disruptive notification test
 
-The **Commerce staging monitor** manual dispatch exposes a
-`simulate_failure` input. Enabling it deliberately fails the workflow before
-any staging health request is made, allowing the GitHub Actions notification
-route to be verified without suspending Render or changing a secret. Leave the
-input disabled for routine manual checks; scheduled runs cannot enable it.
+The **Commerce staging monitor** manual dispatch exposes independent
+`simulate_customer_failure` and `simulate_operations_failure` inputs. Enabling
+one deliberately fails only that job before any request to its origin, allowing
+the target label and GitHub Actions notification route to be verified without
+suspending Render or changing a secret. Leave both inputs disabled for routine
+manual checks; scheduled runs cannot enable them.
+
+### Dual-runtime setup and verification
+
+1. Add `COMMERCE_CUSTOMER_STAGING_ORIGIN` and
+   `COMMERCE_OPERATIONS_STAGING_ORIGIN` under GitHub Actions repository secrets.
+   Copy each direct HTTPS Render origin without a trailing path or query.
+2. Run **Commerce staging monitor** with both failure inputs disabled. Require
+   both `customer-health-and-readiness` and
+   `operations-health-and-readiness` to pass.
+3. Run it with only `simulate_customer_failure` enabled. Confirm the customer
+   job fails intentionally and the operations job passes.
+4. Run it with only `simulate_operations_failure` enabled. Confirm the
+   operations job fails intentionally and the customer job passes.
+5. Run it once more with both inputs disabled and require both jobs to pass.
+6. After successful verification, remove the obsolete
+   `COMMERCE_STAGING_ORIGIN` repository secret. Do not remove it before the new
+   workflow has passed with both replacement secrets.
+
+Record only run numbers, job outcomes, commit and notification result. Do not
+record either secret value or full Render origin.

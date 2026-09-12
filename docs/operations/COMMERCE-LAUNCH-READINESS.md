@@ -32,6 +32,7 @@ This register separates evidence that can be produced by the repository from bus
 | Worker restart and exhaustion | Durable claim leases, bounded retries and terminal exhaustion for fulfilment and communications | Engineering baseline and Render development migration covered; managed restart rehearsal, provider idempotency and alert ownership outstanding |
 | Logging and reconciliation-export minimisation | Exact request-log field set plus fixed reconciliation CSV column allowlist and prohibited-data canaries | Automated engineering boundary covered; deployed processors, access, retention, deletion and production privacy approval remain outstanding |
 | Deployed staging secrets and access | Variable-name inventories, account membership, MFA, external integrations, protected source history and registrar controls | Current Render, Cloudflare, GitHub, Brevo and domain checks passed on 10–11 September 2026; DNSSEC active; Mollie, independent review and production separation remain outstanding |
+| Dual-runtime staging monitor | Separate exact-response customer and operations health/readiness jobs with bounded labels and independent manual failure inputs | Automated checker/workflow baseline covered; replacement secrets, healthy run, per-job failure/notification runs and final recovery run remain manual staging steps |
 
 ## Engineering tests still required
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { checkCommerceStaging, parseStagingOrigin } from "./check-commerce-staging.mjs";
+import { checkCommerceStaging, parseStagingOrigin, parseStagingTarget } from "./check-commerce-staging.mjs";
 
 test("staging origin must be an HTTPS origin without credentials or path data", () => {
   assert.equal(parseStagingOrigin("https://staging.example").origin, "https://staging.example");
@@ -12,6 +12,14 @@ test("staging origin must be an HTTPS origin without credentials or path data", 
   ]) assert.throws(() => parseStagingOrigin(value));
 });
 
+test("staging target is a bounded non-sensitive label", () => {
+  assert.equal(parseStagingTarget("customer"), "customer");
+  assert.equal(parseStagingTarget("operations"), "operations");
+  for (const value of [undefined, "", "checkout", "https://staging.example"]) {
+    assert.throws(() => parseStagingTarget(value), /customer or operations/);
+  }
+});
+
 test("health and readiness require exact successful generic responses", async () => {
   const requested = [];
   const fetchImpl = async (url) => {
@@ -19,8 +27,11 @@ test("health and readiness require exact successful generic responses", async ()
     return Response.json({ status: url.pathname === "/health" ? "ok" : "ready" });
   };
   assert.deepEqual(
-    await checkCommerceStaging({ origin: new URL("https://staging.example"), fetchImpl }),
-    [{ endpoint: "health", status: 200 }, { endpoint: "readiness", status: 200 }],
+    await checkCommerceStaging({ target: "customer", origin: new URL("https://staging.example"), fetchImpl }),
+    [
+      { target: "customer", endpoint: "health", status: 200 },
+      { target: "customer", endpoint: "readiness", status: 200 },
+    ],
   );
   assert.deepEqual(requested, ["/health", "/ready"]);
 });
@@ -28,16 +39,18 @@ test("health and readiness require exact successful generic responses", async ()
 test("a failed or unexpected response rejects the check", async () => {
   await assert.rejects(
     checkCommerceStaging({
+      target: "operations",
       origin: new URL("https://staging.example"),
       fetchImpl: async () => Response.json({ status: "unavailable" }, { status: 503 }),
     }),
-    /health check returned HTTP 503/,
+    /operations health check returned HTTP 503/,
   );
   await assert.rejects(
     checkCommerceStaging({
+      target: "customer",
       origin: new URL("https://staging.example"),
       fetchImpl: async () => Response.json({ status: "wrong" }),
     }),
-    /health check returned an unexpected response/,
+    /customer health check returned an unexpected response/,
   );
 });

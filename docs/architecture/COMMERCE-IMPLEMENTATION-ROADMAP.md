@@ -609,6 +609,29 @@ Implementation baseline completed:
 - Mollie access, production separation, credential rotation provenance and an
   independent least-privilege review remain launch gates.
 
+### 4.24 Dual-runtime staging monitoring
+
+- Check customer and operations liveness/readiness independently without
+  accessing a state-changing, authenticated or provider route.
+- Identify the affected runtime using a bounded non-sensitive label without
+  printing either configured origin.
+- Exercise each job's failure and notification path independently.
+- Preserve separate production alert ownership and service objectives as launch
+  gates.
+
+Implementation baseline completed:
+
+- The staging checker now requires `customer` or `operations` as an exact target
+  label and includes it in generic success/failure output.
+- The scheduled workflow has separate customer and operations jobs, repository
+  secrets and manual failure inputs.
+- Unit tests cover accepted/rejected labels, exact generic responses and
+  target-specific failures.
+- `docs/operations/COMMERCE-STAGING-OBSERVABILITY.md` defines safe secret
+  migration, independent failure checks and final healthy verification.
+- GitHub secret configuration, the three controlled workflow runs and
+  notification confirmation remain manual completion steps.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
