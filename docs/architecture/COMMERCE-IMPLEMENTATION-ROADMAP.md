@@ -637,6 +637,26 @@ Implementation baseline completed:
 - Production alert ownership, service objectives and independent notification
   cover remain launch gates.
 
+### 4.25 Synthetic personal-data incident tabletop
+
+- Exercise controller awareness, conservative containment and bounded evidence
+  without creating a real incident or using personal data.
+- Introduce changing facts, unknown recipients and processor/cache uncertainty.
+- Preserve legal notification decisions for an authorised current-law owner.
+- Expose missing ownership, contacts, templates and retention as launch gaps.
+
+Implementation baseline completed:
+
+- `docs/operations/PERSONAL-DATA-INCIDENT-TABLETOP.md` defines a five-inject,
+  discussion-only exercise with explicit safety and pass criteria.
+- The scenario covers the awareness clock, processor escalation, changing risk,
+  unavailable legal ownership and an incomplete position near 72 hours.
+- Exercise `PDI-TTX-001` passed on 12 September 2026 using the full five-inject
+  sequence and relative awareness clock; no live action or real data was used.
+- Primary/backup legal authority, restricted registers, processor-contact
+  verification, approved communications, retention and alternate-system access
+  remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

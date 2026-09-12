@@ -1,7 +1,7 @@
 # Personal-data incident escalation
 
 **Status:** Engineering operating baseline; legal/privacy approval and production ownership are outstanding  
-**Last engineering update:** 7 September 2026
+**Last engineering update:** 12 September 2026
 
 ## Purpose
 
@@ -197,7 +197,7 @@ addresses, provider payloads, Access logs or regulator-report drafts.
 - [ ] Create controlled ICO and affected-person communication templates.
 - [ ] Approve a purpose-specific retention schedule for logs, webhook bodies,
       orders, addresses, exports, consent and breach evidence.
-- [ ] Run a tabletop exercise using synthetic data, including the awareness
+- [x] Run a tabletop exercise using synthetic data, including the awareness
       clock, processor escalation, risk assessment and phased-report scenario.
 - [ ] Confirm that evidence and communications remain accessible if the primary
       email, source-control or hosting account is unavailable.
@@ -212,3 +212,15 @@ addresses, provider payloads, Access logs or regulator-report drafts.
 ICO guidance notes that it is being reviewed following the Data (Use and Access)
 Act 2025. The accountable owner must check the current guidance when an incident
 occurs and during the final pre-launch review.
+
+The controlled, discussion-only exercise is defined in
+`PERSONAL-DATA-INCIDENT-TABLETOP.md`. It must not create a live incident or use
+real personal data.
+
+Exercise `PDI-TTX-001` passed on 12 September 2026. It confirmed conservative
+containment, restricted evidence handling, an unchanged awareness clock,
+changing-risk assessment, processor escalation, separate notification
+thresholds, phased-report preparation and bounded closure. It also confirmed
+that missing primary/backup legal authority, restricted registers, processor
+routes, approved communications, retention and alternate-system access remain
+launch blockers.

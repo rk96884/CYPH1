@@ -33,6 +33,7 @@ This register separates evidence that can be produced by the repository from bus
 | Logging and reconciliation-export minimisation | Exact request-log field set plus fixed reconciliation CSV column allowlist and prohibited-data canaries | Automated engineering boundary covered; deployed processors, access, retention, deletion and production privacy approval remain outstanding |
 | Deployed staging secrets and access | Variable-name inventories, account membership, MFA, external integrations, protected source history and registrar controls | Current Render, Cloudflare, GitHub, Brevo and domain checks passed on 10–11 September 2026; DNSSEC active; Mollie, independent review and production separation remain outstanding |
 | Dual-runtime staging monitor | Separate exact-response customer and operations health/readiness jobs with bounded labels and independent manual failure inputs | Automated baseline and independent healthy/failure/notification/recovery staging sequence passed on 12 September 2026; legacy single-origin secret removed; production ownership and objectives remain outstanding |
+| Personal-data incident tabletop | Five-inject synthetic scenario covering awareness, containment, processor escalation, changing risk and phased reporting | `PDI-TTX-001` passed on 12 September 2026 without live action or real data; legal/privacy ownership, restricted registers, processor routes, communications, retention and production approval remain outstanding |
 
 ## Engineering tests still required
 
@@ -91,8 +92,8 @@ The following require accountable human sign-off and cannot be completed by auto
       procedure documented; provider-specific sandbox exercise and production
       ownership remain open.
 - [x] Personal-data incident escalation engineering procedure documented;
-      privacy/legal approval, named owners, processor contacts and a synthetic
-      tabletop exercise remain open.
+      synthetic tabletop passed; privacy/legal approval, named primary/backup
+      owners, restricted registers and verified processor contacts remain open.
 - [x] Controlled rollback and commerce-disable engineering procedure
       documented; customer runtime now has independent checkout/webhook gates,
       but staging rehearsal and production approval remain open.
