@@ -73,11 +73,7 @@ export const createCustomerRuntime = (input: Readonly<{
   gates: CustomerRouteGates;
 }>): Handler => async (request) => {
   const url = new URL(request.url);
-  if (request.method === "GET" && url.pathname === "/health") {
-    const response = json({ status: "ok" });
-    response.headers.set("X-CYPH1-Rollback-Drill", "CDR-DRILL-002");
-    return response;
-  }
+  if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
   if (request.method === "GET" && url.pathname === "/ready") {
     try {
       await input.readiness();
