@@ -680,6 +680,22 @@ Implementation baseline completed:
 - A source-controlled faulty-release rollback and the Mollie
   checkout-disable/webhook-continuity exercise remain outstanding.
 
+### 4.27 Customer staging source-revert rehearsal
+
+- Deploy a benign, observable customer runtime marker while preserving the
+  disabled commerce state.
+- Restore the prior behaviour through a new revert commit rather than a branch
+  rewrite or provider-only rollback.
+- Verify the marker disappears, health remains exact, checkout and webhook
+  routes remain absent, and both staging monitor jobs pass.
+
+Exercise `CDR-DRILL-002` passed on 13 September 2026. Marker commit `1c60da8`
+and revert commit `f77abf3` both deployed successfully to customer staging;
+the marker appeared and then disappeared, disabled route checks passed at both
+stages, and post-revert monitor run `#95` passed. The evidence is recorded in
+`docs/operations/COMMERCE-SOURCE-ROLLBACK-REHEARSAL.md`. A faulty-release
+recovery exercise and Mollie webhook-continuity rehearsal remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

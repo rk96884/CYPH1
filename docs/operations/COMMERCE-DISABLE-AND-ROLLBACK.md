@@ -12,9 +12,10 @@ not suspend an entire commerce runtime merely to hide checkout if doing so would
 also prevent an in-flight payment from being recorded.
 
 The current public pre-launch deployment contains no commerce routes. The
-current Render staging listener exposes only generic health/readiness and
-protected `/operations/*` routes. A separate customer runtime now exists in
-source but is not approved or configured for deployment.
+Render operations staging listener exposes only generic health/readiness and
+protected `/operations/*` routes. A separate customer staging runtime is
+deployed with checkout and payment-webhook routes disabled. Neither staging
+listener is approved for production commerce.
 
 ## Existing controls
 
@@ -129,5 +130,7 @@ This runbook does not approve production commerce. The source boundary now
 supports independent checkout and payment-webhook exposure, but a deployed
 customer staging runtime must demonstrate that checkout initiation can be
 disabled without disabling authenticated payment webhooks or reconciliation.
-A controlled disable, rollback and recovery rehearsal must then be performed in
-staging and recorded in the launch-readiness register.
+The disabled-state replacement-deploy and benign source-revert paths were
+rehearsed in customer staging on 12–13 September 2026. A faulty-release
+recovery exercise and the Mollie test checkout-disable/webhook-continuity
+rehearsal remain outstanding launch gates.
