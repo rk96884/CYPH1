@@ -39,7 +39,10 @@ test("customer runtime exposes only generic health and readiness routes", async 
     checkout: response("checkout"), paymentWebhook: response("webhook"), readiness: async () => {},
     gates: { checkoutEnabled: false, paymentWebhooksEnabled: false },
   });
-  assert.equal((await runtime(new Request("https://example.test/health"))).status, 200);
+  const health = await runtime(new Request("https://example.test/health"));
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: "ok" });
+  assert.equal(health.headers.get("x-cyph1-rollback-drill"), "CDR-DRILL-002");
   assert.equal((await runtime(new Request("https://example.test/ready"))).status, 200);
   assert.equal((await runtime(new Request("https://example.test/operations/orders"))).status, 404);
   assert.equal((await runtime(new Request("https://example.test/products"))).status, 404);
