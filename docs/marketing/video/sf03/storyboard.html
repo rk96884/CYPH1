@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CYPH/1 SF-03 production storyboard</title>
+  <style>
+    @font-face{font-family:Michroma;src:url('../../../../public/fonts/michroma-latin.woff2') format('woff2')}
+    @font-face{font-family:Manrope;src:url('../../../../public/fonts/manrope-latin.woff2') format('woff2')}
+    :root{--obsidian:#080711;--aubergine:#21132b;--plum:#321b40;--lavender:#a77af4;--metallic:#d9c6f2;--white:#f7f3f8;--mist:#b8adbf;--alloy:#776a80;--gold:#e6c685}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:1080px;height:1920px;overflow:hidden}
+    body{background:var(--aubergine);color:var(--white);font-family:Manrope,Arial,sans-serif}
+    #stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:var(--aubergine)}
+    .ring{position:absolute;border:2px solid rgba(217,198,242,.18);border-radius:50%;pointer-events:none}
+    .ring.one{width:670px;height:670px;left:600px;top:-330px}
+    .ring.two{width:490px;height:490px;left:690px;top:-240px;border-color:rgba(167,122,244,.27)}
+    .top{position:absolute;left:96px;right:96px;top:112px;display:flex;align-items:start;justify-content:space-between;z-index:8}
+    .series{color:var(--lavender);font-size:25px;letter-spacing:.1em;text-transform:uppercase}
+    .logo{width:262px;height:auto;display:block}
+    .rule-top{position:absolute;left:96px;right:96px;top:244px;height:1px;background:rgba(184,173,191,.5)}
+    .scene{position:absolute;left:96px;right:96px;opacity:0;z-index:4;will-change:opacity,transform}
+    .eyebrow{color:var(--gold);font-size:23px;letter-spacing:.17em;text-transform:uppercase}
+    h1,h2,p{margin:0}
+    .headline{font:400 64px/1.23 Michroma,Arial,sans-serif;letter-spacing:.008em;text-transform:uppercase}
+    .headline .accent{color:var(--lavender)}
+    .scene.hook{top:540px}
+    .hook .headline{margin-top:34px;font-size:67px}
+    .hook .detail{margin-top:74px;color:var(--mist);font-size:30px;line-height:1.45;max-width:830px}
+    .target{position:absolute;left:325px;top:1150px;width:430px;height:430px;opacity:.22;z-index:1}
+    .target circle{fill:none;stroke:var(--lavender);stroke-width:2}
+    .target path{stroke:var(--metallic);stroke-width:2;fill:none}
+    .scene.asynchronous{top:330px}
+    .asynchronous .headline{margin-top:20px;font-size:50px;max-width:870px}
+    .scene.repeat{top:335px}
+    .repeat .headline{margin-top:20px;font-size:55px;max-width:885px}
+    .scene.routine{top:590px}
+    .routine .headline{margin-top:32px;font-size:72px;max-width:860px}
+    .routine .support{margin-top:64px;font-size:31px;color:var(--mist);line-height:1.45}
+    .phase-field{position:absolute;left:90px;right:90px;top:755px;height:785px;z-index:3;opacity:0}
+    .phase{position:absolute;width:386px;height:340px;border-top:2px solid rgba(217,198,242,.55);padding-top:22px}
+    .phase:nth-child(1){left:0;top:0}.phase:nth-child(2){right:0;top:58px}.phase:nth-child(3){left:48px;bottom:0}.phase:nth-child(4){right:14px;bottom:35px}
+    .phase-label{font:400 21px/1.2 Michroma,Arial,sans-serif;letter-spacing:.02em;white-space:nowrap}
+    .phase-label span{color:var(--lavender);margin-right:12px}
+    .phase svg{display:block;width:190px;height:225px;margin:14px auto 0;overflow:visible;transform-origin:50% 80%}
+    .skin{fill:rgba(50,27,64,.7);stroke:var(--gold);stroke-width:2}
+    .follicle{fill:none;stroke:var(--lavender);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+    .shaft{fill:none;stroke:var(--gold);stroke-width:7;stroke-linecap:round}
+    .bulb{fill:var(--gold);stroke:var(--white);stroke-width:2}
+    .pulse-band{position:absolute;left:0;right:0;top:745px;height:820px;background:linear-gradient(180deg,transparent 0%,rgba(217,198,242,.10) 30%,rgba(217,198,242,.19) 50%,rgba(217,198,242,.10) 70%,transparent 100%);opacity:0;z-index:5;pointer-events:none}
+    .pulse-label{position:absolute;top:1557px;left:96px;color:var(--gold);font-size:23px;letter-spacing:.08em;z-index:6;opacity:0}
+    .timeline{position:absolute;left:96px;right:96px;top:1050px;height:145px;display:flex;align-items:center;opacity:0}
+    .timeline .line{height:2px;width:100%;background:var(--alloy)}
+    .timeline i{position:absolute;width:12px;height:12px;border:2px solid var(--lavender);border-radius:50%;background:var(--aubergine)}
+    .timeline i:nth-child(2){left:0}.timeline i:nth-child(3){left:33%}.timeline i:nth-child(4){left:66%}.timeline i:nth-child(5){right:0}
+    .timeline-label{position:absolute;top:1180px;left:96px;color:var(--metallic);font-size:25px;letter-spacing:.13em;opacity:0}
+    .scene.end{top:490px;text-align:left}
+    .end-logo{display:block;width:700px;height:auto;margin-bottom:88px}
+    .descriptor{font:400 35px/1.4 Michroma,Arial,sans-serif;color:var(--metallic);letter-spacing:.06em}
+    .proposition{font:400 62px/1.2 Michroma,Arial,sans-serif;margin-top:108px}
+    .cta{margin-top:112px;padding-top:32px;border-top:2px solid var(--lavender);font-size:31px;letter-spacing:.06em;color:var(--white)}
+    .cta .url{display:block;margin-top:14px;color:var(--lavender);font-size:27px;letter-spacing:.01em}
+    .bottom{position:absolute;left:96px;right:96px;bottom:112px;display:flex;justify-content:space-between;align-items:end;z-index:8;color:var(--mist);font-size:20px;letter-spacing:.1em;text-transform:uppercase}
+    .bottom .stroke{width:95px;height:3px;background:var(--lavender)}
+    .bottom span:last-child{color:var(--gold)}
+  </style>
+</head>
+<body>
+  <main id="stage" aria-label="SF-03 animated educational video storyboard">
+    <div class="ring one"></div><div class="ring two"></div>
+    <div class="top"><span class="series">KNOW THE CYCLE</span><img class="logo" alt="CYPH/1" src="../../../../public/brand/generated/cyph1-wordmark-clean-metallic.svg"></div>
+    <div class="rule-top"></div>
+    <svg class="target" viewBox="0 0 430 430" aria-hidden="true"><circle cx="215" cy="215" r="201"/><circle cx="215" cy="215" r="133"/><path d="M215 0v60M215 370v60M0 215h60M370 215h60"/></svg>
+    <section class="scene hook"><div class="eyebrow">A USEFUL DISTINCTION</div><h1 class="headline">IPL DOES NOT IDENTIFY AN INDIVIDUAL HAIR’S <span class="accent">PHASE.</span></h1><p class="detail">General IPL education — not a future CYPH/1 device claim.</p></section>
+    <section class="scene asynchronous"><div class="eyebrow">FOUR STAGES · ONE CYCLE</div><h2 class="headline">DIFFERENT HAIRS CAN BE AT DIFFERENT POINTS IN THE <span class="accent">CYCLE.</span></h2></section>
+    <section class="scene repeat"><div class="eyebrow">ONE PRINCIPLE</div><h2 class="headline">THAT IS WHY TREATMENT IS <span class="accent">REPEATED OVER TIME.</span></h2></section>
+    <div class="phase-field" aria-label="Four asynchronously cycling follicles">
+      <div class="phase"><div class="phase-label"><span>01 /</span>ANAGEN</div><svg viewBox="0 0 190 225" aria-hidden="true"><path class="skin" d="M10 68L35 62L58 69L80 61L102 67L125 61L151 67L180 62V196L160 216H28L10 195Z"/><path class="follicle" d="M70 72C73 122 78 174 95 197C112 174 117 122 120 72"/><path class="shaft" d="M95 187L95 8"/><circle class="bulb" cx="95" cy="194" r="12"/></svg></div>
+      <div class="phase"><div class="phase-label"><span>02 /</span>CATAGEN</div><svg viewBox="0 0 190 225" aria-hidden="true"><path class="skin" d="M10 68L35 62L58 69L80 61L102 67L125 61L151 67L180 62V196L160 216H28L10 195Z"/><path class="follicle" d="M75 72C78 118 83 149 95 166C107 149 112 118 115 72"/><path class="shaft" d="M95 159L95 13"/><circle class="bulb" cx="95" cy="164" r="10"/></svg></div>
+      <div class="phase"><div class="phase-label"><span>03 /</span>TELOGEN</div><svg viewBox="0 0 190 225" aria-hidden="true"><path class="skin" d="M10 68L35 62L58 69L80 61L102 67L125 61L151 67L180 62V196L160 216H28L10 195Z"/><path class="follicle" d="M78 72C81 104 84 132 95 145C106 132 109 104 112 72"/><path class="shaft" d="M95 137L95 15"/><circle class="bulb" cx="95" cy="142" r="9"/></svg></div>
+      <div class="phase"><div class="phase-label"><span>04 /</span>EXOGEN</div><svg viewBox="0 0 190 225" aria-hidden="true"><path class="skin" d="M10 68L35 62L58 69L80 61L102 67L125 61L151 67L180 62V196L160 216H28L10 195Z"/><path class="follicle" d="M78 72C81 107 84 142 95 153C106 142 109 107 112 72"/><path class="shaft" d="M95 132L95 35"/><path class="shaft" d="M95 26L99 -6"/><circle class="bulb" cx="95" cy="150" r="9"/></svg></div>
+    </div>
+    <div class="pulse-band"></div><div class="pulse-label">ILLUSTRATIVE PULSE · NOT PHASE DETECTION</div>
+    <section class="scene routine"><div class="eyebrow">A CONSIDERED APPROACH</div><h2 class="headline">A CONSIDERED ROUTINE, <span class="accent">NOT A SHORTCUT.</span></h2><p class="support">Repeated across the natural cycle.</p></section>
+    <div class="timeline"><div class="line"></div><i></i><i></i><i></i><i></i></div><div class="timeline-label">TIME · CYCLE · REPEAT</div>
+    <section class="scene end"><img class="end-logo" alt="CYPH/1" src="../../../../public/brand/generated/cyph1-wordmark-clean-metallic.svg"><div class="descriptor">CYCLE. PHASE. ONE.</div><div class="proposition">TARGET THE GROWTH.</div><div class="cta">READ THE FULL GUIDE <span class="url">CYPH1.CO.UK/LEARN/HAIR-GROWTH-CYCLE/</span></div></section>
+    <div class="bottom"><div class="stroke"></div><span>GENERAL IPL EDUCATION</span></div>
+  </main>
+  <script>
+    const scenes={hook:document.querySelector('.hook'),asynchronous:document.querySelector('.asynchronous'),repeat:document.querySelector('.repeat'),routine:document.querySelector('.routine'),end:document.querySelector('.end')};
+    const phaseField=document.querySelector('.phase-field');
+    const diagrams=[...document.querySelectorAll('.phase svg')];
+    const target=document.querySelector('.target');
+    const pulse=document.querySelector('.pulse-band');
+    const pulseLabel=document.querySelector('.pulse-label');
+    const timeline=document.querySelector('.timeline');
+    const timelineLabel=document.querySelector('.timeline-label');
+    const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
+    function envelope(t,a,b,fade=.35){return clamp((t-a)/fade)*clamp((b-t)/fade)}
+    function scene(el,t,a,b){const inP=clamp((t-a)/.42);el.style.opacity=envelope(t,a,b,.42);el.style.transform=`translateY(${Math.round(28*(1-inP))}px)`}
+    window.renderAt=(t)=>{
+      scene(scenes.hook,t,0,4.15);
+      scene(scenes.asynchronous,t,4,10.1);
+      scene(scenes.repeat,t,10,14.1);
+      scene(scenes.routine,t,14,18.65);
+      scene(scenes.end,t,18.5,23.5);
+      phaseField.style.opacity=envelope(t,4.25,14.15,.7);
+      target.style.opacity=(.26*clamp((4.6-t)/1.7)).toFixed(3);
+      target.style.transform=`scale(${(1+.07*clamp(t/4)).toFixed(3)})`;
+      diagrams.forEach((el,i)=>{const p=clamp((t-4.6-i*.28)/.75);const offset=Math.sin(t*(.75+i*.12)+i*1.7)*9;el.style.opacity=p;el.style.transform=`translateY(${Math.round((1-p)*36+offset)}px)`});
+      pulse.style.opacity=(.64*envelope(t,11.18,12.25,.23)).toFixed(3);
+      pulseLabel.style.opacity=envelope(t,10.1,14.05,.35);
+      timeline.style.opacity=envelope(t,14.3,18.5,.45);
+      timelineLabel.style.opacity=envelope(t,14.3,18.5,.45);
+    };
+    window.renderAt(0);
+  </script>
+</body>
+</html>
