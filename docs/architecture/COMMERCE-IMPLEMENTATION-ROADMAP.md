@@ -696,6 +696,31 @@ stages, and post-revert monitor run `#95` passed. The evidence is recorded in
 `docs/operations/COMMERCE-SOURCE-ROLLBACK-REHEARSAL.md`. A faulty-release
 recovery exercise and Mollie webhook-continuity rehearsal remain launch gates.
 
+### 4.28 Customer-data retention and deletion procedure
+
+- Inventory early-access and commerce personal-data locations by purpose.
+- Separate consent withdrawal, rights requests, financial record retention,
+  provider copies and backup handling.
+- Define a safe deletion design without running destructive production SQL or
+  treating this draft as legal approval.
+
+Implementation baseline completed:
+
+- `docs/operations/CUSTOMER-DATA-RETENTION-AND-DELETION.md` records the current
+  pre-launch notice commitments, commerce schema dependencies, request workflow
+  and specific launch blockers.
+- The 13 September 2026 provider check found no Brevo Automations workflows or
+  Cloudflare Worker triggers for early-access cleanup. Brevo's persisted
+  one-month transactional-log rule and disabled new previews were verified, but
+  exact 30-day deletion across DOI/event logs and the 24-month inactivity review
+  remain unverified and require privacy-owner resolution.
+- A monthly, manually owned confirmed-subscriber review method starts 1 October
+  2026; the 14 September age-screen baseline found zero contacts older than 24
+  months. Engagement criteria, backup ownership and restricted decision records
+  require approval before the first actionable case.
+- Category-specific periods, processor settings, legal/finance decisions,
+  restricted registers and tested deletion/restore controls remain outstanding.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.
