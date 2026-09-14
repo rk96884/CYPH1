@@ -1,6 +1,6 @@
 # CYPH/1 pre-launch traffic strategy
 
-**Status:** Proposed  
+**Status:** In execution — reconciled 14 September 2026  
 **Date:** 22 August 2026  
 **Scope:** Drive relevant UK traffic to the CYPH/1 pre-launch website and convert interested visitors into confirmed early-access subscribers.
 
@@ -132,7 +132,7 @@ Use only if it refers to a genuine, defined early-access group. State clearly wh
 
 ### Weeks 1–2: measurement and foundations
 
-- Verify Google Search Console and submit the XML sitemap.
+- ~~Verify Google Search Console and submit the XML sitemap.~~ Completed; homepage indexed and AR-01 submitted for indexing.
 - Record the starting position for organic impressions, visits and confirmed subscribers.
 - Agree the UTM naming convention below.
 - Define the first six social pieces and first two educational website articles.
@@ -225,12 +225,12 @@ Do not put email addresses, names or other personal data in UTM parameters.
 
 ## 12. Immediate next actions
 
-1. Connect Google Search Console and submit the current sitemap.
-2. Agree the measurement baseline and UTM taxonomy.
-3. Create a four-week content calendar containing six short-form concepts, four carousels and two article briefs.
-4. Open a separate implementation issue for the educational content section and article template.
-5. Create the marketing claims register and content review checklist.
-6. Produce the first **Know the cycle** content batch from the approved hair-cycle illustrations.
+1. **Completed:** Google Search Console Domain property verified and current XML sitemap submitted; homepage indexed and AR-01 submitted for indexing.
+2. **Partially completed:** UTM taxonomy agreed; refresh the measurement baseline with current Search Console and subscriber data.
+3. **Completed:** Four-week content calendar contains six short-form concepts, four carousels and two article briefs.
+4. **Completed in implementation:** AR-01 is live at `/learn/hair-growth-cycle/` and linked from the homepage.
+5. **Completed:** Marketing claims register and content review checklist are in place.
+6. **In progress:** SF-01 and SF-02 produced and published; continue the **Know the cycle** batch with SF-03 and remaining assets.
 7. Build a research shortlist of five to ten relevant UK creators without contacting them until the collaboration brief is approved.
 
 ## 13. Reference guidance
