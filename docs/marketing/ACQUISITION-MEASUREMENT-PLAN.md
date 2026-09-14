@@ -43,6 +43,7 @@ DNS verification records must be added as **DNS only** records. Do not remove or
 - `https://www.cyph1.co.uk/sitemap-index.xml` submitted.
 - Homepage confirmed indexed by Google.
 - AR-01 published at `/learn/hair-growth-cycle/` and submitted through URL Inspection for indexing on 14 September 2026.
+- AR-02 published at `/learn/why-ipl-consistency-matters/` and submitted through URL Inspection for indexing on 14 September 2026.
 - Indexing requests are not guarantees of inclusion; confirm AR-01's indexed status after Google has processed the request.
 
 ## Conversion definitions
@@ -171,7 +172,7 @@ Report by channel and campaign:
 1. ~~Exclude `/terms/` from the generated sitemap.~~ Completed.
 2. ~~Build and inspect the resulting sitemap.~~ Completed.
 3. ~~Create and verify the Search Console Domain property.~~ Completed.
-4. ~~Submit the sitemap and inspect the homepage.~~ Completed; homepage indexed. AR-01 submitted separately for indexing on 14 September 2026.
+4. ~~Submit the sitemap and inspect the homepage.~~ Completed; homepage indexed. AR-01 and AR-02 submitted separately for indexing on 14 September 2026.
 5. Populate/update the baseline record from Brevo, Cloudflare and Search Console.
 6. Create the first campaign links using the agreed UTM convention.
 7. Decide whether campaign-source retention in Brevo is necessary before changing the form or Worker.
