@@ -1,0 +1,122 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import HairPhaseIllustration from "../../components/HairPhaseIllustration.astro";
+import { growthPhases } from "../../data/brand";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "The four stages of the hair-growth cycle",
+  datePublished: "2026-09-14",
+  dateModified: "2026-09-14",
+  inLanguage: "en-GB",
+  author: { "@type": "Organization", name: "CYPH/1" },
+  publisher: { "@type": "Organization", name: "CYPH/1" }
+};
+---
+<BaseLayout
+  title="The four stages of the hair-growth cycle | CYPH/1"
+  description="Understand anagen, catagen, telogen and exogen, and why the hair-growth cycle matters in IPL."
+  structuredData={structuredData}
+>
+  <Header />
+  <main id="main" class="article-page">
+    <article>
+      <header class="article-hero section">
+        <div class="container article-reading">
+          <p class="eyebrow">Know the cycle · Hair-growth science</p>
+          <h1>The four stages of the hair-growth cycle</h1>
+          <p class="lede">Hair does not grow continuously or all at once. Individual follicles move through a repeating cycle commonly described as anagen, catagen, telogen and exogen.</p>
+          <p class="article-meta">Published 14 September 2026 · General educational content</p>
+        </div>
+      </header>
+
+      <section class="section article-section" aria-labelledby="cycle-overview">
+        <div class="container article-reading">
+          <p class="section-index">01 / The cycle</p>
+          <h2 id="cycle-overview">Four phases, different roles.</h2>
+          <p>At any one time, different hairs can be at different points in their cycle. Understanding those phases provides useful context for why light-based hair reduction is approached as a repeated routine rather than a one-off event.</p>
+        </div>
+        <ol class="container article-phase-grid">
+          {growthPhases.map((phase) => (
+            <li class:list={{ active: phase.active }}>
+              <div class="phase-card-meta"><span>{phase.number}</span>{phase.active && <small>Phase one</small>}</div>
+              <HairPhaseIllustration phase={phase.name} />
+              <h3>{phase.name}</h3>
+              <p class="phase-label">{phase.label}</p>
+              <p class="phase-description">{phase.description}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section class="section article-section">
+        <div class="container article-reading article-copy">
+          <p class="section-index">02 / Phase by phase</p>
+          <h2>Anagen — active growth</h2>
+          <p>Anagen is the active-growth phase. During this stage, the follicle produces the hair shaft. Light-based hair reduction is associated with active growth, which is one reason treatment is repeated across the hair cycle.</p>
+          <h2>Catagen — transition</h2>
+          <p>Catagen is a short transition, or regression, phase in which active growth stops.</p>
+          <h2>Telogen — rest</h2>
+          <p>Telogen is a resting phase in which the existing hair is no longer actively growing.</p>
+          <h2>Exogen — shedding</h2>
+          <p>Exogen describes the release and shedding of the existing hair. Some scientific sources treat exogen as part of telogen rather than a completely separate phase, which is why CYPH/1 describes the four-stage model as one that is commonly used.</p>
+        </div>
+      </section>
+
+      <section class="section article-section">
+        <div class="container article-reading article-copy">
+          <p class="section-index">03 / Why it matters for IPL</p>
+          <h2>A repeated routine, not phase detection.</h2>
+          <p>IPL treatment does not identify the growth phase of an individual hair. Different hairs can be at different points in the cycle, so light-based hair reduction is repeated over time to allow treatment to coincide with hairs entering active growth.</p>
+          <aside class="science-note">
+            <p><strong>Important distinction.</strong> “Target the growth” describes the CYPH/1 brand principle. It does not mean that a future CYPH/1 device can detect the growth phase of an individual hair.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="sources">
+        <div class="container article-reading article-copy">
+          <p class="section-index">04 / Sources</p>
+          <h2 id="sources">Evidence behind this article.</h2>
+          <p>This article is general hair-cycle and IPL education. It does not make performance, safety or suitability claims about a future CYPH/1 product.</p>
+          <ul class="article-sources">
+            <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK470321/">NCBI Bookshelf — Anatomy, Hair Follicle</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9917549/">International Journal of Molecular Sciences — Hair Growth Cycle and Hair Loss</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5475414/">Journal of Cutaneous and Aesthetic Surgery — Photoepilation and Skin Photorejuvenation</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4745852/">Clinical, Cosmetic and Investigational Dermatology — Lasers and Intense Pulsed Light Technology</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section article-cta">
+        <div class="container article-reading">
+          <p class="eyebrow">Cycle. Phase. One.</p>
+          <h2>Follow the CYPH/1 journey.</h2>
+          <p>Join early access for product-development updates and launch information. Registration is not an order or pre-order.</p>
+          <a class="button" href="/">Explore CYPH/1</a>
+        </div>
+      </section>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .article-reading { max-width: var(--cyph-layout-reading); }
+  .article-hero { padding-bottom: var(--cyph-layout-section-compact); }
+  .article-hero h1 { max-width: 12ch; margin: var(--cyph-space-4) 0 var(--cyph-space-6); font-size: clamp(2.5rem, 7vw, 5.75rem); line-height: var(--cyph-leading-display); }
+  .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
+  .article-section { padding-block: var(--cyph-layout-section-compact); }
+  .article-copy > h2 { margin-top: var(--cyph-space-12); }
+  .article-phase-grid { display: grid; gap: var(--cyph-space-4); margin-top: var(--cyph-space-12); padding: 0 var(--cyph-layout-gutter); list-style: none; }
+  .article-phase-grid li { padding: var(--cyph-space-6); border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .article-phase-grid li.active { border-top-color: var(--cyph-accent-primary); }
+  .article-sources { padding-left: 1.25rem; }
+  .article-sources li + li { margin-top: var(--cyph-space-3); }
+  .article-cta { border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  @media (min-width: 48rem) { .article-phase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 72rem) { .article-phase-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+</style>
