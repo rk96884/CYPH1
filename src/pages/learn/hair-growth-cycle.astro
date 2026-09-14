@@ -83,11 +83,12 @@ const structuredData = {
           <p class="section-index">04 / Sources</p>
           <h2 id="sources" data-reveal>Evidence behind this article.</h2>
           <p>This article is general hair-cycle and IPL education. It does not make performance, safety or suitability claims about a future CYPH/1 product.</p>
+          <p class="related-link"><a href="/learn/why-ipl-consistency-matters/">Next: why consistency matters with home IPL <span aria-hidden="true">→</span></a></p>
           <ul class="article-sources">
-            <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK470321/">NCBI Bookshelf — Anatomy, Hair Follicle</a></li>
-            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9917549/">International Journal of Molecular Sciences — Hair Growth Cycle and Hair Loss</a></li>
-            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5475414/">Journal of Cutaneous and Aesthetic Surgery — Photoepilation and Skin Photorejuvenation</a></li>
-            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4745852/">Clinical, Cosmetic and Investigational Dermatology — Lasers and Intense Pulsed Light Technology</a></li>
+            <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK470321/" target="_blank" rel="noopener noreferrer">NCBI Bookshelf — Anatomy, Hair Follicle</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9917549/" target="_blank" rel="noopener noreferrer">International Journal of Molecular Sciences — Hair Growth Cycle and Hair Loss</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5475414/" target="_blank" rel="noopener noreferrer">Journal of Cutaneous and Aesthetic Surgery — Photoepilation and Skin Photorejuvenation</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4745852/" target="_blank" rel="noopener noreferrer">Clinical, Cosmetic and Investigational Dermatology — Lasers and Intense Pulsed Light Technology</a></li>
           </ul>
         </div>
       </section>
@@ -126,7 +127,7 @@ const structuredData = {
 
 <style>
   .article-reading { max-width: var(--cyph-layout-reading); }
-  .article-hero { padding-bottom: var(--cyph-layout-section-compact); }
+  .article-hero { padding-top: clamp(10rem, 14vw, 12rem); padding-bottom: var(--cyph-layout-section-compact); }
   .article-hero h1 {
     max-width: 13ch;
     margin: var(--cyph-space-4) 0 var(--cyph-space-6);
@@ -255,7 +256,7 @@ const structuredData = {
   @media (min-width: 48rem) { .article-phase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (min-width: 72rem) { .article-phase-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   @media (max-width: 47.99rem) {
-    .article-hero { padding-bottom: var(--cyph-space-12); }
+    .article-hero { padding-top: 10.75rem; padding-bottom: var(--cyph-space-12); }
     .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); line-height: 1.1; }
     .article-page h2 { line-height: 1.2; }
     .article-section { padding-block: var(--cyph-space-12); }
