@@ -1,6 +1,6 @@
 # CYPH/1 acquisition measurement plan
 
-**Status:** Ready for implementation  
+**Status:** In implementation — search foundation live  
 **Date:** 22 August 2026  
 **Related strategy:** [PRE-LAUNCH-TRAFFIC-STRATEGY.md](./PRE-LAUNCH-TRAFFIC-STRATEGY.md)
 
@@ -16,12 +16,12 @@ The principal conversion is a **confirmed double-opt-in subscriber**, not a form
 | --- | --- | --- |
 | Canonical site URL | Ready — `https://www.cyph1.co.uk` | None |
 | Canonical page metadata | Ready | Recheck during release QA |
-| XML sitemap | Ready — `/sitemap-index.xml` | Submit in Search Console after the exclusion below is corrected |
+| XML sitemap | Submitted in Search Console — `/sitemap-index.xml` | Monitor processing and coverage |
 | Sitemap advertised in `robots.txt` | Ready | None |
 | Confirmation page excluded | Ready | None |
 | Privacy Notice excluded | Ready | None |
-| Website Terms excluded | Needs correction — the page is `noindex` but currently appears in the sitemap | Add `/terms/` to the sitemap filter before submission |
-| Google Search Console property | Not yet confirmed | Create a Domain property and verify it through Cloudflare DNS |
+| Website Terms excluded | Ready — `/terms/` excluded from the generated sitemap | None |
+| Google Search Console property | Verified — Domain property for `cyph1.co.uk` | Monitor search performance |
 
 ## Search Console setup
 
@@ -36,6 +36,14 @@ After verification:
 5. Record the baseline below once Search Console begins reporting data.
 
 DNS verification records must be added as **DNS only** records. Do not remove or replace the existing website and email DNS records.
+
+### Search implementation status — 14 September 2026
+
+- Domain property for `cyph1.co.uk` verified in Google Search Console.
+- `https://www.cyph1.co.uk/sitemap-index.xml` submitted.
+- Homepage confirmed indexed by Google.
+- AR-01 published at `/learn/hair-growth-cycle/` and submitted through URL Inspection for indexing on 14 September 2026.
+- Indexing requests are not guarantees of inclusion; confirm AR-01's indexed status after Google has processed the request.
 
 ## Conversion definitions
 
@@ -160,10 +168,10 @@ Report by channel and campaign:
 
 ## Implementation sequence
 
-1. Exclude `/terms/` from the generated sitemap.
-2. Build and inspect the resulting sitemap.
-3. Create and verify the Search Console Domain property.
-4. Submit the sitemap and inspect the homepage.
-5. Populate the baseline record from Brevo, Cloudflare and Search Console.
+1. ~~Exclude `/terms/` from the generated sitemap.~~ Completed.
+2. ~~Build and inspect the resulting sitemap.~~ Completed.
+3. ~~Create and verify the Search Console Domain property.~~ Completed.
+4. ~~Submit the sitemap and inspect the homepage.~~ Completed; homepage indexed. AR-01 submitted separately for indexing on 14 September 2026.
+5. Populate/update the baseline record from Brevo, Cloudflare and Search Console.
 6. Create the first campaign links using the agreed UTM convention.
 7. Decide whether campaign-source retention in Brevo is necessary before changing the form or Worker.
