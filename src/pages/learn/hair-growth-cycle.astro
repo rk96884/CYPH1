@@ -134,13 +134,15 @@ const structuredData = {
     line-height: 1.08;
   }
   .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
-  .article-section { padding-block: var(--cyph-layout-section-compact); }
+  .article-section { padding-block: clamp(2.75rem, 5.5vw, 4.75rem); }
   .article-page h2 {
     max-width: 22ch;
     font-size: clamp(1.6rem, 3.1vw, 2.7rem);
     line-height: 1.16;
   }
-  .article-copy > h2 { margin-top: var(--cyph-space-12); }
+  .article-copy > h2 { margin-top: var(--cyph-space-8); }
+  .article-copy > h2 + p { margin-top: var(--cyph-space-4); }
+  .article-copy > p + h2 { margin-top: var(--cyph-space-12); }
   .article-phase-grid { display: grid; gap: var(--cyph-space-4); margin-top: var(--cyph-space-12); padding: 0 var(--cyph-layout-gutter); list-style: none; }
   .article-phase-grid li {
     padding: var(--cyph-space-6);
@@ -154,7 +156,7 @@ const structuredData = {
   .phase-motion-note { margin-top: var(--cyph-space-3); color: var(--cyph-accent-highlight); font-size: .64rem; letter-spacing: .06em; text-transform: uppercase; }
   .article-sources { padding-left: 1.25rem; }
   .article-sources li + li { margin-top: var(--cyph-space-3); }
-  .article-cta { border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .article-cta { padding-block: clamp(3rem, 6vw, 5.5rem); border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
 
   [data-reveal] { transform: translateX(-.08em); }
   [data-reveal].is-visible {
@@ -253,8 +255,12 @@ const structuredData = {
   @media (min-width: 48rem) { .article-phase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (min-width: 72rem) { .article-phase-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
   @media (max-width: 47.99rem) {
+    .article-hero { padding-bottom: var(--cyph-space-12); }
     .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); line-height: 1.1; }
     .article-page h2 { line-height: 1.2; }
+    .article-section { padding-block: var(--cyph-space-12); }
+    .article-copy > p + h2 { margin-top: var(--cyph-space-8); }
+    .article-cta { padding-block: var(--cyph-space-12); }
   }
   @media (prefers-reduced-motion: reduce) {
     [data-reveal], .article-phase-grid li { opacity: 1; transform: none; transition: none; animation: none !important; filter: none; }
