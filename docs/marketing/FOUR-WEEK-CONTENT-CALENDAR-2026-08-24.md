@@ -20,7 +20,7 @@
 ## Execution status — 14 September 2026
 
 - **SF-01:** created and published on Facebook, Instagram and TikTok.
-- **SF-02:** created and published on Facebook and Instagram; not yet published on TikTok.
+- **SF-02:** created and published on Facebook, Instagram and TikTok.
 - **AR-01:** live at `/learn/hair-growth-cycle/`; submitted to Google Search Console for indexing on 14 September 2026.
 - **SF-03:** produced and reviewed; final video stored at `public/brand/social/cyph1-sf-03-ipl-does-not-read-phase.mp4`. Not yet published.
 - **AR-02:** live at `/learn/why-ipl-consistency-matters/`; submitted to Google Search Console for indexing on 14 September 2026.
