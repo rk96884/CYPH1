@@ -21,8 +21,9 @@
 
 - **SF-01:** created and published on Facebook, Instagram and TikTok.
 - **SF-02:** created and published on Facebook and Instagram; not yet published on TikTok.
-- **AR-01:** implemented at `/learn/hair-growth-cycle/` in draft PR #14; pending final review and merge.
-- **CA-01–CA-04, SF-03–SF-06 and AR-02:** not yet confirmed as produced or published.
+- **AR-01:** live at `/learn/hair-growth-cycle/`; submitted to Google Search Console for indexing on 14 September 2026.
+- **SF-03:** creative direction approved; production brief finalised below. Not yet produced or published.
+- **CA-01–CA-04, SF-04–SF-06 and AR-02:** not yet confirmed as produced or published.
 - Facebook is now an active organic cross-posting channel alongside Instagram and TikTok.
 - The original campaign dates below are retained as the planning baseline; outstanding content should be rescheduled rather than backfilled against expired dates.
 
@@ -53,6 +54,10 @@ Instagram and TikTok can use the same core video with platform-appropriate edits
 | Tue 15 Sep | AR-02 | Website article | Why consistency matters with home IPL | EDU-006, EDU-007 | Join early access |
 | Thu 17 Sep | CA-04 | Instagram carousel / Pinterest | Why treatment is repeated | EDU-006, EDU-007 | Read AR-02 |
 | Sat 19 Sep | SF-06 | Instagram Reel / TikTok | Exogen: release and shedding | EDU-005 | Join early access |
+
+## Spoken brand pronunciation
+
+For voiceover, spoken audio and creator briefing, pronounce **CYPH/1** as **“Sife One”** (`/saɪf wʌn/`). Do not spell out C-Y-P-H. The written brand remains **CYPH/1**.
 
 ## Short-form production briefs
 
@@ -102,25 +107,38 @@ Instagram and TikTok can use the same core video with platform-appropriate edits
 
 ### SF-03 — IPL does not read a hair’s phase
 
-**Hook:** “A useful distinction: IPL does not identify an individual hair’s growth phase.”  
-**Purpose:** Prevent a likely misunderstanding of “Target the growth”.  
+**Status:** Creative direction approved; ready for production.  
+**Hook:** “Your hairs aren’t all in the same phase.”  
+**Purpose:** Prevent a likely misunderstanding of “Target the growth” while explaining why a repeated IPL routine matters.  
 **Length:** 20–25 seconds.  
-**Visual direction:** A clean target motif that resolves into four asynchronously positioned follicle illustrations; do not animate a device scanning or detecting follicles.  
-**On-screen sequence:**
+**Format:** 9:16 vertical master for Instagram Reels, Facebook Reels and TikTok.  
+**Audio direction:** Premium voiceover supported by an instrumental futuristic electronic pulse (approximately 95–115 BPM) and restrained SFX. No vocals in the music. Synchronise a subtle electronic transient with the illustrative IPL light pulse. Use audio licensed for commercial brand use or the platform’s applicable commercial-use library.  
+**Voice direction:** Calm, assured, contemporary UK delivery; educational rather than sales-led. Pronounce CYPH/1 as **“Sife One”**, never as separate letters.  
+**Visual direction:** Dark near-black/deep-purple CYPH/1 field, metallic white/lavender typography and the approved follicle language. Four follicles appear asynchronously and move subtly according to their phase. A violet-white illustrative light pulse may cross the follicles, with Anagen receiving the strongest visual response; it must not look as though the light or a device scans, recognises or selects a growth phase.
 
-1. IPL does not identify an individual hair’s phase.
-2. Different hairs can be at different points in the cycle.
-3. That is why treatment is repeated over time.
-4. A considered routine, not a shortcut.
+**Timed storyboard:**
+
+1. **0–3 sec — Hook:** four follicles appear asynchronously. On screen: **YOUR HAIRS AREN’T ALL IN THE SAME PHASE.**
+2. **3–8 sec — Cycle:** Anagen, Catagen, Telogen and Exogen move independently. On screen: **Different hairs can be at different points in the cycle.**
+3. **8–13 sec — IPL principle:** controlled violet-white pulse crosses the scene; no detection animation. On screen: **IPL DOESN’T READ THE PHASE.**
+4. **13–18 sec — Repetition:** cycle motion continues. On screen: **That’s why treatment is repeated over time.**
+5. **18–23 sec — Brand close:** CYPH/1 lock-up with **CYCLE. PHASE. ONE.** and **TARGET THE GROWTH.** Final CTA: **KNOW THE CYCLE → CYPH1.CO.UK**
+
+**Voiceover master:**
+
+> Your hairs aren’t all in the same phase. Some are actively growing. Others are transitioning, resting or shedding. IPL doesn’t read an individual hair’s phase. That’s why treatment is repeated over time, allowing different hairs to enter active growth. Know the cycle. CYPH/1.
+
+Final brand words are spoken: **“Know the cycle. Sife One.”**
 
 **Caption draft:**
 
-> “Target the growth” describes the treatment principle and the importance of timing across the cycle. It does not mean that an IPL device can detect the phase of an individual hair.
+> Your hairs can be at different points in the growth cycle. IPL does not identify the phase of an individual hair, which is why light-based hair reduction is approached as a repeated routine over time. “Target the growth” describes the principle — not phase detection. Read the full CYPH/1 guide at cyph1.co.uk.
 
-**Claims:** EDU-007, with EDU-006 as context.  
-**Source note:** SRC-003 and SRC-004.  
-**Destination:** AR-01.  
-**UTM content:** `phase-detection-clarification-video-01`.
+**Claims:** EDU-007, with EDU-006 and EDU-001–005 as context.  
+**Source note:** SRC-001–004.  
+**Destination:** `https://www.cyph1.co.uk/learn/hair-growth-cycle/`.  
+**UTM content:** `phase-detection-clarification-video-01`.  
+**Publishing links:** Create separate tracked links for Facebook, Instagram and TikTok using the shared campaign taxonomy.
 
 ### SF-04 — Catagen in one clear idea
 
