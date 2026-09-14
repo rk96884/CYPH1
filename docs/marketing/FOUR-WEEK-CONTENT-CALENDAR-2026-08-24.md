@@ -22,8 +22,9 @@
 - **SF-01:** created and published on Facebook, Instagram and TikTok.
 - **SF-02:** created and published on Facebook and Instagram; not yet published on TikTok.
 - **AR-01:** live at `/learn/hair-growth-cycle/`; submitted to Google Search Console for indexing on 14 September 2026.
-- **SF-03:** creative direction approved; production brief finalised below. Not yet produced or published.
-- **CA-01–CA-04, SF-04–SF-06 and AR-02:** not yet confirmed as produced or published.
+- **SF-03:** produced and reviewed; final video stored at `public/brand/social/cyph1-sf-03-ipl-does-not-read-phase.mp4`. Not yet published.
+- **AR-02:** live at `/learn/why-ipl-consistency-matters/`; submitted to Google Search Console for indexing on 14 September 2026.
+- **CA-01–CA-04 and SF-04–SF-06:** not yet confirmed as produced or published.
 - Facebook is now an active organic cross-posting channel alongside Instagram and TikTok.
 - The original campaign dates below are retained as the planning baseline; outstanding content should be rescheduled rather than backfilled against expired dates.
 
@@ -107,7 +108,7 @@ For voiceover, spoken audio and creator briefing, pronounce **CYPH/1** as **“S
 
 ### SF-03 — IPL does not read a hair’s phase
 
-**Status:** Creative direction approved; ready for production.  
+**Status:** Produced and reviewed; ready for publishing preparation.  
 **Hook:** “Your hairs aren’t all in the same phase.”  
 **Purpose:** Prevent a likely misunderstanding of “Target the growth” while explaining why a repeated IPL routine matters.  
 **Length:** 20–25 seconds.  
@@ -316,7 +317,7 @@ Final brand words are spoken: **“Know the cycle. Sife One.”**
 
 ## Link and UTM plan
 
-AR-01 is now implemented and should become the matched educational destination once PR #14 is merged and deployed. The homepage science section also links to AR-01 so visitors can discover the guide without arriving from social. Until AR-02 is published, use AR-01 or the homepage as appropriate for the remaining cycle content.
+AR-01 and AR-02 are now live as matched educational destinations and cross-link to form the first CYPH/1 search-content cluster. The homepage science section also links to AR-01 so visitors can discover the guide without arriving from social. Route each remaining cycle asset to the most relevant article.
 
 Use these common values:
 
