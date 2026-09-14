@@ -22,7 +22,7 @@
 - **SF-01:** created and published on Facebook, Instagram and TikTok.
 - **SF-02:** created and published on Facebook, Instagram and TikTok.
 - **AR-01:** live at `/learn/hair-growth-cycle/`; submitted to Google Search Console for indexing on 14 September 2026.
-- **SF-03:** produced and reviewed; final video stored at `public/brand/social/cyph1-sf-03-ipl-does-not-read-phase.mp4`. Not yet published.
+- **SF-03:** produced, reviewed and published; final video stored at `public/brand/social/cyph1-sf-03-ipl-does-not-read-phase.mp4`.
 - **AR-02:** live at `/learn/why-ipl-consistency-matters/`; submitted to Google Search Console for indexing on 14 September 2026.
 - **CA-01–CA-04 and SF-04–SF-06:** not yet confirmed as produced or published.
 - Facebook is now an active organic cross-posting channel alongside Instagram and TikTok.
