@@ -156,16 +156,16 @@ const structuredData = {
   .article-sources li + li { margin-top: var(--cyph-space-3); }
   .article-cta { border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
 
-  [data-reveal] {
-    opacity: 0;
-    clip-path: inset(0 0 100% 0);
-    transform: translateY(.28em) translateX(-.08em);
-    transition:
-      opacity 260ms var(--cyph-ease-standard),
-      clip-path 620ms var(--cyph-ease-standard),
-      transform 620ms var(--cyph-ease-standard);
+  [data-reveal] { transform: translateX(-.08em); }
+  [data-reveal].is-visible {
+    animation: cyph-heading-reveal 680ms var(--cyph-ease-standard) both;
   }
-  [data-reveal].is-visible { opacity: 1; clip-path: inset(0); transform: translateY(0) translateX(-.08em); }
+
+  @keyframes cyph-heading-reveal {
+    from { opacity: .12; transform: translateY(.34em) translateX(-.08em); filter: blur(3px); }
+    55% { opacity: .78; filter: blur(.5px); }
+    to { opacity: 1; transform: translateY(0) translateX(-.08em); filter: blur(0); }
+  }
 
   :global(.article-phase-grid li.is-visible .phase-anagen .ipl-beam) {
     animation: cyph-ipl-beam 3.6s var(--cyph-ease-standard) infinite;
@@ -186,14 +186,25 @@ const structuredData = {
   }
   :global(.article-phase-grid li.is-visible .phase-catagen .hair-fill),
   :global(.article-phase-grid li.is-visible .phase-catagen .hair-bulb) {
-    animation: cyph-catagen 5s var(--cyph-ease-standard) infinite alternate;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: cyph-catagen 4.2s var(--cyph-ease-standard) infinite;
+  }
+  :global(.article-phase-grid li.is-visible .phase-catagen .follicle) {
+    animation: cyph-catagen-follicle 4.2s var(--cyph-ease-standard) infinite;
   }
   :global(.article-phase-grid li.is-visible .phase-telogen .hair-bulb) {
-    animation: cyph-telogen 5.8s var(--cyph-ease-standard) infinite;
-    transform-origin: 88px 63px;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: cyph-telogen 4.8s var(--cyph-ease-standard) infinite;
+  }
+  :global(.article-phase-grid li.is-visible .phase-telogen .follicle) {
+    animation: cyph-telogen-rest 4.8s var(--cyph-ease-standard) infinite;
   }
   :global(.article-phase-grid li.is-visible .phase-exogen .hair-fill) {
-    animation: cyph-exogen 4.8s var(--cyph-ease-standard) infinite;
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: cyph-exogen 3.9s var(--cyph-ease-standard) infinite;
   }
   :global(.article-phase-grid li.is-visible .phase-exogen .shed-motion) {
     animation: cyph-shed-dash 4.8s linear infinite;
@@ -216,16 +227,26 @@ const structuredData = {
     83% { opacity: 0; transform: scale(.8); }
   }
   @keyframes cyph-catagen {
-    from { transform: translateY(0); }
-    to { transform: translateY(-2px); }
+    0%, 58%, 100% { transform: translateY(0) scale(1); opacity: 1; }
+    72% { transform: translateY(-4px) scale(.96); opacity: .82; }
+    86% { transform: translateY(-2px) scale(.98); opacity: .9; }
+  }
+  @keyframes cyph-catagen-follicle {
+    0%, 58%, 100% { stroke-opacity: .7; }
+    74% { stroke-opacity: .35; }
   }
   @keyframes cyph-telogen {
-    0%, 100% { opacity: .78; transform: scale(.98); }
-    50% { opacity: 1; transform: scale(1.04); }
+    0%, 100% { opacity: .62; transform: scale(.94); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  @keyframes cyph-telogen-rest {
+    0%, 100% { stroke-opacity: .5; }
+    50% { stroke-opacity: .82; }
   }
   @keyframes cyph-exogen {
-    0%, 68%, 100% { transform: translateY(0); }
-    82% { transform: translateY(-4px); }
+    0%, 56%, 100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    72% { transform: translateY(-7px) rotate(2deg); opacity: .9; }
+    84% { transform: translateY(-11px) rotate(3deg); opacity: .55; }
   }
   @keyframes cyph-shed-dash { to { stroke-dashoffset: -10; } }
 
@@ -236,7 +257,7 @@ const structuredData = {
     .article-page h2 { line-height: 1.2; }
   }
   @media (prefers-reduced-motion: reduce) {
-    [data-reveal], .article-phase-grid li { opacity: 1; clip-path: none; transform: none; transition: none; }
+    [data-reveal], .article-phase-grid li { opacity: 1; transform: none; transition: none; animation: none !important; filter: none; }
     :global(.article-phase-grid .phase-illustration *) { animation: none !important; }
     :global(.article-phase-grid .ipl-effect) { display: none; }
   }
