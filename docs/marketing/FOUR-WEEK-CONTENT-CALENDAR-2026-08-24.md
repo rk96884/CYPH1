@@ -1,6 +1,6 @@
 # CYPH/1 four-week pre-launch content calendar
 
-**Status:** Proposed for approval  
+**Status:** In execution — reconciled 14 September 2026  
 **Campaign period:** 24 August–20 September 2026  
 **Campaign territory:** Know the cycle  
 **Primary objective:** Qualified website visits and confirmed early-access subscribers  
@@ -16,6 +16,15 @@
 - Concept imagery must retain the approved final-design disclaimer.
 - Use subtitles and meaningful text alternatives. Avoid essential information appearing only in audio or graphics.
 - Each post should have one principal action, normally to learn more or join early access.
+
+## Execution status — 14 September 2026
+
+- **SF-01:** created and published on Facebook, Instagram and TikTok.
+- **SF-02:** created and published on Facebook and Instagram; not yet published on TikTok.
+- **AR-01:** implemented at `/learn/hair-growth-cycle/` in draft PR #14; pending final review and merge.
+- **CA-01–CA-04, SF-03–SF-06 and AR-02:** not yet confirmed as produced or published.
+- Facebook is now an active organic cross-posting channel alongside Instagram and TikTok.
+- The original campaign dates below are retained as the planning baseline; outstanding content should be rescheduled rather than backfilled against expired dates.
 
 ## Publishing rhythm
 
@@ -66,7 +75,7 @@ Instagram and TikTok can use the same core video with platform-appropriate edits
 
 **Claims:** EDU-001.  
 **Source note:** SRC-001 and SRC-002.  
-**Destination:** Homepage until AR-01 is live; update the profile link to AR-01 afterwards.  
+**Destination:** AR-01 after publication; SF-01 was originally published while the homepage was the live destination.  
 **UTM content:** `hair-cycle-video-01`.
 
 ### SF-02 — Why CYPH/1 begins with anagen
@@ -289,12 +298,12 @@ Instagram and TikTok can use the same core video with platform-appropriate edits
 
 ## Link and UTM plan
 
-Until the proposed educational pages are live, use the homepage as the destination. Once AR-01 and AR-02 are published, update profile links and scheduled content to use the matched article.
+AR-01 is now implemented and should become the matched educational destination once PR #14 is merged and deployed. The homepage science section also links to AR-01 so visitors can discover the guide without arriving from social. Until AR-02 is published, use AR-01 or the homepage as appropriate for the remaining cycle content.
 
 Use these common values:
 
 ```text
-utm_source=instagram | tiktok | pinterest
+utm_source=instagram | facebook | tiktok | pinterest
 utm_medium=organic-social
 utm_campaign=prelaunch-know-the-cycle
 utm_content=<content ID from this calendar>
@@ -303,7 +312,7 @@ utm_content=<content ID from this calendar>
 Example:
 
 ```text
-https://www.cyph1.co.uk/?utm_source=instagram&utm_medium=organic-social&utm_campaign=prelaunch-know-the-cycle&utm_content=hair-cycle-video-01
+https://www.cyph1.co.uk/learn/hair-growth-cycle/?utm_source=instagram&utm_medium=organic-social&utm_campaign=prelaunch-know-the-cycle&utm_content=hair-cycle-video-01
 ```
 
 ## Review and production workflow
