@@ -27,7 +27,7 @@ const structuredData = {
       <header class="article-hero section">
         <div class="container article-reading">
           <p class="eyebrow">Know the cycle · Hair-growth science</p>
-          <h1>The four stages of the hair-growth cycle</h1>
+          <h1 data-reveal>The four stages of the hair-growth cycle</h1>
           <p class="lede">Hair does not grow continuously or all at once. Individual follicles move through a repeating cycle commonly described as anagen, catagen, telogen and exogen.</p>
           <p class="article-meta">Published 14 September 2026 · General educational content</p>
         </div>
@@ -36,17 +36,18 @@ const structuredData = {
       <section class="section article-section" aria-labelledby="cycle-overview">
         <div class="container article-reading">
           <p class="section-index">01 / The cycle</p>
-          <h2 id="cycle-overview">Four phases, different roles.</h2>
+          <h2 id="cycle-overview" data-reveal>Four phases, different roles.</h2>
           <p>At any one time, different hairs can be at different points in their cycle. Understanding those phases provides useful context for why light-based hair reduction is approached as a repeated routine rather than a one-off event.</p>
         </div>
         <ol class="container article-phase-grid">
           {growthPhases.map((phase) => (
-            <li class:list={{ active: phase.active }}>
+            <li class:list={{ active: phase.active }} data-phase-card>
               <div class="phase-card-meta"><span>{phase.number}</span>{phase.active && <small>Phase one</small>}</div>
               <HairPhaseIllustration phase={phase.name} />
               <h3>{phase.name}</h3>
               <p class="phase-label">{phase.label}</p>
               <p class="phase-description">{phase.description}</p>
+              {phase.name === "Anagen" && <p class="phase-motion-note">Illustrative light pulse · general IPL principle</p>}
             </li>
           ))}
         </ol>
@@ -55,13 +56,13 @@ const structuredData = {
       <section class="section article-section">
         <div class="container article-reading article-copy">
           <p class="section-index">02 / Phase by phase</p>
-          <h2>Anagen — active growth</h2>
+          <h2 data-reveal>Anagen — active growth</h2>
           <p>Anagen is the active-growth phase. During this stage, the follicle produces the hair shaft. Light-based hair reduction is associated with active growth, which is one reason treatment is repeated across the hair cycle.</p>
-          <h2>Catagen — transition</h2>
+          <h2 data-reveal>Catagen — transition</h2>
           <p>Catagen is a short transition, or regression, phase in which active growth stops.</p>
-          <h2>Telogen — rest</h2>
+          <h2 data-reveal>Telogen — rest</h2>
           <p>Telogen is a resting phase in which the existing hair is no longer actively growing.</p>
-          <h2>Exogen — shedding</h2>
+          <h2 data-reveal>Exogen — shedding</h2>
           <p>Exogen describes the release and shedding of the existing hair. Some scientific sources treat exogen as part of telogen rather than a completely separate phase, which is why CYPH/1 describes the four-stage model as one that is commonly used.</p>
         </div>
       </section>
@@ -69,7 +70,7 @@ const structuredData = {
       <section class="section article-section">
         <div class="container article-reading article-copy">
           <p class="section-index">03 / Why it matters for IPL</p>
-          <h2>A repeated routine, not phase detection.</h2>
+          <h2 data-reveal>A repeated routine, not phase detection.</h2>
           <p>IPL treatment does not identify the growth phase of an individual hair. Different hairs can be at different points in the cycle, so light-based hair reduction is repeated over time to allow treatment to coincide with hairs entering active growth.</p>
           <aside class="science-note">
             <p><strong>Important distinction.</strong> “Target the growth” describes the CYPH/1 brand principle. It does not mean that a future CYPH/1 device can detect the growth phase of an individual hair.</p>
@@ -80,7 +81,7 @@ const structuredData = {
       <section class="section article-section" aria-labelledby="sources">
         <div class="container article-reading article-copy">
           <p class="section-index">04 / Sources</p>
-          <h2 id="sources">Evidence behind this article.</h2>
+          <h2 id="sources" data-reveal>Evidence behind this article.</h2>
           <p>This article is general hair-cycle and IPL education. It does not make performance, safety or suitability claims about a future CYPH/1 product.</p>
           <ul class="article-sources">
             <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK470321/">NCBI Bookshelf — Anatomy, Hair Follicle</a></li>
@@ -94,7 +95,7 @@ const structuredData = {
       <section class="section article-cta">
         <div class="container article-reading">
           <p class="eyebrow">Cycle. Phase. One.</p>
-          <h2>Follow the CYPH/1 journey.</h2>
+          <h2 data-reveal>Follow the CYPH/1 journey.</h2>
           <p>Join early access for product-development updates and launch information. Registration is not an order or pre-order.</p>
           <a class="button" href="/">Explore CYPH/1</a>
         </div>
@@ -104,19 +105,139 @@ const structuredData = {
   <Footer />
 </BaseLayout>
 
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const revealTargets = document.querySelectorAll("[data-reveal], [data-phase-card]");
+
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    revealTargets.forEach((target) => target.classList.add("is-visible"));
+  } else {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.18, rootMargin: "0px 0px -8% 0px" });
+
+    revealTargets.forEach((target) => observer.observe(target));
+  }
+</script>
+
 <style>
   .article-reading { max-width: var(--cyph-layout-reading); }
   .article-hero { padding-bottom: var(--cyph-layout-section-compact); }
-  .article-hero h1 { max-width: 12ch; margin: var(--cyph-space-4) 0 var(--cyph-space-6); font-size: clamp(2.5rem, 7vw, 5.75rem); line-height: var(--cyph-leading-display); }
+  .article-hero h1 {
+    max-width: 13ch;
+    margin: var(--cyph-space-4) 0 var(--cyph-space-6);
+    font-size: clamp(2.4rem, 5.7vw, 4.9rem);
+    line-height: 1.08;
+  }
   .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
   .article-section { padding-block: var(--cyph-layout-section-compact); }
+  .article-page h2 {
+    max-width: 22ch;
+    font-size: clamp(1.6rem, 3.1vw, 2.7rem);
+    line-height: 1.16;
+  }
   .article-copy > h2 { margin-top: var(--cyph-space-12); }
   .article-phase-grid { display: grid; gap: var(--cyph-space-4); margin-top: var(--cyph-space-12); padding: 0 var(--cyph-layout-gutter); list-style: none; }
-  .article-phase-grid li { padding: var(--cyph-space-6); border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .article-phase-grid li {
+    padding: var(--cyph-space-6);
+    border-top: var(--cyph-line-structural) solid var(--cyph-border-structural);
+    opacity: 0;
+    transform: translateY(var(--cyph-space-4));
+    transition: opacity var(--cyph-motion-editorial) var(--cyph-ease-standard), transform var(--cyph-motion-editorial) var(--cyph-ease-standard);
+  }
+  .article-phase-grid li.is-visible { opacity: 1; transform: none; }
   .article-phase-grid li.active { border-top-color: var(--cyph-accent-primary); }
+  .phase-motion-note { margin-top: var(--cyph-space-3); color: var(--cyph-accent-highlight); font-size: .64rem; letter-spacing: .06em; text-transform: uppercase; }
   .article-sources { padding-left: 1.25rem; }
   .article-sources li + li { margin-top: var(--cyph-space-3); }
   .article-cta { border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+
+  [data-reveal] {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(.28em) translateX(-.08em);
+    transition:
+      opacity 260ms var(--cyph-ease-standard),
+      clip-path 620ms var(--cyph-ease-standard),
+      transform 620ms var(--cyph-ease-standard);
+  }
+  [data-reveal].is-visible { opacity: 1; clip-path: inset(0); transform: translateY(0) translateX(-.08em); }
+
+  :global(.article-phase-grid li.is-visible .phase-anagen .ipl-beam) {
+    animation: cyph-ipl-beam 3.6s var(--cyph-ease-standard) infinite;
+    transform-origin: 89px 89px;
+  }
+  :global(.article-phase-grid li.is-visible .phase-anagen .ipl-pulse) {
+    fill: none;
+    stroke: var(--cyph-accent-highlight);
+    stroke-width: 1.4;
+    transform-origin: 89px 89px;
+    animation: cyph-ipl-pulse 3.6s var(--cyph-ease-standard) infinite;
+  }
+  :global(.article-phase-grid li.is-visible .phase-anagen .ipl-core) {
+    fill: var(--cyph-color-soft-white);
+    filter: drop-shadow(0 0 7px var(--cyph-accent-primary));
+    transform-origin: 89px 89px;
+    animation: cyph-ipl-core 3.6s var(--cyph-ease-standard) infinite;
+  }
+  :global(.article-phase-grid li.is-visible .phase-catagen .hair-fill),
+  :global(.article-phase-grid li.is-visible .phase-catagen .hair-bulb) {
+    animation: cyph-catagen 5s var(--cyph-ease-standard) infinite alternate;
+  }
+  :global(.article-phase-grid li.is-visible .phase-telogen .hair-bulb) {
+    animation: cyph-telogen 5.8s var(--cyph-ease-standard) infinite;
+    transform-origin: 88px 63px;
+  }
+  :global(.article-phase-grid li.is-visible .phase-exogen .hair-fill) {
+    animation: cyph-exogen 4.8s var(--cyph-ease-standard) infinite;
+  }
+  :global(.article-phase-grid li.is-visible .phase-exogen .shed-motion) {
+    animation: cyph-shed-dash 4.8s linear infinite;
+  }
+
+  @keyframes cyph-ipl-beam {
+    0%, 68%, 100% { opacity: 0; }
+    72% { opacity: .18; }
+    77% { opacity: 1; }
+    82% { opacity: .28; }
+  }
+  @keyframes cyph-ipl-pulse {
+    0%, 72%, 100% { opacity: 0; transform: scale(.72); }
+    77% { opacity: 1; transform: scale(.95); }
+    86% { opacity: 0; transform: scale(1.6); }
+  }
+  @keyframes cyph-ipl-core {
+    0%, 73%, 100% { opacity: 0; transform: scale(.55); }
+    77% { opacity: 1; transform: scale(1.35); }
+    83% { opacity: 0; transform: scale(.8); }
+  }
+  @keyframes cyph-catagen {
+    from { transform: translateY(0); }
+    to { transform: translateY(-2px); }
+  }
+  @keyframes cyph-telogen {
+    0%, 100% { opacity: .78; transform: scale(.98); }
+    50% { opacity: 1; transform: scale(1.04); }
+  }
+  @keyframes cyph-exogen {
+    0%, 68%, 100% { transform: translateY(0); }
+    82% { transform: translateY(-4px); }
+  }
+  @keyframes cyph-shed-dash { to { stroke-dashoffset: -10; } }
+
   @media (min-width: 48rem) { .article-phase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (min-width: 72rem) { .article-phase-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 47.99rem) {
+    .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); line-height: 1.1; }
+    .article-page h2 { line-height: 1.2; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal], .article-phase-grid li { opacity: 1; clip-path: none; transform: none; transition: none; }
+    :global(.article-phase-grid .phase-illustration *) { animation: none !important; }
+    :global(.article-phase-grid .ipl-effect) { display: none; }
+  }
 </style>
