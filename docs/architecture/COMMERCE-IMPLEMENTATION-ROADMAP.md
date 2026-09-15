@@ -143,6 +143,10 @@ Commercial-validation baseline completed:
   data inventory, collection-point and label controls, webhook requirements,
   retention boundaries, threat mitigations and launch evidence. Provider terms
   and live-flow approval remain outstanding.
+- `docs/operations/SHIPPING-OUTAGE-AND-COLLECTION-POINT-FAILURE.md` defines
+  failure classes, narrow containment, customer reselection/fallback,
+  ambiguous-booking reconciliation, labels, tracking, return-to-sender and
+  recovery. Provider-specific exercises remain outstanding.
 
 ### 3.1 Fulfilment adapter
 
@@ -798,6 +802,10 @@ Implementation baseline completed:
 - `docs/operations/PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md` defines the
   minimum roles, decision matrix, restricted-register fields and safe synthetic
   verification exercise without inventing staffing or service promises.
+- `docs/operations/CUSTOMER-SUPPORT-OPERATIONS.md` defines proportionate
+  verification, case classification, authoritative evidence, specialist
+  handoffs and safe handling for payments, cancellations, delivery, returns,
+  refunds, privacy, security and product-safety reports.
 - Named appointments, tested access, approved support channels/hours, response
   commitments, private registers and accountable sign-off remain launch gates.
 
