@@ -34,12 +34,14 @@ test("checkout and payment webhook exposure are independent", async () => {
   assert.equal(await (await webhookRuntime(new Request("https://example.test/webhooks/mollie", { method: "POST" }))).text(), "webhook");
 });
 
-test("customer runtime exposes only generic health and readiness routes", async () => {
+test("CDR-DRILL-003 temporary release exposes the synthetic degraded customer health response", async () => {
   const runtime = createCustomerRuntime({
     checkout: response("checkout"), paymentWebhook: response("webhook"), readiness: async () => {},
     gates: { checkoutEnabled: false, paymentWebhooksEnabled: false },
   });
-  assert.equal((await runtime(new Request("https://example.test/health"))).status, 200);
+  const health = await runtime(new Request("https://example.test/health"));
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: "degraded" });
   assert.equal((await runtime(new Request("https://example.test/ready"))).status, 200);
   assert.equal((await runtime(new Request("https://example.test/operations/orders"))).status, 404);
   assert.equal((await runtime(new Request("https://example.test/products"))).status, 404);
@@ -75,7 +77,7 @@ test("customer liveness remains available and readiness recovers after a databas
   const unavailable = await runtime(new Request("https://example.test/ready"));
   assert.equal(unavailable.status, 503);
   assert.deepEqual(await unavailable.json(), { status: "unavailable" });
-  assert.equal((await runtime(new Request("https://example.test/health"))).status, 200);
+  assert.deepEqual(await (await runtime(new Request("https://example.test/health"))).json(), { status: "degraded" });
   databaseAvailable = true;
   const recovered = await runtime(new Request("https://example.test/ready"));
   assert.equal(recovered.status, 200);
