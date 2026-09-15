@@ -35,7 +35,8 @@ This register separates evidence that can be produced by the repository from bus
 | Dual-runtime staging monitor | Separate exact-response customer and operations health/readiness jobs with bounded labels and independent manual failure inputs | Automated baseline and independent healthy/failure/notification/recovery staging sequence passed on 12 September 2026; legacy single-origin secret removed; production ownership and objectives remain outstanding |
 | Personal-data incident tabletop | Five-inject synthetic scenario covering awareness, containment, processor escalation, changing risk and phased reporting | `PDI-TTX-001` passed on 12 September 2026 without live action or real data; legal/privacy ownership, restricted registers, processor routes, communications, retention and production approval remain outstanding |
 | Disabled-state deployment recovery | Latest-commit customer staging redeploy with unchanged fail-closed controls, read-only route checks and dual-runtime monitoring | `CDR-DRILL-001` passed on 12 September 2026 using commit `9e36f9e`, monitor runs `#85` and `#87`, and exact disabled route checks; faulty-release recovery and Mollie webhook-continuity exercises remain outstanding |
-| Customer staging source revert | Benign observable header deployed and removed with a new revert commit, with disabled route checks and post-revert dual-runtime monitoring | `CDR-DRILL-002` passed on 13 September 2026 using marker commit `1c60da8`, revert commit `f77abf3` and monitor run `#95`; faulty-release recovery and Mollie webhook continuity remain outstanding |
+| Customer staging source revert | Benign observable header deployed and removed with a new revert commit, with disabled route checks and post-revert dual-runtime monitoring | `CDR-DRILL-002` passed on 13 September 2026 using marker commit `1c60da8`, revert commit `f77abf3` and monitor run `#95`; compatible faulty-release recovery subsequently passed and Mollie webhook continuity remains outstanding |
+| Customer staging faulty-release recovery | Compatible customer health-contract regression detected by exact-response monitoring, followed by source-controlled recovery | `CDR-DRILL-003` passed on 15 September 2026 using fault commit `36b79a2`, revert `e1d4460`, customer-only failure run `#107` and healthy dual-runtime run `#108`; Mollie webhook continuity and data/schema rollback remain outstanding |
 | Customer-data retention and deletion | Category inventory, rights-request workflow, processor/backup handling and safe deletion design | Draft procedure and monthly manual early-access review method documented; 14 September age-screen baseline is zero contacts older than 24 months. Brevo's persisted account setting deletes transactional-email logs after one month for all senders and disables new previews, but exact 30-day deletion across DOI/event logs, approved engagement criteria, execution of future monthly reviews, privacy-owner decision, backup owner, restricted register and production erasure tooling remain outstanding |
 
 ## Engineering tests still required
@@ -100,8 +101,8 @@ The following require accountable human sign-off and cannot be completed by auto
 - [x] Controlled rollback and commerce-disable engineering procedure
       documented; customer runtime now has independent checkout/webhook gates,
       the disabled-state deployment and benign source-revert drills passed;
-      faulty-release recovery, Mollie webhook continuity and production
-      approval remain open.
+      the compatible faulty-release recovery drill also passed; Mollie webhook
+      continuity, data/schema rollback and production approval remain open.
 
 ## Launch rule
 

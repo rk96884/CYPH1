@@ -694,7 +694,8 @@ and revert commit `f77abf3` both deployed successfully to customer staging;
 the marker appeared and then disappeared, disabled route checks passed at both
 stages, and post-revert monitor run `#95` passed. The evidence is recorded in
 `docs/operations/COMMERCE-SOURCE-ROLLBACK-REHEARSAL.md`. A faulty-release
-recovery exercise and Mollie webhook-continuity rehearsal remain launch gates.
+recovery exercise remained the next recovery gate at that point; it was later
+completed as `CDR-DRILL-003`. Mollie webhook continuity remains outstanding.
 
 ### 4.28 Customer-data retention and deletion procedure
 
@@ -720,6 +721,23 @@ Implementation baseline completed:
   require approval before the first actionable case.
 - Category-specific periods, processor settings, legal/finance decisions,
   restricted registers and tested deletion/restore controls remain outstanding.
+
+### 4.29 Customer staging faulty-release recovery rehearsal
+
+- Deploy a compatible customer-runtime health-contract regression without
+  exposing commerce routes or changing database/provider state.
+- Verify that exact-response monitoring fails only the customer job while the
+  operations runtime remains healthy.
+- Recover using the committed source revert and verify exact health, readiness,
+  route-gate and dual-runtime monitor results.
+
+Exercise `CDR-DRILL-003` passed on 15 September 2026. Temporary faulty-release
+commit `36b79a2` returned `{"status":"degraded"}` from customer `/health` and
+monitor run `#107` failed only the customer job. Source-controlled revert
+`e1d4460` restored the exact healthy response; `/ready` remained ready and run
+`#108` passed both runtime jobs. Checkout and payment-webhook routes remained
+HTTP `404`, and no database, configuration or provider change was made. Mollie
+webhook continuity and data/schema rollback remain separate launch gates.
 
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
