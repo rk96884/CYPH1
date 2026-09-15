@@ -739,6 +739,23 @@ monitor run `#107` failed only the customer job. Source-controlled revert
 HTTP `404`, and no database, configuration or provider change was made. Mollie
 webhook continuity and data/schema rollback remain separate launch gates.
 
+### 4.30 Production incident and customer-support ownership framework
+
+- Define role-specific incident, technical, support, privacy/legal, finance,
+  fulfilment and launch decision authority.
+- Require independent deputy coverage and preserve personal contacts in a
+  restricted register rather than source control.
+- Define customer-support boundaries, escalation handoffs, alternate-system
+  access and a primary-unavailable exercise.
+
+Implementation baseline completed:
+
+- `docs/operations/PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md` defines the
+  minimum roles, decision matrix, restricted-register fields and safe synthetic
+  verification exercise without inventing staffing or service promises.
+- Named appointments, tested access, approved support channels/hours, response
+  commitments, private registers and accountable sign-off remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

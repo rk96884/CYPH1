@@ -23,6 +23,7 @@ This register separates evidence that can be produced by the repository from bus
 | Staging request observability | Server-generated request correlation and bounded privacy-safe JSON request events | Automated field/omission tests covered; provider alerts and production retention remain manual launch gates |
 | Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
 | Staging incident ownership | Role-based staging response and escalation runbook covering GitHub, Render, Cloudflare Access and database signals | Project owner is accountable for staging; notification-channel tests, independent backup and production ownership remain outstanding |
+| Production ownership and customer support | Role authority, deputy coverage, support boundaries, restricted-register fields and a primary-unavailable exercise are defined | Framework prepared; named appointments, private registers, response commitments, access tests and accountable approval remain outstanding |
 | Customer runtime route isolation | Separate runtime exposes generic health/readiness plus independently gated checkout and Mollie webhook routes; operations paths remain absent | Automated baseline, protected staging deployment, guarded synthetic fixture and read-only route-gate verifier covered; Mollie checkout-disable/webhook-continuity rehearsal outstanding |
 | Database recovery verification | Guarded source/restore comparison checks migration history and aggregate row counts without reading personal-data fields | Engineering command and isolated-restore runbook covered; first logical restore, paid Render PITR and off-platform schedule remain outstanding |
 | Dependency vulnerability baseline | Locked install plus fail-closed production audit and narrowly matched, expiring build-tool exception; weekly npm and GitHub Actions update monitoring | Production audit clean; temporary Astro language-server exception expires 8 October 2026; deployed runtime review and ownership remain outstanding |
@@ -82,6 +83,10 @@ The following require accountable human sign-off and cannot be completed by auto
 - [ ] PCI scope and responsibilities confirmed for hosted checkout.
 - [ ] Shipping destinations, charges, duties, restricted destinations and fulfilment ownership approved.
 - [ ] Incident owner, customer-support owner and escalation contacts assigned.
+
+The role and evidence framework for this item is recorded in
+`docs/operations/PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md`. It remains open
+until the private appointments, deputies, channels and exercises are complete.
 
 ## Operational runbooks required
 

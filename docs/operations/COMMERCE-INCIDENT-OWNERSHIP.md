@@ -29,6 +29,12 @@ The project currently has one accountable staging operator and no independent
 backup. This is acceptable for private engineering exercises but is a launch
 blocker for production commerce.
 
+The production role, authority, deputy, support-channel and private-register
+requirements are defined in
+`docs/operations/PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md`. That framework
+does not close this blocker until named people accept the roles and the
+primary-unavailable exercise passes.
+
 ## Alert routes
 
 | Signal | Primary route | Required operator action |
