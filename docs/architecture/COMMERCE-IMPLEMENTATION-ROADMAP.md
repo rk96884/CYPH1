@@ -128,6 +128,14 @@ are not approved product, price, tax, stock or fulfilment data.
 **Status:** Preferred architecture recorded; no shipping integration, account,
 dependency, database migration or checkout behaviour has been implemented.
 
+Commercial-validation baseline completed:
+
+- `docs/operations/SHIPPING-COMMERCIAL-VALIDATION.md` provides a common provider
+  questionnaire, Sendcloud/InPost/Evri-specific checks, evidence standard,
+  comparison record and launch decision gates.
+- Provider responses, final product/package facts and accountable commercial,
+  insurance, privacy and operational approval remain outstanding.
+
 ### 3.1 Fulfilment adapter
 
 - Implement the approved 3PL/manual fulfilment boundary.
