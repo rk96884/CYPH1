@@ -1,7 +1,9 @@
 # Commerce threat model
 
-**Engineering baseline:** 30 August 2026  
-**Scope:** Private/test commerce API, hosted checkout, PostgreSQL, provider webhooks, fulfilment, communications and protected operations  
+**Engineering baseline:** 30 August 2026; collection-point shipping extension 15 September 2026
+
+**Scope:** Private/test commerce API, hosted checkout, PostgreSQL, payment and shipping-provider webhooks, fulfilment, communications and protected operations
+
 **Production status:** Disabled and not approved
 
 ## Assets and security objectives
@@ -17,6 +19,9 @@ Protect order and contact data, provider and database credentials, authoritative
 5. **Identity proxy → operations handler:** Only verified middleware may construct an operator principal. The handler validates its shape and applies an explicit least-privilege permission for every action.
 6. **Commerce API → fulfilment and communications:** Both consumers remain disabled by default. Commands and deliveries use durable idempotency records and exclude marketing consent from transactional decisions.
 7. **Source and CI → deployments:** Pull requests receive no commerce secrets. Preview, test and future production credentials and data must remain separate.
+8. **Browser → collection-point search:** Treat postcode, coordinates and point identifiers as untrusted. Minimise search data, require an explicit action for browser geolocation and revalidate the chosen point on the server.
+9. **Commerce API → shipping aggregator/carrier:** Send only the service-specific allowlist through a server-side adapter. Keep provider credentials and label access server-only and use bounded calls plus durable booking idempotency.
+10. **Shipping provider → webhook endpoint:** Authenticate each event using the provider's approved signature or lookup mechanism, deduplicate it and map raw statuses through explicit domain transitions.
 
 ## Principal threats and controls
 
@@ -33,6 +38,15 @@ Protect order and contact data, provider and database credentials, authoritative
 | Database compromise or data loss | Private connection, least privilege, migrations and audit records | Backup restore rehearsal, retention approval and database access review |
 | Dependency or CI compromise | Locked dependencies and read-only quality-workflow token | Dependency review and protected-branch/ruleset review |
 | Denial of service or abusive checkout | Explicit per-process checkout admission, bounded bodies, idempotency and fail-closed provider handling | Configure Cloudflare checkout-only policy, prevent direct-origin bypass and obtain load/soak evidence before public checkout |
+| Collection-point substitution or stale selection | Server-side point/service validation, provider-namespaced identifier and immutable order snapshot | Exercise changed, removed, full and incompatible points |
+| Customer location history retained through point search | Postcode alternative, explicit browser permission, transient coordinates and no search-value logging | Review the final selector/provider data path |
+| Malicious point-directory content | Strict response schema, output escaping and trusted map/link construction | Provider-specific hostile-content test |
+| Duplicate shipment after ambiguous timeout | Durable booking idempotency, reservation-before-call and reconciliation/manual-review state | Exercise provider timeout and lookup/retry behaviour |
+| Forged, replayed or out-of-order shipping webhook | Provider authentication, timestamp policy, event deduplication and normalized state machine | Independent provider-specific review and sandbox exercise |
+| Label, barcode or collection code disclosure | Restricted short-lived storage/access; exclude from logs, tickets and public URLs | Review final label workflow and incident response |
+| Tracking/order enumeration | High-entropy customer access, authorization, generic failures and rate limiting | Test public order-status and tracking surfaces |
+| Aggregator compromise, outage or lock-in | Least-privilege credentials, monitoring, data export/exit evidence and CYPH/1 provider abstraction | Approve contingency and contract-exit plan |
+| Excess shipping data shared | Per-service outbound field allowlist and processor data-flow review | Approve contract, DPA and live payload samples |
 
 ## Data minimisation
 
@@ -40,6 +54,15 @@ Protect order and contact data, provider and database credentials, authoritative
 - Do not include customer/address data in reconciliation CSV unless a separately reviewed operational need is established.
 - Audit summaries contain identifiers, amounts, reasons and state changes only.
 - Synthetic records only in local, preview and load testing.
+- Do not persist unsuccessful collection-point searches or raw customer
+  coordinates without an approved purpose.
+- Keep customer contact/address data separate from the immutable public
+  collection-point snapshot.
+- Treat shipping labels, pickup codes, proof-of-delivery material and detailed
+  tracking events as restricted operational data.
+
+The full shipping control baseline and launch evidence are defined in
+`docs/operations/SHIPPING-PRIVACY-AND-SECURITY.md`.
 
 ## Review rule
 

@@ -174,6 +174,11 @@ review date for each category in the restricted processing/retention register.
 | `payments`, `refunds`, checkout sessions and provider identifiers | Preserve necessary transaction/reconciliation evidence while required; examine provider-hosted copies separately | Finance/legal schedule, Mollie contract and deletion capabilities |
 | Raw `webhook_deliveries`, `webhook_events`, outbox, fulfilment and communication events | Shortest justified operational period after retry, reconciliation, support and audit needs; raw bodies and free-form payloads need explicit scrutiny | Category-specific periods and safe purge dependency plan |
 | `audit_events`, Render/Cloudflare/GitHub/Brevo logs and incident evidence | Restrict, minimise and retain by security/accountability purpose; holds may override ordinary expiry | Processor settings, access, periods and legal-hold owner |
+| Collection-point searches and browser location | Treat unsuccessful searches and raw coordinates as transient; do not build location history | Confirm final selector/aggregator data path and any unavoidable provider logging |
+| Confirmed collection-point selection and point snapshot | Retain the provider-namespaced point and immutable public-location snapshot with the order for approved fulfilment/support/claims purposes | Define minimum fields, order-linked period and later minimisation |
+| Shipping labels, pickup/collection codes and tracking events | Restricted access and shortest purpose-specific operational/claims period; do not expose through logs or permanent public URLs | Provider capability, exact period, deletion and backup behaviour |
+| Proof of delivery/collection, photos, signatures or geolocation | Retain only where required for delivery evidence, support or claims; restrict more tightly than ordinary tracking status | Confirm enabled service fields, access, claims period and data-subject handling |
+| Aggregator/carrier customer data and backups | Processor-specific deletion, rights-request and contract-exit treatment | Executed DPA, subprocessors, transfers, retention and deletion confirmation |
 | Reconciliation CSVs, support attachments, local downloads and exports | Approved restricted storage only; delete transient copies once the task and any approved hold end | Location, owner, deletion confirmation and schedule |
 | Render database backups, provider backups and restored test copies | Record backup lifecycle; put erased data beyond use where immediate removal is unavailable and prevent reintroduction on restore | Provider mechanisms, expiry, restore-suppression control and evidence |
 
@@ -269,3 +274,5 @@ or wait for a processor before escalating a deadline risk.
   backup-reintroduction control before handling real orders.
 - Update and approve the public privacy notice and processing records before
   live commerce; the current notice covers only pre-launch registration.
+- Complete the shipping data-flow, field-allowlist and provider retention gates
+  in `SHIPPING-PRIVACY-AND-SECURITY.md` before enabling an aggregator or carrier.

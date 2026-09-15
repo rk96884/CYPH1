@@ -38,6 +38,12 @@ customer/address data, order/payment reference, raw exception, credential or
 provider payload. The route classifier deliberately discards identifiers in
 paths. Application request logs are not an audit trail or an order record.
 
+Future shipping and collection-point paths must also exclude search postcodes,
+browser/customer coordinates, point-selection tokens, collection/pickup codes,
+labels/barcodes, full tracking numbers, proof-of-delivery material, carrier
+free text and shipping webhook bodies/signatures. Use internal shipment IDs and
+bounded provider/outcome codes only where operationally necessary.
+
 Automated tests assert both the exact emitted field set and omission of canary
 personal, query and Access values. Any proposed additional field requires a
 documented purpose, privacy review and updated regression test before release.
@@ -108,3 +114,6 @@ forwarded-log processor access, geographic processing, retention and deletion;
 Cloudflare and operations-role ownership; export storage and deletion; privacy
 documentation; and whether every operational identifier remains necessary.
 
+Shipping-specific field allowlists, canary tests and provider log samples must
+meet `SHIPPING-PRIVACY-AND-SECURITY.md` before a live shipping adapter is
+enabled.

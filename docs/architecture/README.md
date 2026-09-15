@@ -8,5 +8,6 @@ These documents define the approved baseline for evolving the existing Astro pre
 - [Payment-provider contract](PAYMENT-PROVIDER-CONTRACT.md)
 - [Checkout and order flows](COMMERCE-FLOWS.md)
 - [Proposed project structure](COMMERCE-PROJECT-STRUCTURE.md)
+- [ADR 0003: Provider-neutral collection-point delivery](decisions/0003-provider-neutral-collection-point-delivery.md)
 
 These files do not authorise checkout or production payments. The launch gate in the architecture proposal remains authoritative.

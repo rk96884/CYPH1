@@ -135,6 +135,14 @@ Commercial-validation baseline completed:
   comparison record and launch decision gates.
 - Provider responses, final product/package facts and accountable commercial,
   insurance, privacy and operational approval remain outstanding.
+- `docs/architecture/decisions/0003-provider-neutral-collection-point-delivery.md`
+  records the approved domain boundary and alternatives; the logical shipping
+  extension is specified in `docs/architecture/COMMERCE-DATA-MODEL.md` without
+  authorising migrations or integration code.
+- `docs/operations/SHIPPING-PRIVACY-AND-SECURITY.md` defines the provider-neutral
+  data inventory, collection-point and label controls, webhook requirements,
+  retention boundaries, threat mitigations and launch evidence. Provider terms
+  and live-flow approval remain outstanding.
 
 ### 3.1 Fulfilment adapter
 
