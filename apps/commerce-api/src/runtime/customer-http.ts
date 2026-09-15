@@ -73,9 +73,7 @@ export const createCustomerRuntime = (input: Readonly<{
   gates: CustomerRouteGates;
 }>): Handler => async (request) => {
   const url = new URL(request.url);
-  // CDR-DRILL-003 temporary synthetic faulty release. Revert this commit after
-  // the customer-only staging failure has been observed; do not deploy to production.
-  if (request.method === "GET" && url.pathname === "/health") return json({ status: "degraded" });
+  if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
   if (request.method === "GET" && url.pathname === "/ready") {
     try {
       await input.readiness();
