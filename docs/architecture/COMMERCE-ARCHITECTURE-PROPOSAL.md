@@ -66,6 +66,28 @@ The browser must never provide an authoritative price, discount, tax, delivery c
 
 Shipping eligibility is resolved by ISO destination country. Countries map to reusable zones for default pricing, while explicit country overrides handle exceptional rates or restrictions. A missing active country/method rate is an unsupported destination, never permission to apply a generic global fallback. The selected method and calculation inputs are snapshotted on the order so later rate changes do not alter its history.
 
+### Delivery propositions and carrier selection
+
+Customer-facing delivery choices should describe the outcome rather than expose
+provider-specific products. The preferred out-of-home choice is **Locker /
+Collection Point**. A customer selecting it must be able to search for, review,
+change and confirm an eligible location before payment. The order must preserve
+the provider location identifier and an immutable location snapshot separately
+from the customer's contact or billing address.
+
+Carrier and service selection belongs behind a CYPH/1-owned shipping-provider
+abstraction. That boundary must cover service eligibility, collection-point
+discovery and validation, shipment/label creation, tracking events and returns
+without allowing a provider schema to become the order model. Shipping prices
+remain configurable, effective-dated business data and must not be hard-coded
+into storefront components.
+
+Sendcloud is the leading multi-carrier aggregator candidate, subject to current
+commercial and technical validation. It must remain replaceable or
+supplementable through the CYPH/1 abstraction. InPost and Evri are candidate
+underlying carriers; neither is approved for launch by this architectural
+direction.
+
 ## 5. Commerce API
 
 The API is the boundary between the website and operational systems. It should:
@@ -237,6 +259,12 @@ The system must not assume manufacturer dropshipping or a particular 3PL. A fulf
 
 Controlled manual fulfilment may be acceptable at very low volume if documented, access-controlled and auditable.
 
+The fulfilment request must eventually distinguish a home address from a
+locker/PUDO destination and carry the selected delivery proposition, carrier,
+service and collection-point snapshot. It must revalidate provider-controlled
+eligibility before booking and fail safely to customer reselection or an
+approved home-delivery fallback if a point or service becomes unavailable.
+
 ## 13. Administration
 
 The initial administrative interface should support:
@@ -335,6 +363,13 @@ No production payment capability should be enabled until these are approved:
 - Use Square as practical fallback.
 - Retain Stripe for international or advanced requirements.
 - Consider Revolut Business or another provider only after equal technical and commercial assessment.
+- Present **Locker / Collection Point** as the preferred generic customer-facing
+  out-of-home delivery proposition rather than separate carrier products by
+  default.
+- Keep carrier/service selection behind a CYPH/1-owned replaceable shipping
+  abstraction.
+- Treat Sendcloud as the leading aggregator candidate, subject to commercial
+  validation, with InPost and Evri as candidate underlying carriers.
 - Keep checkout disabled throughout pre-launch.
 
 ## 20. Open decisions
@@ -344,6 +379,14 @@ No production payment capability should be enabled until these are approved:
 - Fulfilment model and provider.
 - Runtime, hosting and relational database product.
 - Tax, accounting, delivery and returns integrations.
+- Final packaged dimensions and weight after launch product and packaging
+  selection.
+- Written carrier acceptance of the selected mains-powered IPL/electronic beauty
+  device and its external AC/DC power adapter.
+- Loss and damage compensation or insurance at the expected retail/replacement
+  value.
+- Final business shipping rates, surcharges, return services and minimum-volume
+  requirements for Sendcloud and candidate carriers.
 - Guest-only checkout versus optional accounts.
 - Promotions and early-access offers.
 - Timing for a second live payment provider.

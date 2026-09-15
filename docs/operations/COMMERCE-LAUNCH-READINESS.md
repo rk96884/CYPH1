@@ -39,6 +39,7 @@ This register separates evidence that can be produced by the repository from bus
 | Customer staging source revert | Benign observable header deployed and removed with a new revert commit, with disabled route checks and post-revert dual-runtime monitoring | `CDR-DRILL-002` passed on 13 September 2026 using marker commit `1c60da8`, revert commit `f77abf3` and monitor run `#95`; compatible faulty-release recovery subsequently passed and Mollie webhook continuity remains outstanding |
 | Customer staging faulty-release recovery | Compatible customer health-contract regression detected by exact-response monitoring, followed by source-controlled recovery | `CDR-DRILL-003` passed on 15 September 2026 using fault commit `36b79a2`, revert `e1d4460`, customer-only failure run `#107` and healthy dual-runtime run `#108`; Mollie webhook continuity and data/schema rollback remain outstanding |
 | Customer-data retention and deletion | Category inventory, rights-request workflow, processor/backup handling and safe deletion design | Draft procedure and monthly manual early-access review method documented; 14 September age-screen baseline is zero contacts older than 24 months. Brevo's persisted account setting deletes transactional-email logs after one month for all senders and disables new previews, but exact 30-day deletion across DOI/event logs, approved engagement criteria, execution of future monthly reviews, privacy-owner decision, backup owner, restricted register and production erasure tooling remain outstanding |
+| Multi-carrier and collection-point delivery | Provider-neutral delivery proposition and shipping-adapter direction | Preferred direction recorded: generic **Locker / Collection Point**, CYPH/1-owned carrier abstraction, Sendcloud as leading aggregator candidate and InPost/Evri as candidate underlying carriers. No integration is approved or implemented; commercial and product-eligibility gates remain outstanding. |
 
 ## Engineering tests still required
 
@@ -82,6 +83,18 @@ The following require accountable human sign-off and cannot be completed by auto
 - [ ] VAT, tax, bookkeeping, reconciliation and refund accounting approved.
 - [ ] PCI scope and responsibilities confirmed for hosted checkout.
 - [ ] Shipping destinations, charges, duties, restricted destinations and fulfilment ownership approved.
+- [ ] Final packaged dimensions and weight confirmed for the selected product and
+      packaging.
+- [ ] Written carrier acceptance obtained for the selected mains-powered
+      IPL/electronic beauty device and its external AC/DC power adapter.
+- [ ] Loss and damage compensation or shipment insurance confirmed at the
+      expected retail/replacement value; public consumer cover must not be
+      assumed to apply to a business contract or compensate electronics.
+- [ ] Sendcloud commercial suitability and entitlement validated, including
+      rates, subscription/label fees, surcharges, returns and carrier-contract
+      support.
+- [ ] InPost and Evri business rates, geographic/service coverage, surcharges,
+      return services and minimum-volume requirements confirmed.
 - [ ] Incident owner, customer-support owner and escalation contacts assigned.
 
 The role and evidence framework for this item is recorded in

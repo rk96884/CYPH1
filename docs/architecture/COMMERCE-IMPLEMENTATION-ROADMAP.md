@@ -24,6 +24,14 @@ Evolve the existing `cyph1.co.uk` Astro website into a commerce-capable storefro
 - Confirm stock ownership and fulfilment provider/process.
 - Assign operational ownership for orders, refunds, disputes and incidents.
 - Approve privacy, retention and accounting requirements.
+- Confirm the final packaged dimensions and weight after the launch product and
+  packaging are selected.
+- Obtain written confirmation that proposed carriers accept the selected
+  mains-powered IPL/electronic beauty device and external AC/DC adapter.
+- Confirm loss and damage compensation or separate shipment insurance at the
+  expected CYPH/1 retail/replacement value.
+- Validate business shipping rates, surcharges, returns and minimum-volume
+  requirements.
 
 **Exit:** Merchant onboarding and operational process design can proceed.
 
@@ -98,6 +106,27 @@ are not approved product, price, tax, stock or fulfilment data.
 **Acceptance:** Test-mode checkout completes end to end without changing the public site or creating live charges.
 
 ## Milestone 3 — fulfilment and operations
+
+### 3.0 Multi-carrier delivery direction
+
+- Use customer-facing delivery propositions rather than provider product names;
+  the preferred out-of-home proposition is **Locker / Collection Point**.
+- Allow the customer to search, review, change and confirm a location, and store
+  its provider identifier plus an immutable location snapshot against the
+  order.
+- Put collection-point discovery/validation, carrier-service selection, labels,
+  tracking and returns behind a CYPH/1-owned shipping-provider abstraction.
+- Treat Sendcloud as the leading aggregator candidate, subject to commercial
+  validation and without coupling the CYPH/1 domain model to Sendcloud.
+- Treat InPost and Evri as candidate underlying carriers. Do not enable either
+  until product acceptance, packaged size/weight, geographic service, rates,
+  surcharges, returns, minimum volumes and adequate compensation/insurance are
+  confirmed.
+- Provide a safe home-delivery or customer-reselection path when the point
+  selector, provider API or selected location is unavailable.
+
+**Status:** Preferred architecture recorded; no shipping integration, account,
+dependency, database migration or checkout behaviour has been implemented.
 
 ### 3.1 Fulfilment adapter
 
