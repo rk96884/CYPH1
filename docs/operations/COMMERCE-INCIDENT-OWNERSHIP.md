@@ -35,6 +35,10 @@ requirements are defined in
 does not close this blocker until named people accept the roles and the
 primary-unavailable exercise passes.
 
+The appointment, access verification, handover and exercise evidence required
+to close it are defined in
+`docs/operations/PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md`.
+
 ## Alert routes
 
 | Signal | Primary route | Required operator action |

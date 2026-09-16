@@ -915,6 +915,24 @@ Implementation baseline completed:
   consumer/legal, finance, fulfilment, product-safety, privacy/security,
   accessibility, support-channel and provider-state testing remain launch gates.
 
+### 4.36 Production ownership and deputy appointment pack
+
+- Convert role definitions into explicit accepted appointments with private
+  contacts, authority schedules, access verification and conflict review.
+- Prove deputies can operate independently through planned/unexpected handover
+  and a synthetic primary-unavailable exercise.
+- Keep names, contacts, accounts, MFA/recovery details and signatures in a
+  restricted governance system while retaining privacy-safe role evidence.
+
+Implementation baseline completed:
+
+- `docs/operations/PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md` defines
+  eight appointment components, the required role portfolio, lifecycle,
+  privacy-safe completion register and prepared `OWN-DRILL-001` exercise.
+- No appointment is made by this baseline. Restricted storage, named acceptance,
+  realistic coverage, access/negative tests, conflict mitigations, alternate
+  routes, exercise completion and launch-owner approval remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

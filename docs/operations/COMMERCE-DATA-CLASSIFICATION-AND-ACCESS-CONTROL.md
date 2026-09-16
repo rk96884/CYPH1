@@ -120,6 +120,10 @@ restricted ownership register. One person may initially hold multiple roles,
 but must deliberately assume the correct role and preserve independent review
 where the matrix requires it.
 
+Appointments, authority acceptance, access verification, conflict review and
+deputy exercises must follow
+`PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md`.
+
 ## Role and action matrix
 
 Legend:
@@ -354,5 +358,5 @@ classification or governance baseline.
 - `PERSONAL-DATA-INCIDENT-ESCALATION.md`
 - `PROCESSOR-DUE-DILIGENCE-AND-DPA-CHECKLIST.md`
 - `PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md`
+- `PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md`
 - `SHIPPING-PRIVACY-AND-SECURITY.md`
-

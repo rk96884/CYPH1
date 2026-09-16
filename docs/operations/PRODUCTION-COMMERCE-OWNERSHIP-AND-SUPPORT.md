@@ -16,6 +16,10 @@ This framework does not appoint an individual, create an employment duty or
 approve a service level. Each role and deputy must explicitly accept the scope
 in the restricted register before the corresponding launch gate can close.
 
+Create, accept, verify and review each appointment using
+`PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md`. A role is not active
+merely because a candidate has access or is named informally.
+
 Role titles in this plan grant no data access by themselves. Implemented
 permissions and high-risk separation must remain within
 `COMMERCE-DATA-CLASSIFICATION-AND-ACCESS-CONTROL.md`.
@@ -167,3 +171,4 @@ only; it must not contain the private register.
 - `FULFILMENT-OUTAGE-AND-MANUAL-REVIEW.md`
 - `PERSONAL-DATA-INCIDENT-ESCALATION.md`
 - `CUSTOMER-DATA-RETENTION-AND-DELETION.md`
+- `PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md`
