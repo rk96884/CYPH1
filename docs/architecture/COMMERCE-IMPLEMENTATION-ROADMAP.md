@@ -860,6 +860,25 @@ Implementation baseline completed:
   Sendcloud, carrier, fulfilment and support-system assessments require actual
   service scope, executed terms, evidence and accountable approval.
 
+### 4.33 Commerce data classification and access-control baseline
+
+- Classify commerce, customer, payment, shipping, support, safety, rights,
+  incident, export, audit, credential and backup data by impact and purpose.
+- Define role/action boundaries, high-risk approvals, environment separation,
+  provider/service identities, break-glass controls and access lifecycle.
+- Treat future provider/database permissions as mappings to a stable CYPH/1
+  model rather than allowing dashboard roles to define governance.
+
+Implementation baseline completed:
+
+- `docs/operations/COMMERCE-DATA-CLASSIFICATION-AND-ACCESS-CONTROL.md` defines
+  five handling levels, a commerce data catalogue, maximum role authorities,
+  high-risk separation and provider-neutral implementation requirements.
+- The document distinguishes required design permissions from the four current
+  application permissions. Named assignments, restricted registers,
+  field-level enforcement, PostgreSQL/Mollie/provider mappings and negative
+  permission tests remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

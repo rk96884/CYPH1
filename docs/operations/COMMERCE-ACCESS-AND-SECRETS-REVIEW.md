@@ -31,6 +31,11 @@ Browser variables may contain endpoint URLs, presentation flags and public Turns
 
 ## Operations role mapping
 
+These four permissions are the current engineering baseline only. The full
+classification, intended role authority and future permission design are in
+`COMMERCE-DATA-CLASSIFICATION-AND-ACCESS-CONTROL.md`; documentation there does
+not grant or implement access.
+
 Map verified identity-provider groups to only these application permissions:
 
 | Permission | Intended role | Approved group | Reviewer/date |
@@ -191,3 +196,7 @@ artefacts.
 5. Sample logs, audit summaries and exports for credentials and unnecessary personal data.
 6. Rotate any credential with uncertain provenance and record only the date and owner.
 7. Attach accountable approvals to the launch-readiness record before enabling commerce.
+
+Before production, also verify field-level views, high-risk approvals,
+environment/service-identity separation, break-glass expiry and negative role
+tests under `COMMERCE-DATA-CLASSIFICATION-AND-ACCESS-CONTROL.md`.

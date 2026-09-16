@@ -12,6 +12,11 @@ Operational diagnostics and finance controls must use the minimum data needed
 for their purpose. Adding a database field, request detail or provider payload
 must not automatically add it to a log or export.
 
+Classify source data and copies under
+`COMMERCE-DATA-CLASSIFICATION-AND-ACCESS-CONTROL.md`. A lower-risk output is not
+permission to export its higher-risk source, and an unexpected restricted field
+raises the entire artefact's handling requirement.
+
 This review does not approve a privacy notice, retention schedule, processor
 contract or production access model. Those require accountable legal and
 operational approval before launch.

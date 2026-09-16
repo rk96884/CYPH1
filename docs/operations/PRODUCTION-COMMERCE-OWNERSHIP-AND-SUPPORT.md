@@ -16,6 +16,10 @@ This framework does not appoint an individual, create an employment duty or
 approve a service level. Each role and deputy must explicitly accept the scope
 in the restricted register before the corresponding launch gate can close.
 
+Role titles in this plan grant no data access by themselves. Implemented
+permissions and high-risk separation must remain within
+`COMMERCE-DATA-CLASSIFICATION-AND-ACCESS-CONTROL.md`.
+
 ## Required roles and decision authority
 
 | Role | Required authority | Cannot delegate informally |
