@@ -283,8 +283,9 @@ sale.
 ## Privacy and security cases
 
 - Treat a request for access, correction, erasure or restriction under
-  `CUSTOMER-DATA-RETENTION-AND-DELETION.md`; record its applicable deadline in
-  the restricted rights-request register.
+  `DATA-SUBJECT-RIGHTS-OPERATIONS.md`; record its applicable deadline using the
+  minimum fields in `DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md` and apply
+  the retention decisions in `CUSTOMER-DATA-RETENTION-AND-DELETION.md`.
 - Marketing unsubscribe/withdrawal must be actioned independently from commerce
   support and must not erase required order evidence automatically.
 - Exposed labels, tracking links, pickup codes, wrong-recipient communications
@@ -384,5 +385,6 @@ provider itself; this provider-neutral decision exercise remains the baseline.
 - `REFUNDS-RETURNS-AND-DISPUTES.md`
 - `TRANSACTIONAL-COMMUNICATIONS.md`
 - `CUSTOMER-DATA-RETENTION-AND-DELETION.md`
+- `DATA-SUBJECT-RIGHTS-OPERATIONS.md`
+- `DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md`
 - `PERSONAL-DATA-INCIDENT-ESCALATION.md`
-

@@ -832,6 +832,14 @@ Implementation baseline completed:
   decision workflow only; approved ownership and retention, processor
   execution, technical restriction, isolated database deletion and
   restore-suppression tests remain launch gates.
+- `docs/operations/DATA-SUBJECT-RIGHTS-OPERATIONS.md` converts the exercise into
+  a provider-neutral case lifecycle, identity, search, decision, processor,
+  disclosure, deadline, backup and closure procedure.
+- `docs/operations/DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md` defines the
+  privacy-minimised logical register and prohibits source control or ordinary
+  collaboration tools from becoming the live case system. Storage selection,
+  approval, access controls, retention and synthetic implementation testing
+  remain launch gates.
 
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.

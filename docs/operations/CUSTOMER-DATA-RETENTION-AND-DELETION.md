@@ -244,6 +244,12 @@ The provider-neutral decision workflow can be rehearsed safely using
 authorise deletion or replace later isolated database, processor and
 backup-restore testing.
 
+Live request coordination must follow `DATA-SUBJECT-RIGHTS-OPERATIONS.md` and
+the privacy-minimised logical register in
+`DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md`. Both remain pre-production
+baselines pending accountable approval and implementation in a restricted case
+system.
+
 - Run the early-access monthly review above now; assign primary and backup
   owners for each future commerce system and review due records and holds
   monthly once live personal-data processing begins.
