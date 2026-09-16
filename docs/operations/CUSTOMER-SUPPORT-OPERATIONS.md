@@ -298,6 +298,11 @@ sale.
 
 ## Customer communications
 
+Use only an approved version and purpose from
+`CUSTOMER-SUPPORT-RESPONSE-TEMPLATES.md`. A template is a communication control,
+not evidence that an order, payment, cancellation, shipment, return, safety
+assessment or refund outcome exists.
+
 Every message must:
 
 - use the approved CYPH/1 channel and template purpose;
@@ -387,6 +392,7 @@ provider itself; this provider-neutral decision exercise remains the baseline.
 - `SHIPPING-OUTAGE-AND-COLLECTION-POINT-FAILURE.md`
 - `REFUNDS-RETURNS-AND-DISPUTES.md`
 - `TRANSACTIONAL-COMMUNICATIONS.md`
+- `CUSTOMER-SUPPORT-RESPONSE-TEMPLATES.md`
 - `CUSTOMER-DATA-RETENTION-AND-DELETION.md`
 - `DATA-SUBJECT-RIGHTS-OPERATIONS.md`
 - `DATA-SUBJECT-RIGHTS-COMMUNICATION-TEMPLATES.md`

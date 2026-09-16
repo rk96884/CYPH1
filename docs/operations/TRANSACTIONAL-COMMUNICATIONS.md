@@ -2,6 +2,11 @@
 
 Commerce order messages are separate from marketing communications and do not depend on marketing consent. The initial provider is a no-send `manual-test` adapter; live delivery remains disabled until a provider and credentials are explicitly approved.
 
+Automated lifecycle messages in this document are also distinct from manual
+case communications in `CUSTOMER-SUPPORT-RESPONSE-TEMPLATES.md`. Support must
+not manually imitate an automated order/refund event, and the automated worker
+must not send a support outcome without its own approved semantic event.
+
 ## Event mapping
 
 - `payment.paid` → order confirmation

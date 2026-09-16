@@ -897,6 +897,24 @@ Implementation baseline completed:
   controller/complaint details, accessibility, secure delivery, channel testing
   and accountable sign-off remain launch gates.
 
+### 4.35 Customer-support response template pack
+
+- Provide provider-neutral acknowledgement, verification, checkout, payment,
+  cancellation, destination, delivery, return, warranty, refund, dispute,
+  safety, privacy/security, outage, progress and closure messages.
+- Keep payment, fulfilment, shipment, return and refund outcomes separate and
+  require authoritative evidence before confirmation.
+- Prevent unapproved consumer, warranty, delivery, compensation, refund,
+  medical or response-time promises.
+
+Implementation baseline completed:
+
+- `docs/operations/CUSTOMER-SUPPORT-RESPONSE-TEMPLATES.md` defines 23 guarded
+  templates, common placeholders, pre-send checks and approval/version evidence.
+- The pack is not approved for production use. Final product/policies,
+  consumer/legal, finance, fulfilment, product-safety, privacy/security,
+  accessibility, support-channel and provider-state testing remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

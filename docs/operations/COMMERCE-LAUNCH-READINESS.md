@@ -24,6 +24,7 @@ This register separates evidence that can be produced by the repository from bus
 | Staging health/readiness monitor | Scheduled exact-response checks with timeout and native Actions failure state | Secret configured; healthy baseline, controlled suspension failure and operator-assisted restart recovery verified on 31 August 2026; production alert ownership remains outstanding |
 | Staging incident ownership | Role-based staging response and escalation runbook covering GitHub, Render, Cloudflare Access and database signals | Project owner is accountable for staging; notification-channel tests, independent backup and production ownership remain outstanding |
 | Production ownership and customer support | Role authority, deputy coverage, detailed support workflow, restricted-register fields and a primary-unavailable exercise are defined | Framework and provider-neutral customer-support operating procedure prepared, including verification, case routing and payment/delivery/return/privacy/safety handoffs; named appointments, private registers, approved channels/policies/templates, response commitments, access tests, exercises and accountable approval remain outstanding |
+| Customer-support communications | Guarded provider-neutral templates for verification, checkout, payments, cancellations, destination/delivery, returns, warranty, refunds, disputes, safety, privacy/security, outages and closure | 23-template pack and pre-send/version controls documented. Production use remains unapproved pending final product/policies, consumer/legal, finance, fulfilment, product-safety, privacy/security, accessibility, channel and provider-state testing and accountable sign-off |
 | Customer runtime route isolation | Separate runtime exposes generic health/readiness plus independently gated checkout and Mollie webhook routes; operations paths remain absent | Automated baseline, protected staging deployment, guarded synthetic fixture and read-only route-gate verifier covered; Mollie checkout-disable/webhook-continuity rehearsal outstanding |
 | Database recovery verification | Guarded source/restore comparison checks migration history and aggregate row counts without reading personal-data fields | Engineering command and isolated-restore runbook covered; first logical restore, paid Render PITR and off-platform schedule remain outstanding |
 | Dependency vulnerability baseline | Locked install plus fail-closed production audit and narrowly matched, expiring build-tool exception; weekly npm and GitHub Actions update monitoring | Production audit clean; temporary Astro language-server exception expires 8 October 2026; deployed runtime review and ownership remain outstanding |
@@ -86,6 +87,9 @@ The following require accountable human sign-off and cannot be completed by auto
 - [ ] Final sellable product, claims and compliance evidence approved.
 - [ ] Legal entity, merchant account and settlement account approved.
 - [ ] UK consumer-contract, cancellation, returns, warranty and support terms approved.
+- [ ] Customer-support templates legally and operationally approved against the
+      final product, policies, channels and authoritative provider/application
+      states; accessible delivery and semantic deduplication tested.
 - [ ] Privacy notice, processing records, retention schedule and processor contracts approved.
 - [ ] DSR communication templates, controller/contact/complaint wording,
       accessible formats and secure-delivery channels legally reviewed and
