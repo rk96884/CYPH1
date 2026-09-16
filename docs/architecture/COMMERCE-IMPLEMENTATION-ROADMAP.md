@@ -879,6 +879,24 @@ Implementation baseline completed:
   field-level enforcement, PostgreSQL/Mollie/provider mappings and negative
   permission tests remain launch gates.
 
+### 4.34 Data-subject rights communication template pack
+
+- Provide safe, accessible starting text from unverified acknowledgement and
+  identity requests through access delivery, rights outcomes and closure.
+- Require case-specific approval for extensions, refusals, fees, retention,
+  restriction lifting and complaint wording.
+- Prevent templates from confirming record existence, overstating completed
+  actions or disclosing personal data through notification channels.
+
+Implementation baseline completed:
+
+- `docs/operations/DATA-SUBJECT-RIGHTS-COMMUNICATION-TEMPLATES.md` defines 16
+  guarded templates, controlled placeholders, pre-send checks and approval/
+  version evidence.
+- The pack is not approved for production use. Current-law/privacy review,
+  controller/complaint details, accessibility, secure delivery, channel testing
+  and accountable sign-off remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

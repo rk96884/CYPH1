@@ -286,6 +286,9 @@ sale.
   `DATA-SUBJECT-RIGHTS-OPERATIONS.md`; record its applicable deadline using the
   minimum fields in `DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md` and apply
   the retention decisions in `CUSTOMER-DATA-RETENTION-AND-DELETION.md`.
+- Use only approved versions of
+  `DATA-SUBJECT-RIGHTS-COMMUNICATION-TEMPLATES.md`; support must not select an
+  exemption, extension, retention reason or restriction-lift outcome itself.
 - Marketing unsubscribe/withdrawal must be actioned independently from commerce
   support and must not erase required order evidence automatically.
 - Exposed labels, tracking links, pickup codes, wrong-recipient communications
@@ -386,5 +389,6 @@ provider itself; this provider-neutral decision exercise remains the baseline.
 - `TRANSACTIONAL-COMMUNICATIONS.md`
 - `CUSTOMER-DATA-RETENTION-AND-DELETION.md`
 - `DATA-SUBJECT-RIGHTS-OPERATIONS.md`
+- `DATA-SUBJECT-RIGHTS-COMMUNICATION-TEMPLATES.md`
 - `DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md`
 - `PERSONAL-DATA-INCIDENT-ESCALATION.md`

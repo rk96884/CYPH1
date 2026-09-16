@@ -241,16 +241,19 @@ law requires it, and record any authorised exception.
 ## 7. Response preparation and secure delivery
 
 1. Reconcile the search matrix, decisions, actions and unresolved dependencies.
-2. Independently review the response pack, supplementary information,
+2. Select the applicable approved text from
+   `DATA-SUBJECT-RIGHTS-COMMUNICATION-TEMPLATES.md`; a template cannot replace
+   the case-specific decision or pre-send review.
+3. Independently review the response pack, supplementary information,
    redactions and delivery recipient/channel.
-3. Use an approved authenticated, time-limited delivery method. Do not send a
+4. Use an approved authenticated, time-limited delivery method. Do not send a
    password in the same channel as its protected file.
-4. Use a neutral subject and avoid personal, order, payment, address or tracking
+5. Use a neutral subject and avoid personal, order, payment, address or tracking
    data in notification text.
-5. State completed actions, category-specific retained data and reasons,
+6. State completed actions, category-specific retained data and reasons,
    restriction status, processor/backup limitations, outstanding execution and
    applicable complaint/enforcement routes.
-6. Do not say data is erased, corrected or delivered until evidence supports
+7. Do not say data is erased, corrected or delivered until evidence supports
    that statement.
 
 ## 8. Backup and restore protection
@@ -338,6 +341,7 @@ updated following changes to UK data-protection law.
 ## Related procedures
 
 - `DATA-SUBJECT-RIGHTS-REGISTER-SPECIFICATION.md`
+- `DATA-SUBJECT-RIGHTS-COMMUNICATION-TEMPLATES.md`
 - `DATA-SUBJECT-RIGHTS-TABLETOP.md`
 - `CUSTOMER-DATA-RETENTION-AND-DELETION.md`
 - `CUSTOMER-SUPPORT-OPERATIONS.md`
