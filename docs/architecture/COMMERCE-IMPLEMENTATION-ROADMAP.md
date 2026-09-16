@@ -809,6 +809,30 @@ Implementation baseline completed:
 - Named appointments, tested access, approved support channels/hours, response
   commitments, private registers and accountable sign-off remain launch gates.
 
+### 4.31 Synthetic data-subject rights tabletop
+
+- Exercise access, rectification, erasure, restriction and direct-marketing
+  withdrawal as distinct but coordinated requests.
+- Test proportionate identity verification, a purpose-based system search,
+  secure disclosure, processor instructions and deadline control.
+- Preserve authorised privacy/legal and finance decisions for retention or
+  irreversible deletion, and keep real systems and personal data out of the
+  exercise.
+
+Implementation baseline completed:
+
+- `docs/operations/DATA-SUBJECT-RIGHTS-TABLETOP.md` defines a six-inject,
+  discussion-only exercise using fictional identifiers and provider-neutral
+  system categories.
+- The exercise covers identity uncertainty, cross-system discovery,
+  historical-order accuracy, restriction, processor/backup delay and
+  restore-reintroduction protection.
+- Exercise `DSR-TTX-001` passed on 16 September 2026 using the full six-inject
+  sequence without live action or real personal data. It validated the
+  decision workflow only; approved ownership and retention, processor
+  execution, technical restriction, isolated database deletion and
+  restore-suppression tests remain launch gates.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

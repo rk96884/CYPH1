@@ -239,6 +239,11 @@ or wait for a processor before escalating a deadline risk.
 
 ## Scheduled retention review and safe deletion design
 
+The provider-neutral decision workflow can be rehearsed safely using
+`DATA-SUBJECT-RIGHTS-TABLETOP.md`. Passing that discussion exercise does not
+authorise deletion or replace later isolated database, processor and
+backup-restore testing.
+
 - Run the early-access monthly review above now; assign primary and backup
   owners for each future commerce system and review due records and holds
   monthly once live personal-data processing begins.
