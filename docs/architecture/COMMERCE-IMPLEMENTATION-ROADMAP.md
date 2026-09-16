@@ -841,6 +841,25 @@ Implementation baseline completed:
   approval, access controls, retention and synthetic implementation testing
   remain launch gates.
 
+### 4.32 Processor due diligence and DPA baseline
+
+- Establish one risk-based assessment from intake and role mapping through
+  contract, transfer, control, decision, review and verified exit.
+- Require Article 28 terms, sufficient-guarantees evidence, subprocessor change
+  control, international-transfer assessment, incident/rights assistance and
+  tested retention/deletion/exit routes.
+- Keep executed contracts, private contacts, provider responses and security
+  evidence in a restricted governance system rather than source control.
+
+Implementation baseline completed:
+
+- `docs/operations/PROCESSOR-DUE-DILIGENCE-AND-DPA-CHECKLIST.md` defines the
+  provider-neutral checklist, decision states, per-provider record and current
+  CYPH/1 provider worklist.
+- No provider is approved by the checklist. Render, Cloudflare, Brevo, Mollie,
+  Sendcloud, carrier, fulfilment and support-system assessments require actual
+  service scope, executed terms, evidence and accountable approval.
+
 - Test keyboard, screen-reader, mobile and reduced-motion behaviour.
 - Test provider failures, timeouts, duplicate/out-of-order webhooks and abandoned checkout.
 - Test full and partial refunds, cancellations, returns and disputes.

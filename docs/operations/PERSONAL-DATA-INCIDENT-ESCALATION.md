@@ -34,6 +34,8 @@ international transfers and notification terms must be recorded in a restricted
 processor register before production. A future payment, fulfilment, support,
 analytics or fraud provider joins this scope only after that register and this
 procedure are reviewed.
+Assess and approve that evidence using
+`PROCESSOR-DUE-DILIGENCE-AND-DPA-CHECKLIST.md`.
 
 ## What counts as a suspected breach
 

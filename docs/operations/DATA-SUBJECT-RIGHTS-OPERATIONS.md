@@ -206,6 +206,10 @@ must identify role (processor/controller/recipient), contract route, verified
 contact, response expectation, supported rights, backup behaviour and evidence
 format.
 
+Approve the provider and its evidence under
+`PROCESSOR-DUE-DILIGENCE-AND-DPA-CHECKLIST.md` before it receives production
+personal data.
+
 A scoped processor instruction must contain only necessary identifiers and:
 
 1. case reference and controller instruction;
@@ -338,5 +342,5 @@ updated following changes to UK data-protection law.
 - `CUSTOMER-DATA-RETENTION-AND-DELETION.md`
 - `CUSTOMER-SUPPORT-OPERATIONS.md`
 - `PERSONAL-DATA-INCIDENT-ESCALATION.md`
+- `PROCESSOR-DUE-DILIGENCE-AND-DPA-CHECKLIST.md`
 - `PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md`
-
