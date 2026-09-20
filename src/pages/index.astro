@@ -8,7 +8,7 @@ import { withBase } from "../utils/base-path";
 const signupApiUrl = import.meta.env.PUBLIC_SIGNUP_API_URL ?? "";
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const structuredData = [
-  { "@context": "https://schema.org", "@type": "Organization", name: "CYPH/1", alternateName: "Cycle Phase One", url: "https://www.cyph1.co.uk/", email: "info@cyph1.co.uk", logo: "https://www.cyph1.co.uk/brand/generated/cyph1-lockup-clean-flat.svg" },
+  { "@context": "https://schema.org", "@type": "Organization", name: "CYPH/1", alternateName: "Cycle Phase One", url: "https://www.cyph1.co.uk/", email: "info@cyph1.co.uk", logo: "https://www.cyph1.co.uk/brand/generated/cyph1-lockup-clean-flat.svg", sameAs: ["https://www.instagram.com/cyph1uk/", "https://www.tiktok.com/@cyph1uk", "https://www.facebook.com/cyph1uk", "https://www.linkedin.com/company/146602804/"] },
   { "@context": "https://schema.org", "@type": "WebSite", name: "CYPH/1", alternateName: "Cycle Phase One", url: "https://www.cyph1.co.uk/", inLanguage: "en-GB" },
 ];
 ---
