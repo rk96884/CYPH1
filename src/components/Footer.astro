@@ -2,5 +2,17 @@
 import BrandMark from "./BrandMark.astro";
 import { withBase } from "../utils/base-path";
 const year = new Date().getFullYear();
+const socials = [
+  { name: "Instagram", href: "https://www.instagram.com/cyph1uk/", icon: "instagram" },
+  { name: "TikTok", href: "https://www.tiktok.com/@cyph1uk", icon: "tiktok" },
+  { name: "Facebook", href: "https://www.facebook.com/profile.php?id=61593666869093", icon: "facebook" },
+  { name: "LinkedIn", href: "https://www.linkedin.com/company/146602804/", icon: "linkedin" },
+] as const;
 ---
-<footer class="site-footer"><div class="container footer-grid"><div><BrandMark/><p>Premium consumer beauty technology.<br/>CYPH1 LTD · Company number 17455968 · United Kingdom.</p></div><nav aria-label="Legal and site information"><a href={withBase("terms/")}>Website terms</a><a href={withBase("privacy/")}>Privacy</a><a href={withBase("accessibility/")}>Accessibility</a></nav><p class="copyright">© {year} CYPH/1. All rights reserved.</p></div></footer>
+<footer class="site-footer"><div class="container footer-grid"><div><BrandMark/><p>Premium consumer beauty technology.<br/>CYPH1 LTD · Company number 17455968 · United Kingdom.</p><nav class="social-links" aria-label="CYPH/1 social media">{socials.map((social) => <a href={social.href} target="_blank" rel="me noopener noreferrer" aria-label={`CYPH/1 on ${social.name}`} title={social.name}><svg viewBox="0 0 24 24" aria-hidden="true"><use href={`#social-${social.icon}`}/></svg></a>)}</nav></div><nav aria-label="Legal and site information"><a href={withBase("terms/")}>Website terms</a><a href={withBase("privacy/")}>Privacy</a><a href={withBase("accessibility/")}>Accessibility</a></nav><p class="copyright">© {year} CYPH/1. All rights reserved.</p></div>
+<svg class="social-symbols" aria-hidden="true">
+  <symbol id="social-instagram" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" class="social-fill"/></symbol>
+  <symbol id="social-tiktok" viewBox="0 0 24 24"><path d="M14 4v10.2a4.2 4.2 0 1 1-3.5-4.14"/><path d="M14 4c.55 2.7 2.1 4.25 5 4.8"/></symbol>
+  <symbol id="social-facebook" viewBox="0 0 24 24"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.7 1.8-1.7H18V3.8c-.7-.1-1.6-.2-2.6-.2-2.6 0-4.4 1.6-4.4 4.5V10H8v3h3v8"/></symbol>
+  <symbol id="social-linkedin" viewBox="0 0 24 24"><rect x="3" y="9" width="4" height="12"/><circle cx="5" cy="5" r="2" class="social-fill"/><path d="M11 21V9h4v1.8c.9-1.3 2.2-2.1 4-2.1 3 0 4 2 4 5.1V21h-4v-6.3c0-1.5-.3-2.7-2-2.7-2.2 0-2 2.1-2 3.5V21z"/></symbol>
+</svg></footer>
