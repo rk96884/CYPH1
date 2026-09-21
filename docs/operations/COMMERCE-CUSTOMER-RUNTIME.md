@@ -297,6 +297,18 @@ Exercised on **21 September 2026** using a fresh synthetic £2.00 staging order.
 
 **Follow-up:** retain terminal failed-payment handling as an open sandbox test. Do not treat a failed card attempt that leaves the provider payment `pending` as evidence of a `payment.failed` lifecycle transition. Customer cancellation also remains separately untested.
 
+### Mollie abandoned-checkout / natural-expiry rehearsal
+
+Completed on **21 September 2026** using fresh synthetic £2.00 order `CYPH-T-CA8AF7C5A50C`. The shopper entered Mollie hosted checkout but did not complete payment. Mollie's own **Previous page** control returned the browser to the configured CYPH/1 pending/status route rather than the cancellation route. Protected operations evidence initially showed the order as `pending_payment`, payment as `pending`, fulfilment as `unfulfilled`, and identical payment creation/update timestamps.
+
+Mollie's test dashboard subsequently showed the overall payment as `Open` with a short expiry window. Its history showed an individual credit-card attempt had expired while the overall payment returned to payment-method selection. After the overall hosted checkout naturally expired, Mollie showed the payment as `Expired`. CYPH/1 then authoritatively persisted the associated payment as `expired`; its `updated_at` advanced from `2026-09-21T09:33:42.876Z` to `2026-09-21T10:50:42.007Z`. The order remained `pending_payment`, fulfilment remained `unfulfilled`, and no refund or fulfilment record was created.
+
+**Result:** passed for abandoned-checkout/natural-expiry safety and webhook persistence. Abandonment did not create a paid order or fulfilment, and the later terminal expiry was persisted independently of the browser return.
+
+**Additional finding:** the earlier order `CYPH-T-3ED7551BFDD8`, used for the `Failed` card-attempt rehearsal, was later shown by Mollie as `Expired`. That exercise therefore remains inconclusive for a terminal `failed` provider state; it must not be counted as a failed-payment pass.
+
+**Follow-up:** Mollie's **Previous page** behaviour observed here is a normal return/navigation path, not evidence of explicit payment cancellation. A genuine `canceled` provider-state exercise remains open. The repeated observation that terminal `expired` payments leave the internal order at `pending_payment` reinforces the need for an explicit retry/abandonment order-lifecycle and customer-copy decision before production.
+
 ## Rollback
 
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md`. Never suspend the protected
