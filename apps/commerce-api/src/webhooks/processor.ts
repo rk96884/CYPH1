@@ -89,6 +89,65 @@ export class PaymentWebhookProcessor {
         `, [event.provider, event.eventId, event.type, correlationId]);
         if (receipt.rows[0]?.processing_status === "processed" || receipt.rows[0]?.processing_status === "ignored") continue;
 
+        if (event.type.startsWith("refund.")) {
+          if (!event.providerPaymentId || !event.providerRefundId || !event.amount) {
+            await client.query("UPDATE webhook_events SET processing_status = 'ignored', processed_at = now() WHERE id = $1", [receipt.rows[0]!.id]);
+            ignored += 1;
+            continue;
+          }
+          const paymentResult = await client.query<PaymentRow>(`
+            SELECT id, order_id, status, amount_minor, currency FROM payments
+            WHERE provider = $1 AND provider_payment_id = $2 FOR UPDATE
+          `, [event.provider, event.providerPaymentId]);
+          const payment = paymentResult.rows[0];
+          if (!payment) throw new Error("payment_reference_not_found");
+          if (event.amount.currency !== payment.currency || event.amount.value <= 0 || event.amount.value > Number(payment.amount_minor)) {
+            throw new Error("refund_amount_mismatch");
+          }
+          const refundStatus = event.type === "refund.completed" ? "completed" : event.type === "refund.failed" ? "failed" : "pending";
+          const existingRefund = await client.query<{ id: string; amount_minor: string; currency: string }>(`
+            SELECT id, amount_minor, currency FROM refunds
+            WHERE payment_id = $1 AND provider_refund_id = $2 FOR UPDATE
+          `, [payment.id, event.providerRefundId]);
+          if (existingRefund.rowCount === 1) {
+            const existing = existingRefund.rows[0]!;
+            if (Number(existing.amount_minor) !== event.amount.value || existing.currency !== event.amount.currency) throw new Error("refund_amount_mismatch");
+            await client.query("UPDATE refunds SET status = $1 WHERE id = $2", [refundStatus, existing.id]);
+          } else {
+            await client.query(`
+              INSERT INTO refunds (payment_id, provider_refund_id, amount_minor, currency, reason, status, idempotency_key, created_at)
+              VALUES ($1,$2,$3,$4,'operator_correction',$5,$6,$7)
+            `, [payment.id, event.providerRefundId, event.amount.value, event.amount.currency, refundStatus, `webhook:${event.provider}:${event.providerRefundId}`, event.occurredAt]);
+          }
+          if (refundStatus === "completed") {
+            const totals = await client.query<{ refunded_minor: string }>(`
+              SELECT COALESCE(sum(amount_minor) FILTER (WHERE status = 'completed'), 0) AS refunded_minor
+              FROM refunds WHERE payment_id = $1
+            `, [payment.id]);
+            const refundedMinor = Number(totals.rows[0]?.refunded_minor ?? 0);
+            if (refundedMinor > Number(payment.amount_minor)) throw new Error("refund_total_exceeds_payment");
+            const targetPaymentStatus: PaymentStatus = refundedMinor === Number(payment.amount_minor) ? "refunded" : "partially_refunded";
+            const paymentTransition = transitionPayment(payment.status, targetPaymentStatus);
+            if (paymentTransition.outcome === "requires_review") throw new Error("payment_transition_requires_review");
+            if (paymentTransition.outcome === "applied") await client.query("UPDATE payments SET status = $1 WHERE id = $2", [paymentTransition.status, payment.id]);
+            const orderResult = await client.query<OrderRow>("SELECT id, status FROM orders WHERE id = $1 FOR UPDATE", [payment.order_id]);
+            const order = orderResult.rows[0];
+            if (!order) throw new Error("order_not_found");
+            const desiredOrderStatus = orderStatusFor(paymentTransition.status);
+            if (desiredOrderStatus) {
+              const nextOrderStatus = transitionOrder(order.status, desiredOrderStatus);
+              if (nextOrderStatus !== order.status) await client.query("UPDATE orders SET status = $1 WHERE id = $2", [nextOrderStatus, order.id]);
+            }
+          }
+          await client.query(`
+            INSERT INTO outbox_events (event_key, event_type, aggregate_type, aggregate_id, payload)
+            VALUES ($1, $2, 'payment', $3, $4::jsonb) ON CONFLICT (event_key) DO NOTHING
+          `, [`${event.provider}:${event.eventId}`, event.type, payment.id, JSON.stringify({ orderId: payment.order_id, refundId: event.providerRefundId, correlationId })]);
+          await client.query("UPDATE webhook_events SET processing_status = 'processed', processed_at = now(), last_error_code = NULL WHERE id = $1", [receipt.rows[0]!.id]);
+          applied += 1;
+          continue;
+        }
+
         const targetStatus = eventPaymentStatus(event);
         if (!targetStatus || !event.providerPaymentId) {
           await client.query("UPDATE webhook_events SET processing_status = 'ignored', processed_at = now() WHERE id = $1", [receipt.rows[0]!.id]);
