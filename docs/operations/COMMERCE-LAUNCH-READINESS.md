@@ -52,7 +52,7 @@ This register separates evidence that can be produced by the repository from bus
 - Complete and retain the keyboard-only, screen-reader, 200%/400% zoom,
   mobile-device, reduced-motion and high-contrast evidence in
   `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md`.
-- Checkout provider timeout, ambiguous response and abandoned-session exercises against the provider sandbox. Mollie test-mode `expired` payment handling passed on 21 September 2026. A separate `Failed` card-attempt rehearsal on 21 September left the authoritative provider payment `pending` and is recorded as inconclusive/non-terminal; explicit terminal failed-payment and customer-cancellation outcomes remain open.
+- Checkout provider timeout and ambiguous-response exercises against the provider sandbox remain open. Mollie test-mode `expired` handling and an end-to-end abandoned-checkout/natural-expiry rehearsal passed on 21 September 2026. A separate `Failed` card-attempt rehearsal initially left the authoritative provider payment `pending`; Mollie later showed that overall payment as `Expired`, so it remains inconclusive for a terminal `failed` state. Explicit terminal failed-payment and customer-cancellation outcomes remain open.
 - Full and partial refund, cancellation, return and dispute scenarios against provider and fulfilment sandboxes.
 - Database interruption, worker restart, retry exhaustion and provider-outage exercises.
 - Load and soak tests using synthetic records only; no production personal data.
