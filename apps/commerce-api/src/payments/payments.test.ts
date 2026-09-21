@@ -101,11 +101,12 @@ test("Mollie adapter cannot be configured with a live key", () => {
 });
 
 test("classic Mollie webhook authenticates by retrieving the referenced payment", async () => {
-  let requestedUrl = "";
+  const requestedUrls: string[] = [];
   const provider = new MollieTestPaymentProvider({
     apiKey: "test_example_key", allowedCallbackOrigins: ["https://api.cyph1.co.uk"],
     fetch: async (url) => {
-      requestedUrl = String(url);
+      requestedUrls.push(String(url));
+      if (String(url).endsWith("/refunds")) return response({ _embedded: { refunds: [] } });
       return response({ id: "tr_webhook1", status: "paid", createdAt: "2026-08-29T12:00:00Z", paidAt: "2026-08-29T12:01:00Z", amount: { currency: "GBP", value: "120.00" }, metadata: { orderId: "order_1" } });
     },
   });
@@ -114,7 +115,7 @@ test("classic Mollie webhook authenticates by retrieving the referenced payment"
     headers: { "content-type": "application/x-www-form-urlencoded" },
     endpointUrl: "https://api.cyph1.co.uk/webhooks/mollie",
   });
-  assert.equal(requestedUrl, "https://api.mollie.com/v2/payments/tr_webhook1");
+  assert.deepEqual(requestedUrls, ["https://api.mollie.com/v2/payments/tr_webhook1", "https://api.mollie.com/v2/payments/tr_webhook1/refunds"]);
   assert.equal(verified.outcome, "actionable");
   const events = await provider.normaliseWebhook(verified);
   assert.deepEqual(events.map((event) => ({ id: event.eventId, type: event.type, amount: event.amount?.value })), [
@@ -122,6 +123,25 @@ test("classic Mollie webhook authenticates by retrieving the referenced payment"
   ]);
 });
 
+
+test("classic Mollie webhook emits authoritative refund events", async () => {
+  const provider = new MollieTestPaymentProvider({
+    apiKey: "test_example_key", allowedCallbackOrigins: ["https://api.cyph1.co.uk"],
+    fetch: async (url) => String(url).endsWith("/refunds")
+      ? response({ _embedded: { refunds: [{ id: "re_partial1", status: "refunded", amount: { currency: "GBP", value: "20.00" }, createdAt: "2026-08-29T12:05:00Z" }] } })
+      : response({ id: "tr_webhook1", status: "paid", createdAt: "2026-08-29T12:00:00Z", paidAt: "2026-08-29T12:01:00Z", amount: { currency: "GBP", value: "120.00" }, amountRefunded: { currency: "GBP", value: "20.00" } }),
+  });
+  const verified = await provider.verifyWebhook({
+    rawBody: new TextEncoder().encode("id=tr_webhook1"),
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    endpointUrl: "https://api.cyph1.co.uk/webhooks/mollie",
+  });
+  const events = await provider.normaliseWebhook(verified);
+  assert.deepEqual(events.map((event) => ({ id: event.eventId, type: event.type, amount: event.amount?.value })), [
+    { id: "payment:tr_webhook1:paid", type: "payment.paid", amount: 12_000 },
+    { id: "refund:re_partial1:refunded", type: "refund.completed", amount: 2_000 },
+  ]);
+});
 test("classic Mollie webhook rejects malformed bodies and unapproved endpoints before API access", async () => {
   let calls = 0;
   const provider = new MollieTestPaymentProvider({
