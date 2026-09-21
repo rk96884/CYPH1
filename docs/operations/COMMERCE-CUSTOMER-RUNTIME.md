@@ -281,6 +281,14 @@ in-flight Mollie test payment can be authoritatively reconciled after new
 checkout initiation is disabled. It does **not** approve live payments,
 production checkout, fulfilment or public launch.
 
+### Mollie expired-payment rehearsal
+
+Completed on **21 September 2026** using a fresh synthetic £2.00 staging order. Mollie test mode was exercised with the card outcome set to `Expired`. Protected operations evidence for order `CYPH-T-F8A5BA010838` showed the order remained `pending_payment`, the associated `mollie-test` payment transitioned to `expired`, and fulfilment remained `unfulfilled`. The payment update timestamp advanced after creation, providing database evidence that the terminal payment-state update was processed rather than inferred from the browser UI. No refund or fulfilment record was created.
+
+**Result:** passed for the safety property under test: an expired Mollie test payment does not mark the order paid and does not initiate fulfilment.
+
+**Follow-up:** the current domain model leaves the order at `pending_payment` for terminal non-paid payment states. The customer-facing pending copy and retry/abandonment lifecycle therefore require an explicit product/operations decision before production. This rehearsal does not evidence an explicit customer cancellation or a terminal failed-payment webhook.
+
 ## Rollback
 
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md`. Never suspend the protected
