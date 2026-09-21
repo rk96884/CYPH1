@@ -1,7 +1,7 @@
 # Database backup and restore rehearsal
 
-**Status:** Engineering baseline; first isolated restore is outstanding  
-**Last engineering update:** 7 September 2026
+**Status:** First isolated logical backup/restore rehearsal passed  
+**Last engineering update:** 21 September 2026
 
 ## Purpose
 
@@ -38,7 +38,8 @@ an encrypted off-platform backup schedule.
 ## Prerequisites
 
 1. Install the matching PostgreSQL client tools (`pg_dump`, `pg_restore` and
-   `psql`). They are not currently installed on the CYPH/1 Windows workstation.
+   `psql`). PostgreSQL 17.11 client tools were installed on the CYPH/1 Windows
+   workstation for the first rehearsal.
 2. Obtain the source database's external Render URL from its **Info** page.
 3. Create a completely empty target database whose name contains `restore`,
    `recovery` or `test`, for example `cyph1_commerce_restore_test`.
@@ -115,13 +116,41 @@ $env:DATABASE_SSL = $originalDatabaseSsl
 Expected comparison ending:
 
 ```text
-Verified matching migration history: 9 migrations.
+Verified matching migration history: 10 migrations.
 Verified matching aggregate row counts: 23 tables.
 Restore comparison passed without reading personal-data fields.
 ```
 
 The normal schema verifier then checks required constraints inside a transaction
 and rolls all its test records back.
+
+
+## First isolated rehearsal evidence — 21 September 2026
+
+The first logical backup and isolated local restore rehearsal passed.
+
+- Source: CYPH/1 Render development/staging PostgreSQL database.
+- Client tools: PostgreSQL 17.11.
+- Backup file: `cyph1-commerce-staging.dump`.
+- Backup created: 21 September 2026 at 16:22:34 UTC.
+- Backup size: 87,162 bytes.
+- SHA-256: `B02EDB33E71C63A917DFE346F8E55E6D49005BBB4603BCBC0C1CD7B4B9E875B5`.
+- Restore target: isolated local database `cyph1_commerce_restore_test`.
+- The target was confirmed empty before restore.
+- `pg_restore --exit-on-error` completed with exit code 0.
+- The restored database contained all 23 required tables.
+- Source-versus-restore comparison matched 10 migration records and aggregate
+  row counts across all 23 tables without reading personal-data fields.
+- Normal schema verification passed all required table, lease-column and
+  constraint checks; verifier test records were rolled back.
+- No staging service was repointed to the restore target.
+- Temporary connection and rehearsal-guard environment variables were removed
+  after verification.
+
+The first rehearsal therefore demonstrates that the logical staging backup can
+be restored into an isolated PostgreSQL database and passes the repository's
+comparison and schema-integrity checks. Final artifact deletion and local
+restore-database deletion remain part of the cleanup procedure below.
 
 ## Cleanup
 
