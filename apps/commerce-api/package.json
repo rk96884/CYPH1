@@ -13,7 +13,8 @@
     "db:seed:private-checkout-staging": "node scripts/seed-private-checkout-staging.mjs",
     "db:verify": "node scripts/verify-schema.mjs",
     "db:verify:restore": "node scripts/verify-restored-database.mjs",
-    "test:restore-verifier": "node --test scripts/verify-restored-database.test.mjs"
+    "test:restore-verifier": "node --test scripts/verify-restored-database.test.mjs",
+    "db:rehearse:worker-recovery": "node scripts/rehearse-worker-recovery.mjs"
   },
   "dependencies": {
     "@cyph1/commerce-core": "0.0.0",
