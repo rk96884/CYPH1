@@ -53,7 +53,7 @@ This register separates evidence that can be produced by the repository from bus
   mobile-device, reduced-motion and high-contrast evidence in
   `docs/accessibility/PRIVATE-COMMERCE-MANUAL-REVIEW.md`.
 - Checkout provider timeout and ambiguous-response exercises against the provider sandbox remain open. Mollie test-mode `expired` handling and an end-to-end abandoned-checkout/natural-expiry rehearsal passed on 21 September 2026. A separate `Failed` card-attempt rehearsal initially left the authoritative provider payment `pending`; Mollie later showed that overall payment as `Expired`, so it remains inconclusive for a terminal `failed` state. Explicit terminal failed-payment and customer-cancellation outcomes remain open.
-- Partial-refund reconciliation and duplicate-webhook idempotency passed against Mollie test mode on 21 September 2026. Full refund after partial refund, cancellation, return and dispute scenarios against provider and fulfilment sandboxes remain open.
+- Partial-refund reconciliation, duplicate-webhook idempotency, and full-refund-after-partial passed against Mollie test mode on 21 September 2026. The second £1 refund on the synthetic £2 order completed through Mollie's normal webhook delivery and CYPH/1 transitioned both order and payment from `partially_refunded` to `refunded`, persisted two distinct completed £1 refund records, and left fulfilment `unfulfilled`. Explicit cancellation, terminal failed-payment, timeout/ambiguous-provider, return and dispute scenarios remain open.
 - Database interruption, worker restart, retry exhaustion and provider-outage exercises.
 - Load and soak tests using synthetic records only; no production personal data.
 - First isolated logical restore, paid Render PITR rehearsal and off-platform
