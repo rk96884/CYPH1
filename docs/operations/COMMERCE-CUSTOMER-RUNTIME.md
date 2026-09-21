@@ -242,8 +242,44 @@ the in-flight synthetic payment is processed idempotently and reconciled.
 On **7 September 2026**, the verifier ran against
 `https://commerce-staging.cyph1.co.uk` in `disabled` mode and confirmed
 `/checkout` and `/webhooks/mollie` both returned the exact expected `404`
-response. No checkout or webhook request was submitted. The `active` and
-`contained` deployment checks remain pending the reviewed Mollie test account.
+response. No checkout or webhook request was submitted.
+
+### Mollie checkout-disable/webhook-continuity rehearsal
+
+Completed on **18 September 2026** against the staging customer runtime and
+Mollie test mode using synthetic data only.
+
+- Supporting callback, admission and test-provider configuration was staged
+  while checkout, commerce and webhook gates remained disabled.
+- Webhook-only exposure was verified first: `/checkout` returned `404` while
+  browser `GET /webhooks/mollie` returned `405`.
+- The guarded private fixture was then enabled with `PAYMENT_PROVIDER=mollie-test`,
+  `FULFILMENT_MODE=test` and `FULFILMENT_PROVIDER=manual-test`.
+- Active routing was verified: browser `GET` requests to both `/checkout` and
+  `/webhooks/mollie` returned `405`.
+- One synthetic checkout was created for the private £1 integration fixture plus
+  the £1 integration delivery rate. Mollie displayed a £2.00 test-mode payment.
+- Before completing that payment, checkout creation was contained by restoring
+  `CHECKOUT_HTTP_ENABLED=false`, `COMMERCE_ENABLED=false` and
+  `PRIVATE_CHECKOUT_FIXTURE_ENABLED=false`, while keeping the Mollie test
+  webhook route available. The contained boundary was verified as checkout
+  `404` and webhook `405`.
+- Mollie test mode was then completed with the `Paid` outcome. The browser
+  returned to the deliberately non-authoritative pending page.
+- The protected operations runtime independently reconciled internal order
+  `6e6eb2e4-a264-478b-a47e-6693ae15fcb0` / order number
+  `CYPH-T-6E6EB2E4A264` as `status: paid`, `fulfilmentStatus: unfulfilled`,
+  currency `GBP`, total minor units `200`.
+- The customer runtime was finally restored to the locked-down baseline:
+  checkout, commerce, webhook and private-fixture gates false; payment and
+  fulfilment providers disabled. Post-redeploy checks returned `200` for
+  `/health` and `/ready`, and `404` for both `/checkout` and
+  `/webhooks/mollie`.
+
+This evidence demonstrates the intended staging containment property: an
+in-flight Mollie test payment can be authoritatively reconciled after new
+checkout initiation is disabled. It does **not** approve live payments,
+production checkout, fulfilment or public launch.
 
 ## Rollback
 
