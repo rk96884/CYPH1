@@ -317,6 +317,11 @@ A dedicated fix branch added authoritative refund discovery and refund lifecycle
 
 The existing payment notification was then replayed to the customer webhook. The runtime retrieved Mollie's authoritative state and protected operations showed order and payment `partially_refunded`, exactly one completed GBP refund of 100 minor units, and fulfilment still `unfulfilled`. Replaying the same notification again returned success and left exactly one refund record with unchanged financial state, demonstrating duplicate-delivery idempotency for this scenario.
 
+
+
+### Failed card attempt rehearsal — 21 September 2026
+
+A fresh synthetic GBP £2 checkout (`CYPH-T-2F05E471E91E`, order `2f05e471-e91e-48ea-8e9e-8f3ea8b60714`) was submitted through Mollie test mode using the card test flow and the `Failed` outcome. Mollie History recorded the credit-card attempt as failed because 3-D Secure authentication failed, then returned to payment-method selection while the parent payment remained `Open`. CYPH/1 Operations remained order `pending_payment`, payment `pending`, fulfilment `unfulfilled`, with no refunds and no fulfilments. This passes the safety assertion that a failed payment attempt cannot be mistaken for authoritative payment or trigger fulfilment. A terminal parent-payment `failed` state could not be reproduced through this GBP test checkout; that scenario remains unverified and is recorded as a provider-test limitation rather than a pass.
 **Result:** passed for completed partial-refund reconciliation and duplicate webhook safety. No duplicate refund was created during replay. A second £1.00 refund was then initiated in Mollie test mode. While that refund was pending, CYPH/1 correctly remained `partially_refunded`; Mollie did not send a webhook for that observed pending interval. When the second refund completed, Mollie's normal webhook delivery reached CYPH/1 without manual replay. Operations then showed order and payment `refunded`, two distinct completed GBP refunds of 100 minor units each, and fulfilment still `unfulfilled`. This passes the full-refund-after-partial lifecycle rehearsal.
 
 ## Rollback
