@@ -404,8 +404,7 @@ Implementation baseline completed:
   prohibited.
 - Checkout containment retains independently gated verified webhook processing,
   followed by a bounded reconciliation window and deliberate re-enable step.
-- A Mollie sandbox timeout, webhook-continuity and ambiguous-refund exercise
-  remains outstanding until the reviewed test organisation/key are available.
+- Controlled Mollie test-mode payment lifecycle evidence was completed on 18–21 September 2026: checkout containment preserved webhook continuity, ambiguous provider timeout handling is covered by automated fail-safe evidence, and partial/full refund reconciliation plus duplicate-webhook idempotency passed. Terminal provider-API `failed` and `canceled` states were not reproducible in the current GBP test flow and remain documented provider-test limitations.
 
 ### 4.13 Daily payment, order and refund reconciliation
 
@@ -423,8 +422,7 @@ Implementation baseline completed:
   exported explicitly without customer/address fields.
 - `docs/operations/DAILY-PAYMENT-RECONCILIATION.md` defines UTC intervals,
   provider matching, exception classes, clean-close criteria and evidence.
-- Mollie sandbox balancing, finance approval, production schedule and independent
-  review remain launch gates.
+- Mollie test-mode payment/refund reconciliation evidence was completed on 18–21 September 2026, including paid, expiry, partial/full refund and duplicate-webhook cases. Finance approval, production reconciliation scheduling and independent review remain launch gates.
 
 ### 4.14 Fulfilment outage and manual-review processing
 
