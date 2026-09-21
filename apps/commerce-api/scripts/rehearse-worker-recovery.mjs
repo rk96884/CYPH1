@@ -27,7 +27,7 @@ try{
  const ids=(await client.query("SELECT gen_random_uuid() event_id,gen_random_uuid() communication_id,gen_random_uuid() order_id,gen_random_uuid() customer_id")).rows[0];
  await client.query("INSERT INTO customers(id,email_normalised,email_display) VALUES($1,$2,$2)",[ids.customer_id,`worker-${ids.customer_id}@example.test`]);
  await client.query("INSERT INTO orders(id,order_number,customer_id,status,currency,subtotal_minor,total_minor,delivery_address_snapshot) VALUES($1,$2,$3,'paid','GBP',100,100,'{}'::jsonb)",[ids.order_id,`CYPH1-WORKER-${String(ids.order_id).slice(0,8)}`,ids.customer_id]);
- await client.query("INSERT INTO outbox_events(id,event_key,event_type,aggregate_type,aggregate_id,payload) VALUES($1,$2,'payment.paid','payment',$3,jsonb_build_object('orderId',$3::text))",[ids.event_id,`worker-recovery:${ids.event_id}`,ids.order_id]);
+ await client.query("INSERT INTO outbox_events(id,event_key,event_type,aggregate_type,aggregate_id,payload) VALUES($1,$2,'payment.paid','payment',$3,jsonb_build_object('orderId',$3::uuid::text))",[ids.event_id,`worker-recovery:${ids.event_id}`,ids.order_id]);
  await client.query("INSERT INTO communication_deliveries(id,source_event_id,order_id,customer_id,template_key,deduplication_key,status) VALUES($1,$2,$3,$4,'order-confirmation',$5,'pending')",[ids.communication_id,ids.event_id,ids.order_id,ids.customer_id,`worker-recovery:${ids.communication_id}`]);
  let f=await claimOutbox(client,ids.event_id);check(f,{processing_status:"processing",attempt_count:1},"fulfilment first claim");
  if(await claimOutbox(client,ids.event_id))throw new Error("Fulfilment was reclaimed before lease expiry.");
