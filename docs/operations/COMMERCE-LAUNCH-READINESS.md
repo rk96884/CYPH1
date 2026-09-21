@@ -160,3 +160,8 @@ until the private appointments, deputies, channels and exercises are complete.
 ## Launch rule
 
 Production configuration must remain disabled until every applicable item is evidenced, its accountable owner records approval, and the controlled-launch checklist is signed off. Passing CI is necessary but is not launch approval.
+
+
+### Staging payment-test closure — 21 September 2026
+
+After completion of the Mollie test-mode payment lifecycle and reconciliation work, `cyph1-commerce-customer-staging` was restored to the locked fail-closed baseline and redeployed successfully from current `main`. Final route verification passed: `/health` returned 200, `/ready` returned 200, `/checkout` returned 404, and `/webhooks/mollie` returned 404. Checkout, commerce, payment webhooks and the private checkout fixture are therefore closed again; payment and fulfilment providers are disabled. Remaining production-readiness work is tracked separately and does not require leaving the staging payment routes enabled.
