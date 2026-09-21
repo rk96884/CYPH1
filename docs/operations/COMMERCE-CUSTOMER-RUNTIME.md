@@ -329,3 +329,8 @@ A fresh synthetic GBP £2 checkout (`CYPH-T-2F05E471E91E`, order `2f05e471-e91e-
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md`. Never suspend the protected
 operations runtime as a checkout kill switch, never delete order/payment/event
 records to make a test pass, and never roll back a database migration ad hoc.
+
+
+### Explicit cancellation investigation — 21 September 2026
+
+A fresh synthetic £2 GBP checkout (`CYPH-T-908A811154A7`) was inspected for an explicit cancellation path. The Mollie hosted payment-method screen and card-entry flow exposed only navigation back, not cancellation. The test-status simulator offered `Open`, `Paid`, `Failed` and `Expired`, but no `Canceled` outcome. The Mollie dashboard likewise exposed no Cancel action for the open test payment. During the investigation, the individual card attempt expired and Mollie returned to payment-method selection while the parent payment remained `Open`. Previous-page navigation is therefore not treated as authoritative cancellation. A terminal parent-payment `canceled` state could not be reproduced through the current Mollie GBP test checkout and remains unverified as a provider-test limitation rather than being marked passed or failed.
