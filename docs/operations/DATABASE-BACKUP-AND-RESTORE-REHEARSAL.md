@@ -146,11 +146,15 @@ The first logical backup and isolated local restore rehearsal passed.
 - No staging service was repointed to the restore target.
 - Temporary connection and rehearsal-guard environment variables were removed
   after verification.
+- The temporary dump was deleted after evidence capture and its absence was
+  confirmed.
+- The isolated local restore database was dropped and a subsequent database
+  listing returned zero matching rows.
 
 The first rehearsal therefore demonstrates that the logical staging backup can
 be restored into an isolated PostgreSQL database and passes the repository's
-comparison and schema-integrity checks. Final artifact deletion and local
-restore-database deletion remain part of the cleanup procedure below.
+comparison and schema-integrity checks. The temporary backup artifact and isolated restore database were then deleted,
+completing the rehearsal cleanup.
 
 ## Cleanup
 
