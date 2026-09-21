@@ -1,7 +1,7 @@
 # Worker restart and retry exhaustion
 
-**Status:** Engineering baseline and Render development migration complete; managed rehearsal outstanding  
-**Last engineering update:** 8 September 2026
+**Status:** Engineering baseline, Render development migration and guarded lease/retry rehearsal complete; real process-interruption and provider-idempotency evidence outstanding  
+**Last engineering update:** 21 September 2026
 
 ## Purpose
 
@@ -40,14 +40,25 @@ must report the worker claim lease columns. Use the existing Render development
 database credentials only in the current PowerShell process and remove them
 afterwards.
 
-## Deferred managed rehearsal
+## Guarded database rehearsal
 
-Use synthetic records and no live provider. Start a worker claim, stop the
-worker before completion, wait for the configured lease, and start a replacement
-worker. Verify the same durable job is reclaimed, the stable provider key is
-reused, and exactly one fulfilment/message effect is recorded. Repeat through
-the final permitted attempt and verify the job becomes terminal `failed` and is
-visible for accountable manual review.
+On 21 September 2026, the guarded synthetic rehearsal passed first against an
+isolated local PostgreSQL 17 database and then against Render development
+PostgreSQL. For both fulfilment and transactional communications it verified
+active-lease protection, stale-claim recovery and terminal `retry_exhausted`
+behaviour at three attempts. The rehearsal used a 30-second test lease and
+safely aged only its own synthetic claim timestamps rather than waiting for wall
+clock expiry. All synthetic records were enclosed in a transaction and rolled
+back; the local cleanup query confirmed zero synthetic customer records remained.
+
+The Render-development run used the same guarded harness and no live payment,
+fulfilment or communication provider calls. Database credentials were removed
+from the local PowerShell environment after the run.
+
+This evidence validates the PostgreSQL lease/reclaim/retry-exhaustion contract.
+It does **not** yet prove recovery after physically interrupting a worker process,
+nor that the selected external fulfilment and communication providers honour the
+stable idempotency keys. Those remain separate launch gates.
 
 Do not shorten production leases, manipulate real order rows, or repeatedly
 restart a worker to manufacture attempts. Manual replay must remain permission
@@ -60,7 +71,8 @@ controlled and audited.
 - [x] Expired claims at the limit become terminal failures.
 - [x] Completion and failure clear claim timestamps.
 - [x] Apply and verify migration `0010` on Render development PostgreSQL.
-- [ ] Run a managed restart/reclaim/exhaustion rehearsal with synthetic data.
+- [x] Run the guarded synthetic database lease/reclaim/exhaustion rehearsal locally and on Render development.
+- [ ] Run a real worker process-interruption/replacement-worker recovery exercise.
 - [ ] Verify the selected fulfilment and communication providers honour stable
       idempotency keys.
 - [ ] Assign ownership and alerting for terminal failures.
