@@ -309,6 +309,16 @@ Mollie's test dashboard subsequently showed the overall payment as `Open` with a
 
 **Follow-up:** Mollie's **Previous page** behaviour observed here is a normal return/navigation path, not evidence of explicit payment cancellation. A genuine `canceled` provider-state exercise remains open. The repeated observation that terminal `expired` payments leave the internal order at `pending_payment` reinforces the need for an explicit retry/abandonment order-lifecycle and customer-copy decision before production.
 
+### Mollie partial-refund reconciliation rehearsal
+
+Completed on **21 September 2026** against Mollie test mode using existing synthetic £2.00 paid order `CYPH-T-6E6EB2E4A264`. Mollie had completed a £1.00 partial refund, but the pre-fix CYPH/1 webhook path left the internal order `paid`, payment `captured` and refunds empty. This exposed a defect: classic Mollie payment webhooks retrieved only payment status and did not reconcile authoritative refund resources.
+
+A dedicated fix branch added authoritative refund discovery and refund lifecycle events, persisted provider refund identity/amount/status, and derived payment/order `partially_refunded` or `refunded` state from completed refund totals. The commerce regression suite passed **69/69** tests before staging deployment. Source commit `85b0129` was deployed to `cyph1-commerce-customer-staging`; health returned `200` and browser GET checks returned `405` for both active checkout and webhook routes.
+
+The existing payment notification was then replayed to the customer webhook. The runtime retrieved Mollie's authoritative state and protected operations showed order and payment `partially_refunded`, exactly one completed GBP refund of 100 minor units, and fulfilment still `unfulfilled`. Replaying the same notification again returned success and left exactly one refund record with unchanged financial state, demonstrating duplicate-delivery idempotency for this scenario.
+
+**Result:** passed for completed partial-refund reconciliation and duplicate webhook safety. No second refund was initiated and the remaining refundable amount at Mollie remained £1.00. Full-refund-after-partial remains a separate staging exercise before this refund lifecycle is considered complete.
+
 ## Rollback
 
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md`. Never suspend the protected
