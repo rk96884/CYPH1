@@ -15,6 +15,8 @@ type MolliePayment = {
   _links?: { checkout?: { href?: string } };
 };
 type MollieRefund = { id: string; status: string; amount: MollieAmount; createdAt: string };
+type MollieRefundList = { _embedded?: { refunds?: MollieRefund[] } };
+type MollieWebhookPayload = { payment: MolliePayment; refunds: readonly MollieRefund[] };
 
 export type MollieTestAdapterConfig = Readonly<{
   apiKey: string;
@@ -235,24 +237,35 @@ export class MollieTestPaymentProvider implements PaymentProvider {
       throw error;
     }
     if (payment.id !== paymentId) return Object.freeze({ outcome: "invalid", provider: this.key });
+    const refundList = await this.#request<MollieRefundList>(`/payments/${encodeURIComponent(paymentId)}/refunds`, { method: "GET" }, "webhook-authentication");
+    const refunds = refundList._embedded?.refunds ?? [];
+    const refundFingerprint = refunds.map((refund) => `${refund.id}:${refund.status}`).sort().join(",") || "none";
     return Object.freeze({
       outcome: "actionable", provider: this.key,
-      providerEventId: `payment:${payment.id}:${payment.status}`,
-      payload: payment,
+      providerEventId: `payment:${payment.id}:${payment.status}:refunds:${refundFingerprint}`,
+      payload: Object.freeze({ payment, refunds: Object.freeze(refunds) } satisfies MollieWebhookPayload),
     });
   }
 
   async normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]> {
     if (input.provider !== this.key || input.outcome !== "actionable" || !input.providerEventId || !input.payload) return Object.freeze([]);
-    const payment = input.payload as MolliePayment;
-    if (!payment.id || !payment.status || !payment.createdAt || !payment.amount) {
+    const payload = input.payload as MollieWebhookPayload;
+    const payment = payload.payment;
+    if (!payment?.id || !payment.status || !payment.createdAt || !payment.amount || !Array.isArray(payload.refunds)) {
       throw new PaymentProviderError("unknown_provider_error", "Verified Mollie webhook payload is incomplete.");
     }
     const occurredAt = payment.paidAt ?? payment.authorisedAt ?? payment.canceledAt ?? payment.expiredAt ?? payment.createdAt;
-    return Object.freeze([Object.freeze({
-      eventId: input.providerEventId, provider: this.key,
+    const paymentEvent = Object.freeze({
+      eventId: `payment:${payment.id}:${payment.status}`, provider: this.key,
       providerPaymentId: payment.id, type: webhookEventType(payment.status),
       occurredAt, amount: parseAmount(payment.amount),
-    })]);
+    } satisfies PaymentEvent);
+    const refundEvents = payload.refunds.map((refund) => Object.freeze({
+      eventId: `refund:${refund.id}:${refund.status}`, provider: this.key,
+      providerPaymentId: payment.id, providerRefundId: refund.id,
+      type: (`refund.${refundStatus(refund.status)}`) as PaymentEvent["type"],
+      occurredAt: refund.createdAt, amount: parseAmount(refund.amount),
+    } satisfies PaymentEvent));
+    return Object.freeze([paymentEvent, ...refundEvents]);
   }
 }
