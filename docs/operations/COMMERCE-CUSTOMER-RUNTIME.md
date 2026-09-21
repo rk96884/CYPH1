@@ -289,6 +289,14 @@ Completed on **21 September 2026** using a fresh synthetic £2.00 staging order.
 
 **Follow-up:** the current domain model leaves the order at `pending_payment` for terminal non-paid payment states. The customer-facing pending copy and retry/abandonment lifecycle therefore require an explicit product/operations decision before production. This rehearsal does not evidence an explicit customer cancellation or a terminal failed-payment webhook.
 
+### Mollie failed-attempt rehearsal
+
+Exercised on **21 September 2026** using a fresh synthetic £2.00 staging order. Mollie test checkout was exercised with the card outcome set to `Failed`. Mollie returned to payment-method selection rather than producing an observed terminal provider failure. After leaving the payment flow, protected operations evidence for order `CYPH-T-3ED7551BFDD8` continued to show the order as `pending_payment`, the associated `mollie-test` payment as `pending`, and fulfilment as `unfulfilled`. The payment `updated_at` value had not advanced from creation, so no persisted payment-state update was evidenced.
+
+**Result:** inconclusive for terminal failed-payment handling. The observed failed card attempt did not establish a terminal `failed` provider payment. The safety boundary nevertheless held: the order was not marked paid and no fulfilment or refund was created.
+
+**Follow-up:** retain terminal failed-payment handling as an open sandbox test. Do not treat a failed card attempt that leaves the provider payment `pending` as evidence of a `payment.failed` lifecycle transition. Customer cancellation also remains separately untested.
+
 ## Rollback
 
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md`. Never suspend the protected
