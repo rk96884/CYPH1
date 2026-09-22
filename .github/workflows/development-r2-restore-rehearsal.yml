@@ -74,8 +74,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo pg_ctlcluster 17 main start || true
-          sudo -u postgres createdb commerce_restore_test
+          if ! sudo pg_lsclusters --no-header | awk '$1 == "17" && $2 == "main" { found=1 } END { exit(found ? 0 : 1) }'; then
+            sudo pg_createcluster 17 main --start
+          else
+            sudo pg_ctlcluster 17 main start
+          fi
+          sudo -u postgres /usr/lib/postgresql/17/bin/createdb commerce_restore_test
           echo "RESTORE_DATABASE_URL=postgresql://postgres@localhost:5432/commerce_restore_test" >> "$GITHUB_ENV"
 
       - name: Restore encrypted backup into isolated target
