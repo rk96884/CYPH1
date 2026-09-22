@@ -2,6 +2,8 @@ name: Development encrypted R2 backup
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
 
 permissions:
   contents: read

@@ -1,0 +1,63 @@
+name: Development backup freshness monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      simulate_stale_backup:
+        description: "Deliberately fail after the real freshness check to test notification routing"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "47 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      R2_ENDPOINT: ${{ vars.R2_BACKUP_ENDPOINT }}
+      R2_BUCKET: cyph1-commerce-backups
+    steps:
+      - name: Verify R2 configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          case "$R2_ENDPOINT" in
+            https://*.eu.r2.cloudflarestorage.com) ;;
+            *) echo "R2 endpoint must be the EU jurisdiction S3 API endpoint."; exit 1 ;;
+          esac
+
+      - name: Check newest development backup freshness
+        shell: bash
+        run: |
+          set -euo pipefail
+          newest="$(aws s3api list-objects-v2 --bucket "$R2_BUCKET" --prefix "development/" --endpoint-url "$R2_ENDPOINT" --query 'sort_by(Contents,&LastModified)[-1].[Key,LastModified,Size]' --output text)"
+          test -n "$newest" && test "$newest" != "None" || { echo "No development backup exists."; exit 1; }
+          read -r key modified size <<< "$newest"
+          case "$key" in *.dump.age) ;; *) echo "Newest development object is not an encrypted dump."; exit 1 ;; esac
+          test "$size" -gt 0 || { echo "Newest encrypted backup is empty."; exit 1; }
+          modified_epoch="$(date -u -d "$modified" +%s)"
+          now_epoch="$(date -u +%s)"
+          age_seconds="$((now_epoch - modified_epoch))"
+          max_age_seconds="$((36 * 60 * 60))"
+          test "$age_seconds" -ge 0 || { echo "Backup timestamp is unexpectedly in the future."; exit 1; }
+          if [ "$age_seconds" -gt "$max_age_seconds" ]; then
+            echo "Newest encrypted development backup exceeds the 36-hour freshness threshold."
+            exit 1
+          fi
+          echo "Encrypted development backup freshness check passed; newest object is within 36 hours and non-empty."
+
+      - name: Deliberate notification-route rehearsal failure
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_stale_backup }}
+        shell: bash
+        run: |
+          echo "Deliberate manual-only failure after successful real R2 freshness check."
+          exit 1
