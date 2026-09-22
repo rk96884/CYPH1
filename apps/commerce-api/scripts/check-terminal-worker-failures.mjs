@@ -38,7 +38,8 @@ export const formatTerminalFailureSummary = (summary, now = new Date()) => {
   return lines;
 };
 
-const direct = process.argv[1] && new URL(import.meta.url).pathname.replace(/^\/(.:\/)/, "$1").replaceAll("%20", " ") === process.argv[1].replaceAll("\\", "/");
+const direct = Boolean(process.argv[1]) &&
+  fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 if (direct) {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required.");
   const ssl = process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined;
