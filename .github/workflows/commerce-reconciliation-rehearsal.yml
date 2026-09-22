@@ -1,0 +1,26 @@
+name: Commerce reconciliation rehearsal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reconciliation-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      DATABASE_URL: ${{ secrets.COMMERCE_DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: "true"
+      ALLOW_RECONCILIATION_REHEARSAL: "true"
+      RECONCILIATION_REHEARSAL_CONFIRM: "synthetic-reconciliation"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run rollback-only reconciliation rehearsal
+        run: npm --workspace @cyph1/commerce-api run db:rehearse:reconciliation
