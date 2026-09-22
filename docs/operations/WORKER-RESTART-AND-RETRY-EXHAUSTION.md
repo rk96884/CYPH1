@@ -1,6 +1,6 @@
 # Worker restart and retry exhaustion
 
-**Status:** Engineering baseline, lease/retry rehearsal and local real process-interruption rehearsal complete; Render process-interruption, provider-idempotency and alert ownership remain outstanding  
+**Status:** Engineering baseline, lease/retry rehearsal and real process-interruption rehearsal complete locally and on Render development; provider-idempotency and alert ownership remain outstanding  
 **Last engineering update:** 22 September 2026
 
 ## Purpose
@@ -73,11 +73,9 @@ external payment, fulfilment or communication provider was called. The harness
 removed its synthetic records and the isolated local rehearsal database was
 dropped after the run.
 
-This proves recovery after physically interrupting the local worker process and
-stable CYPH/1-side fulfilment idempotency-key derivation. It does **not** prove
-that a selected external provider honours that key, nor yet reproduce the
-process-interruption exercise against Render development. Those remain separate
-launch gates.
+The same guarded real-process rehearsal also passed against Render development PostgreSQL on 22 September 2026. A real child process durably claimed the synthetic job before forced termination; reclaim remained blocked before lease expiry; after the harness aged only its own synthetic claim beyond the test lease, the same durable job was reclaimed on the next attempt with the same event key and CYPH/1 fulfilment idempotency key. No external provider call was made.
+
+This proves recovery after physically interrupting the worker process against both the isolated local and managed Render development databases, plus stable CYPH/1-side fulfilment idempotency-key derivation. It does **not** prove that a selected external provider honours that key. Provider-side idempotency remains a separate launch gate.
 
 Do not shorten production leases, manipulate real order rows, or repeatedly
 restart a worker to manufacture attempts. Manual replay must remain permission
@@ -92,7 +90,7 @@ controlled and audited.
 - [x] Apply and verify migration `0010` on Render development PostgreSQL.
 - [x] Run the guarded synthetic database lease/reclaim/exhaustion rehearsal locally and on Render development.
 - [x] Run a guarded real worker process-interruption/replacement-worker recovery exercise locally.
-- [ ] Repeat the guarded real process-interruption exercise against Render development.
+- [x] Repeat the guarded real process-interruption exercise against Render development.
 - [ ] Verify the selected fulfilment and communication providers honour stable
       idempotency keys.
 - [ ] Assign ownership and alerting for terminal failures.
