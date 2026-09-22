@@ -1,6 +1,6 @@
 # Daily payment, order and refund reconciliation
 
-**Status:** Pre-production engineering baseline; Mollie sandbox exercise and finance approval outstanding
+**Status:** Pre-production engineering baseline; sandbox reconciliation exercise passed on 22 September 2026; finance approval and production ownership outstanding
 
 **Scope:** Provider payments/refunds compared with CYPH/1 orders, checkout sessions and fulfilment state
 
@@ -156,3 +156,14 @@ When the reviewed Mollie test organisation and `test_` key are available:
 
 Follow `PAYMENT-PROVIDER-OUTAGE.md` for ambiguous outcomes and
 `COMMERCE-DISABLE-AND-ROLLBACK.md` for containment.
+
+
+## Sandbox reconciliation evidence — 22 September 2026
+
+The engineering sandbox exercise passed using two complementary evidence sets while commerce remained in the locked fail-closed baseline.
+
+A protected reconciliation export for the UTC interval 21–23 September contained seven rows and surfaced the existing synthetic payment activity without exposing customer names, email addresses, delivery addresses or payment credentials. The export included the current £2 control order as order `paid`, payment `captured`, fulfilment `unfulfilled` and £0 refunded; five earlier £2 attempts as payment `expired` with orders `pending_payment` and fulfilment `unfulfilled`; and the earlier fully refunded £2 transaction because refund activity fell inside the selected interval. That row showed the captured £2 fully refunded through two completed £1 refund records with no fulfilment.
+
+The remaining exception-visibility controls were exercised by the guarded, manual-only rollback rehearsal introduced in PR #30 and run from `main` commit `7b26482`. GitHub Actions run `35748889741` passed on 22 September 2026. Inside one non-production database transaction the rehearsal created synthetic-only records and verified that reconciliation semantics surface a checkout in `resolution_required` with `ambiguous_provider_outcome`, a 700-minor-unit refund in `resolution_required`, and an order with no provider payment. The transaction was rolled back and the rehearsal verified cleanup. No Mollie call was made and no customer identity was emitted by the rehearsal.
+
+This closes the engineering sandbox reconciliation exercise. Finance approval, production cut-off/coverage, named production ownership, settlement/accounting controls and production operational approval remain launch gates.
