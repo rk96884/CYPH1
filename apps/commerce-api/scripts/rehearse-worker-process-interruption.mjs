@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, fileURLToPath } from "node:path";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import pg from "pg";
 const { Client }=pg;
 const config=()=>{
