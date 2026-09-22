@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { money, PaymentProviderError, type PaymentProvider } from "../../../../packages/commerce-core/src/index.js";
 import { handleOperationsRequest, reconciliationCsvColumns } from "./handler.js";
-import { OperationsService, type OperationsRepository } from "./service.js";
+import { OperationsError, OperationsService, type OperationsRepository } from "./service.js";
 
 const provider: PaymentProvider = {
   key:"mollie-test", createCheckout:async()=>{throw new Error("unused");}, verifyWebhook:async()=>({outcome:"irrelevant",provider:"mollie-test"}), normaliseWebhook:async()=>[],
