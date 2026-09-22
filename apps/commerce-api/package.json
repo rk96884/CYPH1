@@ -15,7 +15,10 @@
     "db:verify:restore": "node scripts/verify-restored-database.mjs",
     "test:restore-verifier": "node --test scripts/verify-restored-database.test.mjs",
     "db:rehearse:worker-recovery": "node scripts/rehearse-worker-recovery.mjs",
-    "db:rehearse:worker-process-interruption": "node scripts/rehearse-worker-process-interruption.mjs"
+    "db:rehearse:worker-process-interruption": "node scripts/rehearse-worker-process-interruption.mjs",
+    "monitor:terminal-worker-failures": "node scripts/check-terminal-worker-failures.mjs",
+    "test:terminal-worker-failures": "node --test scripts/check-terminal-worker-failures.test.mjs",
+    "db:rehearse:terminal-worker-failures": "node scripts/rehearse-terminal-worker-failures.mjs"
   },
   "dependencies": {
     "@cyph1/commerce-core": "0.0.0",
