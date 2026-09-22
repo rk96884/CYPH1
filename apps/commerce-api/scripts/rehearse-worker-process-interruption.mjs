@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, fileURLToPath } from "node:path";
 import pg from "pg";
 const { Client }=pg;
 const config=()=>{
@@ -28,8 +28,11 @@ try{
  await client.query("INSERT INTO payments(id,order_id,provider,status,amount_minor,currency,idempotency_key) VALUES($1,$2,'manual-test','captured',100,'GBP',$3)",[paymentId,orderId,`worker-process-payment:${paymentId}`]);
  await client.query("INSERT INTO outbox_events(id,event_key,event_type,aggregate_type,aggregate_id,payload) VALUES($1,$2,'payment.paid','payment',$3,$4::jsonb)",[eventId,eventKey,paymentId,JSON.stringify({orderId,correlationId:randomUUID()})]);
  await client.query("COMMIT");
- const child=spawn(process.execPath,[new URL("./worker-process-interruption-child.mjs",import.meta.url).pathname,eventId,marker],{env:process.env,stdio:["ignore","pipe","pipe"]});
- await new Promise((resolve,reject)=>{const deadline=setTimeout(()=>reject(new Error("Child worker did not claim within 10 seconds.")),10000);child.stdout.on("data",d=>{if(String(d).includes("CLAIMED")){clearTimeout(deadline);resolve();}});child.on("error",reject);});
+ const childScript=fileURLToPath(new URL("./worker-process-interruption-child.mjs",import.meta.url));
+ const child=spawn(process.execPath,[childScript,eventId,marker],{env:process.env,stdio:["ignore","pipe","pipe"]});
+ let childStderr="";
+ child.stderr.on("data",d=>{childStderr+=String(d);});
+ await new Promise((resolve,reject)=>{const deadline=setTimeout(()=>reject(new Error(`Child worker did not claim within 10 seconds.${childStderr ? ` Child stderr: ${childStderr.trim()}` : ""}`)),10000);child.stdout.on("data",d=>{if(String(d).includes("CLAIMED")){clearTimeout(deadline);resolve();}});child.on("error",error=>{clearTimeout(deadline);reject(error);});child.on("exit",(code,signal)=>{if(code!==null||signal){clearTimeout(deadline);reject(new Error(`Child worker exited before claiming (code=${code}, signal=${signal}).${childStderr ? ` Child stderr: ${childStderr.trim()}` : ""}`));}});});
  const first=JSON.parse(await readFile(marker,"utf8")); if(first.eventKey!==eventKey)throw new Error("First worker did not preserve the durable event key.");
  const claimed=(await client.query("SELECT processing_status,attempt_count FROM outbox_events WHERE id=$1",[eventId])).rows[0]; if(claimed.processing_status!=="processing"||claimed.attempt_count!==1)throw new Error("First worker claim was not durable.");
  child.kill("SIGKILL"); await new Promise(r=>child.once("exit",r));
