@@ -24,8 +24,8 @@ jobs:
           test -n "$AWS_SECRET_ACCESS_KEY" || { echo "R2 secret access key is missing."; exit 1; }
           test -n "$R2_ENDPOINT" || { echo "R2 endpoint variable is missing."; exit 1; }
           case "$R2_ENDPOINT" in
-            https://*.r2.cloudflarestorage.com) ;;
-            *) echo "R2 endpoint must be the Cloudflare S3 API endpoint."; exit 1 ;;
+            https://*.eu.r2.cloudflarestorage.com) ;;
+            *) echo "R2 endpoint must be the EU jurisdiction Cloudflare S3 API endpoint."; exit 1 ;;
           esac
 
       - name: Verify scoped bucket access
