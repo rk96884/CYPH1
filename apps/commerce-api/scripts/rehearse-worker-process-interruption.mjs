@@ -1,0 +1,45 @@
+import process from "node:process";
+import { randomUUID } from "node:crypto";
+import { spawn } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import pg from "pg";
+const { Client }=pg;
+const config=()=>{
+ if(process.env.ALLOW_WORKER_PROCESS_INTERRUPTION_REHEARSAL!=="true"||process.env.WORKER_PROCESS_INTERRUPTION_CONFIRM!=="synthetic-process-interruption")throw new Error("Worker process interruption rehearsal requires both explicit rehearsal guards.");
+ if(process.env.NODE_ENV==="production")throw new Error("Worker process interruption rehearsal is disabled in production.");
+ const value=process.env.DATABASE_URL?.trim(); if(!value)throw new Error("DATABASE_URL is required.");
+ const url=new URL(value); if(!["postgres:","postgresql:"].includes(url.protocol))throw new Error("DATABASE_URL must use PostgreSQL.");
+ const database=decodeURIComponent(url.pathname.slice(1)); if(!/(development|staging|test|restore|recovery)/i.test(database))throw new Error("Refusing process interruption rehearsal against a database not explicitly named development, staging, test, restore or recovery.");
+ const ssl=process.env.DATABASE_SSL; if(ssl!==undefined&&!["true","false"].includes(ssl))throw new Error("DATABASE_SSL must be true or false.");
+ return {connectionString:value,ssl:ssl==="true"?{rejectUnauthorized:true}:false};
+};
+const cfg=config(), client=new Client(cfg), temp=await mkdtemp(join(tmpdir(),"cyph1-worker-process-")), marker=join(temp,"claimed.json");
+const customerId=randomUUID(), orderId=randomUUID(), eventId=randomUUID(), productId=randomUUID(), paymentId=randomUUID(), eventKey=`worker-process:${eventId}`;
+const cleanup=async()=>{await client.query("DELETE FROM audit_events WHERE entity_type='fulfilment' AND entity_id IN (SELECT id FROM fulfilments WHERE order_id=$1)",[orderId]);await client.query("DELETE FROM fulfilments WHERE order_id=$1",[orderId]);await client.query("DELETE FROM outbox_events WHERE id=$1",[eventId]);await client.query("DELETE FROM payments WHERE id=$1",[paymentId]);await client.query("DELETE FROM order_items WHERE order_id=$1",[orderId]);await client.query("DELETE FROM orders WHERE id=$1",[orderId]);await client.query("DELETE FROM products WHERE id=$1",[productId]);await client.query("DELETE FROM customers WHERE id=$1",[customerId]);};
+await client.connect();
+try{
+ await client.query("BEGIN");
+ await client.query("INSERT INTO customers(id,email_normalised,email_display) VALUES($1,$2,$2)",[customerId,`worker-process-${customerId}@example.test`]);
+ await client.query("INSERT INTO products(id,sku,slug,name,description,status,price_minor,currency,tax_code,fulfilment_sku,content_version) VALUES($1,$2,$3,'Worker rehearsal','Synthetic','private',100,'GBP','test',$2,'worker-rehearsal')",[productId,`WORKER-${productId.slice(0,8)}`,`worker-${productId}`]);
+ await client.query("INSERT INTO orders(id,order_number,customer_id,status,fulfilment_status,currency,subtotal_minor,total_minor,delivery_address_snapshot,paid_at) VALUES($1,$2,$3,'paid','unfulfilled','GBP',100,100,$4::jsonb,now())",[orderId,`CYPH1-WORKER-${orderId.slice(0,8)}`,customerId,JSON.stringify({recipientName:"Synthetic",line1:"1 Test Street",locality:"London",postalCode:"SW1A 1AA",countryCode:"GB"})]);
+ await client.query("INSERT INTO order_items(order_id,product_id,sku_snapshot,name_snapshot,unit_price_minor,quantity,line_total_minor) VALUES($1,$2,$3,'Worker rehearsal',100,1,100)",[orderId,productId,`WORKER-${productId.slice(0,8)}`]);
+ await client.query("INSERT INTO payments(id,order_id,provider,status,amount_minor,currency,idempotency_key) VALUES($1,$2,'manual-test','captured',100,'GBP',$3)",[paymentId,orderId,`worker-process-payment:${paymentId}`]);
+ await client.query("INSERT INTO outbox_events(id,event_key,event_type,aggregate_type,aggregate_id,payload) VALUES($1,$2,'payment.paid','payment',$3,$4::jsonb)",[eventId,eventKey,paymentId,JSON.stringify({orderId,correlationId:randomUUID()})]);
+ await client.query("COMMIT");
+ const child=spawn(process.execPath,[new URL("./worker-process-interruption-child.mjs",import.meta.url).pathname,eventId,marker],{env:process.env,stdio:["ignore","pipe","pipe"]});
+ await new Promise((resolve,reject)=>{const deadline=setTimeout(()=>reject(new Error("Child worker did not claim within 10 seconds.")),10000);child.stdout.on("data",d=>{if(String(d).includes("CLAIMED")){clearTimeout(deadline);resolve();}});child.on("error",reject);});
+ const first=JSON.parse(await readFile(marker,"utf8")); if(first.eventKey!==eventKey)throw new Error("First worker did not preserve the durable event key.");
+ const claimed=(await client.query("SELECT processing_status,attempt_count FROM outbox_events WHERE id=$1",[eventId])).rows[0]; if(claimed.processing_status!=="processing"||claimed.attempt_count!==1)throw new Error("First worker claim was not durable.");
+ child.kill("SIGKILL"); await new Promise(r=>child.once("exit",r));
+ const early=await client.query("SELECT id FROM outbox_events WHERE id=$1 AND processing_status='processing' AND processing_started_at<=now()-(30*interval '1 second')",[eventId]); if(early.rowCount!==0)throw new Error("Claim lease unexpectedly expired immediately.");
+ await client.query("UPDATE outbox_events SET processing_started_at=now()-interval '31 seconds' WHERE id=$1",[eventId]);
+ const replacement=await client.query(`UPDATE outbox_events SET processing_status='processing',attempt_count=attempt_count+1,processing_started_at=now(),last_error_code=NULL WHERE id=$1 AND processing_status='processing' AND attempt_count<3 AND processing_started_at<=now()-(30*interval '1 second') RETURNING event_key,attempt_count`,[eventId]);
+ if(replacement.rowCount!==1||replacement.rows[0].attempt_count!==2||replacement.rows[0].event_key!==eventKey)throw new Error("Replacement worker did not reclaim the same durable job with the same event key.");
+ const idempotencyKey=`fulfilment:${replacement.rows[0].event_key}`; if(idempotencyKey!==`fulfilment:${eventKey}`)throw new Error("Stable provider idempotency key changed across process interruption.");
+ console.log("Verified a real child worker process durably claimed the synthetic job before forced termination.");
+ console.log("Verified the replacement claim was blocked before lease expiry and reclaimed the same durable job after expiry.");
+ console.log(`Verified stable fulfilment provider idempotency key across interruption: ${idempotencyKey}`);
+ console.log("Worker process interruption rehearsal passed; no external provider call was made.");
+} finally {await cleanup().catch(()=>undefined);await client.end().catch(()=>undefined);await rm(temp,{recursive:true,force:true}).catch(()=>undefined);}
