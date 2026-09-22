@@ -52,7 +52,7 @@ jobs:
           set -euo pipefail
           umask 077
           dump="$RUNNER_TEMP/commerce-development.dump"
-          pg_dump --format=custom --no-owner --no-privileges --file="$dump" "$DATABASE_URL"
+          /usr/lib/postgresql/17/bin/pg_dump --format=custom --no-owner --no-privileges --file="$dump" "$DATABASE_URL"
           test -s "$dump"
           test "$(head -c 5 "$dump")" = "PGDMP"
           size="$(wc -c < "$dump" | tr -d ' ')"
