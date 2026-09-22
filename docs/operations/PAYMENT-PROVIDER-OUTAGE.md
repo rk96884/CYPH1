@@ -1,6 +1,6 @@
 # Payment-provider outage and ambiguous-payment handling
 
-**Status:** Mollie test-mode checkout containment/recovery rehearsal and automated ambiguous-timeout safety evidence passed; retryable-refund failure exercise and production approval remain outstanding
+**Status:** Mollie test-mode checkout containment/recovery rehearsal, automated ambiguous-timeout safety evidence and retryable-refund reservation-safety exercise passed; production approval remains outstanding
 
 **Scope:** Checkout creation, payment-status retrieval, verified webhooks and refunds
 
@@ -157,7 +157,7 @@ Follow `COMMERCE-DISABLE-AND-ROLLBACK.md` for containment and recovery and
 
 A controlled Mollie test-mode exercise was completed against the Render development/staging environment. The initial fail-closed boundary was confirmed with health/readiness `200` and both checkout and Mollie webhook routes `404`. The reviewed test configuration was then enabled and route checks returned health/readiness `200`, checkout `400` for an empty invalid request and the webhook handler `400` for an empty invalid notification, proving both gated routes were active.
 
-One synthetic £2 checkout completed successfully through Mollie test mode. The protected operations view confirmed order `paid`, payment `paid`, fulfilment `unfulfilled` and no refund, establishing the healthy control path without a real fulfilment side effect.
+One synthetic £2 checkout completed successfully through Mollie test mode. The protected operations view confirmed order `paid`, payment `captured`, fulfilment `unfulfilled` and no refund, establishing the healthy control path without a real fulfilment side effect.
 
 The degraded-provider containment state was then deployed with commerce and checkout disabled while Mollie webhook ingestion remained enabled. Health/readiness stayed `200`; `/checkout` returned `404`, while an empty `/webhooks/mollie` request returned handler-level `400` rather than route-level `404`. This demonstrated that new payment attempts can be stopped without removing the notification path for in-flight payments.
 
@@ -165,4 +165,8 @@ A real Mollie network outage was deliberately **not** manufactured. Ambiguous ch
 
 After the exercise, all commerce/payment/fulfilment gates and providers were restored to the locked disabled baseline. Final verification returned health `200`, readiness `200`, checkout `404` and Mollie webhook `404`.
 
-This closes the checkout-containment/recovery portion of the sandbox outage exercise. The runbook's separate retryable-refund-failure exercise remains outstanding, as do production ownership/approval and live-provider operational validation.
+The same-session in-flight webhook replay step was not repeated during the 22 September containment window. Idempotent webhook handling is supported by the separate 21 September controlled classic-webhook replay evidence, which caused authoritative provider retrieval without duplicate fulfilment; this should not be read as a same-session replay result.
+
+The retryable-refund safety requirement was subsequently exercised by deterministic automated evidence merged in PR #28 (`5edccfc`). A simulated retryable provider failure moved the refund to `resolution_required`, retained the ambiguous amount as reserved, blocked a replacement refund that would exceed the remaining unreserved balance, and made no second provider refund call. No Mollie transaction or deliberate network disruption was used for this test.
+
+This closes the engineering sandbox exercise for checkout containment, ambiguous-timeout handling and retryable-refund reservation safety. Production ownership/approval and live-provider operational validation remain outstanding.
