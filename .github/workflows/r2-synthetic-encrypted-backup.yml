@@ -1,0 +1,77 @@
+name: R2 synthetic encrypted backup rehearsal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-encrypted-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      R2_ENDPOINT: ${{ vars.R2_BACKUP_ENDPOINT }}
+      R2_BUCKET: cyph1-commerce-backups
+    steps:
+      - name: Verify configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID" || { echo "R2 access key secret is missing."; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo "R2 secret access key is missing."; exit 1; }
+          test -n "$R2_ENDPOINT" || { echo "R2 endpoint variable is missing."; exit 1; }
+          case "$R2_ENDPOINT" in
+            https://*.eu.r2.cloudflarestorage.com) ;;
+            *) echo "R2 endpoint must be the EU jurisdiction S3 API endpoint."; exit 1 ;;
+          esac
+
+      - name: Install age
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y age >/dev/null
+          age --version
+
+      - name: Create synthetic PostgreSQL-shaped fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          printf 'PGDMP' > "$RUNNER_TEMP/synthetic.dump"
+          head -c 4091 /dev/urandom >> "$RUNNER_TEMP/synthetic.dump"
+          echo "Created synthetic fixture only; no database connection was used."
+
+      - name: Encrypt synthetic fixture with ephemeral age key
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          age-keygen -o "$RUNNER_TEMP/age-key.txt" 2> "$RUNNER_TEMP/age-keygen.log"
+          recipient="$(grep '^# public key:' "$RUNNER_TEMP/age-key.txt" | cut -d' ' -f4)"
+          test -n "$recipient"
+          age -r "$recipient" -o "$RUNNER_TEMP/synthetic.dump.age" "$RUNNER_TEMP/synthetic.dump"
+          test -s "$RUNNER_TEMP/synthetic.dump.age"
+          age -d -i "$RUNNER_TEMP/age-key.txt" -o "$RUNNER_TEMP/roundtrip.dump" "$RUNNER_TEMP/synthetic.dump.age"
+          cmp "$RUNNER_TEMP/synthetic.dump" "$RUNNER_TEMP/roundtrip.dump"
+          echo "Authenticated encryption round-trip verified."
+
+      - name: Upload encrypted synthetic object
+        shell: bash
+        run: |
+          set -euo pipefail
+          object="rehearsals/synthetic-encryption/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.dump.age"
+          aws s3 cp "$RUNNER_TEMP/synthetic.dump.age" "s3://$R2_BUCKET/$object" --endpoint-url "$R2_ENDPOINT" --only-show-errors
+          size="$(wc -c < "$RUNNER_TEMP/synthetic.dump.age" | tr -d ' ')"
+          sha="$(sha256sum "$RUNNER_TEMP/synthetic.dump.age" | cut -d' ' -f1)"
+          echo "Encrypted synthetic object uploaded: size=$size bytes; sha256=$sha"
+          echo "No database data or encryption private key was uploaded."
+
+      - name: Remove runner-local material
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/synthetic.dump" "$RUNNER_TEMP/synthetic.dump.age" "$RUNNER_TEMP/roundtrip.dump" "$RUNNER_TEMP/age-key.txt" "$RUNNER_TEMP/age-keygen.log"
