@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { money, PaymentProviderError, type PaymentProvider } from "../../../../packages/commerce-core/src/index.js";
 import { handleOperationsRequest, reconciliationCsvColumns } from "./handler.js";
-import { OperationsService, type OperationsRepository } from "./service.js";
+import { OperationsError, OperationsService, type OperationsRepository } from "./service.js";
 
 const provider: PaymentProvider = {
   key:"mollie-test", createCheckout:async()=>{throw new Error("unused");}, verifyWebhook:async()=>({outcome:"irrelevant",provider:"mollie-test"}), normaliseWebhook:async()=>[],
@@ -66,6 +66,31 @@ test("retryable refund failures are held for reconciliation and not marked defin
   await assert.rejects(()=>ambiguousService.refund({orderId:"o1",amountMinor:500,reason:"customer_request",operatorId:"operator",idempotencyKey:"refund-timeout"}),/could not complete/);
   assert.equal(resolutionRequired,1);
   assert.equal(failed,0);
+});
+
+test("retryable refund failure keeps the amount reserved and blocks a replacement refund",async()=>{
+  let reservedMinor=0; let resolutionRequired=false; let providerRefundCalls=0;
+  const ambiguousProvider:PaymentProvider={
+    ...provider,
+    refund:async()=>{providerRefundCalls+=1;throw new PaymentProviderError("provider_unavailable","temporary provider failure",true);},
+  };
+  const reservationRepository:OperationsRepository={
+    ...repository,
+    reserveRefund:async(input)=>{
+      const available=1000-reservedMinor;
+      if(input.amountMinor>available) throw new OperationsError("conflict","Refund amount exceeds the unreserved payment balance.");
+      reservedMinor+=input.amountMinor;
+      return {outcome:"reserved" as const,refundId:"r-ambiguous",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:input.amountMinor,refundableMinor:available};
+    },
+    markRefundResolutionRequired:async()=>{resolutionRequired=true;},
+  };
+  const ambiguousService=new OperationsService(reservationRepository,{getConfiguredProvider:()=>ambiguousProvider,getProvider:()=>ambiguousProvider});
+  await assert.rejects(()=>ambiguousService.refund({orderId:"o1",amountMinor:700,reason:"customer_request",operatorId:"operator",idempotencyKey:"refund-ambiguous"}),/could not complete/);
+  assert.equal(resolutionRequired,true);
+  assert.equal(reservedMinor,700);
+  await assert.rejects(()=>ambiguousService.refund({orderId:"o1",amountMinor:400,reason:"operator_correction",operatorId:"operator",idempotencyKey:"refund-replacement"}),/unreserved payment balance/);
+  assert.equal(providerRefundCalls,1);
+  assert.equal(reservedMinor,700);
 });
 
 test("partial and full refund amounts remain explicit provider requests",async()=>{
