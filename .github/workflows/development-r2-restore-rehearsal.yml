@@ -82,8 +82,10 @@ jobs:
           RESTORE_PORT="$(sudo pg_lsclusters --no-header | awk '$1 == "17" && $2 == "main" { print $3; exit }')"
           test -n "$RESTORE_PORT"
           sudo -u postgres /usr/lib/postgresql/17/bin/createdb -p "$RESTORE_PORT" commerce_restore_test
+          sudo -u postgres /usr/lib/postgresql/17/bin/psql -p "$RESTORE_PORT" -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE restore_verifier LOGIN;"
+          sudo -u postgres /usr/lib/postgresql/17/bin/psql -p "$RESTORE_PORT" -d commerce_restore_test -v ON_ERROR_STOP=1 -c "GRANT CONNECT ON DATABASE commerce_restore_test TO restore_verifier;"
           echo "RESTORE_PORT=$RESTORE_PORT" >> "$GITHUB_ENV"
-          echo "RESTORE_DATABASE_URL=postgresql://postgres@localhost:$RESTORE_PORT/commerce_restore_test" >> "$GITHUB_ENV"
+          echo "RESTORE_DATABASE_URL=postgresql:///commerce_restore_test?host=/var/run/postgresql&port=$RESTORE_PORT&user=restore_verifier" >> "$GITHUB_ENV"
 
       - name: Restore encrypted backup into isolated target
         shell: bash
@@ -91,6 +93,7 @@ jobs:
           set -euo pipefail
           sudo install -o postgres -g postgres -m 0600 "$RUNNER_TEMP/backup.dump" /var/lib/postgresql/17/main/restore.dump
           sudo -u postgres /usr/lib/postgresql/17/bin/pg_restore --exit-on-error --no-owner --no-privileges --host=/var/run/postgresql --port="$RESTORE_PORT" --dbname=commerce_restore_test /var/lib/postgresql/17/main/restore.dump
+          sudo -u postgres /usr/lib/postgresql/17/bin/psql -p "$RESTORE_PORT" -d commerce_restore_test -v ON_ERROR_STOP=1 -c "GRANT USAGE ON SCHEMA public TO restore_verifier; GRANT SELECT ON ALL TABLES IN SCHEMA public TO restore_verifier;"
           echo "Backup restored into isolated runner-local PostgreSQL database."
 
       - name: Install repository dependencies
