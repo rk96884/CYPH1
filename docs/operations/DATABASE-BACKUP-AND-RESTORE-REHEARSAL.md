@@ -183,6 +183,20 @@ The drill passes only if the restore command succeeds, aggregate comparison and
 schema verification pass, the source remains unchanged and the temporary copy
 is handled according to the approved retention procedure.
 
+## Automated off-platform backup design baseline
+
+The repository now includes a provider-neutral validation boundary for scheduled logical backups. Before an encrypted object may be treated as a successful backup, automation must:
+
+1. create a PostgreSQL custom-format dump with `pg_dump --format=custom --no-owner --no-privileges`;
+2. fail on a missing, empty, truncated or non-`PGDMP` dump;
+3. encrypt the validated dump before upload using an authenticated/approved encryption mechanism and a secret held outside source control;
+4. validate the encrypted envelope and record only privacy-safe metadata: UTC time, byte size and SHA-256 digest;
+5. upload only the encrypted object to the approved off-platform destination;
+6. remove runner-local plaintext and encrypted temporary files after the upload attempt;
+7. independently check backup freshness and fail the monitoring workflow when the newest valid backup exceeds the approved recovery window.
+
+The current implementation deliberately stops at local artifact validation. No storage provider, retention period, encryption secret, production database or scheduled database connection is configured by this baseline. GitHub Actions artifacts are not approved as the production backup store. Storage-provider selection, authenticated encryption implementation, retention/immutability, restore-from-storage rehearsal and missing-backup notification evidence remain open.
+
 ## Paid-plan rehearsal before production
 
 After upgrading to paid Render Postgres, separately exercise point-in-time
