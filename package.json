@@ -33,7 +33,8 @@
     "audit:links": "npm run build && node scripts/audit-links.mjs",
     "audit:performance": "npm run build && node scripts/audit-performance.mjs",
     "preview": "astro preview",
-    "db:rehearse:worker-recovery": "npm run db:rehearse:worker-recovery --workspace @cyph1/commerce-api"
+    "db:rehearse:worker-recovery": "npm run db:rehearse:worker-recovery --workspace @cyph1/commerce-api",
+    "db:rehearse:worker-process-interruption": "npm run db:rehearse:worker-process-interruption --workspace @cyph1/commerce-api"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
