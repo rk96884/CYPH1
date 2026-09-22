@@ -1,0 +1,37 @@
+name: R2 backup access check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r2-access-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      R2_ENDPOINT: ${{ vars.R2_BACKUP_ENDPOINT }}
+      R2_BUCKET: cyph1-commerce-backups
+    steps:
+      - name: Verify required configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$AWS_ACCESS_KEY_ID" || { echo "R2 access key secret is missing."; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo "R2 secret access key is missing."; exit 1; }
+          test -n "$R2_ENDPOINT" || { echo "R2 endpoint variable is missing."; exit 1; }
+          case "$R2_ENDPOINT" in
+            https://*.r2.cloudflarestorage.com) ;;
+            *) echo "R2 endpoint must be the Cloudflare S3 API endpoint."; exit 1 ;;
+          esac
+
+      - name: Verify scoped bucket access
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws s3api head-bucket --bucket "$R2_BUCKET" --endpoint-url "$R2_ENDPOINT"
+          aws s3api list-objects-v2 --bucket "$R2_BUCKET" --max-items 1 --endpoint-url "$R2_ENDPOINT" >/dev/null
+          echo "R2 backup bucket is reachable with the configured read/write credential."
