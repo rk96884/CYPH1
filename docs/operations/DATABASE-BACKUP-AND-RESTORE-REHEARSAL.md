@@ -1,7 +1,7 @@
 # Database backup and restore rehearsal
 
-**Status:** First isolated logical backup/restore rehearsal passed  
-**Last engineering update:** 21 September 2026
+**Status:** Development logical backup, off-platform encrypted restore and freshness-monitor rehearsals passed  
+**Last engineering update:** 22 September 2026
 
 ## Purpose
 
@@ -17,10 +17,7 @@ point-in-time recovery facility and expires 30 days after creation. The Hobby
 workspace's three-day point-in-time window applies only to a **paid** Postgres
 instance.
 
-Until the database is upgraded, use `pg_dump` through the external TLS URL and
-restore only into a distinct empty local or temporary database. Before
-production, move to paid Postgres, verify Render point-in-time recovery and add
-an encrypted off-platform backup schedule.
+Until the database is upgraded, development uses `pg_dump` through the external TLS URL and restores only into a distinct empty local or temporary database. An encrypted off-platform development schedule is now configured and rehearsed. Before production, move to paid Postgres and separately verify Render point-in-time recovery plus production-specific backup ownership, retention and recovery controls.
 
 ## Safety rules
 
@@ -183,19 +180,26 @@ The drill passes only if the restore command succeeds, aggregate comparison and
 schema verification pass, the source remains unchanged and the temporary copy
 is handled according to the approved retention procedure.
 
-## Automated off-platform backup design baseline
+## Automated off-platform development backup and recovery — 22 September 2026
 
-The repository now includes a provider-neutral validation boundary for scheduled logical backups. Before an encrypted object may be treated as a successful backup, automation must:
+The development implementation now goes beyond the original design baseline:
 
-1. create a PostgreSQL custom-format dump with `pg_dump --format=custom --no-owner --no-privileges`;
-2. fail on a missing, empty, truncated or non-`PGDMP` dump;
-3. encrypt the validated dump before upload using an authenticated/approved encryption mechanism and a secret held outside source control;
-4. validate the encrypted envelope and record only privacy-safe metadata: UTC time, byte size and SHA-256 digest;
-5. upload only the encrypted object to the approved off-platform destination;
-6. remove runner-local plaintext and encrypted temporary files after the upload attempt;
-7. independently check backup freshness and fail the monitoring workflow when the newest valid backup exceeds the approved recovery window.
+- GitHub Actions creates a PostgreSQL 17 custom-format dump and rejects empty or non-`PGDMP` output.
+- The dump is encrypted with `age` before upload. Only the encrypted `.dump.age` object is uploaded to the private EU-jurisdiction Cloudflare R2 bucket.
+- The R2 bucket has public access disabled and a 30-day bucket-lock rule. This is immutability evidence, not a complete production retention policy.
+- A real encrypted development backup was retrieved from R2, decrypted on the runner and restored successfully into a fresh isolated PostgreSQL 17 database.
+- The guarded source/restore verifier accepted the isolated socket connection and completed successfully without reading personal-data fields.
+- The successful comparison covered matching migration history and aggregate row counts across all 23 required tables.
+- Runner-local dump, decrypted copy, identity file and isolated restore material are removed by unconditional cleanup steps.
+- The backup workflow is scheduled daily at 02:17 UTC.
+- An independent R2 freshness monitor is scheduled daily at 03:47 UTC and fails if no non-empty encrypted development backup exists or if the newest one is older than 36 hours.
+- The real freshness check passed on 22 September 2026.
+- A manual-only deliberate post-check failure was then exercised; the workflow failed as designed and its GitHub failure notification reached the project owner without changing database or R2 state.
+- A final normal freshness run returned green.
 
-The current implementation deliberately stops at local artifact validation. No storage provider, retention period, encryption secret, production database or scheduled database connection is configured by this baseline. GitHub Actions artifacts are not approved as the production backup store. Storage-provider selection, authenticated encryption implementation, retention/immutability, restore-from-storage rehearsal and missing-backup notification evidence remain open.
+This closes the **development engineering** off-platform logical-backup, isolated restore and missing/stale-backup notification rehearsal. It does not approve production recovery. Paid Render PITR, production backup/restore configuration, production ownership, key custody/rotation, lifecycle/retention approval and production notification expectations remain open.
+
+The current backup workflow still performs an encryption round-trip using the private age identity. Before production, prefer encrypting with the public age recipient only and reserving the private identity for controlled restore verification. The repository's earlier generic backup-artifact validator also predates the selected age envelope and must not be treated as canonical age validation until updated.
 
 ## Paid-plan rehearsal before production
 
