@@ -1,0 +1,49 @@
+name: Persistent backup encryption rehearsal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  persistent-key-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install age
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y age >/dev/null
+          age --version
+
+      - name: Verify persistent backup identity with synthetic data
+        shell: bash
+        env:
+          IDENTITY_VALUE: ${{ secrets.BACKUP_AGE_IDENTITY }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$IDENTITY_VALUE" || { echo "Backup encryption identity secret is missing."; exit 1; }
+          identity="$RUNNER_TEMP/identity.txt"
+          source="$RUNNER_TEMP/source.txt"
+          cipher="$RUNNER_TEMP/source.txt.age"
+          restored="$RUNNER_TEMP/restored.txt"
+          printf '%s\n' "$IDENTITY_VALUE" > "$identity"
+          unset IDENTITY_VALUE
+          recipient="$(age-keygen -y "$identity")"
+          test -n "$recipient"
+          printf 'CYPH1 synthetic persistent-key rehearsal\n' > "$source"
+          age -r "$recipient" -o "$cipher" "$source"
+          age -d -i "$identity" -o "$restored" "$cipher"
+          cmp "$source" "$restored"
+          echo "Persistent backup encryption identity round-trip verified."
+          echo "No database connection, R2 upload, customer data, or private-key output was used."
+
+      - name: Remove runner-local material
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$RUNNER_TEMP/identity.txt" "$RUNNER_TEMP/source.txt" "$RUNNER_TEMP/source.txt.age" "$RUNNER_TEMP/restored.txt"
