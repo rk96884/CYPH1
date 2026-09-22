@@ -1,0 +1,30 @@
+name: Commerce terminal worker failure monitor
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commerce-terminal-worker-failure-monitor
+  cancel-in-progress: true
+
+jobs:
+  terminal-worker-failures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      DATABASE_URL: ${{ secrets.COMMERCE_DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Check privacy-safe terminal worker failure counts
+        run: npm run monitor:terminal-worker-failures
