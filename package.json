@@ -36,7 +36,8 @@
     "db:rehearse:worker-recovery": "npm run db:rehearse:worker-recovery --workspace @cyph1/commerce-api",
     "db:rehearse:worker-process-interruption": "npm run db:rehearse:worker-process-interruption --workspace @cyph1/commerce-api",
     "monitor:terminal-worker-failures": "npm run monitor:terminal-worker-failures --workspace @cyph1/commerce-api",
-    "test:terminal-worker-failures": "npm run test:terminal-worker-failures --workspace @cyph1/commerce-api"
+    "test:terminal-worker-failures": "npm run test:terminal-worker-failures --workspace @cyph1/commerce-api",
+    "db:rehearse:terminal-worker-failures": "npm run db:rehearse:terminal-worker-failures --workspace @cyph1/commerce-api"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
