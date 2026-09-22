@@ -24,10 +24,15 @@ const databaseIdentity = (value, name) => {
   let url;
   try { url = new URL(value.trim()); }
   catch { throw new Error(`${name} must be a valid PostgreSQL URL.`); }
-  if (!["postgres:", "postgresql:"].includes(url.protocol) || !url.hostname || !url.pathname.slice(1)) {
+  const socketHost = url.searchParams.get("host");
+  if (!["postgres:", "postgresql:"].includes(url.protocol) || (!url.hostname && !socketHost) || !url.pathname.slice(1)) {
     throw new Error(`${name} must be a valid PostgreSQL URL.`);
   }
-  return Object.freeze({ url: value.trim(), host: url.hostname.toLowerCase(), database: decodeURIComponent(url.pathname.slice(1)) });
+  return Object.freeze({
+    url: value.trim(),
+    host: (url.hostname || socketHost).toLowerCase(),
+    database: decodeURIComponent(url.pathname.slice(1)),
+  });
 };
 
 export const loadRestoreVerificationConfig = (environment) => {
