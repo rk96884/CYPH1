@@ -1,6 +1,6 @@
 # Worker restart and retry exhaustion
 
-**Status:** Engineering baseline, lease/retry rehearsal and real process-interruption rehearsal complete locally and on Render development; provider-idempotency and alert ownership remain outstanding  
+**Status:** Engineering baseline, lease/retry, real process-interruption and development terminal-failure alerting rehearsals complete; provider idempotency and production ownership remain outstanding  
 **Last engineering update:** 22 September 2026
 
 ## Purpose
@@ -93,7 +93,7 @@ controlled and audited.
 - [x] Repeat the guarded real process-interruption exercise against Render development.
 - [ ] Verify the selected fulfilment and communication providers honour stable
       idempotency keys.
-- [ ] Assign ownership and alerting for terminal failures.
+- [x] Development terminal-failure monitoring and project-owner GitHub notification route verified on 22 September 2026.\n- [ ] Assign named production owner/deputy and response expectations for terminal failures.
 
 ## Development migration evidence
 
