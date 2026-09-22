@@ -18,6 +18,12 @@ test("restore verification requires explicit guards and a distinct test target",
   assert.equal(config.restore.database, "commerce_restore_test");
   assert.equal(config.sourceSsl, true);
   assert.equal(config.restoreSsl, false);
+  const socketConfig = loadRestoreVerificationConfig({
+    ...guardedEnvironment,
+    RESTORE_DATABASE_URL: "postgresql:///commerce_restore_test?host=/var/run/postgresql&port=5433&user=restore_verifier",
+  });
+  assert.equal(socketConfig.restore.host, "/var/run/postgresql");
+  assert.equal(socketConfig.restore.database, "commerce_restore_test");
   assert.throws(() => loadRestoreVerificationConfig({
     ...guardedEnvironment,
     RESTORE_DATABASE_URL: guardedEnvironment.SOURCE_DATABASE_URL,
