@@ -1,7 +1,7 @@
 # Worker restart and retry exhaustion
 
-**Status:** Engineering baseline, Render development migration and guarded lease/retry rehearsal complete; real process-interruption and provider-idempotency evidence outstanding  
-**Last engineering update:** 21 September 2026
+**Status:** Engineering baseline, lease/retry rehearsal and local real process-interruption rehearsal complete; Render process-interruption, provider-idempotency and alert ownership remain outstanding  
+**Last engineering update:** 22 September 2026
 
 ## Purpose
 
@@ -56,9 +56,28 @@ fulfilment or communication provider calls. Database credentials were removed
 from the local PowerShell environment after the run.
 
 This evidence validates the PostgreSQL lease/reclaim/retry-exhaustion contract.
-It does **not** yet prove recovery after physically interrupting a worker process,
-nor that the selected external fulfilment and communication providers honour the
-stable idempotency keys. Those remain separate launch gates.
+
+## Real process-interruption rehearsal
+
+On 22 September 2026, a guarded rehearsal passed against an isolated local
+PostgreSQL 17 database using a real child worker process. The worker durably
+claimed a synthetic `payment.paid` outbox event and was then forcibly terminated
+before completion. The claim remained `processing`; an immediate replacement
+claim was rejected while the lease was valid. The harness then aged only its own
+synthetic claim beyond the 30-second test lease and verified that a replacement
+claim recovered the same durable event on attempt two.
+
+The event key was unchanged across the interruption, so the fulfilment request
+would retain the same `fulfilment:<event-key>` provider idempotency key. No
+external payment, fulfilment or communication provider was called. The harness
+removed its synthetic records and the isolated local rehearsal database was
+dropped after the run.
+
+This proves recovery after physically interrupting the local worker process and
+stable CYPH/1-side fulfilment idempotency-key derivation. It does **not** prove
+that a selected external provider honours that key, nor yet reproduce the
+process-interruption exercise against Render development. Those remain separate
+launch gates.
 
 Do not shorten production leases, manipulate real order rows, or repeatedly
 restart a worker to manufacture attempts. Manual replay must remain permission
@@ -72,7 +91,8 @@ controlled and audited.
 - [x] Completion and failure clear claim timestamps.
 - [x] Apply and verify migration `0010` on Render development PostgreSQL.
 - [x] Run the guarded synthetic database lease/reclaim/exhaustion rehearsal locally and on Render development.
-- [ ] Run a real worker process-interruption/replacement-worker recovery exercise.
+- [x] Run a guarded real worker process-interruption/replacement-worker recovery exercise locally.
+- [ ] Repeat the guarded real process-interruption exercise against Render development.
 - [ ] Verify the selected fulfilment and communication providers honour stable
       idempotency keys.
 - [ ] Assign ownership and alerting for terminal failures.
