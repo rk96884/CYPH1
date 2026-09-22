@@ -1,6 +1,6 @@
 # Payment-provider outage and ambiguous-payment handling
 
-**Status:** Pre-production engineering baseline; sandbox exercise and production approval outstanding
+**Status:** Mollie test-mode checkout containment/recovery rehearsal and automated ambiguous-timeout safety evidence passed; retryable-refund failure exercise and production approval remain outstanding
 
 **Scope:** Checkout creation, payment-status retrieval, verified webhooks and refunds
 
@@ -151,3 +151,18 @@ After a Mollie test account and reviewed `test_` key are available:
 
 Follow `COMMERCE-DISABLE-AND-ROLLBACK.md` for containment and recovery and
 `COMMERCE-INCIDENT-OWNERSHIP.md` for escalation ownership.
+
+
+## Staging exercise evidence — 22 September 2026
+
+A controlled Mollie test-mode exercise was completed against the Render development/staging environment. The initial fail-closed boundary was confirmed with health/readiness `200` and both checkout and Mollie webhook routes `404`. The reviewed test configuration was then enabled and route checks returned health/readiness `200`, checkout `400` for an empty invalid request and the webhook handler `400` for an empty invalid notification, proving both gated routes were active.
+
+One synthetic £2 checkout completed successfully through Mollie test mode. The protected operations view confirmed order `paid`, payment `paid`, fulfilment `unfulfilled` and no refund, establishing the healthy control path without a real fulfilment side effect.
+
+The degraded-provider containment state was then deployed with commerce and checkout disabled while Mollie webhook ingestion remained enabled. Health/readiness stayed `200`; `/checkout` returned `404`, while an empty `/webhooks/mollie` request returned handler-level `400` rather than route-level `404`. This demonstrated that new payment attempts can be stopped without removing the notification path for in-flight payments.
+
+A real Mollie network outage was deliberately **not** manufactured. Ambiguous checkout timeout behaviour is separately covered by automated evidence on `main`: a bounded provider timeout is classified as retryable `network_error`, and checkout remains resolution-required without payment attachment, success assumption, replacement payment or fulfilment.
+
+After the exercise, all commerce/payment/fulfilment gates and providers were restored to the locked disabled baseline. Final verification returned health `200`, readiness `200`, checkout `404` and Mollie webhook `404`.
+
+This closes the checkout-containment/recovery portion of the sandbox outage exercise. The runbook's separate retryable-refund-failure exercise remains outstanding, as do production ownership/approval and live-provider operational validation.
