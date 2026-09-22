@@ -89,7 +89,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo -u postgres /usr/lib/postgresql/17/bin/pg_restore --exit-on-error --no-owner --no-privileges --host=/var/run/postgresql --port="$RESTORE_PORT" --dbname=commerce_restore_test "$RUNNER_TEMP/backup.dump"
+          sudo install -o postgres -g postgres -m 0600 "$RUNNER_TEMP/backup.dump" /var/lib/postgresql/17/main/restore.dump
+          sudo -u postgres /usr/lib/postgresql/17/bin/pg_restore --exit-on-error --no-owner --no-privileges --host=/var/run/postgresql --port="$RESTORE_PORT" --dbname=commerce_restore_test /var/lib/postgresql/17/main/restore.dump
           echo "Backup restored into isolated runner-local PostgreSQL database."
 
       - name: Install repository dependencies
@@ -112,4 +113,5 @@ jobs:
           if [ -n "${RESTORE_PORT:-}" ]; then
             sudo -u postgres /usr/lib/postgresql/17/bin/dropdb --if-exists -p "$RESTORE_PORT" commerce_restore_test 2>/dev/null || true
           fi
+          sudo rm -f /var/lib/postgresql/17/main/restore.dump
           rm -f "$RUNNER_TEMP/backup.dump.age" "$RUNNER_TEMP/backup.dump" "$RUNNER_TEMP/identity.txt"
