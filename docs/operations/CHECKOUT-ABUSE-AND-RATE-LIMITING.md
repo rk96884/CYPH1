@@ -16,9 +16,9 @@ not a substitute for provider-side payment controls.
    and apply a reviewed checkout-specific rate rule or challenge. Do not apply
    the same limit to `/webhooks/mollie`, `/health` or `/ready`.
 2. **Origin exposure:** remove or restrict the direct Render subdomain before
-   launch so an attacker cannot bypass the Cloudflare policy. The current direct
-   origin remains enabled for staging operations and therefore is not an
-   adequate production edge boundary.
+   launch so an attacker cannot bypass the Cloudflare policy. On 23 September
+   2026 the staging Render subdomain was disabled and independently verified as
+   blocked; production must repeat and record the same control before launch.
 3. **Application admission:** the customer runtime caps concurrent and
    rolling-window `POST /checkout` requests per process. It ignores forwarded
    IP headers and returns a generic `429` with `Retry-After` when saturated.
@@ -122,8 +122,16 @@ payment.
   Final containment checks returned `200` for `/health` and `/ready`, and
   `404` for `/checkout` and `/webhooks/mollie`.
 - `commerce-staging.cyph1.co.uk` remains Cloudflare-proxied and the edge rule
-  remains active. The direct Render origin remains a known staging bypass and
-  must be removed or restricted before production launch.
+  remains active.
+- On 23 September 2026, the native Render subdomain was first verified as a real
+  bypass: a direct `GET /health` returned the application's `{"status":"ok"}`
+  response. A repository search found no committed dependency on the native
+  `.onrender.com` hostname. The Render Subdomain control was then disabled.
+  The custom Cloudflare-proxied hostname continued to return `200` for
+  `/health`, while the native Render hostname returned `404 Not Found` with
+  `x-render-routing: blocked-render-subdomain`. This closes the staging
+  direct-origin bypass. The production service must repeat this verification
+  before public checkout is enabled.
 
 No production threshold is approved by this rehearsal. The low application and
 Cloudflare values were selected only to obtain bounded staging evidence.
@@ -147,7 +155,9 @@ availability is at risk.
 - [ ] Approve capacity-based staging thresholds.
 - [x] Configure and review a Cloudflare staging checkout edge policy and prove
   bounded enforcement through the proxied custom hostname.
-- [ ] Remove or restrict direct-origin bypass before public checkout.
+- [x] Remove/restrict the staging direct-origin bypass and verify the proxied
+  custom hostname remains healthy. Repeat this control for production before
+  public checkout.
 - [x] Run bounded staging application and edge burst/recovery tests with
   malformed synthetic requests.
 - [ ] Verify an authenticated Mollie test webhook remains reachable and
