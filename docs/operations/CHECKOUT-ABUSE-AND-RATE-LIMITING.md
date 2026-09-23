@@ -139,7 +139,7 @@ A second bounded staging rehearsal closed the stronger webhook-isolation gate us
 
 - Checkout remained behind the Cloudflare-proxied custom hostname with the application rehearsal window at four admitted requests per 10 seconds.
 - A genuine private-fixture checkout created one £2 Mollie test payment. Mollie reported the payment paid; the protected operations record subsequently showed the order `paid`, payment `captured` for 200 GBP minor units and fulfilment `unfulfilled`.
-- During deliberate checkout saturation, admitted malformed checkout attempts returned `500` in this run and subsequent attempts returned `429`. The unexpected `500` responses are a separate investigation item and are not treated as successful checkout evidence.
+- During deliberate checkout saturation, admitted malformed checkout attempts returned `500` in this run and subsequent attempts returned `429`. The `500` cause was subsequently traced to malformed structured input reaching checkout fingerprinting before required-field validation; the regression was fixed and verified in staging as described below.
 - While checkout was returning `429`, the same existing Mollie payment ID was submitted to `POST /webhooks/mollie`. The Mollie test adapter authenticated the notification by retrieving the referenced payment and refunds from Mollie's API. The endpoint returned `{"received":true}` with HTTP `200`.
 - A read-only protected operations check after the duplicate notification remained unchanged: one captured £2 payment, order `paid`, fulfilment `unfulfilled`, no refunds and no fulfilment records. No second payment was created.
 - The customer browser confirmation page remained on its non-authoritative pending display even after the protected operations state was paid/captured. Record this as a separate status-page UX/state-refresh investigation; it does not override authoritative provider/database state.
@@ -147,6 +147,16 @@ A second bounded staging rehearsal closed the stronger webhook-isolation gate us
 This closes the staging authenticated Mollie webhook-under-checkout-saturation gate. It does not approve production thresholds, production edge configuration or production operational ownership.
 
 After the rehearsal, the locked staging baseline was restored and independently checked through the proxied custom hostname: `/health` and `/ready` returned HTTP `200`, while `POST /checkout` and `POST /webhooks/mollie` returned HTTP `404`. The Cloudflare checkout edge rule remained active and the native Render customer subdomain remained disabled.
+
+### 23 September 2026 malformed-input regression closure
+
+The unexpected malformed-request `500` was reproduced from the rehearsal path and traced to request structure validation occurring too late: a syntactically valid JSON object with a valid idempotency key could reach checkout fingerprinting before required fields and nested address types had been validated. Missing `email` therefore caused an ordinary runtime exception rather than a controlled checkout validation error.
+
+The checkout HTTP boundary was hardened to validate the required request structure and primitive field types before invoking `CheckoutService`. Regression coverage includes an empty object, wrong email and quantity types, a null delivery address and a wrongly typed nested postcode. These malformed inputs are rejected without invoking the checkout service.
+
+After the fix was merged, staging was temporarily enabled using the guarded Mollie-test/private-fixture configuration. A single `POST /checkout` containing `{}` with a valid synthetic idempotency key returned `{"message":"Invalid request."}` with HTTP `400`, replacing the earlier `500` behavior. No valid checkout or payment was submitted for this verification.
+
+The locked staging baseline was then restored. Final containment checks through the proxied custom hostname returned HTTP `200` for `/health` and `/ready`, and HTTP `404` for both `POST /checkout` and `POST /webhooks/mollie`. This closes the malformed-input `500` investigation.
 
 No production threshold is approved by this rehearsal. The low application and
 Cloudflare values were selected only to obtain bounded staging evidence.
