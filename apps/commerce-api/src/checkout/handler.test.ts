@@ -15,6 +15,32 @@ test("checkout handler requires JSON POST and an idempotency key", async () => {
   assert.equal((await handleCheckoutRequest(new Request("https://api.example/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }), checkout)).status, 400);
 });
 
+
+test("checkout handler rejects malformed structured input before the service", async () => {
+  let calls = 0;
+  const checkout = { async initiate() {
+    calls += 1;
+    throw new Error("must not run");
+  } };
+  const malformed = [
+    {},
+    { ...body, email: 123 },
+    { ...body, quantity: "1" },
+    { ...body, deliveryAddress: null },
+    { ...body, deliveryAddress: { ...body.deliveryAddress, postalCode: 123 } },
+  ];
+  for (const value of malformed) {
+    const response = await handleCheckoutRequest(new Request("https://api.example/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Idempotency-Key": "malformed-test" },
+      body: JSON.stringify(value),
+    }), checkout);
+    assert.equal(response.status, 400);
+    assert.deepEqual(await response.json(), { message: "Invalid request." });
+  }
+  assert.equal(calls, 0);
+});
+
 test("checkout handler returns only the safe hosted checkout result", async () => {
   let input: InitiateCheckoutInput | undefined;
   const response = await handleCheckoutRequest(new Request("https://api.example/checkout", {
