@@ -69,7 +69,7 @@ export const loadPrivateCheckoutFixtureEnabled = (environment: Environment): boo
 export const createCustomerRuntime = (input: Readonly<{
   checkout: Handler;
   paymentWebhook: Handler;
-  orderStatus: Handler;
+  orderStatus?: Handler;
   readiness: ReadinessCheck;
   gates: CustomerRouteGates;
 }>): Handler => async (request) => {
@@ -89,7 +89,7 @@ export const createCustomerRuntime = (input: Readonly<{
   }
   if (/^\/orders\/[^/]+\/status$/.test(url.pathname)) {
     if (!input.gates.checkoutEnabled) return json({ message: "Not found." }, 404);
-    return input.orderStatus(request);
+    return input.orderStatus ? input.orderStatus(request) : json({ message: "Not found." }, 404);
   }
   if (url.pathname === "/webhooks/mollie") {
     if (!input.gates.paymentWebhooksEnabled) return json({ message: "Not found." }, 404);
