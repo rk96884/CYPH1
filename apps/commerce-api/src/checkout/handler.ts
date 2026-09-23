@@ -3,6 +3,26 @@ import { CheckoutError, type CheckoutResult, type InitiateCheckoutInput } from "
 type CheckoutInitiator = Readonly<{ initiate(input: InitiateCheckoutInput): Promise<CheckoutResult> }>;
 type CheckoutHttpOptions = Readonly<{ allowedOrigin?: string }>;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const validCheckoutInput = (value: unknown): value is Omit<InitiateCheckoutInput, "idempotencyKey"> => {
+  if (!isRecord(value) || !isRecord(value.deliveryAddress)) return false;
+  const address = value.deliveryAddress;
+  return typeof value.productSlug === "string"
+    && typeof value.quantity === "number"
+    && typeof value.shippingRateId === "string"
+    && typeof value.email === "string"
+    && typeof value.correlationId === "string"
+    && typeof address.recipientName === "string"
+    && typeof address.line1 === "string"
+    && (address.line2 === undefined || typeof address.line2 === "string")
+    && typeof address.locality === "string"
+    && (address.region === undefined || typeof address.region === "string")
+    && typeof address.postalCode === "string"
+    && typeof address.countryCode === "string";
+};
+
 const json = (body: unknown, status: number, headers: Readonly<Record<string, string>> = {}): Response => new Response(JSON.stringify(body), {
   status,
   headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers },
@@ -47,9 +67,11 @@ export const handleCheckoutRequest = async (
   }
   const idempotencyKey = request.headers.get("idempotency-key")?.trim() ?? "";
   if (!idempotencyKey || idempotencyKey.length > 128) return json({ message: "A valid idempotency key is required." }, 400, corsHeaders);
-  let input: Omit<InitiateCheckoutInput, "idempotencyKey">;
-  try { input = await request.json() as Omit<InitiateCheckoutInput, "idempotencyKey">; }
+  let parsed: unknown;
+  try { parsed = await request.json(); }
   catch { return json({ message: "Invalid request." }, 400, corsHeaders); }
+  if (!validCheckoutInput(parsed)) return json({ message: "Invalid request." }, 400, corsHeaders);
+  const input = parsed;
 
   try {
     const result = await checkout.initiate({ ...input, idempotencyKey });
