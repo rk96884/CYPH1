@@ -3,6 +3,7 @@ import pg from "pg";
 import { handleCheckoutRequest } from "../checkout/handler.js";
 import { PostgresCheckoutRepository } from "../checkout/postgres.js";
 import { CheckoutService } from "../checkout/service.js";
+import { handleOrderStatusRequest, PostgresOrderStatusRepository } from "../checkout/status.js";
 import { loadCommerceConfig } from "../config.js";
 import { createPaymentProviderRegistry } from "../payments/factory.js";
 import { handlePaymentWebhookRequest } from "../webhooks/handler.js";
@@ -44,6 +45,7 @@ const notFound: CustomerHandler = async (_request): Promise<Response> => new Res
 });
 let checkout: CustomerHandler = notFound;
 let paymentWebhook: CustomerHandler = notFound;
+let orderStatus: CustomerHandler = notFound;
 
 if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
   const paymentProvider = createPaymentProviderRegistry(environment).getConfiguredProvider();
@@ -56,9 +58,10 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
       throw new Error("Enabled checkout requires the private storefront origin and all checkout callback URLs.");
     }
     const unitTaxMinor = Number(environment.PRIVATE_CHECKOUT_UNIT_TAX_MINOR ?? "0");
+    const checkoutRepository = new PostgresCheckoutRepository(pool, unitTaxMinor);
     const service = new CheckoutService(
       loadCommerceConfig(environment),
-      new PostgresCheckoutRepository(pool, unitTaxMinor),
+      checkoutRepository,
       paymentProvider,
       { orderStatusBaseUrl, cancellationBaseUrl, webhookUrl },
       privateCheckoutFixtureEnabled,
@@ -69,6 +72,8 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
       admission,
       allowedOrigin,
     );
+    const statusRepository = new PostgresOrderStatusRepository(pool);
+    orderStatus = (request) => handleOrderStatusRequest(request, statusRepository, allowedOrigin);
   }
   if (gates.paymentWebhooksEnabled) {
     const processor = new PaymentWebhookProcessor(paymentProvider, new PostgresTransactionRunner(pool));
@@ -79,6 +84,7 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
 const runtime = createCustomerRuntime({
   checkout,
   paymentWebhook,
+  orderStatus,
   readiness: async () => { await pool.query("SELECT 1"); },
   gates,
 });
