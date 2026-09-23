@@ -158,6 +158,18 @@ After the fix was merged, staging was temporarily enabled using the guarded Moll
 
 The locked staging baseline was then restored. Final containment checks through the proxied custom hostname returned HTTP `200` for `/health` and `/ready`, and HTTP `404` for both `POST /checkout` and `POST /webhooks/mollie`. This closes the malformed-input `500` investigation.
 
+### 23 September 2026 payment-status refresh verification
+
+The private confirmation-page follow-up from the authenticated webhook rehearsal is closed in staging.
+
+- The pending browser page now reads only a coarse CYPH/1 order state through a guarded read-only endpoint; it does not query Mollie directly or receive customer, address, amount, order-number or provider/payment identifiers.
+- Origin enforcement was exercised first with a non-allowed origin and returned HTTP `403`.
+- Using the configured private storefront origin, the existing synthetic £2 paid order returned only `{"state":"paid"}` with HTTP `200`.
+- The existing paid order was then opened through the private pending-status page using its UUID. The page polled CYPH/1 and automatically transitioned to the existing success presentation, preserving the internal order UUID. No new Mollie payment was created for this verification.
+- The locked staging baseline was restored after the exercise. Final containment returned HTTP `200` for `/health` and `/ready`, and HTTP `404` for `POST /checkout` and `POST /webhooks/mollie`.
+
+This closes the staging payment-confirmation refresh investigation. Production configuration and launch approval remain separate gates.
+
 No production threshold is approved by this rehearsal. The low application and
 Cloudflare values were selected only to obtain bounded staging evidence.
 
