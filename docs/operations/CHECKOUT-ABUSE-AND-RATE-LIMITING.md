@@ -146,6 +146,8 @@ A second bounded staging rehearsal closed the stronger webhook-isolation gate us
 
 This closes the staging authenticated Mollie webhook-under-checkout-saturation gate. It does not approve production thresholds, production edge configuration or production operational ownership.
 
+After the rehearsal, the locked staging baseline was restored and independently checked through the proxied custom hostname: `/health` and `/ready` returned HTTP `200`, while `POST /checkout` and `POST /webhooks/mollie` returned HTTP `404`. The Cloudflare checkout edge rule remained active and the native Render customer subdomain remained disabled.
+
 No production threshold is approved by this rehearsal. The low application and
 Cloudflare values were selected only to obtain bounded staging evidence.
 
