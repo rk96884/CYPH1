@@ -75,6 +75,27 @@ A first run may include cold-start latency. If it fails, retain both cold and
 warm results rather than concealing the cold start, then decide whether the
 service plan and availability expectations are acceptable.
 
+## Bounded checkout admission probe
+
+`scripts/check-checkout-admission-capacity.mjs` provides a deliberately narrow
+pre-provider measurement for the checkout HTTP/admission boundary. It sends only
+malformed synthetic `{}` bodies with unique synthetic idempotency keys. The
+request is rejected by structural validation before order creation, PostgreSQL
+checkout writes or Mollie payment creation. Expected responses are only the
+normal validation `400` or admission-control `429` with a positive
+`Retry-After`.
+
+The probe fails closed unless `CHECKOUT_PROBE_CONFIRM` is exactly
+`synthetic-malformed-no-payment`. It is hard-limited to 40 requests and
+concurrency 5. It cannot establish database or payment-provider transaction
+capacity and therefore must not, by itself, be used to approve a production
+checkout threshold.
+
+Use it only during an explicitly enabled guarded staging window, with the
+configured private storefront origin. Record the application admission values,
+Cloudflare rule, request counts, response split, latency, runtime resources and
+post-test containment.
+
 ## Deferred capacity work
 
 Checkout performance requires separate approval because it creates database
