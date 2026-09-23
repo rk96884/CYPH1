@@ -63,10 +63,21 @@ export const runCheckoutAdmissionProbe = async ({ config, fetchImpl = fetch, now
           },
           body: "{}",
         });
-        const body = await response.json().catch(() => undefined);
+        const rawBody = await response.text().catch(() => "");
+        let body;
+        try { body = JSON.parse(rawBody); } catch { body = undefined; }
         const expected400 = response.status === 400 && body?.message === "Invalid request.";
-        const expected429 = response.status === 429 && body?.message === "Checkout is temporarily busy." && Number(response.headers.get("retry-after")) > 0;
-        observations.push({ status: response.status, valid: expected400 || expected429, durationMs: Math.max(0, now() - startedAt) });
+        const application429 = response.status === 429 && body?.message === "Checkout is temporarily busy." && Number(response.headers.get("retry-after")) > 0;
+        const edge429 = response.status === 429 && !application429 && (
+          /error code:\s*1015/i.test(rawBody) ||
+          response.headers.get("server")?.toLowerCase() === "cloudflare"
+        );
+        observations.push({
+          status: response.status,
+          kind: expected400 ? "validation" : application429 ? "application-limit" : edge429 ? "edge-limit" : "unexpected",
+          valid: expected400 || application429 || edge429,
+          durationMs: Math.max(0, now() - startedAt),
+        });
       } catch {
         observations.push({ status: 0, valid: false, durationMs: Math.max(0, now() - startedAt) });
       } finally {
@@ -81,7 +92,8 @@ export const runCheckoutAdmissionProbe = async ({ config, fetchImpl = fetch, now
   return Object.freeze({
     requests: observations.length,
     admittedValidationResponses: observations.filter((x) => x.status === 400).length,
-    limitedResponses: observations.filter((x) => x.status === 429).length,
+    applicationLimitedResponses: observations.filter((x) => x.kind === "application-limit").length,
+    edgeLimitedResponses: observations.filter((x) => x.kind === "edge-limit").length,
     peakConcurrency,
     p50Ms: Math.round(percentile(durations, .5)),
     p95Ms: Math.round(percentile(durations, .95)),
@@ -93,7 +105,7 @@ const direct = process.argv[1] && import.meta.url === pathToFileURL(process.argv
 if (direct) {
   try {
     const result = await runCheckoutAdmissionProbe({ config: loadCheckoutProbeConfig(process.env) });
-    console.log(`Bounded checkout admission probe passed: ${result.requests} requests; 400=${result.admittedValidationResponses}; 429=${result.limitedResponses}; peak concurrency ${result.peakConcurrency}; p50 ${result.p50Ms} ms; p95 ${result.p95Ms} ms; max ${result.maximumMs} ms.`);
+    console.log(`Bounded checkout admission probe passed: ${result.requests} requests; 400=${result.admittedValidationResponses}; app-429=${result.applicationLimitedResponses}; edge-429=${result.edgeLimitedResponses}; peak concurrency ${result.peakConcurrency}; p50 ${result.p50Ms} ms; p95 ${result.p95Ms} ms; max ${result.maximumMs} ms.`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Checkout admission probe failed.");
     process.exitCode = 1;
