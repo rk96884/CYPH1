@@ -34,6 +34,22 @@ test("checkout and payment webhook exposure are independent", async () => {
   assert.equal(await (await webhookRuntime(new Request("https://example.test/webhooks/mollie", { method: "POST" }))).text(), "webhook");
 });
 
+
+test("order status route follows the checkout exposure gate", async () => {
+  const orderStatus = response("status");
+  const enabled = createCustomerRuntime({
+    checkout: response("checkout"), paymentWebhook: response("webhook"), orderStatus, readiness: async () => {},
+    gates: { checkoutEnabled: true, paymentWebhooksEnabled: false },
+  });
+  assert.equal(await (await enabled(new Request("https://example.test/orders/123e4567-e89b-42d3-a456-426614174000/status"))).text(), "status");
+
+  const disabled = createCustomerRuntime({
+    checkout: response("checkout"), paymentWebhook: response("webhook"), orderStatus, readiness: async () => {},
+    gates: { checkoutEnabled: false, paymentWebhooksEnabled: false },
+  });
+  assert.equal((await disabled(new Request("https://example.test/orders/123e4567-e89b-42d3-a456-426614174000/status"))).status, 404);
+});
+
 test("customer runtime exposes only generic health and readiness routes", async () => {
   const runtime = createCustomerRuntime({
     checkout: response("checkout"), paymentWebhook: response("webhook"), readiness: async () => {},
