@@ -96,6 +96,35 @@ configured private storefront origin. Record the application admission values,
 Cloudflare rule, request counts, response split, latency, runtime resources and
 post-test containment.
 
+## Checkout admission staging evidence — 23 September 2026
+
+A bounded malformed-request exercise measured the two existing staging abuse
+boundaries without creating an order or Mollie payment.
+
+The initial edge-inclusive run used application admission values of maximum
+concurrency 2 and 4 requests per 10 seconds, with Cloudflare at 5 requests per
+10 seconds / 10-second block. Twelve requests at concurrency 2 produced 4
+validation `400` responses, 2 application `429` responses and 6 Cloudflare
+edge `429` responses, with p50 80 ms, p95 506 ms and maximum 506 ms. A
+six-request diagnostic separately showed requests 1–4 returning validation
+`400`, request 5 returning the application busy `429`, and request 6 being
+blocked by Cloudflare with error 1015.
+
+For isolation, Cloudflare was temporarily raised to 20 requests per 10 seconds
+while the application remained at maximum concurrency 2 and 4 requests per 10
+seconds. After the windows cleared, the same 12-request/concurrency-2 probe
+returned exactly 4 validation `400`, 8 application `429`, 0 edge `429`, no
+unexpected responses, p50 74 ms, p95 315 ms and maximum 315 ms. This demonstrates
+the configured application rolling-window boundary independently of Cloudflare.
+
+Cloudflare was then restored to the staging rehearsal value of 5 requests per
+10 seconds with a 10-second block. The application values remained maximum
+concurrency 2, 4 requests per 10 seconds and a 10-second window.
+
+These results validate enforcement of the deliberately low staging limits. They
+do **not** establish database, Mollie or end-to-end production checkout capacity
+and do not approve production thresholds.
+
 ## Deferred capacity work
 
 Checkout performance requires separate approval because it creates database
