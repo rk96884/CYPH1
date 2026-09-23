@@ -1,6 +1,6 @@
 # Checkout abuse and rate limiting
 
-**Status:** Staging application and Cloudflare edge rehearsals passed; production thresholds, direct-origin hardening and full webhook saturation evidence outstanding  
+**Status:** Staging application, Cloudflare edge, direct-origin and authenticated webhook-under-saturation rehearsals passed; production thresholds and operational ownership outstanding  
 **Last engineering update:** 23 September 2026
 
 ## Purpose
@@ -133,6 +133,19 @@ payment.
   direct-origin bypass. The production service must repeat this verification
   before public checkout is enabled.
 
+### 23 September 2026 authenticated webhook-under-saturation evidence
+
+A second bounded staging rehearsal closed the stronger webhook-isolation gate using one synthetic £2 Mollie test payment.
+
+- Checkout remained behind the Cloudflare-proxied custom hostname with the application rehearsal window at four admitted requests per 10 seconds.
+- A genuine private-fixture checkout created one £2 Mollie test payment. Mollie reported the payment paid; the protected operations record subsequently showed the order `paid`, payment `captured` for 200 GBP minor units and fulfilment `unfulfilled`.
+- During deliberate checkout saturation, admitted malformed checkout attempts returned `500` in this run and subsequent attempts returned `429`. The unexpected `500` responses are a separate investigation item and are not treated as successful checkout evidence.
+- While checkout was returning `429`, the same existing Mollie payment ID was submitted to `POST /webhooks/mollie`. The Mollie test adapter authenticated the notification by retrieving the referenced payment and refunds from Mollie's API. The endpoint returned `{"received":true}` with HTTP `200`.
+- A read-only protected operations check after the duplicate notification remained unchanged: one captured £2 payment, order `paid`, fulfilment `unfulfilled`, no refunds and no fulfilment records. No second payment was created.
+- The customer browser confirmation page remained on its non-authoritative pending display even after the protected operations state was paid/captured. Record this as a separate status-page UX/state-refresh investigation; it does not override authoritative provider/database state.
+
+This closes the staging authenticated Mollie webhook-under-checkout-saturation gate. It does not approve production thresholds, production edge configuration or production operational ownership.
+
 No production threshold is approved by this rehearsal. The low application and
 Cloudflare values were selected only to obtain bounded staging evidence.
 
@@ -160,7 +173,9 @@ availability is at risk.
   public checkout.
 - [x] Run bounded staging application and edge burst/recovery tests with
   malformed synthetic requests.
-- [ ] Verify an authenticated Mollie test webhook remains reachable and
-  idempotent during checkout saturation. Invalid webhook route-continuity
-  evidence passed, but does not close this stronger gate.
+- [x] Verify an authenticated Mollie test webhook remains reachable and
+  idempotent during checkout saturation. A genuine Mollie test payment was
+  authenticated through provider retrieval, replayed while checkout returned
+  `429`, acknowledged with HTTP `200`, and remained one captured payment with
+  no fulfilment after the duplicate notification.
 - [ ] Assign alert ownership and approve production thresholds.
