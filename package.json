@@ -37,7 +37,9 @@
     "db:rehearse:worker-process-interruption": "npm run db:rehearse:worker-process-interruption --workspace @cyph1/commerce-api",
     "monitor:terminal-worker-failures": "npm run monitor:terminal-worker-failures --workspace @cyph1/commerce-api",
     "test:terminal-worker-failures": "npm run test:terminal-worker-failures --workspace @cyph1/commerce-api",
-    "db:rehearse:terminal-worker-failures": "npm run db:rehearse:terminal-worker-failures --workspace @cyph1/commerce-api"
+    "db:rehearse:terminal-worker-failures": "npm run db:rehearse:terminal-worker-failures --workspace @cyph1/commerce-api",
+    "test:checkout-capacity-probe": "node --test scripts/check-checkout-admission-capacity.test.mjs",
+    "probe:checkout-capacity": "node scripts/check-checkout-admission-capacity.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
