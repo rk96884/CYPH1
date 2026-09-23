@@ -32,7 +32,8 @@ test("checkout probe accepts only controlled validation and limiter responses", 
   });
   assert.equal(result.requests, 6);
   assert.equal(result.admittedValidationResponses, 4);
-  assert.equal(result.limitedResponses, 2);
+  assert.equal(result.applicationLimitedResponses, 2);
+  assert.equal(result.edgeLimitedResponses, 0);
   assert.equal(result.peakConcurrency, 2);
 });
 
@@ -44,4 +45,16 @@ test("checkout probe rejects any success or unexpected error response", async ()
     }),
     /2 unexpected responses/,
   );
+});
+
+test("checkout probe recognises Cloudflare edge 429 separately", async () => {
+  const result = await runCheckoutAdmissionProbe({
+    config: loadCheckoutProbeConfig({ ...env, CHECKOUT_PROBE_REQUESTS: "2", CHECKOUT_PROBE_CONCURRENCY: "1" }),
+    fetchImpl: async (_url, _init) => new Response("error code: 1015", {
+      status: 429,
+      headers: { Server: "cloudflare" },
+    }),
+  });
+  assert.equal(result.edgeLimitedResponses, 2);
+  assert.equal(result.applicationLimitedResponses, 0);
 });
