@@ -125,6 +125,16 @@ These results validate enforcement of the deliberately low staging limits. They
 do **not** establish database, Mollie or end-to-end production checkout capacity
 and do not approve production thresholds.
 
+## Production database read-only capacity evidence — 24 September 2026
+
+A bounded read-only exercise measured the production customer runtime to production PostgreSQL path after the clean production schema was migrated and verified. Commerce, checkout, payment webhooks, payment provider and fulfilment remained locked off throughout. The probe issued only `SELECT 1 AS probe`; it created no orders, customers, payments, personal data or Mollie activity.
+
+The production customer service used 0.5 CPU / 512 MB RAM and the production PostgreSQL instance used 0.1 CPU / 256 MB RAM. The first run used 40 queries at concurrency 4 and completed with zero failures: peak concurrency 4, p50 1 ms, p95 107 ms and maximum 218 ms. The second run kept the workload at 40 queries and increased concurrency to the probe's hard maximum of 8; it also completed with zero failures: peak concurrency 8, p50 1 ms, p95 304 ms and maximum 401 ms. Both runs remained below the deliberately conservative 500 ms p95 test ceiling.
+
+The higher-concurrency result shows materially increased tail latency despite remaining within the read-only acceptance ceiling. This evidence therefore supports retaining a conservative checkout concurrency hypothesis rather than treating concurrency 8 as checkout capacity. The current candidate values remain maximum checkout concurrency 4, application rolling window 12 requests per 60 seconds, and Cloudflare 20 checkout requests per 60 seconds per IP with a 60-second block. These values are **not production-approved thresholds**: `SELECT 1` does not exercise checkout transactions, inventory reservation, order writes, Mollie calls, webhook processing or end-to-end contention.
+
+No further increase beyond concurrency 8 was attempted because that is the probe's deliberate hard safety limit. Final checkout threshold approval remains dependent on a separately controlled synthetic checkout exercise and associated resource/reconciliation evidence.
+
 ## Deferred capacity work
 
 Checkout performance requires separate approval because it creates database
