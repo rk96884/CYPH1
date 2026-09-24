@@ -1,0 +1,133 @@
+name: Production encrypted R2 backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      R2_ENDPOINT: ${{ vars.R2_BACKUP_ENDPOINT }}
+      R2_BUCKET: cyph1-commerce-backups
+      DATABASE_URL: ${{ secrets.COMMERCE_PRODUCTION_DATABASE_URL }}
+      BACKUP_AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY }}
+
+    steps:
+      - name: Verify configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL" || { echo "Production database secret is missing."; exit 1; }
+          test -n "$BACKUP_AGE_IDENTITY" || { echo "Backup encryption identity is missing."; exit 1; }
+          test -n "$AWS_ACCESS_KEY_ID" || { echo "R2 access key is missing."; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo "R2 secret access key is missing."; exit 1; }
+          test -n "$R2_ENDPOINT" || { echo "R2 endpoint is missing."; exit 1; }
+
+          case "$R2_ENDPOINT" in
+            https://*.eu.r2.cloudflarestorage.com) ;;
+            *) echo "R2 endpoint must be the EU jurisdiction S3 API endpoint."; exit 1 ;;
+          esac
+
+          case "$DATABASE_URL" in
+            *production*) ;;
+            *) echo "Refusing backup: database URL does not identify a production database."; exit 1 ;;
+          esac
+
+      - name: Install PostgreSQL 17 client and age
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y curl ca-certificates age >/dev/null
+          sudo install -d /usr/share/postgresql-common/pgdg
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc |
+            sudo gpg --dearmor --yes -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" |
+            sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client-17 >/dev/null
+          pg_dump --version
+          age --version
+
+      - name: Create and validate production database dump
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          dump="$RUNNER_TEMP/commerce-production.dump"
+
+          /usr/lib/postgresql/17/bin/pg_dump \
+            --format=custom \
+            --no-owner \
+            --no-privileges \
+            --file="$dump" \
+            "$DATABASE_URL"
+
+          test -s "$dump"
+          test "$(head -c 5 "$dump")" = "PGDMP"
+
+          size="$(wc -c < "$dump" | tr -d ' ')"
+          sha="$(sha256sum "$dump" | cut -d' ' -f1)"
+          echo "Validated PostgreSQL custom-format dump: size=$size bytes; sha256=$sha"
+
+      - name: Encrypt and round-trip verify backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+
+          identity="$RUNNER_TEMP/backup-age-identity.txt"
+          dump="$RUNNER_TEMP/commerce-production.dump"
+          encrypted="$RUNNER_TEMP/commerce-production.dump.age"
+          restored="$RUNNER_TEMP/roundtrip.dump"
+
+          printf '%s\n' "$BACKUP_AGE_IDENTITY" > "$identity"
+          unset BACKUP_AGE_IDENTITY
+
+          recipient="$(age-keygen -y "$identity")"
+          test -n "$recipient"
+
+          age -r "$recipient" -o "$encrypted" "$dump"
+          test -s "$encrypted"
+
+          age -d -i "$identity" -o "$restored" "$encrypted"
+          cmp "$dump" "$restored"
+
+          echo "Authenticated encryption round-trip verified."
+
+      - name: Upload encrypted backup to private R2
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          encrypted="$RUNNER_TEMP/commerce-production.dump.age"
+          object="production/$(date -u +'%Y/%m/%d')/commerce-production-$(date -u +'%Y%m%dT%H%M%SZ')-${GITHUB_RUN_ID}.dump.age"
+
+          aws s3 cp "$encrypted" \
+            "s3://$R2_BUCKET/$object" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --only-show-errors
+
+          size="$(wc -c < "$encrypted" | tr -d ' ')"
+          sha="$(sha256sum "$encrypted" | cut -d' ' -f1)"
+
+          echo "Encrypted production backup uploaded: size=$size bytes; sha256=$sha"
+          echo "Plaintext database dump and encryption identity were not uploaded."
+
+      - name: Remove runner-local backup material
+        if: always()
+        shell: bash
+        run: |
+          rm -f \
+            "$RUNNER_TEMP/commerce-production.dump" \
+            "$RUNNER_TEMP/commerce-production.dump.age" \
+            "$RUNNER_TEMP/roundtrip.dump" \
+            "$RUNNER_TEMP/backup-age-identity.txt"
