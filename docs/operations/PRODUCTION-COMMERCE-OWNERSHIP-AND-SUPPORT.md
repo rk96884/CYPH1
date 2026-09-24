@@ -160,6 +160,17 @@ Two read-only production checks were completed through the authenticated custom-
 
 No order, payment, refund, fulfilment action or other commerce write was created by these checks. This evidence establishes the current primary operator's read-only production operations access. It does **not** satisfy the separate deputy-access, staffing, coverage, escalation or primary-unavailable approval gates below.
 
+### Production operations direct-origin hardening — 24 September 2026
+
+After the protected custom-domain access checks passed, the native Render subdomain for `cyph1-commerce-operations-production` was disabled to prevent that hostname from providing an alternate route around the Cloudflare Access boundary.
+
+Post-change verification produced both required outcomes:
+
+- the protected custom-domain request to `https://operations.cyph1.co.uk/operations/orders` continued to authenticate and returned the expected empty production order set; and
+- the former native Render operations hostname returned **Not Found** when the operations orders path was requested.
+
+This verifies that the intended Cloudflare-protected production operations route remains functional while the tested native Render direct-origin route is no longer available.
+
 ## Approval gates
 
 - [ ] Incident commander and deputy appointed and accepted.
