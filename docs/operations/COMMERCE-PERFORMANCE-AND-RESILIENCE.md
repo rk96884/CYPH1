@@ -172,4 +172,8 @@ Render workspace notifications are configured for Email delivery with **Only fai
 
 After the custom-domain route was verified, the native Render subdomain was disabled. The Cloudflare-proxied `/health` and `/ready` endpoints continued to return their expected success responses, while the native `cyph1-commerce-customer-production.onrender.com/health` route no longer returned the application health response. This removes the normal public direct-origin bypass around Cloudflare.
 
-An independent external uptime monitor against the final production custom hostname remains a separate control.
+Independent external availability monitoring is now configured using UptimeRobot against `https://commerce.cyph1.co.uk/ready` at a five-minute interval. The monitor reported the endpoint **Up**, with the initial observed response time approximately 240 ms and no incidents at setup time. Because the monitored path is the public Cloudflare-proxied readiness endpoint, the check exercises the external route through Cloudflare to the customer runtime and its database-readiness check.
+
+The monitor's notification route was tested using UptimeRobot's non-disruptive **Test Notification** function. The operational owner confirmed receipt of the test email. This demonstrates an independent end-to-end alert route without deliberately taking the production service or database offline.
+
+The independent external uptime-monitoring control is therefore established for the production customer readiness endpoint.
