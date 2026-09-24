@@ -45,8 +45,17 @@ The rehearsal deliberately had no production database URL or Render production d
 
 The live Render production database was not a restore target and was not queried by this rehearsal.
 
+## R2 lifecycle retention
+
+On 24 September 2026, Cloudflare R2 lifecycle rules were enabled for the private `cyph1-commerce-backups` bucket:
+
+- `production/`: delete uploaded objects after **90 days**;
+- `development/`: delete uploaded objects after **90 days**.
+
+The existing default incomplete-multipart-upload abort rule remains enabled at seven days. The backup bucket's separately configured 30-day Bucket Lock remains the minimum-deletion protection; the 90-day lifecycle rules define the routine retention/deletion point for encrypted database backups.
+
 ## Scope and remaining controls
 
 This evidence establishes the complete initial off-platform chain: production dump creation, encryption round-trip, private R2 upload, freshness monitoring, encrypted retrieval, decryption, isolated PostgreSQL 17 restoration, recovered-state verification, and cleanup.
 
-The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. Approved retention/lifecycle policy, encryption-key custody/rotation arrangements, alert/operational ownership, and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
+The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. The 90-day R2 lifecycle retention policy is now configured. Encryption-key custody/rotation arrangements, alert/operational ownership, and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
