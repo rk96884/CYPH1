@@ -72,8 +72,18 @@ This demonstrates that newly created production backups can be recovered without
 
 Historical R2 objects created before this rotation were encrypted with the previous identity. Because no independent copy of that previous identity is known to be retained, those pre-rotation objects must not be treated as independently recoverable after replacement of the GitHub secret. The verified post-rotation backup is the recovery baseline for the new identity.
 
+## Backup failure alert ownership
+
+On 24 September 2026, the GitHub account responsible for CYPH/1 operations was confirmed to have GitHub Actions notifications configured for **Email (Failed workflows only)**.
+
+A controlled end-to-end notification rehearsal was then run using **Production backup freshness monitor #3**. The workflow first passed the real R2 configuration check and the real newest-production-backup freshness check. Its manual-only notification-route rehearsal step was then deliberately enabled and exited with code 1, causing the overall workflow to fail as designed.
+
+The resulting GitHub Actions failure email was received by the operational owner. This demonstrates the current end-to-end route from a production backup-monitor failure through GitHub Actions to the operator's email inbox.
+
+The deliberate failure did not represent a stale or failed production backup; the real production freshness check passed immediately before the notification test.
+
 ## Scope and remaining controls
 
 This evidence establishes the complete initial off-platform chain: production dump creation, encryption round-trip, private R2 upload, freshness monitoring, encrypted retrieval, decryption, isolated PostgreSQL 17 restoration, recovered-state verification, and cleanup.
 
-The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. The 90-day R2 lifecycle retention policy is now configured. Encryption-key custody and rotation have now been demonstrated for newly created backups. Alert/operational ownership and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
+The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. The 90-day R2 lifecycle retention policy is now configured. Encryption-key custody and rotation have now been demonstrated for newly created backups. Backup failure alert ownership has now been demonstrated through an end-to-end email rehearsal. Broader production monitoring/operational ownership and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
