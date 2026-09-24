@@ -1,0 +1,323 @@
+name: Production R2 restore rehearsal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      R2_ENDPOINT: ${{ vars.R2_BACKUP_ENDPOINT }}
+      R2_BUCKET: cyph1-commerce-backups
+      BACKUP_AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY }}
+
+    steps:
+      - name: Verify configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$BACKUP_AGE_IDENTITY" || {
+            echo "Backup encryption identity is missing."
+            exit 1
+          }
+
+          test -n "$AWS_ACCESS_KEY_ID" || {
+            echo "R2 access key is missing."
+            exit 1
+          }
+
+          test -n "$AWS_SECRET_ACCESS_KEY" || {
+            echo "R2 secret access key is missing."
+            exit 1
+          }
+
+          test -n "$R2_ENDPOINT" || {
+            echo "R2 endpoint is missing."
+            exit 1
+          }
+
+          case "$R2_ENDPOINT" in
+            https://*.eu.r2.cloudflarestorage.com) ;;
+            *)
+              echo "R2 endpoint must be the EU jurisdiction S3 API endpoint."
+              exit 1
+              ;;
+          esac
+
+          if [ -n "${DATABASE_URL:-}" ]; then
+            echo "Refusing restore rehearsal: DATABASE_URL must not be present."
+            exit 1
+          fi
+
+          echo "Configuration verified. No live database target is configured."
+
+      - name: Install PostgreSQL 17 and age
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update -qq
+          sudo apt-get install -y curl ca-certificates age >/dev/null
+
+          sudo install -d /usr/share/postgresql-common/pgdg
+
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc |
+            sudo gpg --dearmor --yes \
+              -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg
+
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.gpg] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" |
+            sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-17 postgresql-client-17 >/dev/null
+
+          /usr/lib/postgresql/17/bin/pg_restore --version
+          age --version
+
+      - name: Download newest encrypted production backup
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          object="$(aws s3api list-objects-v2 \
+            --bucket "$R2_BUCKET" \
+            --prefix "production/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --query 'sort_by(Contents,&LastModified)[-1].Key' \
+            --output text)"
+
+          test -n "$object" || {
+            echo "No production backup found."
+            exit 1
+          }
+
+          test "$object" != "None" || {
+            echo "No production backup found."
+            exit 1
+          }
+
+          case "$object" in
+            production/*.dump.age) ;;
+            *)
+              echo "Newest production object is not an encrypted production dump."
+              exit 1
+              ;;
+          esac
+
+          aws s3 cp \
+            "s3://$R2_BUCKET/$object" \
+            "$RUNNER_TEMP/backup.dump.age" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --only-show-errors
+
+          test -s "$RUNNER_TEMP/backup.dump.age"
+
+          echo "Downloaded newest encrypted production backup."
+
+      - name: Decrypt and validate PostgreSQL dump
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+
+          printf '%s\n' "$BACKUP_AGE_IDENTITY" \
+            > "$RUNNER_TEMP/identity.txt"
+
+          unset BACKUP_AGE_IDENTITY
+
+          age -d \
+            -i "$RUNNER_TEMP/identity.txt" \
+            -o "$RUNNER_TEMP/backup.dump" \
+            "$RUNNER_TEMP/backup.dump.age"
+
+          test -s "$RUNNER_TEMP/backup.dump"
+
+          test "$(head -c 5 "$RUNNER_TEMP/backup.dump")" = "PGDMP"
+
+          echo "Encrypted backup decrypted and PostgreSQL custom-format header verified."
+
+      - name: Create isolated PostgreSQL 17 restore target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! sudo pg_lsclusters --no-header |
+            awk '$1 == "17" && $2 == "main" { found=1 } END { exit(found ? 0 : 1) }'
+          then
+            sudo pg_createcluster 17 main --start
+          else
+            sudo pg_ctlcluster 17 main start
+          fi
+
+          RESTORE_PORT="$(
+            sudo pg_lsclusters --no-header |
+            awk '$1 == "17" && $2 == "main" { print $3; exit }'
+          )"
+
+          test -n "$RESTORE_PORT"
+
+          sudo -u postgres \
+            /usr/lib/postgresql/17/bin/createdb \
+            -p "$RESTORE_PORT" \
+            commerce_production_restore_test
+
+          echo "RESTORE_PORT=$RESTORE_PORT" >> "$GITHUB_ENV"
+
+          echo "Created isolated runner-local PostgreSQL restore target."
+
+      - name: Restore production backup into isolated target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo install \
+            -o postgres \
+            -g postgres \
+            -m 0600 \
+            "$RUNNER_TEMP/backup.dump" \
+            /var/lib/postgresql/17/main/restore.dump
+
+          sudo -u postgres \
+            /usr/lib/postgresql/17/bin/pg_restore \
+            --exit-on-error \
+            --no-owner \
+            --no-privileges \
+            --host=/var/run/postgresql \
+            --port="$RESTORE_PORT" \
+            --dbname=commerce_production_restore_test \
+            /var/lib/postgresql/17/main/restore.dump
+
+          echo "Production backup restored into isolated runner-local PostgreSQL."
+
+      - name: Verify recovered production database
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          psql_cmd=(
+            sudo -u postgres
+            /usr/lib/postgresql/17/bin/psql
+            -p "$RESTORE_PORT"
+            -d commerce_production_restore_test
+            -v ON_ERROR_STOP=1
+            -At
+          )
+
+          migrations="$(
+            "${psql_cmd[@]}" \
+              -c "SELECT COUNT(*) FROM schema_migrations;"
+          )"
+
+          expected_tables="$(
+            "${psql_cmd[@]}" -c "
+              SELECT COUNT(*)
+              FROM pg_tables
+              WHERE schemaname = 'public'
+                AND tablename IN (
+                  'products',
+                  'inventory_levels',
+                  'customers',
+                  'customer_consents',
+                  'addresses',
+                  'shipping_zones',
+                  'shipping_zone_countries',
+                  'shipping_methods',
+                  'shipping_rates',
+                  'orders',
+                  'order_items',
+                  'payments',
+                  'refunds',
+                  'webhook_deliveries',
+                  'webhook_events',
+                  'fulfilments',
+                  'outbox_events',
+                  'checkout_sessions',
+                  'fulfilment_events',
+                  'operator_commands',
+                  'communication_deliveries',
+                  'audit_events',
+                  'schema_migrations'
+                );
+            "
+          )"
+
+          customers="$(
+            "${psql_cmd[@]}" -c "SELECT COUNT(*) FROM customers;"
+          )"
+
+          orders="$(
+            "${psql_cmd[@]}" -c "SELECT COUNT(*) FROM orders;"
+          )"
+
+          payments="$(
+            "${psql_cmd[@]}" -c "SELECT COUNT(*) FROM payments;"
+          )"
+
+          refunds="$(
+            "${psql_cmd[@]}" -c "SELECT COUNT(*) FROM refunds;"
+          )"
+
+          test "$migrations" = "10" || {
+            echo "Expected 10 migrations; found $migrations."
+            exit 1
+          }
+
+          test "$expected_tables" = "23" || {
+            echo "Expected 23 commerce tables; found $expected_tables."
+            exit 1
+          }
+
+          test "$customers" = "0" || {
+            echo "Unexpected customer records found."
+            exit 1
+          }
+
+          test "$orders" = "0" || {
+            echo "Unexpected order records found."
+            exit 1
+          }
+
+          test "$payments" = "0" || {
+            echo "Unexpected payment records found."
+            exit 1
+          }
+
+          test "$refunds" = "0" || {
+            echo "Unexpected refund records found."
+            exit 1
+          }
+
+          echo "Recovered production database verification passed."
+          echo "Applied migrations: 10"
+          echo "Expected commerce tables: 23/23"
+          echo "Customers/orders/payments/refunds: 0/0/0/0"
+
+      - name: Remove isolated restore and runner-local backup material
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${RESTORE_PORT:-}" ]; then
+            sudo -u postgres \
+              /usr/lib/postgresql/17/bin/dropdb \
+              --if-exists \
+              -p "$RESTORE_PORT" \
+              commerce_production_restore_test \
+              2>/dev/null || true
+          fi
+
+          sudo rm -f /var/lib/postgresql/17/main/restore.dump
+
+          rm -f \
+            "$RUNNER_TEMP/backup.dump.age" \
+            "$RUNNER_TEMP/backup.dump" \
+            "$RUNNER_TEMP/identity.txt"
+
+          echo "Isolated restore and runner-local backup material removed."
