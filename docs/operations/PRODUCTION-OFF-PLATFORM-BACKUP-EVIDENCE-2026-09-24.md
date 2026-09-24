@@ -29,6 +29,24 @@ The production freshness monitor is isolated to the R2 `production/` prefix, so 
 
 On 24 September 2026, manual run **Production backup freshness monitor #1** completed successfully. The real R2 configuration and newest-production-backup freshness checks passed. The manual-only deliberate notification-route failure was skipped, as intended.
 
+## Production R2 restore rehearsal
+
+On 24 September 2026, manual run **Production R2 restore rehearsal #1** completed successfully.
+
+The rehearsal deliberately had no production database URL or Render production database credential. It:
+
+- verified R2 and encryption configuration and refused execution if a `DATABASE_URL` was present;
+- selected the newest encrypted object only from the R2 `production/` prefix;
+- downloaded and decrypted the backup and verified the PostgreSQL custom-format `PGDMP` header;
+- created an isolated PostgreSQL 17 restore target on the disposable GitHub Actions runner;
+- restored the production backup into that isolated target;
+- verified **10** applied migrations, **23 / 23** expected commerce tables, and **0 / 0 / 0 / 0** customers/orders/payments/refunds, matching the independently established pre-launch production state;
+- removed the isolated restore and runner-local encrypted/plaintext/key material after verification.
+
+The live Render production database was not a restore target and was not queried by this rehearsal.
+
 ## Scope and remaining controls
 
-This evidence establishes successful production off-platform backup creation plus independent freshness detection. It does **not** by itself prove a production R2 restore. A production off-platform restore rehearsal, approved retention/lifecycle policy, encryption-key custody/rotation arrangements, alert/operational ownership, and future restore testing after real production data exists remain separate controls.
+This evidence establishes the complete initial off-platform chain: production dump creation, encryption round-trip, private R2 upload, freshness monitoring, encrypted retrieval, decryption, isolated PostgreSQL 17 restoration, recovered-state verification, and cleanup.
+
+The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. Approved retention/lifecycle policy, encryption-key custody/rotation arrangements, alert/operational ownership, and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
