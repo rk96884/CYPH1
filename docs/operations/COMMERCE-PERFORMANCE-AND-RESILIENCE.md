@@ -158,3 +158,18 @@ multi-instance behaviour and production objectives also remain launch gates.
 | Probe summary | Passed with zero invalid responses: peak concurrency 4; p50 63 ms; p95 198 ms; maximum 240 ms |
 | Render/PostgreSQL observations | No failure was exposed by the exact health/readiness responses; provider resource graphs were not captured |
 | Follow-up | GitHub Actions **Commerce staging monitor** run #50 passed after the probe against `c90ac74`; retain checkout/provider load, resource evidence and capacity approval as separate gates |
+
+
+## Production customer routing and readiness monitoring — 24 September 2026
+
+The production customer service was assigned the custom hostname `commerce.cyph1.co.uk`. Cloudflare DNS uses a proxied CNAME to the Render customer service. Render verified the custom domain and issued its certificate.
+
+`CUSTOMER_RUNTIME_ORIGIN` was changed to `https://commerce.cyph1.co.uk` and the service redeployed successfully. Through the Cloudflare-proxied hostname, `/health` returned `{"status":"ok"}` and `/ready` returned `{"status":"ready"}`.
+
+Render's service Health Check Path is configured as `/ready`. The application readiness endpoint performs the existing PostgreSQL readiness query, so this check covers application readiness and database connectivity rather than process liveness alone.
+
+Render workspace notifications are configured for Email delivery with **Only failure notifications**, and the production customer service inherits that workspace default. This records the configured Render failure-notification route; unlike the separately rehearsed GitHub backup alert, a deliberate Render service outage was not induced solely to test email delivery.
+
+After the custom-domain route was verified, the native Render subdomain was disabled. The Cloudflare-proxied `/health` and `/ready` endpoints continued to return their expected success responses, while the native `cyph1-commerce-customer-production.onrender.com/health` route no longer returned the application health response. This removes the normal public direct-origin bypass around Cloudflare.
+
+An independent external uptime monitor against the final production custom hostname remains a separate control.
