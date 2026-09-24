@@ -1,6 +1,6 @@
 # Production off-platform backup evidence — 24 September 2026
 
-**Status:** Initial production backup and freshness monitoring passed
+**Status:** Initial production backup, restore, retention, and encryption-key recovery controls passed
 
 ## Backup control
 
@@ -54,8 +54,26 @@ On 24 September 2026, Cloudflare R2 lifecycle rules were enabled for the private
 
 The existing default incomplete-multipart-upload abort rule remains enabled at seven days. The backup bucket's separately configured 30-day Bucket Lock remains the minimum-deletion protection; the 90-day lifecycle rules define the routine retention/deletion point for encrypted database backups.
 
+## Encryption-key custody and rotation
+
+On 24 September 2026, the backup age identity was rotated after establishing independent recovery custody.
+
+A replacement age identity was generated locally. Its public recipient is:
+
+`age1jr8pudq0sk8knhta4e5yarne3y4wh3r20xr5x7phtlenunmndghq4kr7k2`
+
+The private identity itself is not recorded in repository evidence. Independent protected copies were established on the recovery operator's laptop and phone before the GitHub Actions `BACKUP_AGE_IDENTITY` secret was replaced.
+
+After rotation, manual run **Production encrypted R2 backup #2** completed successfully, including production dump validation, age encryption and decrypt/compare round-trip, private R2 upload, and runner-local cleanup. The resulting encrypted object was `production_2026_09_24_commerce-production-20260924T154143Z-36021967578.dump.age`.
+
+The new encrypted R2 object was then downloaded independently and decrypted locally using the laptop-held recovery identity rather than the GitHub Actions secret. Decryption produced a 79,626-byte dump. A read-only `pg_restore --list` validation identified it as a PostgreSQL custom-format archive created from `cyph1_commerce_production`, with 159 TOC entries and source database version PostgreSQL 17.11. The temporary plaintext recovery-test dump was then deleted and its absence confirmed.
+
+This demonstrates that newly created production backups can be recovered without relying on GitHub retaining the only copy of the age private identity.
+
+Historical R2 objects created before this rotation were encrypted with the previous identity. Because no independent copy of that previous identity is known to be retained, those pre-rotation objects must not be treated as independently recoverable after replacement of the GitHub secret. The verified post-rotation backup is the recovery baseline for the new identity.
+
 ## Scope and remaining controls
 
 This evidence establishes the complete initial off-platform chain: production dump creation, encryption round-trip, private R2 upload, freshness monitoring, encrypted retrieval, decryption, isolated PostgreSQL 17 restoration, recovered-state verification, and cleanup.
 
-The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. The 90-day R2 lifecycle retention policy is now configured. Encryption-key custody/rotation arrangements, alert/operational ownership, and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
+The initial production R2 recovery path is therefore demonstrated for the current pre-launch empty-data state. The 90-day R2 lifecycle retention policy is now configured. Encryption-key custody and rotation have now been demonstrated for newly created backups. Alert/operational ownership and future restore testing after real production data exists remain separate controls. The strict zero-record assertions in the current rehearsal must be revised before it is used after live commerce data exists.
