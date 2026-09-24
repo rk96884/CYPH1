@@ -144,6 +144,22 @@ payment.
    alternate-access method.
 7. Record gaps, owners and due dates; repeat failed portions before launch.
 
+
+## Production operations access evidence — 24 September 2026
+
+A separate Render service, `cyph1-commerce-operations-production`, was deployed in Frankfurt from `main` using the commerce API operations runtime. It connects to the production PostgreSQL database while commerce, payment and fulfilment remain disabled.
+
+The service is exposed through `operations.cyph1.co.uk` behind a dedicated Cloudflare Access self-hosted application named **CYPH1 Commerce Operations Production**. The existing named-operator-only Access policy is attached. The native application root was reached only after completing the Cloudflare Access authentication flow.
+
+Application-level authorization is separately constrained by `OPERATIONS_ACCESS_GRANTS`. At this rehearsal the named production operator was granted only `orders:read` and `reconciliation:export`. The higher-risk `refunds:create` and `fulfilment:retry` permissions were not granted and were not exercised.
+
+Two read-only production checks were completed through the authenticated custom-domain path:
+
+- `GET /operations/orders` returned `{"orders":[]}`, demonstrating successful Cloudflare authentication, production Access audience validation, application grant recognition, the `orders:read` permission and a production PostgreSQL read.
+- `GET /operations/reconciliation.csv` for a bounded September 2026 range returned the expected reconciliation column headings with no data rows, demonstrating the `reconciliation:export` permission while confirming the current production commerce dataset remained empty.
+
+No order, payment, refund, fulfilment action or other commerce write was created by these checks. This evidence establishes the current primary operator's read-only production operations access. It does **not** satisfy the separate deputy-access, staffing, coverage, escalation or primary-unavailable approval gates below.
+
 ## Approval gates
 
 - [ ] Incident commander and deputy appointed and accepted.
