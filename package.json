@@ -44,8 +44,8 @@
     "probe:production-db-capacity": "node scripts/check-production-db-capacity.mjs"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.3",
-    "astro": "^7.3.2",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.3",
     "sharp": "^0.35.4"
   },
   "devDependencies": {
