@@ -1,0 +1,65 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BrandMark from "../../components/BrandMark.astro";
+
+const commerceApiUrl = "https://commerce.cyph1.co.uk";
+---
+<BaseLayout title="Payment status — CYPH/1" description="Check the status of your CYPH/1 order." robots="noindex, nofollow, noarchive">
+  <header class="private-header container"><BrandMark/><span>Secure checkout</span></header>
+  <main id="main" class="checkout-status container" data-order-status data-api-url={commerceApiUrl}>
+    <p class="eyebrow">Order status</p>
+    <h1>Checking your payment</h1>
+    <p data-status-message>Your browser return is not proof of payment. We’ll confirm the order once Mollie’s verified payment notification has been processed.</p>
+    <p class="order-reference" data-order-reference></p>
+    <a class="text-link" href="/">Return to CYPH/1</a>
+  </main>
+  <script>
+    const root = document.querySelector("[data-order-status]");
+    const message = document.querySelector("[data-status-message]");
+    const output = document.querySelector("[data-order-reference]");
+    const order = new URLSearchParams(window.location.search).get("order");
+    const validOrder = order && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order);
+    if (output instanceof HTMLElement && validOrder) output.textContent = `Order reference: ${order}`;
+
+    if (root instanceof HTMLElement && message instanceof HTMLElement && validOrder) {
+      const apiUrl = root.dataset.apiUrl;
+      let attempts = 0;
+      const maximumAttempts = 30;
+      const poll = async () => {
+        attempts += 1;
+        try {
+          const response = await fetch(`${apiUrl}/orders/${encodeURIComponent(order)}/status`, {
+            method: "GET",
+            cache: "no-store",
+            credentials: "omit",
+            headers: { Accept: "application/json" },
+          });
+          if (response.ok) {
+            const result = await response.json();
+            if (result?.state === "paid") {
+              message.textContent = "Payment confirmed. Your order has been received and is now being prepared.";
+              return;
+            }
+            if (result?.state === "cancelled") {
+              window.location.replace(`/private-commerce/cancelled/?order=${encodeURIComponent(order)}`);
+              return;
+            }
+          }
+        } catch {
+          // Keep the current status and retry within the bounded polling window.
+        }
+        if (attempts < maximumAttempts) window.setTimeout(poll, 2000);
+        else message.textContent = "We’re still waiting for payment confirmation. Your order has not been marked as paid unless our verified payment notification confirms it.";
+      };
+      window.setTimeout(poll, 1000);
+    } else if (message instanceof HTMLElement) {
+      message.textContent = "We couldn’t identify this order from the return link. Please contact CYPH/1 support if you need help.";
+    }
+  </script>
+</BaseLayout>
+<style>
+  .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
+  .private-header span{font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase;color:var(--cyph-text-secondary)}
+  .checkout-status{min-height:70svh;padding-block:var(--cyph-layout-section)}h1{max-width:12ch;font-size:clamp(2.4rem,7vw,6rem);line-height:1.08}.checkout-status>p{max-width:42rem;color:var(--cyph-text-secondary)}.order-reference{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:.75rem}
+  @media(max-width:420px){.private-header{align-items:flex-start;gap:var(--cyph-space-4)}.checkout-status{padding-block:var(--cyph-space-8)}}
+</style>
