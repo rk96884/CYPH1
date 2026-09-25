@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { CreateFulfilmentRequest, FulfilmentProviderEvent, FulfilmentStatus } from "../../../../packages/commerce-core/src/index.js";
 import { ManualTestFulfilmentProvider } from "./manual-test.js";
+import { ManualLiveFulfilmentProvider } from "./manual-live.js";
+import { loadCommerceConfig } from "../config.js";
 import { PostgresFulfilmentOutboxConsumer, defaultFulfilmentAutomaticRetryLimit } from "./outbox.js";
 import { FulfilmentError, FulfilmentService, type FulfilmentRepository } from "./service.js";
 
@@ -86,4 +88,24 @@ test("cancellation and return commands use stable provider idempotency keys", as
   repository.status = "dispatched";
   await service.requestReturn(repository.reference, "operator-command-2");
   assert.deepEqual(keys, ["cancel:operator-command-1", "return:operator-command-2"]);
+});
+
+
+test("manual-live fulfilment is explicit, deterministic and side-effect free", async () => {
+  const provider = new ManualLiveFulfilmentProvider();
+  assert.equal(provider.key, "manual-live");
+  assert.deepEqual(await provider.create(request), { providerReference: "manual-live-CYPH1-0001", status: "accepted" });
+  await assert.doesNotReject(() => provider.cancel("manual-live-CYPH1-0001", "cancel-1"));
+  await assert.doesNotReject(() => provider.requestReturn("manual-live-CYPH1-0001", "return-1"));
+});
+
+test("manual-live fulfilment is restricted to live mode and satisfies commerce dependency gating", () => {
+  assert.throws(() => loadCommerceConfig({ FULFILMENT_MODE: "test", FULFILMENT_PROVIDER: "manual-live" }), /restricted to live mode/);
+  assert.throws(() => loadCommerceConfig({ FULFILMENT_MODE: "live", FULFILMENT_PROVIDER: "manual-test" }), /restricted to test mode/);
+  const config = loadCommerceConfig({
+    COMMERCE_ENABLED: "true", PAYMENT_PROVIDER: "mollie-live", FULFILMENT_MODE: "live", FULFILMENT_PROVIDER: "manual-live",
+  });
+  assert.equal(config.commerceEnabled, true);
+  assert.equal(config.fulfilmentMode, "live");
+  assert.equal(config.fulfilmentProvider, "manual-live");
 });
