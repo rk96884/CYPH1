@@ -1,5 +1,6 @@
 import { PaymentProviderError } from "../../../../packages/commerce-core/src/index.js";
 import { loadCommerceConfig } from "../config.js";
+import { MollieLivePaymentProvider } from "./mollie-live.js";
 import { MollieTestPaymentProvider } from "./mollie-test.js";
 import { ConfiguredPaymentProviderRegistry } from "./registry.js";
 
@@ -13,9 +14,10 @@ export const createPaymentProviderRegistry = (environment: Environment): Configu
   const apiKey = environment.MOLLIE_API_KEY;
   const origins = environment.PAYMENT_CALLBACK_ORIGINS?.split(",").map((value) => value.trim()).filter(Boolean) ?? [];
   if (!apiKey || origins.length === 0) {
-    throw new PaymentProviderError("configuration_error", "Mollie test configuration requires an API key and approved callback origins.");
+    throw new PaymentProviderError("configuration_error", "Mollie configuration requires an API key and approved callback origins.");
   }
-  return new ConfiguredPaymentProviderRegistry([
-    new MollieTestPaymentProvider({ apiKey, allowedCallbackOrigins: origins }),
-  ], commerce.paymentProvider);
+  const provider = commerce.paymentProvider === "mollie-live"
+    ? new MollieLivePaymentProvider({ apiKey, allowedCallbackOrigins: origins })
+    : new MollieTestPaymentProvider({ apiKey, allowedCallbackOrigins: origins });
+  return new ConfiguredPaymentProviderRegistry([provider], commerce.paymentProvider);
 };
