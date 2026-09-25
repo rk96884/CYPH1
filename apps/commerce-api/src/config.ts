@@ -1,6 +1,6 @@
 export type PaymentProviderKey = "disabled" | "mollie-test" | "mollie-live";
-export type FulfilmentMode = "disabled" | "test";
-export type FulfilmentProviderKey = "disabled" | "manual-test";
+export type FulfilmentMode = "disabled" | "test" | "live";
+export type FulfilmentProviderKey = "disabled" | "manual-test" | "manual-live";
 
 export type CommerceConfig = Readonly<{
   commerceEnabled: boolean;
@@ -26,10 +26,10 @@ const isPaymentProvider = (value: string): value is PaymentProviderKey =>
   value === "disabled" || value === "mollie-test" || value === "mollie-live";
 
 const isFulfilmentMode = (value: string): value is FulfilmentMode =>
-  value === "disabled" || value === "test";
+  value === "disabled" || value === "test" || value === "live";
 
 const isFulfilmentProvider = (value: string): value is FulfilmentProviderKey =>
-  value === "disabled" || value === "manual-test";
+  value === "disabled" || value === "manual-test" || value === "manual-live";
 
 export const loadCommerceConfig = (environment: Environment): CommerceConfig => {
   assertServerSecretBoundary(environment);
@@ -47,6 +47,9 @@ export const loadCommerceConfig = (environment: Environment): CommerceConfig => 
   if (!isFulfilmentProvider(fulfilmentProvider)) throw new Error("Unsupported FULFILMENT_PROVIDER configuration.");
   if (fulfilmentProvider === "manual-test" && fulfilmentMode !== "test") {
     throw new Error("The manual-test fulfilment provider is restricted to test mode.");
+  }
+  if (fulfilmentProvider === "manual-live" && fulfilmentMode !== "live") {
+    throw new Error("The manual-live fulfilment provider is restricted to live mode.");
   }
 
   const requestedEnabled = environment.COMMERCE_ENABLED === "true";
