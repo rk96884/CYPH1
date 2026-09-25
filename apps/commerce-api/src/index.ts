@@ -18,6 +18,7 @@ export {
 export type { CustomerRouteGates } from "./runtime/customer-http.js";
 export { FulfilmentError, FulfilmentService } from "./fulfilment/service.js";
 export { ManualTestFulfilmentProvider } from "./fulfilment/manual-test.js";
+export { ManualLiveFulfilmentProvider } from "./fulfilment/manual-live.js";
 export { PostgresFulfilmentRepository } from "./fulfilment/postgres.js";
 export { PostgresFulfilmentOutboxConsumer } from "./fulfilment/outbox.js";
 export { OperationsError, OperationsService, operationPermissions } from "./operations/service.js";
