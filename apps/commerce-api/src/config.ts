@@ -1,4 +1,4 @@
-export type PaymentProviderKey = "disabled" | "mollie-test";
+export type PaymentProviderKey = "disabled" | "mollie-test" | "mollie-live";
 export type FulfilmentMode = "disabled" | "test";
 export type FulfilmentProviderKey = "disabled" | "manual-test";
 
@@ -23,7 +23,7 @@ export const assertServerSecretBoundary = (environment: Environment): void => {
 };
 
 const isPaymentProvider = (value: string): value is PaymentProviderKey =>
-  value === "disabled" || value === "mollie-test";
+  value === "disabled" || value === "mollie-test" || value === "mollie-live";
 
 const isFulfilmentMode = (value: string): value is FulfilmentMode =>
   value === "disabled" || value === "test";
