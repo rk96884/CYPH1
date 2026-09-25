@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BrandMark from "../../components/BrandMark.astro";
+---
+<BaseLayout title="Checkout cancelled — CYPH/1" description="Your CYPH/1 checkout was cancelled." robots="noindex, nofollow, noarchive">
+  <header class="private-header container"><BrandMark/><span>Secure checkout</span></header>
+  <main id="main" class="checkout-status container">
+    <p class="eyebrow">Checkout cancelled</p>
+    <h1>No payment has been confirmed</h1>
+    <p>You left the payment flow before completion. We won’t treat this order as paid unless Mollie sends us a verified payment notification.</p>
+    <a class="text-link" href="/">Return to CYPH/1</a>
+  </main>
+</BaseLayout>
+<style>
+  .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
+  .private-header span{font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase;color:var(--cyph-text-secondary)}
+  .checkout-status{min-height:70svh;padding-block:var(--cyph-layout-section)}h1{max-width:14ch;font-size:clamp(2.4rem,7vw,6rem);line-height:1.08}.checkout-status>p{max-width:42rem;color:var(--cyph-text-secondary)}
+  @media(max-width:420px){.private-header{align-items:flex-start;gap:var(--cyph-space-4)}.checkout-status{padding-block:var(--cyph-space-8)}}
+</style>
