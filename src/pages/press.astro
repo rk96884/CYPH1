@@ -1,0 +1,74 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import BrandMark from "../components/BrandMark.astro";
+import { withBase } from "../utils/base-path";
+
+const title = "Press & Media | CYPH/1";
+const description = "Press and media information for CYPH/1, a UK premium beauty-technology brand exploring a more informed approach to at-home IPL and the hair-growth cycle.";
+const topics = [
+  "At-home IPL and consumer beauty technology",
+  "The hair-growth cycle and why timing matters to IPL routines",
+  "Making IPL education clearer and more useful for consumers",
+  "Beauty-tech product design, usability and consistency",
+  "Building a UK premium beauty-technology brand",
+  "CYPH/1 educational content and the developing Cycle Phase One concept",
+];
+---
+<BaseLayout title={title} description={description}>
+  <Header />
+  <main id="main" class="press-page">
+    <section class="press-hero section">
+      <div class="container press-hero-grid">
+        <div>
+          <p class="eyebrow">Press & media</p>
+          <h1>Beauty technology,<br/><span>better understood.</span></h1>
+          <p class="press-lede">CYPH/1 is a UK premium consumer beauty-technology brand exploring a more informed approach to at-home IPL — with education, consistency and the hair-growth cycle at the centre of the conversation.</p>
+          <a class="button" href="mailto:hello@cyph1.co.uk?subject=Press%20%26%20media%20enquiry">Media enquiry</a>
+        </div>
+        <div class="press-visual" aria-hidden="true">
+          <div class="visual-orbit orbit-a"></div><div class="visual-orbit orbit-b"></div><div class="visual-core"><BrandMark /></div>
+          <span class="visual-label label-a">CYCLE</span><span class="visual-label label-b">PHASE</span><span class="visual-label label-c">IPL</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="press-about section"><div class="container press-split">
+      <p class="section-index">01 / About CYPH/1</p><div><h2>Designed around a more informed routine.</h2><p>CYPH/1 is developing premium at-home beauty technology for the UK market. Our starting point is simple: effective routines depend not only on the device, but also on understanding how and when it is used.</p><p>Our work currently focuses on IPL hair removal and clearer consumer education around the hair-growth cycle. We are building the brand carefully, with an emphasis on thoughtful design, useful information and claims that remain proportionate to the evidence behind them.</p></div>
+    </div></section>
+
+    <section class="press-expertise section"><div class="press-watermark" aria-hidden="true">C/1</div><div class="container press-split press-content">
+      <p class="section-index">02 / Commentary</p><div><h2>How we can help journalists and creators.</h2><p>We welcome relevant media enquiries and can provide background information or commentary across areas including:</p><ul>{topics.map((topic) => <li>{topic}</li>)}</ul></div>
+    </div></section>
+
+    <section class="press-learning section"><div class="container press-split">
+      <p class="section-index">03 / Learn</p><div><h2>Education before hype.</h2><p>Our growing learning library explains the fundamentals behind IPL, including the hair-growth cycle and why consistency matters. It is intended to make beauty technology easier to understand without overstating what the science can currently tell us.</p><a class="press-link" href={withBase("learn/")}>Explore CYPH/1 Learn →</a></div>
+    </div></section>
+
+    <section class="press-facts section"><div class="container"><p class="section-index">04 / Company information</p><div class="fact-grid"><article><span>Company</span><strong>CYPH1 LTD</strong></article><article><span>Company number</span><strong>17455968</strong></article><article><span>Based in</span><strong>United Kingdom</strong></article><article><span>Focus</span><strong>Premium consumer beauty technology</strong></article></div></div></section>
+
+    <section class="press-contact section"><div class="container press-split"><p class="section-index">05 / Media enquiries</p><div><h2>Working on a beauty-tech story?</h2><p>For press enquiries, interviews, background information, imagery or relevant requests for comment, please get in touch. If you are working to a deadline, include it in your message.</p><a class="button" href="mailto:hello@cyph1.co.uk?subject=Press%20%26%20media%20enquiry">hello@cyph1.co.uk</a></div></div></section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+.press-page{background:var(--cyph-surface-canvas)}
+.press-hero{min-height:82svh;display:grid;align-items:center;padding-top:10rem;background:radial-gradient(circle at 78% 42%,rgb(167 122 244 / .14),transparent 30%),var(--cyph-surface-base)}
+.press-hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(19rem,.9fr);align-items:center;gap:var(--cyph-layout-cluster)}
+.press-hero h1{max-width:12ch;font-size:clamp(2.8rem,6vw,6rem)}.press-hero h1 span{color:var(--cyph-accent-primary)}
+.press-lede{max-width:38rem;margin:var(--cyph-space-8) 0;color:var(--cyph-text-secondary);font-size:clamp(1rem,1.5vw,1.16rem)}
+.press-visual{position:relative;width:min(38vw,30rem);aspect-ratio:1;margin-inline:auto;animation:pressReveal 1.1s cubic-bezier(.22,.61,.36,1) .15s both}
+.visual-orbit{position:absolute;border:1px solid rgb(191 163 255 / .45);border-radius:50%}.orbit-a{inset:4%;border-top-color:var(--cyph-accent-primary);transform:rotate(-20deg)}.orbit-b{inset:20%;border-right-color:var(--cyph-color-champagne-highlight);transform:rotate(28deg)}
+.visual-core{position:absolute;inset:31%;display:grid;place-items:center;border:1px solid rgb(167 122 244 / .6);border-radius:50%;background:rgb(8 7 17 / .68);padding:1.5rem}.visual-core :global(.brand-mark){width:100%;transform:none}.visual-label{position:absolute;color:var(--cyph-text-secondary);font-size:.58rem;letter-spacing:.2em}.label-a{top:2%;left:46%}.label-b{right:0;bottom:27%}.label-c{bottom:7%;left:18%}
+.press-split{display:grid;grid-template-columns:minmax(10rem,.35fr) minmax(0,1fr);gap:var(--cyph-layout-cluster)}.press-split h2{max-width:13ch;font-size:clamp(2.5rem,5.2vw,5.4rem)}.press-split>div>p{max-width:44rem;color:var(--cyph-text-secondary);font-size:1.03rem}.press-about{background:var(--cyph-surface-raised)}
+.press-expertise{position:relative;overflow:hidden;color:var(--cyph-text-on-light);background:#e4dce6}.press-expertise .section-index{color:#6e4c82}.press-expertise .press-split>div>p{color:#554c59}.press-content{position:relative;z-index:1}.press-watermark{position:absolute;left:-3vw;top:50%;font-family:var(--cyph-font-display);font-size:clamp(14rem,28vw,30rem);line-height:.7;color:rgb(110 76 130 / .07);transform:translateY(-50%);pointer-events:none}
+.press-expertise ul{max-width:48rem;margin:var(--cyph-space-10) 0 0;padding:0;border-top:1px solid rgb(11 7 16 / .22);list-style:none}.press-expertise li{padding:var(--cyph-space-4) 0;border-bottom:1px solid rgb(11 7 16 / .22);color:#403746}
+.press-learning{background:var(--cyph-surface-base)}.press-link{display:inline-block;margin-top:var(--cyph-space-6);color:var(--cyph-accent-primary);font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;text-underline-offset:.35rem}
+.press-facts{color:var(--cyph-text-on-light);background:var(--cyph-surface-editorial)}.press-facts .section-index{color:#6e4c82}.fact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:var(--cyph-space-10);border:1px solid rgb(11 7 16 / .22)}.fact-grid article{min-height:10rem;display:flex;flex-direction:column;justify-content:space-between;padding:var(--cyph-space-6);border-right:1px solid rgb(11 7 16 / .22);border-bottom:1px solid rgb(11 7 16 / .22)}.fact-grid article:nth-child(2n){border-right:0}.fact-grid article:nth-last-child(-n+2){border-bottom:0}.fact-grid span{color:#675d6b;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}.fact-grid strong{font-family:var(--cyph-font-display);font-size:clamp(1rem,2vw,1.5rem);font-weight:400;text-transform:uppercase}
+.press-contact{background:radial-gradient(circle at 12% 45%,rgb(167 122 244 / .12),transparent 30%),var(--cyph-surface-emphasis)}
+@keyframes pressReveal{from{opacity:0;transform:translateY(24px) scale(1.04)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:800px){.press-hero-grid,.press-split{grid-template-columns:1fr}.press-visual{width:min(80vw,26rem);margin-top:2rem}.press-watermark{left:-7rem}.fact-grid{grid-template-columns:1fr}.fact-grid article{border-right:0}.fact-grid article:nth-last-child(2){border-bottom:1px solid rgb(11 7 16 / .22)}}
+@media(prefers-reduced-motion:reduce){.press-visual{animation:none}}
+</style>
