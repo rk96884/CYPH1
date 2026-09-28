@@ -18,7 +18,7 @@ jobs:
       SOURCE_DATABASE_URL: ${{ secrets.COMMERCE_DEVELOPMENT_DATABASE_URL }}
       BACKUP_AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Verify configuration
         shell: bash
