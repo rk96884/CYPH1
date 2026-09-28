@@ -33,7 +33,12 @@ export const handlePaymentWebhookRequest = async (
     const result = await processor.process({ rawBody, headers, endpointUrl: request.url });
     if (result.acknowledgement === "rejected") return json({ received: false }, 400);
     return json({ received: true }, 200);
-  } catch {
+  } catch (error) {
+    console.error("payment_webhook_processing_failed", {
+      error: error instanceof Error
+        ? { name: error.name, message: error.message }
+        : { name: "UnknownError" },
+    });
     return json({ message: "Webhook processing is temporarily unavailable." }, 502);
   }
 };
