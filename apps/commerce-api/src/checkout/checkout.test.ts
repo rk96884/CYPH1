@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { money, PaymentProviderError, type PaymentProvider, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type CreateCheckoutInput, type PaymentProvider, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
 import { CheckoutError, CheckoutService, type CheckoutOrder, type CheckoutRepository, type CheckoutResult } from "./service.js";
 
 class MemoryCheckoutRepository implements CheckoutRepository {
@@ -41,13 +41,13 @@ class MemoryCheckoutRepository implements CheckoutRepository {
   async markResolutionRequired(orderId: string) { this.resolutionRequired.push(orderId); }
 }
 
-const provider = (capture: Array<Readonly<{ amount: number; lines: number }>>): PaymentProvider => ({
+const provider = (capture: CreateCheckoutInput[]): PaymentProvider => ({
   key: "mollie-test",
   async createCheckout(input) {
-    capture.push({ amount: input.amount.value, lines: input.lines.reduce((sum, line) => sum + line.totalAmount.value, 0) });
+    capture.push(input);
     return {
       provider: "mollie-test", providerPaymentId: "tr_test", checkoutUrl: "https://www.mollie.com/checkout/test",
-      status: "pending", metadata: {},
+      status: input.method === "klarna" ? "authorised" : "pending", metadata: {},
     };
   },
   async getPayment() { throw new Error("not used"); },
@@ -60,7 +60,7 @@ const request = (overrides = {}) => ({
   productSlug: "integration-test-fixture", quantity: 1, shippingRateId: "rate_test",
   email: "Test@Example.com", idempotencyKey: "checkout-test-1", correlationId: "correlation-test-1",
   deliveryAddress: {
-    recipientName: "Test Customer", line1: "1 Test Street", locality: "London",
+    givenName: "Test", familyName: "Customer", line1: "1 Test Street", locality: "London",
     postalCode: "SW1A 1AA", countryCode: "GB",
   },
   ...overrides,
@@ -72,30 +72,48 @@ const urls = {
   webhookUrl: "https://api.example/webhooks/mollie",
 };
 
+const serviceFor = (repository: MemoryCheckoutRepository, captured: CreateCheckoutInput[]) => new CheckoutService(
+  { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
+  repository, provider(captured), urls, true,
+);
+
 test("private checkout recalculates authoritative totals and creates a pending hosted checkout", async () => {
   const repository = new MemoryCheckoutRepository();
-  const captured: Array<Readonly<{ amount: number; lines: number }>> = [];
-  const service = new CheckoutService(
-    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
-    repository, provider(captured), urls, true,
-  );
-  const result = await service.initiate(request());
+  const captured: CreateCheckoutInput[] = [];
+  const result = await serviceFor(repository, captured).initiate(request());
   assert.equal(result.status, "pending_payment");
   assert.equal(result.replayed, false);
-  assert.deepEqual(captured, [{ amount: 12_500, lines: 12_500 }]);
+  assert.equal(captured[0]?.amount.value, 12_500);
+  assert.equal(captured[0]?.lines.reduce((sum, line) => sum + line.totalAmount.value, 0), 12_500);
+  assert.deepEqual(captured[0]?.customer, { email: "test@example.com" });
+  assert.equal(captured[0]?.method, undefined);
+  assert.equal(captured[0]?.shippingAddress, undefined);
   assert.equal(repository.orders[0]?.subtotalMinor, 10_000);
   assert.equal(repository.orders[0]?.taxMinor, 2_000);
   assert.equal(repository.orders[0]?.deliveryMinor, 500);
   assert.equal(repository.orders[0]?.email, "test@example.com");
+  assert.equal(repository.orders[0]?.deliveryAddress.recipientName, "Test Customer");
+});
+
+test("Klarna checkout sends structured billing and shipping data with manual capture", async () => {
+  const repository = new MemoryCheckoutRepository();
+  const captured: CreateCheckoutInput[] = [];
+  await serviceFor(repository, captured).initiate(request({ paymentMethod: "klarna" }));
+  const input = captured[0];
+  assert.ok(input);
+  assert.equal(input.method, "klarna");
+  assert.equal(input.captureMode, "manual");
+  assert.deepEqual(input.customer, {
+    email: "test@example.com", givenName: "Test", familyName: "Customer",
+    streetAndNumber: "1 Test Street", postalCode: "SW1A 1AA", city: "London", country: "GB",
+  });
+  assert.deepEqual(input.shippingAddress, input.customer);
 });
 
 test("checkout retries replay the stored hosted session without another provider call", async () => {
   const repository = new MemoryCheckoutRepository();
-  const captured: Array<Readonly<{ amount: number; lines: number }>> = [];
-  const service = new CheckoutService(
-    { commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" },
-    repository, provider(captured), urls, true,
-  );
+  const captured: CreateCheckoutInput[] = [];
+  const service = serviceFor(repository, captured);
   await service.initiate(request());
   const replay = await service.initiate(request());
   assert.equal(replay.replayed, true);
