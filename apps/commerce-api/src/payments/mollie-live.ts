@@ -1,6 +1,6 @@
 import {
-  PaymentProviderError, type CheckoutSession, type CreateCheckoutInput,
-  type GetPaymentInput, type NormalisedPayment, type NormalisedRefund,
+  PaymentProviderError, type CaptureInput, type CheckoutSession, type CreateCheckoutInput,
+  type GetPaymentInput, type NormalisedCapture, type NormalisedPayment, type NormalisedRefund,
   type PaymentProvider, type RefundInput, type VerifiedWebhook,
   type VerifyWebhookInput, type PaymentEvent,
 } from "../../../../packages/commerce-core/src/index.js";
@@ -52,6 +52,11 @@ export class MollieLivePaymentProvider implements PaymentProvider {
 
   async getPayment(input: GetPaymentInput): Promise<NormalisedPayment> {
     const result = await this.#delegate.getPayment(input);
+    return Object.freeze({ ...result, provider: this.key });
+  }
+
+  async capture(input: CaptureInput): Promise<NormalisedCapture> {
+    const result = await this.#delegate.capture(input);
     return Object.freeze({ ...result, provider: this.key });
   }
 
