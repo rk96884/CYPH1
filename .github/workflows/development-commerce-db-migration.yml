@@ -1,0 +1,30 @@
+name: Development commerce DB migration
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-commerce-db-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.COMMERCE_DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Apply commerce database migrations
+        run: npm run db:migrate
+      - name: Verify commerce database schema
+        run: npm run db:verify
