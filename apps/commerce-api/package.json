@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:rehearse:capture-deadlines": "npm run build:runtime && node scripts/rehearse-capture-deadlines.mjs",
+    "monitor:capture-deadlines": "node ../../build/commerce-api/apps/commerce-api/src/runtime/capture-deadline-monitor.js",
     "db:rehearse:capture": "npm run build:runtime && node scripts/rehearse-capture.mjs",
     "test": "node scripts/test.mjs",
     "build:runtime": "tsc -p tsconfig.runtime.json",

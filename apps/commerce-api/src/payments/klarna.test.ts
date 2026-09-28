@@ -111,7 +111,8 @@ test("Mollie exposes Klarna capture deadline and creates an idempotent capture",
   });
   const payment = await provider.getPayment({ providerPaymentId: "tr_klarna1", correlationId: "corr-klarna-1" });
   assert.equal(payment.status, "authorised");
-  assert.equal(payment.captureBefore, "2026-10-26T12:01:00Z");
+  assert.equal(payment.captureBefore, "2026-10-26T12:01:00.000Z");
+  assert.equal(payment.authorisedAt, "2026-09-28T12:01:00.000Z");
   const capture = await provider.capture({ paymentId: "payment_klarna_1", orderId: "order_klarna_1", providerPaymentId: "tr_klarna1", amount: money(12_000, "GBP"), authorisedAmount: money(12_000, "GBP"), operatorId: "fulfilment-worker", idempotencyKey: "capture-order-klarna-1", correlationId: "corr-klarna-1" });
   assert.equal(capture.providerCaptureId, "cpt_1");
   assert.equal(capture.status, "pending");

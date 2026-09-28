@@ -1,4 +1,5 @@
 import pg from "pg";
+import { providerTimestamp } from "../payments/capture-deadline.js";
 import { money, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
 import {
   CheckoutError,
@@ -207,14 +208,18 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     currency: string;
     idempotencyKey: string;
     checkoutUrl: string;
+    status?: "pending" | "authorised";
+    captureMode?: "manual" | "automatic";
+    captureBefore?: string;
+    authorisedAt?: string;
   }>): Promise<void> {
     await this.transaction(async (client) => {
       await client.query(
         `INSERT INTO payments
-          (order_id, provider, provider_payment_id, status, amount_minor, currency, idempotency_key)
-         VALUES ($1, $2, $3, 'pending', $4, $5, $6)`,
+          (order_id, provider, provider_payment_id, status, amount_minor, currency, idempotency_key, capture_mode, capture_before, authorised_at)
+         VALUES ($1, $2, $3, $10, $4, $5, $6, $7, $8, $9)`,
         [input.orderId, input.provider, input.providerPaymentId, input.amountMinor,
-          input.currency, input.idempotencyKey],
+          input.currency, input.idempotencyKey, input.captureMode ?? null, providerTimestamp(input.captureBefore) ?? null, providerTimestamp(input.authorisedAt) ?? null, input.status ?? "pending"],
       );
       const order = await client.query(
         `UPDATE orders SET status = 'pending_payment'

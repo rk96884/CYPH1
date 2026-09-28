@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import { money, PaymentProviderError, type PaymentProviderRegistry } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type NormalisedPayment, type PaymentProviderRegistry } from "../../../../packages/commerce-core/src/index.js";
+import { providerTimestamp } from "../payments/capture-deadline.js";
 
 export const operationPermissions = ["orders:read", "payments:capture", "refunds:create", "fulfilment:retry", "reconciliation:export"] as const;
 export type OperationPermission = typeof operationPermissions[number];
@@ -16,6 +17,7 @@ export type CaptureResult = Readonly<{ status: "completed" | "failed" | "resolut
 export type CaptureReservation = Readonly<{ outcome: "reserved"; paymentId: string; provider: string; providerPaymentId: string; amountMinor: number; currency: string }> | Readonly<{ outcome: "replayed"; result: CaptureResult }>;
 export interface OperationsRepository {
   reserveCapture(input: CaptureCommand): Promise<CaptureReservation>;
+  refreshCapture(input: CaptureCommand & { paymentId: string; payment: NormalisedPayment; now: Date }): Promise<boolean>;
   finishCapture(input: CaptureCommand & { paymentId: string; result: CaptureResult }): Promise<CaptureResult>;
   searchOrders(query: string, limit: number): Promise<readonly OrderSummary[]>;
   getOrder(orderId: string): Promise<OrderDetails | undefined>;
@@ -34,7 +36,7 @@ export class OperationsError extends Error {
 const fingerprint = (value: unknown): string => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
 export class OperationsService {
-  constructor(private readonly repository: OperationsRepository, private readonly providers: PaymentProviderRegistry) {}
+  constructor(private readonly repository: OperationsRepository, private readonly providers: PaymentProviderRegistry, private readonly clock: () => Date = () => new Date()) {}
   search(query: string) { return this.repository.searchOrders(query.trim(), 50); }
   details(orderId: string) { return this.repository.getOrder(orderId); }
 
@@ -48,6 +50,14 @@ export class OperationsService {
       const provider = this.providers.getProvider(reservation.provider);
       if (!provider.capture) throw new PaymentProviderError("configuration_error", "Capture is not supported.");
       const amount = money(reservation.amountMinor, reservation.currency);
+      const payment = await provider.getPayment({ providerPaymentId: reservation.providerPaymentId, correlationId: command.correlationId });
+      if (payment.provider !== reservation.provider || payment.providerPaymentId !== reservation.providerPaymentId ||
+          (payment.orderId !== undefined && payment.orderId !== input.orderId) || payment.amount.value !== amount.value || payment.amount.currency !== amount.currency) throw new Error("provider_identity_mismatch");
+      providerTimestamp(payment.captureBefore); providerTimestamp(payment.authorisedAt);
+      const ready = await this.repository.refreshCapture({ ...command, paymentId: reservation.paymentId, payment, now: this.clock() });
+      // No deadline is guessed. Even a locally overdue payment is refreshed before this decision.
+      if (!ready || payment.status !== "authorised" || payment.captureMode === "automatic" ||
+          !payment.captureBefore || Date.parse(payment.captureBefore) <= this.clock().getTime()) throw new Error("capture_requires_resolution");
       const captured = await provider.capture({ ...input, paymentId: reservation.paymentId, providerPaymentId: reservation.providerPaymentId, amount, authorisedAmount: amount, correlationId: command.correlationId });
       const verified = captured.provider === reservation.provider && captured.providerPaymentId === reservation.providerPaymentId &&
         captured.amount.value === amount.value && captured.amount.currency === amount.currency && !!captured.providerCaptureId;

@@ -8,6 +8,7 @@ class MemoryCheckoutRepository implements CheckoutRepository {
   readonly completed = new Map<string, CheckoutResult>();
   readonly abandoned: string[] = [];
   readonly resolutionRequired: string[] = [];
+  attached: Parameters<CheckoutRepository["attachPayment"]>[0] | undefined;
 
   async getProduct() {
     return {
@@ -29,7 +30,8 @@ class MemoryCheckoutRepository implements CheckoutRepository {
 
   async findCheckout(idempotencyKey: string) { return this.completed.get(idempotencyKey); }
   async createOrder(order: CheckoutOrder) { this.orders.push(order); }
-  async attachPayment(input: Readonly<{ orderId: string; checkoutUrl: string; idempotencyKey: string }>) {
+  async attachPayment(input: Parameters<CheckoutRepository["attachPayment"]>[0]) {
+    this.attached = input;
     const order = this.orders.find((candidate) => candidate.id === input.orderId);
     assert.ok(order);
     this.completed.set(input.idempotencyKey, {
@@ -104,6 +106,8 @@ test("Klarna checkout sends structured billing and shipping data with manual cap
   assert.ok(input);
   assert.equal(input.method, "klarna");
   assert.equal(input.captureMode, "manual");
+  assert.equal(repository.attached?.captureMode, "manual");
+  assert.equal(repository.attached?.status, "authorised");
   assert.deepEqual(input.customer, {
     email: "test@example.com", givenName: "Test", familyName: "Customer",
     streetAndNumber: "1 Test Street", postalCode: "SW1A 1AA", city: "London", country: "GB",

@@ -65,6 +65,8 @@ export type CheckoutSession = Readonly<{
   status: PaymentStatus;
   expiresAt?: string;
   captureBefore?: string;
+  authorisedAt?: string;
+  captureMode?: CaptureMode;
   metadata: Readonly<Record<string, string>>;
 }>;
 
@@ -80,6 +82,7 @@ export type NormalisedPayment = Readonly<{
   createdAt: string;
   authorisedAt?: string;
   captureBefore?: string;
+  captureMode?: CaptureMode;
   paidAt?: string;
   cancelledAt?: string;
   expiredAt?: string;
@@ -153,6 +156,10 @@ export type PaymentEvent = Readonly<{
     "refund.failed" | "dispute.opened" | "dispute.updated";
   occurredAt: string;
   amount?: Money;
+  /** Only populated from verified provider data, never an inbound webhook body. */
+  captureBefore?: string;
+  authorisedAt?: string;
+  captureMode?: CaptureMode;
 }>;
 
 export interface PaymentProvider {

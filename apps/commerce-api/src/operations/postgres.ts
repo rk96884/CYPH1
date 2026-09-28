@@ -1,5 +1,5 @@
 import pg from "pg";
-import { transitionOrder, transitionPayment, type OrderStatus, type PaymentStatus } from "../../../../packages/commerce-core/src/index.js";
+import { transitionOrder, transitionPayment, type NormalisedPayment, type OrderStatus, type PaymentStatus } from "../../../../packages/commerce-core/src/index.js";
 import type { CaptureCommand, CaptureReservation, CaptureResult } from "./service.js";
 import { OperationsError, type OperationsRepository, type RefundReservation, type RefundReason } from "./service.js";
 
@@ -71,6 +71,23 @@ export class PostgresOperationsRepository implements OperationsRepository {
     });
   }
 
+  async refreshCapture(input: CaptureCommand & { paymentId: string; payment: NormalisedPayment; now: Date }): Promise<boolean> {
+    return this.transaction(async (client) => {
+      const commands = await client.query("SELECT status, result FROM operator_commands WHERE idempotency_key=$1 AND command_type='payment.capture' AND request_fingerprint=$2 FOR UPDATE", [input.idempotencyKey, input.fingerprint]);
+      if (commands.rowCount !== 1 || commands.rows[0].status !== "reserved" || commands.rows[0].result.paymentId !== input.paymentId) return false;
+      const payments = await client.query("SELECT status FROM payments WHERE id=$1 AND order_id=$2 FOR UPDATE", [input.paymentId, input.orderId]);
+      const orders = await client.query("SELECT status FROM orders WHERE id=$1 FOR UPDATE", [input.orderId]);
+      if (payments.rows[0]?.status !== "authorised" || orders.rows[0]?.status !== "pending_payment") return false;
+      await client.query(`UPDATE payments SET capture_before=$2, authorised_at=COALESCE($3,authorised_at),
+        capture_mode=COALESCE($4,capture_mode) WHERE id=$1`,
+      [input.paymentId, input.payment.captureBefore ?? null, input.payment.authorisedAt ?? null, input.payment.captureMode ?? null]);
+      await this.audit(client, "payment", input.paymentId, "capture.provider_verified", input.operatorId, input.correlationId,
+        { orderId: input.orderId, providerStatus: input.payment.status, captureBefore: input.payment.captureBefore ?? null });
+      return input.payment.status === "authorised" && input.payment.captureMode !== "automatic" &&
+        !!input.payment.captureBefore && Date.parse(input.payment.captureBefore) > input.now.getTime();
+    });
+  }
+
   async searchOrders(query: string, limit: number) {
     const term = query ? `%${query.replace(/[%_\\]/g, "\\$&")}%` : "%";
     const result = await this.pool.query(`SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at
@@ -82,7 +99,7 @@ export class PostgresOperationsRepository implements OperationsRepository {
     const order = await this.pool.query("SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at FROM orders WHERE id = $1", [orderId]);
     if (order.rowCount !== 1) return undefined;
     const [payments, refunds, fulfilments, audit] = await Promise.all([
-      this.pool.query("SELECT id, provider, provider_payment_id, status, amount_minor, currency, created_at, updated_at FROM payments WHERE order_id = $1 ORDER BY created_at", [orderId]),
+      this.pool.query("SELECT id, provider, provider_payment_id, status, amount_minor, currency, capture_mode, capture_before, authorised_at, capture_deadline_state, capture_monitor_checked_at, created_at, updated_at FROM payments WHERE order_id = $1 ORDER BY created_at", [orderId]),
       this.pool.query(`SELECT r.id, r.payment_id, r.provider_refund_id, r.status, r.amount_minor, r.currency, r.reason, r.created_at, r.updated_at
         FROM refunds r JOIN payments p ON p.id = r.payment_id WHERE p.order_id = $1 ORDER BY r.created_at`, [orderId]),
       this.pool.query("SELECT id, provider, provider_reference, status, failure_code, tracking_carrier, tracking_reference, created_at, updated_at FROM fulfilments WHERE order_id = $1 ORDER BY created_at", [orderId]),

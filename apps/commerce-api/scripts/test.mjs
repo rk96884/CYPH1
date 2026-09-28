@@ -23,6 +23,7 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "operations.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "capture.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "payments", "klarna.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "payments", "capture-monitor.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "access", "access.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "http.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "customer-http.test.js"),

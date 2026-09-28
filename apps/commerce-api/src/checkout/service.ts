@@ -48,7 +48,7 @@ export interface CheckoutRepository {
   getShipping(destinationCountry: string): Promise<Readonly<{ destination: ShippingDestination; rates: readonly ShippingRate[] }> | undefined>;
   findCheckout(idempotencyKey: string, fingerprint: string): Promise<CheckoutResult | undefined>;
   createOrder(order: CheckoutOrder, idempotencyKey: string, fingerprint: string): Promise<void>;
-  attachPayment(input: Readonly<{ orderId: string; provider: string; providerPaymentId: string; amountMinor: number; currency: string; idempotencyKey: string; checkoutUrl: string }>): Promise<void>;
+  attachPayment(input: Readonly<{ orderId: string; provider: string; providerPaymentId: string; amountMinor: number; currency: string; idempotencyKey: string; checkoutUrl: string; status?: "pending" | "authorised"; captureMode?: "manual" | "automatic"; captureBefore?: string; authorisedAt?: string }>): Promise<void>;
   abandonOrder(orderId: string): Promise<void>;
   markResolutionRequired(orderId: string): Promise<void>;
 }
@@ -131,7 +131,11 @@ export class CheckoutService {
         idempotencyKey,
         correlationId: requireText(input.correlationId, "Correlation ID"),
       });
-      await this.repository.attachPayment({ orderId, provider: checkout.provider, providerPaymentId: checkout.providerPaymentId, amountMinor: basket.total.value, currency: basket.total.currency, idempotencyKey, checkoutUrl: checkout.checkoutUrl });
+      await this.repository.attachPayment({ orderId, provider: checkout.provider, providerPaymentId: checkout.providerPaymentId, amountMinor: basket.total.value, currency: basket.total.currency, idempotencyKey, checkoutUrl: checkout.checkoutUrl,
+        status: checkout.status === "authorised" ? "authorised" : "pending",
+        ...(checkout.captureMode ? { captureMode: checkout.captureMode } : input.paymentMethod === "klarna" ? { captureMode: "manual" as const } : {}),
+        ...(checkout.captureBefore ? { captureBefore: checkout.captureBefore } : {}), ...(checkout.authorisedAt ? { authorisedAt: checkout.authorisedAt } : {}),
+      });
       transitionOrder("draft", "pending_payment");
       return Object.freeze({ orderId, orderNumber, status: "pending_payment", checkoutUrl: checkout.checkoutUrl, replayed: false });
     } catch (error) {

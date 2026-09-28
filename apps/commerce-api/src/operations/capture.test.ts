@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type pg from "pg";
-import { PaymentProviderError, type PaymentProvider } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type PaymentProvider } from "../../../../packages/commerce-core/src/index.js";
 import { PostgresOperationsRepository } from "./postgres.js";
 import { PostgresFulfilmentRepository } from "../fulfilment/postgres.js";
 import { OperationsService, type CaptureResult } from "./service.js";
@@ -31,6 +31,7 @@ function fixture() {
     if (s.startsWith("INSERT INTO audit_events")) { state.audits.push(args); return rows([]); }
     if (s.startsWith("SELECT status FROM payments")) return rows([{ status: state.payment }]);
     if (s.startsWith("SELECT status FROM orders")) return rows([{ status: state.order }]);
+    if (s.startsWith("UPDATE payments SET capture_before")) return rows([]);
     if (s.startsWith("UPDATE payments SET status")) { state.payment = String(args[1]); return rows([]); }
     if (s.startsWith("UPDATE orders SET status")) { state.order = String(args[1]); return rows([]); }
     if (s.startsWith("INSERT INTO outbox_events")) { state.outbox++; return rows([]); }
@@ -50,7 +51,8 @@ function fixture() {
   const repository = new PostgresOperationsRepository(pool);
   let capture: NonNullable<PaymentProvider["capture"]> = async (input) => ({ provider: "mollie-test", providerPaymentId: input.providerPaymentId, providerCaptureId: "cpt_1", amount: input.amount, status: "completed", createdAt: "2026-09-28T00:00:00Z" });
   const unused = async (): Promise<never> => { throw new Error("unused"); };
-  const provider: PaymentProvider = { key: "mollie-test", createCheckout: unused, getPayment: unused, refund: unused, verifyWebhook: unused, normaliseWebhook: unused,
+  let deadline: string | undefined = "2026-10-01T12:00:00Z";
+  const provider: PaymentProvider = { key: "mollie-test", createCheckout: unused, getPayment: async () => ({ provider: "mollie-test", providerPaymentId: "tr_1", status: "authorised", captureMode: "manual", ...(deadline ? { captureBefore: deadline } : {}), amount: money(1000, "GBP"), refundableAmount: money(0, "GBP"), createdAt: "2026-09-28T00:00:00Z" }), refund: unused, verifyWebhook: unused, normaliseWebhook: unused,
     capture: async (input) => {
       assert.ok(state.commits > 0, "reservation committed before contacting provider");
       assert.equal(state.commands.get(input.idempotencyKey)?.status, "reserved");
@@ -58,7 +60,7 @@ function fixture() {
       assert.deepEqual(input.amount, input.authorisedAmount);
       state.calls++; return capture(input);
     } };
-  const service = new OperationsService(repository, { getProvider: () => provider, getConfiguredProvider: () => provider });
+  const service = new OperationsService(repository, { getProvider: () => provider, getConfiguredProvider: () => provider }, () => new Date("2026-09-28T12:00:00Z"));
   const config = loadCloudflareAccessConfig({ CLOUDFLARE_ACCESS_TEAM_DOMAIN: "https://test.cloudflareaccess.com", CLOUDFLARE_ACCESS_AUDIENCE: "test",
     OPERATIONS_ACCESS_GRANTS: JSON.stringify({ "operator@example.test": ["payments:capture"], "viewer@example.test": ["orders:read"] }) });
   const access = createCloudflareAccessAuthenticator(config, async (token) => ({ payload: { email: token } }));
@@ -66,7 +68,7 @@ function fixture() {
   const request = (key: string | undefined = "capture-1", identity = "operator@example.test", order = "o1") => handler(new Request(`https://ops.test/operations/orders/${order}/capture`, {
     method: "POST", headers: { ...(key === undefined ? {} : { "Idempotency-Key": key }), ...(identity ? { "cf-access-jwt-assertion": identity } : {}) },
   }));
-  return { state, repository, service, request, setCapture: (fn: typeof capture) => { capture = fn; }, fulfilment: new PostgresFulfilmentRepository(pool) };
+  return { state, repository, service, request, setDeadline: (value: string | undefined) => { deadline = value; }, setCapture: (fn: typeof capture) => { capture = fn; }, fulfilment: new PostgresFulfilmentRepository(pool) };
 }
 
 test("protected authorised capture commits reservation, captures and releases existing fulfilment pipeline", async () => {
@@ -79,8 +81,8 @@ test("protected authorised capture commits reservation, captures and releases ex
   assert.equal(f.state.payment, "captured"); assert.equal(f.state.order, "paid"); assert.equal(f.state.outbox, 1);
   assert.equal((await f.fulfilment.reservePaidOrder("o1", "test", "fulfil", "corr")).outcome, "reserved");
   const audit = f.state.audits.filter((a) => String(a[2]).startsWith("capture."));
-  assert.deepEqual(audit.map((a) => a[2]), ["capture.reserved", "capture.completed"]);
-  assert.equal(audit[0]![3], "operator@example.test"); assert.equal(audit[0]![4], audit[1]![4]);
+  assert.deepEqual(audit.map((a) => a[2]), ["capture.reserved", "capture.provider_verified", "capture.completed"]);
+  assert.equal(audit[0]![3], "operator@example.test"); assert.equal(audit[0]![4], audit[2]![4]);
 });
 
 test("capture requires authenticated operator with explicit server-side grant", async () => {
@@ -147,4 +149,13 @@ test("capture persistence failure retains reservation and blocks replay", async 
   assert.equal((await f.request()).status, 500);
   assert.equal((await f.request()).status, 409); assert.equal((await f.request("replacement")).status, 409);
   assert.equal(f.state.calls, 1); assert.equal(f.state.order, "pending_payment");
+});
+
+test("operator capture refreshes deadline and fails closed when overdue, exactly due, missing or invalid", async () => {
+  for (const deadline of ["2026-09-28T11:59:59Z", "2026-09-28T12:00:00Z", undefined, "not-a-date"]) {
+    const f = fixture(); f.setDeadline(deadline);
+    assert.equal((await f.request()).status, 202); assert.equal(f.state.calls, 0);
+    assert.equal(f.state.order, "pending_payment");
+    await assert.rejects(() => f.fulfilment.reservePaidOrder("o1", "test", "fulfil", "corr"), /verified captured/);
+  }
 });

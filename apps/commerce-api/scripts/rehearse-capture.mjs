@@ -17,14 +17,16 @@ const fulfilment = new PostgresFulfilmentRepository(pool);
 const operatorId = "capture-rehearsal";
 let calls = 0;
 let outcome = "completed";
-const provider = { key: "capture-test", async capture(input) {
+const provider = { key: "capture-test", async getPayment(input) {
+  return { provider: "capture-test", providerPaymentId: input.providerPaymentId, status: "authorised", captureMode: "manual", captureBefore: "2026-10-01T00:00:00Z", amount: { value: 1000, currency: "GBP" } };
+}, async capture(input) {
   // An independent connection must see the committed reservation.
   const command = await pool.query("SELECT status FROM operator_commands WHERE idempotency_key=$1", [input.idempotencyKey]);
   assert.equal(command.rows[0]?.status, "reserved");
   calls++;
   return { provider: "capture-test", providerPaymentId: input.providerPaymentId, providerCaptureId: `capture-${randomUUID()}`, amount: input.amount, status: outcome };
 } };
-const service = new OperationsService(repository, { getProvider: () => provider });
+const service = new OperationsService(repository, { getProvider: () => provider }, () => new Date("2026-09-28T12:00:00Z"));
 const createOrder = async () => {
   const id = randomUUID();
   await pool.query(`INSERT INTO orders (id,order_number,status,currency,subtotal_minor,discount_minor,tax_minor,delivery_minor,total_minor,delivery_address_snapshot)
