@@ -15,9 +15,22 @@ export const loadCaptureDeadlineConfig = (environment: Readonly<Record<string, s
   return { warningMinutes, criticalMinutes, maxPayments: integer("CAPTURE_DEADLINE_MAX_PAYMENTS", 100, 10000) };
 };
 
-/** Require an unambiguous provider timestamp, with an explicit UTC offset. Nullable provider fields are treated as absent. */
+/**
+ * Require an unambiguous provider timestamp. Nullable provider fields are treated as absent.
+ * Mollie's captureBefore field is documented as YYYY-MM-DD; interpret that date as the
+ * start of the stated UTC day so deadline comparisons remain deterministic and conservative.
+ */
 export const providerTimestamp = (value: string | null | undefined): string | undefined => {
   if (value == null) return undefined;
+  const dateOnly = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.exec(value);
+  if (dateOnly) {
+    const year = Number(dateOnly[1]);
+    const month = Number(dateOnly[2]);
+    const day = Number(dateOnly[3]);
+    const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    if (day > daysInMonth) throw new Error("invalid_provider_timestamp");
+    return new Date(Date.UTC(year, month - 1, day)).toISOString();
+  }
   if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|[+-]([01]\d|2[0-3]):[0-5]\d)$/.test(value) || !Number.isFinite(Date.parse(value))) throw new Error("invalid_provider_timestamp");
   const daysInMonth = new Date(Date.UTC(Number(value.slice(0, 4)), Number(value.slice(5, 7)), 0)).getUTCDate();
   if (Number(value.slice(8, 10)) > daysInMonth) throw new Error("invalid_provider_timestamp");
