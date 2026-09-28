@@ -154,7 +154,16 @@ export class MollieTestPaymentProvider implements PaymentProvider {
   }
 
   async capture(input: CaptureInput): Promise<NormalisedCapture> {
-    if (input.amount.value <= 0) throw new PaymentProviderError("validation_error", "Capture amount must be positive.");
+    if (
+      input.amount.currency !== input.authorisedAmount.currency ||
+      input.amount.value <= 0 ||
+      input.amount.value > input.authorisedAmount.value
+    ) {
+      throw new PaymentProviderError(
+        "validation_error",
+        "Capture amount exceeds the authoritative authorised amount.",
+      );
+    }
     const capture = await this.#request<MollieCapture>(`/payments/${encodeURIComponent(requireText(input.providerPaymentId, "Provider payment ID"))}/captures`, {
       method: "POST", headers: { "Idempotency-Key": requireText(input.idempotencyKey, "Idempotency key") },
       body: JSON.stringify({ amount: { currency: input.amount.currency, value: formatAmount(input.amount.value) }, description: `CYPH/1 order ${input.orderId}`, metadata: { orderId: input.orderId, operatorId: input.operatorId } }),

@@ -92,7 +92,8 @@ test("private checkout recalculates authoritative totals and creates a pending h
   assert.equal(repository.orders[0]?.taxMinor, 2_000);
   assert.equal(repository.orders[0]?.deliveryMinor, 500);
   assert.equal(repository.orders[0]?.email, "test@example.com");
-  assert.equal(repository.orders[0]?.deliveryAddress.recipientName, "Test Customer");
+  assert.equal(repository.orders[0]?.deliveryAddress.givenName, "Test");
+  assert.equal(repository.orders[0]?.deliveryAddress.familyName, "Customer");
 });
 
 test("Klarna checkout sends structured billing and shipping data with manual capture", async () => {
