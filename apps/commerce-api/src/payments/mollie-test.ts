@@ -194,15 +194,18 @@ export class MollieTestPaymentProvider implements PaymentProvider {
     const parameters = new URLSearchParams(body);
     if ([...parameters.keys()].some((key) => key !== "id") || parameters.getAll("id").length !== 1) return Object.freeze({ outcome: "malformed", provider: this.key });
     const paymentId = parameters.get("id") ?? ""; if (!/^tr_[A-Za-z0-9]+$/.test(paymentId)) return Object.freeze({ outcome: "malformed", provider: this.key });
-    const payment = await this.#request<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`, { method: "GET" }, input.correlationId);
-    if (payment.id !== paymentId || !payment.metadata?.orderId) return Object.freeze({ outcome: "invalid", provider: this.key });
-    const refunds = await this.#request<MollieRefundList>(`/payments/${encodeURIComponent(paymentId)}/refunds`, { method: "GET" }, input.correlationId);
-    return Object.freeze({ outcome: "verified", provider: this.key, providerEventId: `mollie:${paymentId}`, providerPaymentId: paymentId, orderId: payment.metadata.orderId, payload: Object.freeze({ payment, refunds: Object.freeze(refunds._embedded?.refunds ?? []) } satisfies MollieWebhookPayload) });
+    let payment: MolliePayment;
+    try { payment = await this.#request<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`, { method: "GET" }, "webhook-authentication"); }
+    catch (error) { if (error instanceof PaymentProviderError && error.category === "not_found") return Object.freeze({ outcome: "irrelevant", provider: this.key, providerEventId: `unknown:${paymentId}` }); throw error; }
+    if (payment.id !== paymentId) return Object.freeze({ outcome: "invalid", provider: this.key });
+    const refundList = await this.#request<MollieRefundList>(`/payments/${encodeURIComponent(paymentId)}/refunds`, { method: "GET" }, "webhook-authentication");
+    const refunds = refundList._embedded?.refunds ?? []; const refundFingerprint = refunds.map((refund) => `${refund.id}:${refund.status}`).sort().join(",") || "none";
+    return Object.freeze({ outcome: "actionable", provider: this.key, providerEventId: `payment:${payment.id}:${payment.status}:refunds:${refundFingerprint}`, payload: Object.freeze({ payment, refunds: Object.freeze(refunds) } satisfies MollieWebhookPayload) });
   }
 
-  normaliseWebhook(verified: VerifiedWebhook): readonly PaymentEvent[] {
-    if (verified.outcome !== "verified" || verified.provider !== this.key || !verified.payload) throw new PaymentProviderError("validation_error", "Only verified Mollie webhooks can be normalised.");
-    const payload = verified.payload as MollieWebhookPayload; const payment = payload.payment;
+  async normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]> {
+    if (input.provider !== this.key || input.outcome !== "actionable" || !input.providerEventId || !input.payload) return Object.freeze([]);
+    const payload = input.payload as MollieWebhookPayload; const payment = payload.payment;
     if (!payment?.id || !payment.status || !payment.createdAt || !payment.amount || !Array.isArray(payload.refunds)) throw new PaymentProviderError("unknown_provider_error", "Verified Mollie webhook payload is incomplete.");
     const occurredAt = payment.paidAt ?? payment.authorizedAt ?? payment.canceledAt ?? payment.expiredAt ?? payment.createdAt;
     const timing = captureMetadata(payment);
