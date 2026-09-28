@@ -1,4 +1,6 @@
 import pg from "pg";
+import { transitionOrder, transitionPayment, type OrderStatus, type PaymentStatus } from "../../../../packages/commerce-core/src/index.js";
+import type { CaptureCommand, CaptureReservation, CaptureResult } from "./service.js";
 import { OperationsError, type OperationsRepository, type RefundReservation, type RefundReason } from "./service.js";
 
 const summary = (row: Record<string, any>) => Object.freeze({
@@ -8,6 +10,66 @@ const summary = (row: Record<string, any>) => Object.freeze({
 
 export class PostgresOperationsRepository implements OperationsRepository {
   constructor(private readonly pool: pg.Pool) {}
+
+  async reserveCapture(input: CaptureCommand): Promise<CaptureReservation> {
+    return this.transaction(async (client) => {
+      // Serialise even when the command row does not exist yet.
+      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [input.idempotencyKey]);
+      const existing = await client.query("SELECT command_type, request_fingerprint, status, result FROM operator_commands WHERE idempotency_key=$1 FOR UPDATE", [input.idempotencyKey]);
+      if (existing.rowCount === 1) {
+        const command = existing.rows[0];
+        if (command.command_type !== "payment.capture" || command.request_fingerprint !== input.fingerprint) throw new OperationsError("conflict", "The idempotency key was used for a different request.");
+        if (command.status === "reserved") throw new OperationsError("conflict", "Capture is in progress or requires manual resolution. Do not repeat capture.");
+        return { outcome: "replayed", result: command.result as CaptureResult };
+      }
+      // Match webhook lock order: payment before order.
+      const payments = await client.query("SELECT id, provider, provider_payment_id, status, amount_minor, currency FROM payments WHERE order_id=$1 ORDER BY created_at FOR UPDATE", [input.orderId]);
+      const orders = await client.query("SELECT status, total_minor, currency FROM orders WHERE id=$1 FOR UPDATE", [input.orderId]);
+      if (orders.rowCount !== 1) throw new OperationsError("not_found", "Order not found.");
+      const order = orders.rows[0];
+      const payment = payments.rows.find((row) => row.status === "authorised");
+      if (order.status !== "pending_payment" || !payment || !payment.provider_payment_id || payments.rows.some((row) => ["captured", "partially_refunded", "refunded", "resolution_required"].includes(row.status)) ||
+        payments.rows.filter((row) => row.status === "authorised").length !== 1 || Number(payment.amount_minor) !== Number(order.total_minor) || payment.currency !== order.currency) {
+        throw new OperationsError("conflict", "An uncaptured authorised payment matching the pending order is required.");
+      }
+      const inserted = await client.query(`INSERT INTO operator_commands (idempotency_key, command_type, target_type, target_id, operator_id, request_fingerprint, result)
+        VALUES ($1,'payment.capture','order',$2,$3,$4,$5::jsonb) ON CONFLICT DO NOTHING RETURNING id`,
+      [input.idempotencyKey, input.orderId, input.operatorId, input.fingerprint, JSON.stringify({ paymentId: payment.id })]);
+      if (inserted.rowCount !== 1) throw new OperationsError("conflict", "A capture command already exists. Manual resolution is required.");
+      await this.audit(client, "payment", payment.id, "capture.reserved", input.operatorId, input.correlationId, { orderId: input.orderId });
+      return { outcome: "reserved", paymentId: payment.id, provider: payment.provider, providerPaymentId: payment.provider_payment_id, amountMinor: Number(payment.amount_minor), currency: payment.currency };
+    });
+  }
+
+  async finishCapture(input: CaptureCommand & { paymentId: string; result: CaptureResult }): Promise<CaptureResult> {
+    return this.transaction(async (client) => {
+      const commands = await client.query("SELECT status, result FROM operator_commands WHERE idempotency_key=$1 AND command_type='payment.capture' AND request_fingerprint=$2 FOR UPDATE", [input.idempotencyKey, input.fingerprint]);
+      if (commands.rowCount !== 1 || commands.rows[0].status !== "reserved" || commands.rows[0].result.paymentId !== input.paymentId) throw new OperationsError("conflict", "Capture reservation is not available.");
+      const payments = await client.query("SELECT status FROM payments WHERE id=$1 AND order_id=$2 FOR UPDATE", [input.paymentId, input.orderId]);
+      const orders = await client.query("SELECT status FROM orders WHERE id=$1 FOR UPDATE", [input.orderId]);
+      const payment = payments.rows[0]; const order = orders.rows[0];
+      if (!payment || !order) throw new OperationsError("conflict", "Capture payment is not available.");
+      let result = input.result;
+      if (result.status === "completed") {
+        const transition = transitionPayment(payment.status as PaymentStatus, "captured");
+        if (transition.status !== "captured" || !["pending_payment", "paid"].includes(order.status)) result = { ...result, status: "resolution_required" };
+        else {
+          await client.query("UPDATE payments SET status=$2 WHERE id=$1", [input.paymentId, transition.status]);
+          await client.query("UPDATE orders SET status=$2, paid_at=COALESCE(paid_at,now()) WHERE id=$1", [input.orderId, transitionOrder(order.status as OrderStatus, "paid")]);
+          if (transition.outcome === "applied") await client.query(`INSERT INTO outbox_events (event_key,event_type,aggregate_type,aggregate_id,payload)
+            VALUES ($1,'payment.paid','payment',$2,$3::jsonb) ON CONFLICT (event_key) DO NOTHING`,
+          [`capture:${input.paymentId}:paid`, input.paymentId, JSON.stringify({ orderId: input.orderId, correlationId: input.correlationId })]);
+        }
+      }
+      if (result.status === "resolution_required") {
+        const transition = transitionPayment(payment.status as PaymentStatus, "resolution_required");
+        if (transition.outcome === "applied") await client.query("UPDATE payments SET status=$2 WHERE id=$1", [input.paymentId, transition.status]);
+      }
+      await client.query("UPDATE operator_commands SET status=$2, result=$3::jsonb WHERE idempotency_key=$1", [input.idempotencyKey, result.status, JSON.stringify(result)]);
+      await this.audit(client, "payment", input.paymentId, `capture.${result.status}`, input.operatorId, input.correlationId, { ...result, orderId: input.orderId });
+      return result;
+    });
+  }
 
   async searchOrders(query: string, limit: number) {
     const term = query ? `%${query.replace(/[%_\\]/g, "\\$&")}%` : "%";
