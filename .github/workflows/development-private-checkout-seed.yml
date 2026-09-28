@@ -32,6 +32,7 @@ jobs:
       - name: Seed private checkout staging fixture
         env:
           DATABASE_URL: ${{ secrets.COMMERCE_DEVELOPMENT_DATABASE_URL }}
+          DATABASE_SSL: "true"
           NODE_ENV: test
           ALLOW_PRIVATE_CHECKOUT_STAGING_SEED: "true"
           PRIVATE_CHECKOUT_STAGING_SEED_CONFIRM: integration-test-fixture
