@@ -57,6 +57,13 @@ const requestPathname = (url: string | undefined): string => {
   catch { return "/invalid-request-target"; }
 };
 
+const safeError = (error: unknown): Readonly<{ name: string; message: string }> => {
+  if (error instanceof Error) {
+    return Object.freeze({ name: error.name || "Error", message: error.message || "Unknown error" });
+  }
+  return Object.freeze({ name: "UnknownError", message: "Non-Error value thrown" });
+};
+
 const server = createServer(async (incoming, outgoing) => {
   const requestId = createRequestId();
   const startedAt = performance.now();
@@ -73,6 +80,16 @@ const server = createServer(async (incoming, outgoing) => {
     await send(response, outgoing, requestId);
   } catch (error) {
     status = error instanceof RangeError ? 413 : 500;
+    if (status === 500) {
+      const detail = safeError(error);
+      console.error(JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "error",
+        event: "operations_runtime_error",
+        requestId,
+        error: detail,
+      }));
+    }
     await send(new Response(JSON.stringify({ message: status === 413 ? "Request body is too large." : "The request could not be completed." }), {
       status,
       headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
