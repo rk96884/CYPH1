@@ -17,7 +17,8 @@ for (const [minutes, expected] of [[1441, "safe"], [1440, "warning"], [361, "war
 test("missing deadline is actionable and never manufactured; unknown mode needs reconciliation", () => {
   assert.equal(captureDeadlineState("manual", null, now, config), "missing_deadline");
   assert.equal(captureDeadlineState(null, at(10000), now, config), "reconciliation_required");
-  for (const value of ["invalid", "2026-10-01", "2026-10-01T00:00:00", "2026-13-45T00:00:00Z", "2026-02-30T00:00:00Z"]) assert.throws(() => providerTimestamp(value), /invalid_provider_timestamp/);
+  assert.equal(providerTimestamp("2026-10-01"), "2026-10-01T00:00:00.000Z");
+  for (const value of ["invalid", "2026-10-01T00:00:00", "2026-13-45T00:00:00Z", "2026-02-30T00:00:00Z"]) assert.throws(() => providerTimestamp(value), /invalid_provider_timestamp/);
 });
 test("deadline policy validates integers and critical must be inside warning", () => {
   for (const value of ["", "0", "-1", "1.5", "NaN", "Infinity", " 100", "999999999999999"]) assert.throws(() => loadCaptureDeadlineConfig({ CAPTURE_DEADLINE_WARNING_MINUTES: value }));
@@ -73,7 +74,7 @@ test("Mollie webhook timing is fetched and verified; a changed deadline has a ne
   let deadline = at(1440); let requests = 0;
   const provider = new MollieTestPaymentProvider({ apiKey: "test_capture_monitor", allowedCallbackOrigins: ["https://api.example"], fetch: async (url) => {
     requests++;
-    return new Response(JSON.stringify(String(url).endsWith("/refunds") ? { _embedded: { refunds: [] } } : { id: "tr_test", status: "authorised", captureMode: "manual", captureBefore: deadline, authorisedAt: at(-1000), createdAt: at(-2000), amount: { value: "10.00", currency: "GBP" } }));
+    return new Response(JSON.stringify(String(url).endsWith("/refunds") ? { _embedded: { refunds: [] } } : { id: "tr_test", status: "authorized", captureMode: "manual", captureBefore: deadline, authorizedAt: at(-1000), createdAt: at(-2000), amount: { value: "10.00", currency: "GBP" } }));
   } });
   const input = { rawBody: new TextEncoder().encode("id=tr_test"), headers: { "content-type": "application/x-www-form-urlencoded" }, endpointUrl: "https://api.example/webhooks/mollie" };
   const first = (await provider.normaliseWebhook(await provider.verifyWebhook(input)))[0]!;
