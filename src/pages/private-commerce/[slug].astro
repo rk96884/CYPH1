@@ -29,7 +29,8 @@ const { presentation } = Astro.props;
       <fieldset>
         <legend>Test contact and delivery details</legend>
         <label>Email address <input name="email" type="email" value="test@example.invalid" autocomplete="off" required/></label>
-        <label>Recipient name <input name="recipientName" value="Test Customer" autocomplete="off" required/></label>
+        <label>First name <input name="givenName" value="Test" autocomplete="off" required/></label>
+        <label>Last name <input name="familyName" value="Customer" autocomplete="off" required/></label>
         <label>Address line 1 <input name="line1" value="1 Test Street" autocomplete="off" required/></label>
         <label>Town or city <input name="locality" value="London" autocomplete="off" required/></label>
         <label>Postcode <input name="postalCode" value="SW1A 1AA" autocomplete="off" required/></label>
@@ -60,9 +61,10 @@ const { presentation } = Astro.props;
             body: JSON.stringify({
               productSlug: data.get("productSlug"), quantity: Number(data.get("quantity")),
               shippingRateId: data.get("shippingRateId"), email: data.get("email"),
+              paymentMethod: "klarna",
               correlationId: crypto.randomUUID(),
               deliveryAddress: {
-                recipientName: data.get("recipientName"), line1: data.get("line1"), locality: data.get("locality"),
+                givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), locality: data.get("locality"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
               },
             }),
