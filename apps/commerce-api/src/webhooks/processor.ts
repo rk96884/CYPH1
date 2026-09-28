@@ -47,7 +47,14 @@ export class PaymentWebhookProcessor {
   ) {}
 
   async process(input: VerifyWebhookInput, correlationId = randomUUID()): Promise<WebhookProcessingResult> {
+    const startedAt = Date.now();
+    const logStage = (stage: string): void => {
+      console.info("payment_webhook_stage", { stage, elapsedMs: Date.now() - startedAt });
+    };
+
+    logStage("processing_started");
     const bodyHash = createHash("sha256").update(input.rawBody).digest("hex");
+    logStage("delivery_record_started");
     const deliveryId = await this.database.transaction(async (client) => {
       const delivery = await client.query<{ id: string }>(`
         INSERT INTO webhook_deliveries (provider, raw_body, raw_body_sha256, correlation_id)
@@ -55,27 +62,43 @@ export class PaymentWebhookProcessor {
       `, [this.provider.key, Buffer.from(input.rawBody), bodyHash, correlationId]);
       return delivery.rows[0]!.id;
     });
+    logStage("delivery_record_completed");
     let verified;
-    try { verified = await this.provider.verifyWebhook(input); }
+    try {
+      logStage("verification_started");
+      verified = await this.provider.verifyWebhook(input);
+      logStage("verification_completed");
+    }
     catch (error) {
+      logStage("verification_failed");
       await this.#markDelivery(deliveryId, "verification_error");
+      logStage("verification_error_recorded");
       throw error;
     }
+    logStage("verification_outcome_record_started");
     await this.#markDelivery(deliveryId, verified.outcome);
+    logStage("verification_outcome_record_completed");
     if (verified.outcome === "invalid" || verified.outcome === "malformed") {
       return Object.freeze({ acknowledgement: "rejected", eventCount: 0 });
     }
     if (verified.outcome === "irrelevant") {
+      logStage("ignored_event_record_started");
       await this.#recordIgnored(verified.providerEventId ?? bodyHash, correlationId);
+      logStage("ignored_event_record_completed");
       return Object.freeze({ acknowledgement: "ignored", eventCount: 0 });
     }
+    logStage("normalisation_started");
     const events = await this.provider.normaliseWebhook(verified);
+    logStage("normalisation_completed");
     if (events.length === 0) {
+      logStage("empty_event_record_started");
       await this.#recordIgnored(verified.providerEventId ?? bodyHash, correlationId);
+      logStage("empty_event_record_completed");
       return Object.freeze({ acknowledgement: "ignored", eventCount: 0 });
     }
 
-    return this.database.transaction(async (client) => {
+    logStage("persistence_started");
+    const result = await this.database.transaction(async (client) => {
       let applied = 0;
       let ignored = 0;
       for (const event of events) {
@@ -197,6 +220,8 @@ export class PaymentWebhookProcessor {
       }
       return Object.freeze({ acknowledgement: applied > 0 ? "processed" : ignored > 0 ? "ignored" : "duplicate", eventCount: applied });
     });
+    logStage("persistence_completed");
+    return result;
   }
 
   async #markDelivery(deliveryId: string, outcome: "actionable" | "irrelevant" | "invalid" | "malformed" | "verification_error") {
