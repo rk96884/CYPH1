@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { providerTimestamp } from "../payments/capture-deadline.js";
 import {
   transitionOrder, transitionPayment, type OrderStatus, type PaymentEvent,
   type PaymentProvider, type PaymentStatus, type VerifyWebhookInput,
@@ -165,6 +166,11 @@ export class PaymentWebhookProcessor {
         }
         const paymentTransition = transitionPayment(payment.status, targetStatus);
         if (paymentTransition.outcome === "requires_review") throw new Error("payment_transition_requires_review");
+        if (targetStatus === "authorised" && paymentTransition.status === "authorised") {
+          await client.query(`UPDATE payments SET capture_before=$2, authorised_at=COALESCE($3,authorised_at),
+            capture_mode=COALESCE($4,capture_mode) WHERE id=$1`,
+          [payment.id, providerTimestamp(event.captureBefore) ?? null, providerTimestamp(event.authorisedAt) ?? null, event.captureMode ?? null]);
+        }
         if (paymentTransition.outcome === "applied") {
           await client.query("UPDATE payments SET status = $1 WHERE id = $2", [paymentTransition.status, payment.id]);
         }

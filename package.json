@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "monitor:capture-deadlines": "npm run monitor:capture-deadlines --workspace @cyph1/commerce-api",
     "dev": "astro dev",
     "build": "astro build",
     "check": "astro check && npm run check:commerce",

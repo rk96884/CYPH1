@@ -1,4 +1,4 @@
-import { OperationsError, type OperationPermission, type OperationsPrincipal, type OperationsService, type RefundReason } from "./service.js";
+import { operationPermissions, OperationsError, type OperationPermission, type OperationsPrincipal, type OperationsService, type RefundReason } from "./service.js";
 
 const securityHeaders = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "Permissions-Policy": "camera=(), microphone=(), geolocation=()" };
 const headers = { "Content-Type": "application/json; charset=utf-8", ...securityHeaders };
@@ -6,7 +6,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const allowed = (principal: OperationsPrincipal | undefined, permission: OperationPermission): principal is OperationsPrincipal => !!principal?.permissions.includes(permission);
 const validPrincipal = (principal: OperationsPrincipal | undefined): principal is OperationsPrincipal => {
   if (!principal || !principal.id.trim() || principal.id.length > 254) return false;
-  const known: readonly OperationPermission[] = ["orders:read", "refunds:create", "fulfilment:retry", "reconciliation:export"];
+  const known: readonly OperationPermission[] = operationPermissions;
   return new Set(principal.permissions).size === principal.permissions.length && principal.permissions.every((permission) => known.includes(permission));
 };
 const safeCsv = (value: unknown): string => {
@@ -33,6 +33,11 @@ export const handleOperationsRequest = async (request: Request, service: Operati
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
+    if (request.method === "POST" && path[0] === "orders" && path[1] && path[2] === "capture" && path.length === 3) {
+      if (!allowed(principal, "payments:capture")) return json({ message: "Permission denied." }, 403);
+      const result = await service.capture({ orderId: path[1], operatorId: principal.id, idempotencyKey: request.headers.get("idempotency-key") ?? "" });
+      return json(result, result.status === "completed" ? 200 : result.status === "resolution_required" ? 202 : 502);
+    }
     if (request.method === "GET" && path[0] === "orders" && path.length === 1) {
       if (!allowed(principal, "orders:read")) return json({ message: "Permission denied." }, 403);
       return json({ orders: await service.search(url.searchParams.get("q") ?? "") });

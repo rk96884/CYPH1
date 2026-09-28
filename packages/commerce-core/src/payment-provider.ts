@@ -24,12 +24,33 @@ export type CheckoutLine = Readonly<{
   totalAmount: Money;
 }>;
 
+/** Customer/address data required by selected payment methods. */
+export type PaymentCustomer = Readonly<{
+  email?: string;
+  givenName?: string;
+  familyName?: string;
+  streetAndNumber?: string;
+  streetAdditional?: string;
+  postalCode?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+}>;
+
+export type PaymentMethod = "klarna";
+export type CaptureMode = "automatic" | "manual";
+
 export type CreateCheckoutInput = Readonly<{
   orderId: string;
   orderNumber: string;
   amount: Money;
   lines: readonly CheckoutLine[];
-  customer?: Readonly<{ email?: string; givenName?: string; familyName?: string }>;
+  customer?: PaymentCustomer;
+  shippingAddress?: PaymentCustomer;
+  /** Omit to let Mollie Checkout offer the account's enabled methods. */
+  method?: PaymentMethod;
+  /** Klarna physical-goods checkout should use manual capture until dispatch. */
+  captureMode?: CaptureMode;
   successUrl: string;
   cancellationUrl: string;
   webhookUrl: string;
@@ -43,6 +64,9 @@ export type CheckoutSession = Readonly<{
   checkoutUrl: string;
   status: PaymentStatus;
   expiresAt?: string;
+  captureBefore?: string;
+  authorisedAt?: string;
+  captureMode?: CaptureMode;
   metadata: Readonly<Record<string, string>>;
 }>;
 
@@ -57,10 +81,35 @@ export type NormalisedPayment = Readonly<{
   refundableAmount: Money;
   createdAt: string;
   authorisedAt?: string;
+  captureBefore?: string;
+  captureMode?: CaptureMode;
   paidAt?: string;
   cancelledAt?: string;
   expiredAt?: string;
   failureCategory?: "declined" | "technical" | "unknown";
+}>;
+
+export type CaptureInput = Readonly<{
+  paymentId: string;
+  orderId: string;
+  providerPaymentId: string;
+  amount: Money;
+  /** Authoritative authorised ceiling; adapters must not capture above it or in another currency. */
+  authorisedAmount: Money;
+  description?: string;
+  /** Audit identity for the operator/process that released fulfilment and initiated capture. */
+  operatorId: string;
+  idempotencyKey: string;
+  correlationId: string;
+}>;
+
+export type NormalisedCapture = Readonly<{
+  provider: string;
+  providerPaymentId: string;
+  providerCaptureId: string;
+  amount: Money;
+  status: "pending" | "completed" | "failed";
+  createdAt: string;
 }>;
 
 export type RefundInput = Readonly<{
@@ -107,12 +156,18 @@ export type PaymentEvent = Readonly<{
     "refund.failed" | "dispute.opened" | "dispute.updated";
   occurredAt: string;
   amount?: Money;
+  /** Only populated from verified provider data, never an inbound webhook body. */
+  captureBefore?: string;
+  authorisedAt?: string;
+  captureMode?: CaptureMode;
 }>;
 
 export interface PaymentProvider {
   readonly key: string;
   createCheckout(input: CreateCheckoutInput): Promise<CheckoutSession>;
   getPayment(input: GetPaymentInput): Promise<NormalisedPayment>;
+  /** Optional until every configured provider supports authorization/capture. */
+  capture?(input: CaptureInput): Promise<NormalisedCapture>;
   refund(input: RefundInput): Promise<NormalisedRefund>;
   verifyWebhook(input: VerifyWebhookInput): Promise<VerifiedWebhook>;
   normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]>;

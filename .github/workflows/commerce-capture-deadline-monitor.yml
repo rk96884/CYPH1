@@ -1,0 +1,59 @@
+name: Commerce capture deadline monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      rehearsal_condition:
+        description: "Manual-only notification-route rehearsal; no payment or database state is changed"
+        required: true
+        type: choice
+        default: none
+        options:
+          - none
+          - warning
+          - critical
+          - overdue
+          - missing_deadline
+          - reconciliation_required
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commerce-capture-deadline-monitor
+  cancel-in-progress: false
+
+jobs:
+  capture-deadlines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      DATABASE_URL: ${{ secrets.COMMERCE_DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: "true"
+      PAYMENT_PROVIDER: mollie-test
+      MOLLIE_API_KEY: ${{ secrets.MOLLIE_TEST_API_KEY }}
+      PAYMENT_CALLBACK_ORIGINS: ${{ secrets.COMMERCE_CUSTOMER_STAGING_ORIGIN }}
+      CAPTURE_DEADLINE_WARNING_MINUTES: "1440"
+      CAPTURE_DEADLINE_CRITICAL_MINUTES: "360"
+      CAPTURE_DEADLINE_MAX_PAYMENTS: "100"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Rehearse capture-deadline notification route
+        if: ${{ inputs.rehearsal_condition != 'none' }}
+        shell: bash
+        env:
+          REHEARSAL_CONDITION: ${{ inputs.rehearsal_condition }}
+        run: |
+          echo "Synthetic capture-deadline ${REHEARSAL_CONDITION} alert: notification-route rehearsal only; no database or provider state was changed."
+          exit 1
+      - name: Build commerce runtime
+        if: ${{ inputs.rehearsal_condition == 'none' }}
+        run: npm run build:runtime --workspace @cyph1/commerce-api
+      - name: Check authoritative manual-capture deadlines
+        if: ${{ inputs.rehearsal_condition == 'none' }}
+        run: npm run monitor:capture-deadlines

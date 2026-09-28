@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
-import { money, PaymentProviderError, type PaymentProviderRegistry } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type NormalisedPayment, type PaymentProviderRegistry } from "../../../../packages/commerce-core/src/index.js";
+import { providerTimestamp } from "../payments/capture-deadline.js";
 
-export const operationPermissions = ["orders:read", "refunds:create", "fulfilment:retry", "reconciliation:export"] as const;
+export const operationPermissions = ["orders:read", "payments:capture", "refunds:create", "fulfilment:retry", "reconciliation:export"] as const;
 export type OperationPermission = typeof operationPermissions[number];
 export type OperationsPrincipal = Readonly<{ id: string; permissions: readonly OperationPermission[] }>;
 export type RefundReason = "customer_request" | "cancelled_order" | "returned_goods" | "operator_correction";
@@ -11,7 +12,13 @@ export type TimelineEvent = Readonly<{ id: string; type: string; action: string;
 export type OrderDetails = Readonly<{ order: OrderSummary; payments: readonly Readonly<Record<string, unknown>>[]; refunds: readonly Readonly<Record<string, unknown>>[]; fulfilments: readonly Readonly<Record<string, unknown>>[]; timeline: readonly TimelineEvent[] }>;
 export type RefundReservation = Readonly<{ outcome: "reserved" | "replayed"; refundId: string; paymentId: string; provider: string; providerPaymentId: string; currency: string; amountMinor: number; refundableMinor: number; result?: Readonly<Record<string, unknown>> }>;
 
+export type CaptureCommand = Readonly<{ orderId: string; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>;
+export type CaptureResult = Readonly<{ status: "completed" | "failed" | "resolution_required"; providerCaptureId?: string }>;
+export type CaptureReservation = Readonly<{ outcome: "reserved"; paymentId: string; provider: string; providerPaymentId: string; amountMinor: number; currency: string }> | Readonly<{ outcome: "replayed"; result: CaptureResult }>;
 export interface OperationsRepository {
+  reserveCapture(input: CaptureCommand): Promise<CaptureReservation>;
+  refreshCapture(input: CaptureCommand & { paymentId: string; payment: NormalisedPayment; now: Date }): Promise<boolean>;
+  finishCapture(input: CaptureCommand & { paymentId: string; result: CaptureResult }): Promise<CaptureResult>;
   searchOrders(query: string, limit: number): Promise<readonly OrderSummary[]>;
   getOrder(orderId: string): Promise<OrderDetails | undefined>;
   reserveRefund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<RefundReservation>;
@@ -29,9 +36,42 @@ export class OperationsError extends Error {
 const fingerprint = (value: unknown): string => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
 export class OperationsService {
-  constructor(private readonly repository: OperationsRepository, private readonly providers: PaymentProviderRegistry) {}
+  constructor(private readonly repository: OperationsRepository, private readonly providers: PaymentProviderRegistry, private readonly clock: () => Date = () => new Date()) {}
   search(query: string) { return this.repository.searchOrders(query.trim(), 50); }
   details(orderId: string) { return this.repository.getOrder(orderId); }
+
+  async capture(input: Readonly<{ orderId: string; operatorId: string; idempotencyKey: string }>): Promise<CaptureResult> {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(input.idempotencyKey)) throw new OperationsError("invalid_request", "A valid idempotency key is required.");
+    const command = { ...input, fingerprint: fingerprint({ command: "payment.capture", ...input }), correlationId: randomUUID() };
+    const reservation = await this.repository.reserveCapture(command);
+    if (reservation.outcome === "replayed") return reservation.result;
+    let result: CaptureResult;
+    try {
+      const provider = this.providers.getProvider(reservation.provider);
+      if (!provider.capture) throw new PaymentProviderError("configuration_error", "Capture is not supported.");
+      const amount = money(reservation.amountMinor, reservation.currency);
+      const payment = await provider.getPayment({ providerPaymentId: reservation.providerPaymentId, correlationId: command.correlationId });
+      if (payment.provider !== reservation.provider || payment.providerPaymentId !== reservation.providerPaymentId ||
+          (payment.orderId !== undefined && payment.orderId !== input.orderId) || payment.amount.value !== amount.value || payment.amount.currency !== amount.currency) throw new Error("provider_identity_mismatch");
+      providerTimestamp(payment.captureBefore); providerTimestamp(payment.authorisedAt);
+      const ready = await this.repository.refreshCapture({ ...command, paymentId: reservation.paymentId, payment, now: this.clock() });
+      // No deadline is guessed. Even a locally overdue payment is refreshed before this decision.
+      if (!ready || payment.status !== "authorised" || payment.captureMode === "automatic" ||
+          !payment.captureBefore || Date.parse(payment.captureBefore) <= this.clock().getTime()) throw new Error("capture_requires_resolution");
+      const captured = await provider.capture({ ...input, paymentId: reservation.paymentId, providerPaymentId: reservation.providerPaymentId, amount, authorisedAmount: amount, correlationId: command.correlationId });
+      const verified = captured.provider === reservation.provider && captured.providerPaymentId === reservation.providerPaymentId &&
+        captured.amount.value === amount.value && captured.amount.currency === amount.currency && !!captured.providerCaptureId;
+      result = verified
+        ? { status: captured.status === "pending" ? "resolution_required" : captured.status, providerCaptureId: captured.providerCaptureId }
+        : { status: "resolution_required" };
+    } catch (error) {
+      // Unknown errors can occur after the provider accepted the request. Never resend automatically.
+      result = { status: error instanceof PaymentProviderError && !error.retryable &&
+        ["configuration_error", "authentication_error", "validation_error", "payment_declined"].includes(error.category) ? "failed" : "resolution_required" };
+    }
+    // A persistence failure leaves the durable reservation in place, blocking another provider call.
+    return this.repository.finishCapture({ ...command, paymentId: reservation.paymentId, result });
+  }
 
   async refund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string }>) {
     if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) throw new OperationsError("invalid_request", "Refund amount must be a positive integer in minor units.");
