@@ -9,9 +9,9 @@ import { providerTimestamp } from "./capture-deadline.js";
 type Fetch = typeof globalThis.fetch;
 type MollieAmount = { currency: string; value: string };
 type MolliePayment = {
-  id: string; status: string; createdAt: string; expiresAt?: string; captureBefore?: string;
-  authorisedAt?: string; paidAt?: string; canceledAt?: string; expiredAt?: string;
-  captureMode?: "manual" | "automatic";
+  id: string; status: string; createdAt: string; expiresAt?: string | null; captureBefore?: string | null;
+  authorizedAt?: string | null; paidAt?: string | null; canceledAt?: string | null; expiredAt?: string | null;
+  captureMode?: "manual" | "automatic" | null;
   amount: MollieAmount; amountRefunded?: MollieAmount;
   metadata?: { orderId?: string; orderNumber?: string; correlationId?: string };
   _links?: { checkout?: { href?: string } };
@@ -21,10 +21,18 @@ type MollieRefund = { id: string; status: string; amount: MollieAmount; createdA
 type MollieRefundList = { _embedded?: { refunds?: MollieRefund[] } };
 type MollieWebhookPayload = { payment: MolliePayment; refunds: readonly MollieRefund[] };
 
+const mollieTimestamp = (field: string, value: string | null | undefined): string | undefined => {
+  try { return providerTimestamp(value); }
+  catch (error) {
+    if (error instanceof Error && error.message === "invalid_provider_timestamp") throw new Error(`invalid_provider_timestamp:${field}`);
+    throw error;
+  }
+};
+
 const captureMetadata = (payment: MolliePayment) => {
-  const captureBefore = providerTimestamp(payment.captureBefore);
-  const authorisedAt = providerTimestamp(payment.authorisedAt);
-  if (payment.captureMode !== undefined && !["manual", "automatic"].includes(payment.captureMode)) throw new PaymentProviderError("unknown_provider_error", "Invalid capture mode.");
+  const captureBefore = mollieTimestamp("captureBefore", payment.captureBefore);
+  const authorisedAt = mollieTimestamp("authorizedAt", payment.authorizedAt);
+  if (payment.captureMode != null && !["manual", "automatic"].includes(payment.captureMode)) throw new PaymentProviderError("unknown_provider_error", "Invalid capture mode.");
   return { ...(captureBefore ? { captureBefore } : {}), ...(authorisedAt ? { authorisedAt } : {}), ...(payment.captureMode ? { captureMode: payment.captureMode } : {}) };
 };
 
@@ -51,7 +59,7 @@ const parseAmount = (amount: MollieAmount) => {
 
 const paymentStatus = (status: string): PaymentStatus => {
   const statuses: Record<string, PaymentStatus> = {
-    open: "pending", pending: "pending", authorised: "authorised", paid: "captured",
+    open: "pending", pending: "pending", authorized: "authorised", paid: "captured",
     failed: "failed", canceled: "cancelled", expired: "expired",
   };
   const normalised = statuses[status];
@@ -68,7 +76,7 @@ const refundStatus = (status: string): NormalisedRefund["status"] => {
 
 const webhookEventType = (status: string): PaymentEvent["type"] => {
   const events: Record<string, PaymentEvent["type"]> = {
-    open: "payment.pending", pending: "payment.pending", authorised: "payment.authorised",
+    open: "payment.pending", pending: "payment.pending", authorized: "payment.authorised",
     paid: "payment.paid", failed: "payment.failed", canceled: "payment.cancelled", expired: "payment.expired",
   };
   const event = events[status];
@@ -163,16 +171,7 @@ export class MollieTestPaymentProvider implements PaymentProvider {
   }
 
   async capture(input: CaptureInput): Promise<NormalisedCapture> {
-    if (
-      input.amount.currency !== input.authorisedAmount.currency ||
-      input.amount.value <= 0 ||
-      input.amount.value > input.authorisedAmount.value
-    ) {
-      throw new PaymentProviderError(
-        "validation_error",
-        "Capture amount exceeds the authoritative authorised amount.",
-      );
-    }
+    if (input.amount.currency !== input.authorisedAmount.currency || input.amount.value <= 0 || input.amount.value > input.authorisedAmount.value) throw new PaymentProviderError("validation_error", "Capture amount exceeds the authoritative authorised amount.");
     const capture = await this.#request<MollieCapture>(`/payments/${encodeURIComponent(requireText(input.providerPaymentId, "Provider payment ID"))}/captures`, {
       method: "POST", headers: { "Idempotency-Key": requireText(input.idempotencyKey, "Idempotency key") },
       body: JSON.stringify({ amount: { currency: input.amount.currency, value: formatAmount(input.amount.value) }, description: `CYPH/1 order ${input.orderId}`, metadata: { orderId: input.orderId, operatorId: input.operatorId } }),
@@ -195,22 +194,19 @@ export class MollieTestPaymentProvider implements PaymentProvider {
     const parameters = new URLSearchParams(body);
     if ([...parameters.keys()].some((key) => key !== "id") || parameters.getAll("id").length !== 1) return Object.freeze({ outcome: "malformed", provider: this.key });
     const paymentId = parameters.get("id") ?? ""; if (!/^tr_[A-Za-z0-9]+$/.test(paymentId)) return Object.freeze({ outcome: "malformed", provider: this.key });
-    let payment: MolliePayment;
-    try { payment = await this.#request<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`, { method: "GET" }, "webhook-authentication"); }
-    catch (error) { if (error instanceof PaymentProviderError && error.category === "not_found") return Object.freeze({ outcome: "irrelevant", provider: this.key, providerEventId: `unknown:${paymentId}` }); throw error; }
-    if (payment.id !== paymentId) return Object.freeze({ outcome: "invalid", provider: this.key });
-    const refundList = await this.#request<MollieRefundList>(`/payments/${encodeURIComponent(paymentId)}/refunds`, { method: "GET" }, "webhook-authentication");
-    const refunds = refundList._embedded?.refunds ?? []; const refundFingerprint = refunds.map((refund) => `${refund.id}:${refund.status}`).sort().join(",") || "none";
-    return Object.freeze({ outcome: "actionable", provider: this.key, providerEventId: `payment:${payment.id}:${payment.status}:refunds:${refundFingerprint}`, payload: Object.freeze({ payment, refunds: Object.freeze(refunds) } satisfies MollieWebhookPayload) });
+    const payment = await this.#request<MolliePayment>(`/payments/${encodeURIComponent(paymentId)}`, { method: "GET" }, input.correlationId);
+    if (payment.id !== paymentId || !payment.metadata?.orderId) return Object.freeze({ outcome: "invalid", provider: this.key });
+    const refunds = await this.#request<MollieRefundList>(`/payments/${encodeURIComponent(paymentId)}/refunds`, { method: "GET" }, input.correlationId);
+    return Object.freeze({ outcome: "verified", provider: this.key, providerEventId: `mollie:${paymentId}`, providerPaymentId: paymentId, orderId: payment.metadata.orderId, payload: Object.freeze({ payment, refunds: Object.freeze(refunds._embedded?.refunds ?? []) } satisfies MollieWebhookPayload) });
   }
 
-  async normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]> {
-    if (input.provider !== this.key || input.outcome !== "actionable" || !input.providerEventId || !input.payload) return Object.freeze([]);
-    const payload = input.payload as MollieWebhookPayload; const payment = payload.payment;
+  normaliseWebhook(verified: VerifiedWebhook): readonly PaymentEvent[] {
+    if (verified.outcome !== "verified" || verified.provider !== this.key || !verified.payload) throw new PaymentProviderError("validation_error", "Only verified Mollie webhooks can be normalised.");
+    const payload = verified.payload as MollieWebhookPayload; const payment = payload.payment;
     if (!payment?.id || !payment.status || !payment.createdAt || !payment.amount || !Array.isArray(payload.refunds)) throw new PaymentProviderError("unknown_provider_error", "Verified Mollie webhook payload is incomplete.");
-    const occurredAt = payment.paidAt ?? payment.authorisedAt ?? payment.canceledAt ?? payment.expiredAt ?? payment.createdAt;
+    const occurredAt = payment.paidAt ?? payment.authorizedAt ?? payment.canceledAt ?? payment.expiredAt ?? payment.createdAt;
     const timing = captureMetadata(payment);
-    const revision = payment.status === "authorised" ? `:${timing.captureMode ?? "unknown"}:${timing.captureBefore ?? "missing"}:${timing.authorisedAt ?? "missing"}` : "";
+    const revision = payment.status === "authorized" ? `:${timing.captureMode ?? "unknown"}:${timing.captureBefore ?? "missing"}:${timing.authorisedAt ?? "missing"}` : "";
     const paymentEvent = Object.freeze({ eventId: `payment:${payment.id}:${payment.status}${revision}`, provider: this.key, providerPaymentId: payment.id, type: webhookEventType(payment.status), occurredAt, amount: parseAmount(payment.amount), ...timing } satisfies PaymentEvent);
     const refundEvents = payload.refunds.map((refund) => Object.freeze({ eventId: `refund:${refund.id}:${refund.status}`, provider: this.key, providerPaymentId: payment.id, providerRefundId: refund.id, type: (`refund.${refundStatus(refund.status)}`) as PaymentEvent["type"], occurredAt: refund.createdAt, amount: parseAmount(refund.amount) } satisfies PaymentEvent));
     return Object.freeze([paymentEvent, ...refundEvents]);
