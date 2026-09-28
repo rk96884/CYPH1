@@ -1,16 +1,22 @@
 const enabled = (value: string | undefined): boolean => value === "true";
 
 export const privateOperationsPresentation = (): Readonly<{ slug: string; apiUrl: string }> | undefined => {
-  if (!enabled(import.meta.env.PUBLIC_COMMERCE_OPERATIONS_UI_ENABLED)) return undefined;
-
+  const explicitEnabled = enabled(import.meta.env.PUBLIC_COMMERCE_OPERATIONS_UI_ENABLED);
   const slug = import.meta.env.PUBLIC_COMMERCE_OPERATIONS_SLUG?.trim();
   const api = import.meta.env.PUBLIC_COMMERCE_OPERATIONS_API_URL?.trim();
 
-  // Fail the static build rather than silently omitting the operations route
-  // when the UI has explicitly been enabled with incomplete configuration.
+  // A configured slug + API URL is sufficient to generate the private static
+  // operations route. This avoids silently dropping the route when a hosting
+  // provider does not expose the boolean build flag to Astro as expected.
+  // With no operations configuration at all (for example ordinary local/CI
+  // builds), the route remains disabled.
+  if (!explicitEnabled && !slug && !api) return undefined;
+
+  // Never allow a partially configured operations presentation. If any signal
+  // enables/configures it, require both values and fail the build loudly.
   if (!slug || !api) {
     throw new Error(
-      "Operations UI is enabled but PUBLIC_COMMERCE_OPERATIONS_SLUG or PUBLIC_COMMERCE_OPERATIONS_API_URL is missing.",
+      "Operations UI is configured but PUBLIC_COMMERCE_OPERATIONS_SLUG or PUBLIC_COMMERCE_OPERATIONS_API_URL is missing.",
     );
   }
 
