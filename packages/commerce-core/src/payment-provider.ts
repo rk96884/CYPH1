@@ -24,12 +24,37 @@ export type CheckoutLine = Readonly<{
   totalAmount: Money;
 }>;
 
+/**
+ * Customer/address data that a payment method may require for risk and
+ * eligibility checks. Providers must only send fields required for the
+ * selected method; CYPH/1 remains authoritative for the delivery address.
+ */
+export type PaymentCustomer = Readonly<{
+  email?: string;
+  givenName?: string;
+  familyName?: string;
+  streetAndNumber?: string;
+  streetAdditional?: string;
+  postalCode?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+}>;
+
+export type PaymentMethod = "klarna";
+export type CaptureMode = "automatic" | "manual";
+
 export type CreateCheckoutInput = Readonly<{
   orderId: string;
   orderNumber: string;
   amount: Money;
   lines: readonly CheckoutLine[];
-  customer?: Readonly<{ email?: string; givenName?: string; familyName?: string }>;
+  customer?: PaymentCustomer;
+  shippingAddress?: PaymentCustomer;
+  /** Omit to let Mollie Checkout offer the account's enabled methods. */
+  method?: PaymentMethod;
+  /** Klarna physical-goods checkout should use manual capture until dispatch. */
+  captureMode?: CaptureMode;
   successUrl: string;
   cancellationUrl: string;
   webhookUrl: string;
@@ -43,6 +68,7 @@ export type CheckoutSession = Readonly<{
   checkoutUrl: string;
   status: PaymentStatus;
   expiresAt?: string;
+  captureBefore?: string;
   metadata: Readonly<Record<string, string>>;
 }>;
 
@@ -57,10 +83,31 @@ export type NormalisedPayment = Readonly<{
   refundableAmount: Money;
   createdAt: string;
   authorisedAt?: string;
+  captureBefore?: string;
   paidAt?: string;
   cancelledAt?: string;
   expiredAt?: string;
   failureCategory?: "declined" | "technical" | "unknown";
+}>;
+
+export type CaptureInput = Readonly<{
+  paymentId: string;
+  orderId: string;
+  providerPaymentId: string;
+  amount: Money;
+  authorisedAmount: Money;
+  description?: string;
+  idempotencyKey: string;
+  correlationId: string;
+}>;
+
+export type NormalisedCapture = Readonly<{
+  provider: string;
+  providerPaymentId: string;
+  providerCaptureId: string;
+  amount: Money;
+  status: "pending" | "completed" | "failed";
+  createdAt: string;
 }>;
 
 export type RefundInput = Readonly<{
@@ -113,6 +160,8 @@ export interface PaymentProvider {
   readonly key: string;
   createCheckout(input: CreateCheckoutInput): Promise<CheckoutSession>;
   getPayment(input: GetPaymentInput): Promise<NormalisedPayment>;
+  /** Optional until every configured provider supports authorization/capture. */
+  capture?(input: CaptureInput): Promise<NormalisedCapture>;
   refund(input: RefundInput): Promise<NormalisedRefund>;
   verifyWebhook(input: VerifyWebhookInput): Promise<VerifiedWebhook>;
   normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]>;
