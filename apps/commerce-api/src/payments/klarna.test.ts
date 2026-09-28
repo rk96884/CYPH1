@@ -106,7 +106,7 @@ test("Mollie exposes Klarna capture deadline and creates an idempotent capture",
         ...(init ? { init } : {}),
       });
       if (String(url).endsWith("/captures")) return response({ id: "cpt_1", status: "pending", amount: { currency: "GBP", value: "120.00" }, createdAt: "2026-09-28T12:05:00Z" }, 201);
-      return response({ id: "tr_klarna1", status: "authorised", createdAt: "2026-09-28T12:00:00Z", authorisedAt: "2026-09-28T12:01:00Z", captureBefore: "2026-10-26T12:01:00Z", amount: { currency: "GBP", value: "120.00" }, metadata: { orderId: "order_klarna_1" } });
+      return response({ id: "tr_klarna1", status: "authorized", createdAt: "2026-09-28T12:00:00Z", authorizedAt: "2026-09-28T12:01:00Z", captureBefore: "2026-10-26T12:01:00Z", amount: { currency: "GBP", value: "120.00" }, metadata: { orderId: "order_klarna_1" } });
     }
   });
   const payment = await provider.getPayment({ providerPaymentId: "tr_klarna1", correlationId: "corr-klarna-1" });
