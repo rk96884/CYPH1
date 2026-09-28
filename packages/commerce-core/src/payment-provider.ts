@@ -24,11 +24,7 @@ export type CheckoutLine = Readonly<{
   totalAmount: Money;
 }>;
 
-/**
- * Customer/address data that a payment method may require for risk and
- * eligibility checks. Providers must only send fields required for the
- * selected method; CYPH/1 remains authoritative for the delivery address.
- */
+/** Customer/address data required by selected payment methods. */
 export type PaymentCustomer = Readonly<{
   email?: string;
   givenName?: string;
@@ -95,8 +91,11 @@ export type CaptureInput = Readonly<{
   orderId: string;
   providerPaymentId: string;
   amount: Money;
+  /** Authoritative authorised ceiling; adapters must not capture above it or in another currency. */
   authorisedAmount: Money;
   description?: string;
+  /** Audit identity for the operator/process that released fulfilment and initiated capture. */
+  operatorId: string;
   idempotencyKey: string;
   correlationId: string;
 }>;
