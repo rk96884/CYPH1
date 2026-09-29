@@ -51,7 +51,7 @@ const trustedCorsOrigin = (request: IncomingMessage): string | undefined => {
   return operationsUiOrigin && origin === operationsUiOrigin ? origin : undefined;
 };
 
-const corsHeaders = (origin: string | undefined): HeadersInit => origin ? {
+const corsHeaders = (origin: string | undefined): Record<string, string> => origin ? {
   "Access-Control-Allow-Origin": origin,
   "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
