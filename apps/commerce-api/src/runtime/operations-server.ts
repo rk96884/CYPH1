@@ -13,6 +13,7 @@ const databaseUrl = environment.DATABASE_URL?.trim();
 if (!databaseUrl) throw new Error("DATABASE_URL is required.");
 const port = Number(environment.PORT ?? "3000");
 if (!Number.isSafeInteger(port) || port < 1 || port > 65_535) throw new Error("PORT must be a valid TCP port.");
+const operationsUiOrigin = environment.OPERATIONS_UI_ORIGIN?.trim().replace(/\/$/, "");
 
 const pool = new pg.Pool({
   connectionString: databaseUrl,
@@ -45,6 +46,27 @@ const readBody = async (request: IncomingMessage): Promise<ArrayBuffer | undefin
   return body.buffer;
 };
 
+const trustedCorsOrigin = (request: IncomingMessage): string | undefined => {
+  const origin = request.headers.origin?.trim().replace(/\/$/, "");
+  return operationsUiOrigin && origin === operationsUiOrigin ? origin : undefined;
+};
+
+const corsHeaders = (origin: string | undefined): HeadersInit => origin ? {
+  "Access-Control-Allow-Origin": origin,
+  "Access-Control-Allow-Credentials": "true",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Idempotency-Key",
+  "Access-Control-Max-Age": "600",
+  "Vary": "Origin",
+} : {};
+
+const withCors = (response: Response, origin: string | undefined): Response => {
+  if (!origin) return response;
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(corsHeaders(origin))) headers.set(name, value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+};
+
 const send = async (response: Response, target: ServerResponse, requestId: string): Promise<void> => {
   target.statusCode = response.status;
   response.headers.forEach((value, name) => target.setHeader(name, value));
@@ -67,15 +89,23 @@ const safeError = (error: unknown): Readonly<{ name: string; message: string }> 
 const server = createServer(async (incoming, outgoing) => {
   const requestId = createRequestId();
   const startedAt = performance.now();
+  const corsOrigin = trustedCorsOrigin(incoming);
   let status = 500;
   try {
+    if (incoming.method === "OPTIONS") {
+      const response = new Response(null, { status: 204, headers: corsHeaders(corsOrigin) });
+      status = response.status;
+      await send(response, outgoing, requestId);
+      return;
+    }
+
     const body = await readBody(incoming);
     const request = new Request(`https://operations.invalid${incoming.url ?? "/"}`, {
       method: incoming.method ?? "GET",
       headers: requestHeaders(incoming.headers),
       ...(body ? { body } : {}),
     });
-    const response = await runtime(request);
+    const response = withCors(await runtime(request), corsOrigin);
     status = response.status;
     await send(response, outgoing, requestId);
   } catch (error) {
@@ -90,10 +120,10 @@ const server = createServer(async (incoming, outgoing) => {
         error: detail,
       }));
     }
-    await send(new Response(JSON.stringify({ message: status === 413 ? "Request body is too large." : "The request could not be completed." }), {
+    await send(withCors(new Response(JSON.stringify({ message: status === 413 ? "Request body is too large." : "The request could not be completed." }), {
       status,
       headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
-    }), outgoing, requestId);
+    }), corsOrigin), outgoing, requestId);
   } finally {
     writeRuntimeRequestLog(createRuntimeRequestLog({
       requestId,
