@@ -27,6 +27,10 @@ const csv = (rows: readonly Readonly<Record<string, unknown>>[]): string => {
     ...rows.map((row) => reconciliationCsvColumns.map((column) => safeCsv(row[column])).join(",")),
   ].join("\r\n");
 };
+const safeError = (error: unknown): Readonly<{ name: string; message: string }> => {
+  if (error instanceof Error) return Object.freeze({ name: error.name || "Error", message: error.message || "Unknown error" });
+  return Object.freeze({ name: "UnknownError", message: "Non-Error value thrown" });
+};
 
 export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal): Promise<Response> => {
   if (!validPrincipal(principal)) return json({ message: "Authentication required." }, 401);
@@ -68,6 +72,7 @@ export const handleOperationsRequest = async (request: Request, service: Operati
   } catch(error) {
     if(error instanceof SyntaxError)return json({message:"Invalid JSON request."},400);
     if(error instanceof OperationsError)return json({message:error.message,code:error.code},{invalid_request:400,not_found:404,conflict:409,provider_error:502}[error.code]);
+    console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: "error", event: "operations_handler_error", error: safeError(error) }));
     return json({message:"The operations request could not be completed."},500);
   }
 };
