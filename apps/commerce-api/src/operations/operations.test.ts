@@ -115,3 +115,50 @@ test("partial and full refund amounts remain explicit provider requests",async()
   await amountService.refund({orderId:"o1",amountMinor:1000,reason:"cancelled_order",operatorId:"operator",idempotencyKey:"full"});
   assert.deepEqual(amounts,[400,1000]);
 });
+
+test("refund diagnostic records retryable submit failure safely before resolution marking", async (t) => {
+  const logs: string[] = []; let resolved = 0; let failed = 0; let calls = 0; let correlationId = "";
+  t.mock.method(console, "error", (entry: string) => { logs.push(entry); });
+  const failingProvider: PaymentProvider = { ...provider, refund: async (input) => {
+    calls++; correlationId = input.correlationId;
+    throw Object.assign(new PaymentProviderError("conflict", "Authorization: Bearer secret-key; customer@example.test; raw-provider-body", true), {
+      response: { body: "raw-provider-body" }, headers: { Authorization: "secret-key" }, customer: "customer@example.test",
+    });
+  } };
+  const failingRepository: OperationsRepository = { ...repository,
+    markRefundResolutionRequired: async () => { assert.equal(logs.length, 1); resolved++; },
+    failRefund: async () => { failed++; },
+  };
+  const local = new OperationsService(failingRepository, { getProvider: () => failingProvider, getConfiguredProvider: () => failingProvider });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-refund" }), /could not complete/);
+  assert.equal(resolved, 1); assert.equal(failed, 0); assert.equal(calls, 1);
+  const diagnostic = JSON.parse(logs[0]!);
+  assert.ok(Number.isFinite(Date.parse(diagnostic.timestamp)));
+  assert.deepEqual({ ...diagnostic, timestamp: "verified" }, { timestamp: "verified", level: "error", event: "refund_provider_error", stage: "submit_refund", provider: "mollie-test", refundId: "r1", correlationId,
+    error: { name: "PaymentProviderError", message: "Refund operation failed.", category: "conflict", retryable: true } });
+  assert.doesNotMatch(logs.join(""), /secret-key|Authorization|customer@example|raw-provider-body|diagnostic-refund/);
+});
+
+test("refund diagnostic identifies lookup, payment, balance and persistence failure stages", async (t) => {
+  const logs: string[] = [];
+  t.mock.method(console, "error", (entry: string) => { logs.push(entry); });
+  for (const stage of ["provider_lookup", "get_payment", "validate_refundable_balance", "persist_provider_result"]) {
+    const fail = async (): Promise<never> => { throw new Error("private-provider-data"); };
+    const localProvider: PaymentProvider = { ...provider, getPayment: stage === "get_payment" ? fail : async () => ({ ...await provider.getPayment({ providerPaymentId: "tr_1", correlationId: "test" }), refundableAmount: money(stage === "validate_refundable_balance" ? 0 : 1000, "GBP") }) };
+    const local = new OperationsService({ ...repository, completeRefund: stage === "persist_provider_result" ? fail : repository.completeRefund }, {
+      getProvider: () => { if (stage === "provider_lookup") throw new Error("private-provider-data"); return localProvider; }, getConfiguredProvider: () => localProvider,
+    });
+    await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-stages" }));
+    assert.equal(JSON.parse(logs.at(-1)!).stage, stage);
+  }
+  assert.equal(logs.length, 4); assert.doesNotMatch(logs.join(""), /private-provider-data/);
+});
+
+test("refund diagnostic delivery failure does not change resolution handling", async (t) => {
+  t.mock.method(console, "error", () => { throw new Error("logger unavailable"); });
+  let resolved = 0;
+  const localProvider: PaymentProvider = { ...provider, refund: async () => { throw new PaymentProviderError("network_error", "timeout", true); } };
+  const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { resolved++; } }, { getProvider: () => localProvider, getConfiguredProvider: () => localProvider });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-logger" }), /could not complete/);
+  assert.equal(resolved, 1);
+});

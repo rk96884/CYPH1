@@ -56,6 +56,14 @@ const reconciliationDiagnostic = (stage: string, recovery: CaptureRecovery, erro
   console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: "error", event: "capture_reconciliation_provider_error", stage, provider: recovery.provider, claimId: recovery.claimId, error: detail }));
 };
 
+const refundDiagnostic = (stage: string, provider: string, refundId: string, correlationId: string, error: unknown): void => {
+  // Exception messages/extra properties may contain provider payloads or credentials.
+  const detail = { name: error instanceof PaymentProviderError ? "PaymentProviderError" : error instanceof OperationsError ? "OperationsError" : error instanceof Error ? "Error" : "UnknownError",
+    message: "Refund operation failed.", ...(error instanceof PaymentProviderError ? { category: error.category, retryable: error.retryable } : {}) };
+  try { console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: "error", event: "refund_provider_error", stage, provider, refundId, correlationId, error: detail })); }
+  catch { /* Diagnostic delivery must not change refund failure handling. */ }
+};
+
 export class OperationsService {
   constructor(private readonly repository: OperationsRepository, private readonly providers: PaymentProviderRegistry, private readonly clock: () => Date = () => new Date()) {}
   search(query: string) { return this.repository.searchOrders(query.trim(), 50); }
@@ -161,18 +169,24 @@ export class OperationsService {
     const correlationId = randomUUID();
     const reservation = await this.repository.reserveRefund({ ...input, fingerprint: fingerprint(input), correlationId });
     if (reservation.outcome === "replayed") return reservation.result;
+    let stage = "provider_lookup";
     try {
       const provider = this.providers.getProvider(reservation.provider);
+      stage = "get_payment";
       const payment = await provider.getPayment({ providerPaymentId: reservation.providerPaymentId, correlationId });
+      stage = "validate_refundable_balance";
       if (payment.amount.currency !== reservation.currency || payment.refundableAmount.value < reservation.amountMinor) throw new OperationsError("conflict", "The provider no longer reports enough refundable value.");
+      stage = "submit_refund";
       const result = await provider.refund({
         paymentId: reservation.paymentId, orderId: input.orderId, providerPaymentId: reservation.providerPaymentId,
         amount: money(reservation.amountMinor, reservation.currency), refundableAmount: payment.refundableAmount,
         reason: input.reason, operatorId: input.operatorId, idempotencyKey: input.idempotencyKey, correlationId,
       });
+      stage = "persist_provider_result";
       await this.repository.completeRefund({ refundId: reservation.refundId, providerRefundId: result.providerRefundId, status: result.status, operatorId: input.operatorId, correlationId });
       return result;
     } catch (error) {
+      refundDiagnostic(stage, reservation.provider, reservation.refundId, correlationId, error);
       if (error instanceof PaymentProviderError && error.retryable) {
         await this.repository.markRefundResolutionRequired({ refundId: reservation.refundId, operatorId: input.operatorId, correlationId });
       } else {
