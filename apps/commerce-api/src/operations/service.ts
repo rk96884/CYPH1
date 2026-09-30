@@ -48,6 +48,14 @@ export class OperationsError extends Error {
 }
 
 const fingerprint = (value: unknown): string => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+const reconciliationDiagnostic = (stage: string, recovery: CaptureRecovery, error: unknown): void => {
+  const detail = error instanceof PaymentProviderError
+    ? { name: error.name, message: error.message, category: error.category, retryable: error.retryable }
+    : error instanceof Error
+      ? { name: error.name || "Error", message: error.message || "Unknown error" }
+      : { name: "UnknownError", message: "Non-Error value thrown" };
+  console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: "error", event: "capture_reconciliation_provider_error", stage, provider: recovery.provider, claimId: recovery.claimId, error: detail }));
+};
 
 export class OperationsService {
   constructor(private readonly repository: OperationsRepository, private readonly providers: PaymentProviderRegistry, private readonly clock: () => Date = () => new Date()) {}
@@ -69,7 +77,6 @@ export class OperationsService {
           (payment.orderId !== undefined && payment.orderId !== input.orderId) || payment.amount.value !== amount.value || payment.amount.currency !== amount.currency) throw new Error("provider_identity_mismatch");
       providerTimestamp(payment.captureBefore); providerTimestamp(payment.authorisedAt);
       const ready = await this.repository.refreshCapture({ ...command, paymentId: reservation.paymentId, payment, now: this.clock() });
-      // No deadline is guessed. Even a locally overdue payment is refreshed before this decision.
       if (!ready || payment.status !== "authorised" || payment.captureMode === "automatic" ||
           !payment.captureBefore || Date.parse(payment.captureBefore) <= this.clock().getTime()) throw new Error("capture_requires_resolution");
       const request = { ...input, paymentId: reservation.paymentId, providerPaymentId: reservation.providerPaymentId, amount, authorisedAmount: amount, correlationId: command.correlationId };
@@ -81,11 +88,9 @@ export class OperationsService {
         ? { status: captured.status === "pending" ? "resolution_required" : captured.status, providerCaptureId: captured.providerCaptureId }
         : { status: "resolution_required" };
     } catch (error) {
-      // Unknown errors can occur after the provider accepted the request. Never resend automatically.
       result = { status: error instanceof PaymentProviderError && !error.retryable &&
         ["configuration_error", "authentication_error", "validation_error", "payment_declined"].includes(error.category) ? "failed" : "resolution_required" };
     }
-    // A persistence failure leaves the durable reservation in place, blocking another provider call.
     return this.repository.finishCapture({ ...command, paymentId: reservation.paymentId, result });
   }
 
@@ -95,14 +100,19 @@ export class OperationsService {
     const recovery = reserved.recovery;
     let result: CaptureReconciliationResult = { status: "resolution_required", outcome: "provider_ambiguous" };
     let verifiedPayment: NormalisedPayment | undefined;
+    let stage = "provider_lookup";
     try {
       const provider = this.providers.getProvider(recovery.provider);
       if (!provider.listCaptures) throw new Error("capture_lookup_unavailable");
+      stage = "get_payment";
       const payment = await provider.getPayment({ providerPaymentId: recovery.providerPaymentId, correlationId: recovery.claimId });
+      stage = "validate_payment";
       if (payment.provider !== recovery.provider || payment.providerPaymentId !== recovery.providerPaymentId ||
           (payment.orderId !== undefined && payment.orderId !== orderId) || payment.amount.value !== recovery.amountMinor || payment.amount.currency !== recovery.currency) throw new Error("payment_mismatch");
       providerTimestamp(payment.captureBefore); providerTimestamp(payment.authorisedAt); providerTimestamp(payment.paidAt);
+      stage = "list_captures";
       const listed = await provider.listCaptures({ providerPaymentId: recovery.providerPaymentId, correlationId: recovery.claimId });
+      stage = "validate_capture_evidence";
       if (!listed.complete || listed.captures.some((capture) => capture.provider !== recovery.provider || capture.providerPaymentId !== recovery.providerPaymentId ||
           capture.amount.currency !== recovery.currency || capture.amount.value !== recovery.amountMinor || !capture.providerCaptureId || !providerTimestamp(capture.createdAt)) || listed.captures.length > 1) throw new Error("capture_evidence_ambiguous");
       verifiedPayment = payment;
@@ -115,10 +125,9 @@ export class OperationsService {
       } else if (payment.status !== "authorised") {
         result = { status: "failed", outcome: "payment_not_eligible" };
       } else {
+        stage = "validate_replay_evidence";
         const request = recovery.request;
         const evidence = recovery.firstAttemptAt && recovery.providerContext ? { firstAttemptAt: recovery.firstAttemptAt, providerContext: recovery.providerContext } : undefined;
-        // An empty capture list is not proof that a timed-out POST cannot still complete.
-        // Replay only the immutable original request/key within the provider's guarantee.
         const safeRequest = request && request.orderId === orderId && request.paymentId === recovery.paymentId && request.providerPaymentId === recovery.providerPaymentId &&
           request.operatorId === recovery.originalOperatorId && request.idempotencyKey === recovery.idempotencyKey &&
           request.amount.value === recovery.amountMinor && request.amount.currency === recovery.currency &&
@@ -128,13 +137,19 @@ export class OperationsService {
             !await this.repository.permitCaptureReplay(recovery, operatorId)) {
           result = { status: "resolution_required", outcome: "manual_resolution_required" };
         } else {
+          stage = "resume_capture";
           const resumed = await provider.capture({ ...request, correlationId: recovery.claimId, replay: evidence });
+          stage = "validate_resumed_capture";
           if (resumed.provider !== recovery.provider || resumed.providerPaymentId !== recovery.providerPaymentId || !resumed.providerCaptureId ||
               resumed.amount.value !== recovery.amountMinor || resumed.amount.currency !== recovery.currency || !providerTimestamp(resumed.createdAt)) throw new Error("capture_mismatch");
           result = { status: resumed.status === "completed" ? "completed" : "resolution_required", outcome: resumed.status === "completed" ? "capture_resumed" : "capture_pending", providerCaptureId: resumed.providerCaptureId, captures: [resumed] };
         }
       }
-    } catch { result = { status: "resolution_required", outcome: "provider_ambiguous" }; verifiedPayment = undefined; }
+    } catch (error) {
+      reconciliationDiagnostic(stage, recovery, error);
+      result = { status: "resolution_required", outcome: "provider_ambiguous" };
+      verifiedPayment = undefined;
+    }
     return this.repository.finishCaptureReconciliation(recovery, operatorId, result, verifiedPayment);
   }
 
