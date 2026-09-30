@@ -69,6 +69,45 @@ test("Mollie payment status and refundable amount are normalised", async () => {
   assert.equal(result.orderId, "order_1");
 });
 
+test("Mollie amountRemaining overrides the reconstructed refundable balance, including zero", async () => {
+  const provider = new MollieTestPaymentProvider({
+    apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"],
+    fetch: async () => response({ id: "tr_1", status: "paid", createdAt: "2026-08-29T12:00:00Z", amount: { currency: "GBP", value: "2.00" }, amountRefunded: { currency: "GBP", value: "1.00" }, amountRemaining: { currency: "GBP", value: "0.00" } }),
+  });
+  const result = await provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" });
+  assert.equal(result.refundableAmount.value, 0);
+  assert.equal(result.refundableAmount.currency, "GBP");
+});
+
+for (const [name, amountRemaining] of [
+  ["currency mismatch", { currency: "EUR", value: "1.00" }],
+  ["above payment amount", { currency: "GBP", value: "2.01" }],
+  ["negative", { currency: "GBP", value: "-1.00" }],
+  ["malformed value", { currency: "GBP", value: "sensitive-provider-data" }],
+  ["malformed currency", { currency: "sensitive-provider-data", value: "1.00" }],
+  ["null", null],
+] as const) {
+  test(`Mollie rejects invalid amountRemaining: ${name}`, async () => {
+    const provider = new MollieTestPaymentProvider({
+      apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"],
+      fetch: async () => response({ id: "tr_1", status: "paid", createdAt: "2026-08-29T12:00:00Z", amount: { currency: "GBP", value: "2.00" }, amountRefunded: { currency: "GBP", value: "1.00" }, amountRemaining }),
+    });
+    await assert.rejects(() => provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" }), (error: unknown) =>
+      error instanceof PaymentProviderError && error.category === "unknown_provider_error" && error.message === "Mollie returned an invalid remaining amount.");
+  });
+}
+
+test("Mollie still validates amountRefunded when amountRemaining is present", async () => {
+  for (const amountRefunded of [{ currency: "EUR", value: "1.00" }, { currency: "GBP", value: "2.01" }]) {
+    const provider = new MollieTestPaymentProvider({
+      apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"],
+      fetch: async () => response({ id: "tr_1", status: "paid", createdAt: "2026-08-29T12:00:00Z", amount: { currency: "GBP", value: "2.00" }, amountRefunded, amountRemaining: { currency: "GBP", value: "0.00" } }),
+    });
+    await assert.rejects(() => provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" }), (error: unknown) =>
+      error instanceof PaymentProviderError && error.category === "unknown_provider_error" && error.message === "Mollie returned an invalid refunded amount.");
+  }
+});
+
 test("Mollie refund rejects over-refunds before making a provider call", async () => {
   let calls = 0;
   const provider = new MollieTestPaymentProvider({ apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"], fetch: async () => { calls += 1; return response({}); } });

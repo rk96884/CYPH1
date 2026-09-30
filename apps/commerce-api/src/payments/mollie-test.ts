@@ -14,7 +14,7 @@ type MolliePayment = {
   id: string; status: string; createdAt: string; expiresAt?: string | null; captureBefore?: string | null;
   authorizedAt?: string | null; paidAt?: string | null; canceledAt?: string | null; expiredAt?: string | null;
   captureMode?: "manual" | "automatic" | null;
-  amount: MollieAmount; amountRefunded?: MollieAmount;
+  amount: MollieAmount; amountRefunded?: MollieAmount; amountRemaining?: MollieAmount;
   metadata?: { orderId?: string; orderNumber?: string; correlationId?: string };
   _links?: { checkout?: { href?: string } };
 };
@@ -171,7 +171,13 @@ export class MollieTestPaymentProvider implements PaymentProvider {
     const payment = await this.#request<MolliePayment>(`/payments/${encodeURIComponent(requireText(input.providerPaymentId, "Provider payment ID"))}`, { method: "GET" }, requireText(input.correlationId, "Correlation ID"));
     const amount = parseAmount(payment.amount); const refunded = payment.amountRefunded ? parseAmount(payment.amountRefunded) : money(0, amount.currency);
     if (refunded.currency !== amount.currency || refunded.value > amount.value) throw new PaymentProviderError("unknown_provider_error", "Mollie returned an invalid refunded amount.");
-    return Object.freeze({ provider: this.key, providerPaymentId: payment.id, ...(payment.metadata?.orderId ? { orderId: payment.metadata.orderId } : {}), status: paymentStatus(payment.status), amount, refundableAmount: money(amount.value - refunded.value, amount.currency), createdAt: payment.createdAt, ...captureMetadata(payment), ...(payment.paidAt ? { paidAt: payment.paidAt } : {}), ...(payment.canceledAt ? { cancelledAt: payment.canceledAt } : {}), ...(payment.expiredAt ? { expiredAt: payment.expiredAt } : {}) });
+    let refundableAmount = money(amount.value - refunded.value, amount.currency);
+    if (payment.amountRemaining !== undefined) {
+      try { refundableAmount = parseAmount(payment.amountRemaining); }
+      catch { throw new PaymentProviderError("unknown_provider_error", "Mollie returned an invalid remaining amount."); }
+      if (refundableAmount.currency !== amount.currency || refundableAmount.value > amount.value) throw new PaymentProviderError("unknown_provider_error", "Mollie returned an invalid remaining amount.");
+    }
+    return Object.freeze({ provider: this.key, providerPaymentId: payment.id, ...(payment.metadata?.orderId ? { orderId: payment.metadata.orderId } : {}), status: paymentStatus(payment.status), amount, refundableAmount, createdAt: payment.createdAt, ...captureMetadata(payment), ...(payment.paidAt ? { paidAt: payment.paidAt } : {}), ...(payment.canceledAt ? { cancelledAt: payment.canceledAt } : {}), ...(payment.expiredAt ? { expiredAt: payment.expiredAt } : {}) });
   }
 
   async capture(input: CaptureInput): Promise<NormalisedCapture> {
