@@ -5,10 +5,13 @@ import {
   type VerifyWebhookInput, type PaymentEvent,
 } from "../../../../packages/commerce-core/src/index.js";
 import { MollieTestPaymentProvider } from "./mollie-test.js";
+import type { CaptureList, CaptureReplayEvidence } from "../../../../packages/commerce-core/src/index.js";
+import { mollieCaptureContext, mollieCaptureReplaySafe } from "./mollie-capture-replay.js";
 
 type Fetch = typeof globalThis.fetch;
 
 export type MollieLiveAdapterConfig = Readonly<{
+  clock?: () => Date;
   apiKey: string;
   allowedCallbackOrigins: readonly string[];
   fetch?: Fetch;
@@ -56,8 +59,18 @@ export class MollieLivePaymentProvider implements PaymentProvider {
   }
 
   async capture(input: CaptureInput): Promise<NormalisedCapture> {
-    const result = await this.#delegate.capture(input);
+    if (input.replay && !this.canReplayCapture(input.replay, this.config.clock?.() ?? new Date())) throw new PaymentProviderError("conflict", "Capture replay is not demonstrably safe.");
+    // The live credential was checked above, not the delegate's synthetic credential.
+    const { replay: _replay, ...request } = input;
+    const result = await this.#delegate.capture(request);
     return Object.freeze({ ...result, provider: this.key });
+  }
+
+  captureReplayContext(): string { return mollieCaptureContext(this.config.apiKey, this.config.apiBaseUrl); }
+  canReplayCapture(evidence: CaptureReplayEvidence, now: Date): boolean { return mollieCaptureReplaySafe(evidence, this.captureReplayContext(), now); }
+  async listCaptures(input: GetPaymentInput): Promise<CaptureList> {
+    const result = await this.#delegate.listCaptures(input);
+    return { ...result, captures: result.captures.map((capture) => ({ ...capture, provider: this.key })) };
   }
 
   async refund(input: RefundInput): Promise<NormalisedRefund> {

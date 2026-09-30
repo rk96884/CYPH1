@@ -12,7 +12,9 @@ const provider: PaymentProvider = {
 const state:{completed?:string}={};
 const repository:OperationsRepository={
   reserveCapture:async()=>{throw new Error("unused");}, finishCapture:async(input)=>input.result,
-  refreshCapture:async()=>true,
+  refreshCapture:async()=>true, prepareCaptureAttempt:async()=>{},
+  reserveCaptureReconciliation:async()=>{throw new Error("unused");}, permitCaptureReplay:async()=>false,
+  finishCaptureReconciliation:async(_recovery,_operator,result)=>result,
   searchOrders:async()=>[], getOrder:async()=>undefined, reconciliationRows:async()=>[], retryOutbox:async(input)=>({replayed:false,eventId:input.eventId}),
   reserveRefund:async(input)=>({outcome:"reserved",refundId:"r1",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:input.amountMinor,refundableMinor:1000}),
   completeRefund:async(input)=>{state.completed=input.providerRefundId;}, failRefund:async()=>{}, markRefundResolutionRequired:async()=>{},

@@ -18,7 +18,7 @@ function fixture() {
     const rows = (values: Record<string, unknown>[]) => ({ rowCount: values.length, rows: values });
     if (["BEGIN", "ROLLBACK"].includes(s) || s.startsWith("SELECT pg_advisory")) return rows([]);
     if (s === "COMMIT") { state.commits++; return rows([]); }
-    if (s.startsWith("SELECT command_type") || s.startsWith("SELECT status, result FROM operator_commands")) {
+    if (s.startsWith("SELECT status FROM operator_commands") || s.startsWith("SELECT command_type") || s.startsWith("SELECT status, result FROM operator_commands")) {
       const c = state.commands.get(String(args[0])); return rows(c ? [c] : []);
     }
     if (s.startsWith("SELECT id, provider, provider_payment_id")) return rows([{ id: "p1", provider: "mollie-test", provider_payment_id: "tr_1", status: state.payment, amount_minor: "1000", currency: "GBP" }]);
@@ -31,6 +31,7 @@ function fixture() {
     if (s.startsWith("INSERT INTO audit_events")) { state.audits.push(args); return rows([]); }
     if (s.startsWith("SELECT status FROM payments")) return rows([{ status: state.payment }]);
     if (s.startsWith("SELECT status FROM orders")) return rows([{ status: state.order }]);
+    if (s.startsWith("UPDATE operator_commands SET capture_payment_id")) return rows([]);
     if (s.startsWith("UPDATE payments SET capture_before")) return rows([]);
     if (s.startsWith("UPDATE payments SET status")) { state.payment = String(args[1]); return rows([]); }
     if (s.startsWith("UPDATE orders SET status")) { state.order = String(args[1]); return rows([]); }
@@ -81,7 +82,7 @@ test("protected authorised capture commits reservation, captures and releases ex
   assert.equal(f.state.payment, "captured"); assert.equal(f.state.order, "paid"); assert.equal(f.state.outbox, 1);
   assert.equal((await f.fulfilment.reservePaidOrder("o1", "test", "fulfil", "corr")).outcome, "reserved");
   const audit = f.state.audits.filter((a) => String(a[2]).startsWith("capture."));
-  assert.deepEqual(audit.map((a) => a[2]), ["capture.reserved", "capture.provider_verified", "capture.completed"]);
+  assert.deepEqual(audit.map((a) => a[2]), ["capture.reserved", "capture.provider_verified", "capture.attempt_reserved", "capture.completed"]);
   assert.equal(audit[0]![3], "operator@example.test"); assert.equal(audit[0]![4], audit[2]![4]);
 });
 

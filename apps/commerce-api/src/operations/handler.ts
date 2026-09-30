@@ -27,6 +27,15 @@ const csv = (rows: readonly Readonly<Record<string, unknown>>[]): string => {
     ...rows.map((row) => reconciliationCsvColumns.map((column) => safeCsv(row[column])).join(",")),
   ].join("\r\n");
 };
+const captureReconciliationMessages = {
+  capture_reconciled: "Capture reconciled — provider capture already existed.",
+  capture_resumed: "Capture safely resumed using the original command.",
+  payment_captured: "Provider confirms payment captured.",
+  manual_resolution_required: "Safe automatic replay cannot be established; manual resolution required.",
+  payment_not_eligible: "Payment is no longer eligible for capture.",
+  provider_ambiguous: "Provider state could not be determined; manual resolution required.",
+  capture_pending: "Provider capture remains unresolved. Do not issue another capture.",
+} as const;
 const safeError = (error: unknown): Readonly<{ name: string; message: string }> => {
   if (error instanceof Error) return Object.freeze({ name: error.name || "Error", message: error.message || "Unknown error" });
   return Object.freeze({ name: "UnknownError", message: "Non-Error value thrown" });
@@ -37,6 +46,11 @@ export const handleOperationsRequest = async (request: Request, service: Operati
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
+    if (request.method === "POST" && path[0] === "orders" && path[1] && path[2] === "capture" && path[3] === "reconcile" && path.length === 4) {
+      if (!allowed(principal, "payments:capture")) return json({ message: "Permission denied." }, 403);
+      const result = await service.reconcileCapture(path[1], principal.id);
+      return json({ ...result, message: captureReconciliationMessages[result.outcome] }, result.status === "resolution_required" ? 202 : 200);
+    }
     if (request.method === "POST" && path[0] === "orders" && path[1] && path[2] === "capture" && path.length === 3) {
       if (!allowed(principal, "payments:capture")) return json({ message: "Permission denied." }, 403);
       const result = await service.capture({ orderId: path[1], operatorId: principal.id, idempotencyKey: request.headers.get("idempotency-key") ?? "" });

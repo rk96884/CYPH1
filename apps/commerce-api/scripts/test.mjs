@@ -22,6 +22,8 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "fulfilment", "fulfilment.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "operations.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "capture.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "operations", "capture-reconciliation.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "payments", "capture-replay.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "payments", "klarna.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "payments", "capture-monitor.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "access", "access.test.js"),

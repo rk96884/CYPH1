@@ -101,7 +101,12 @@ export type CaptureInput = Readonly<{
   operatorId: string;
   idempotencyKey: string;
   correlationId: string;
+  /** Evidence for an explicit recovery replay; never a replacement key. */
+  replay?: CaptureReplayEvidence;
 }>;
+
+export type CaptureReplayEvidence = Readonly<{ firstAttemptAt: string; providerContext: string }>;
+export type CaptureList = Readonly<{ captures: readonly NormalisedCapture[]; complete: boolean }>;
 
 export type NormalisedCapture = Readonly<{
   provider: string;
@@ -168,6 +173,9 @@ export interface PaymentProvider {
   getPayment(input: GetPaymentInput): Promise<NormalisedPayment>;
   /** Optional until every configured provider supports authorization/capture. */
   capture?(input: CaptureInput): Promise<NormalisedCapture>;
+  listCaptures?(input: GetPaymentInput): Promise<CaptureList>;
+  captureReplayContext?(): string;
+  canReplayCapture?(evidence: CaptureReplayEvidence, now: Date): boolean;
   refund(input: RefundInput): Promise<NormalisedRefund>;
   verifyWebhook(input: VerifyWebhookInput): Promise<VerifiedWebhook>;
   normaliseWebhook(input: VerifiedWebhook): Promise<readonly PaymentEvent[]>;
