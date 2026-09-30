@@ -24,7 +24,8 @@
     "db:rehearse:terminal-worker-failures": "node scripts/rehearse-terminal-worker-failures.mjs",
     "db:rehearse:reconciliation": "node scripts/rehearse-reconciliation.mjs",
     "test:backup-artifacts": "node --test scripts/validate-backup-artifacts.test.mjs",
-    "backup:validate": "node scripts/validate-backup-artifacts.mjs"
+    "backup:validate": "node scripts/validate-backup-artifacts.mjs",
+    "db:rehearse:capture-reconciliation": "npm run build:runtime && node scripts/rehearse-capture-reconciliation.mjs"
   },
   "dependencies": {
     "@cyph1/commerce-core": "0.0.0",

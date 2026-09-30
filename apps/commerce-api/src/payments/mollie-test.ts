@@ -5,6 +5,8 @@ import {
   type VerifyWebhookInput, type PaymentEvent,
 } from "../../../../packages/commerce-core/src/index.js";
 import { providerTimestamp } from "./capture-deadline.js";
+import type { CaptureList, CaptureReplayEvidence } from "../../../../packages/commerce-core/src/index.js";
+import { mollieCaptureContext, mollieCaptureReplaySafe } from "./mollie-capture-replay.js";
 
 type Fetch = typeof globalThis.fetch;
 type MollieAmount = { currency: string; value: string };
@@ -17,6 +19,7 @@ type MolliePayment = {
   _links?: { checkout?: { href?: string } };
 };
 type MollieCapture = { id: string; status?: string; amount: MollieAmount; createdAt: string };
+type MollieCaptureList = { count: number; _embedded: { captures: (MollieCapture & { paymentId: string })[] }; _links: { next: { href: string } | null } };
 type MollieRefund = { id: string; status: string; amount: MollieAmount; createdAt: string };
 type MollieRefundList = { _embedded?: { refunds?: MollieRefund[] } };
 type MollieWebhookPayload = { payment: MolliePayment; refunds: readonly MollieRefund[] };
@@ -37,6 +40,7 @@ const captureMetadata = (payment: MolliePayment) => {
 };
 
 export type MollieTestAdapterConfig = Readonly<{
+  clock?: () => Date;
   apiKey: string;
   allowedCallbackOrigins: readonly string[];
   fetch?: Fetch;
@@ -171,12 +175,28 @@ export class MollieTestPaymentProvider implements PaymentProvider {
   }
 
   async capture(input: CaptureInput): Promise<NormalisedCapture> {
+    if (input.replay && !this.canReplayCapture(input.replay, this.config.clock?.() ?? new Date())) throw new PaymentProviderError("conflict", "Capture replay is not demonstrably safe.");
     if (input.amount.currency !== input.authorisedAmount.currency || input.amount.value <= 0 || input.amount.value > input.authorisedAmount.value) throw new PaymentProviderError("validation_error", "Capture amount exceeds the authoritative authorised amount.");
     const capture = await this.#request<MollieCapture>(`/payments/${encodeURIComponent(requireText(input.providerPaymentId, "Provider payment ID"))}/captures`, {
       method: "POST", headers: { "Idempotency-Key": requireText(input.idempotencyKey, "Idempotency key") },
       body: JSON.stringify({ amount: { currency: input.amount.currency, value: formatAmount(input.amount.value) }, description: `CYPH/1 order ${input.orderId}`, metadata: { orderId: input.orderId, operatorId: input.operatorId } }),
     }, requireText(input.correlationId, "Correlation ID"));
     return Object.freeze({ provider: this.key, providerPaymentId: input.providerPaymentId, providerCaptureId: capture.id, amount: parseAmount(capture.amount), status: capture.status === "failed" ? "failed" : capture.status === "succeeded" ? "completed" : "pending", createdAt: capture.createdAt });
+  }
+
+  captureReplayContext(): string { return mollieCaptureContext(this.config.apiKey, this.config.apiBaseUrl); }
+  canReplayCapture(evidence: CaptureReplayEvidence, now: Date): boolean { return mollieCaptureReplaySafe(evidence, this.captureReplayContext(), now); }
+
+  async listCaptures(input: GetPaymentInput): Promise<CaptureList> {
+    const list = await this.#request<MollieCaptureList>(`/payments/${encodeURIComponent(requireText(input.providerPaymentId, "Provider payment ID"))}/captures?limit=250`, { method: "GET" }, input.correlationId);
+    if (!Array.isArray(list._embedded?.captures) || list.count !== list._embedded.captures.length || !list._links || !("next" in list._links)) throw new PaymentProviderError("unknown_provider_error", "Incomplete capture lookup.");
+    const captures = list._embedded.captures.map((capture): NormalisedCapture => {
+      if (!/^cpt_[A-Za-z0-9]+$/.test(capture.id) || capture.paymentId !== input.providerPaymentId || !["pending", "succeeded", "failed"].includes(capture.status ?? "") || !providerTimestamp(capture.createdAt)) throw new PaymentProviderError("unknown_provider_error", "Invalid capture lookup.");
+      return { provider: this.key, providerPaymentId: capture.paymentId, providerCaptureId: capture.id, amount: parseAmount(capture.amount), status: capture.status === "succeeded" ? "completed" : capture.status === "failed" ? "failed" : "pending", createdAt: providerTimestamp(capture.createdAt)! };
+    });
+    if (new Set(captures.map((capture) => capture.providerCaptureId)).size !== captures.length) throw new PaymentProviderError("unknown_provider_error", "Duplicate capture lookup.");
+    // A truncated list is evidence of ambiguity, never evidence of no captures.
+    return { captures, complete: list._links.next === null };
   }
 
   async refund(input: RefundInput): Promise<NormalisedRefund> {

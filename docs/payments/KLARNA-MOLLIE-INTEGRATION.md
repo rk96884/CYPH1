@@ -1,8 +1,8 @@
 # Klarna via Mollie integration
 
-Status: implementation in progress on `feature/klarna-mollie-payments`
+Status: capture reconciliation implemented; deployment and provider rehearsal pending
 
-Last reviewed: 2026-09-28
+Last reviewed: 2026-09-29
 
 ## Purpose
 
@@ -58,7 +58,7 @@ The implemented physical-goods flow is:
 
 ### Endpoint and replay behaviour
 
-Apply migrations through `0012_capture_deadline_monitor.sql` before running this version (including `0011_operator_capture.sql`). Add `payments:capture` only to the intended operator's server-side `OPERATIONS_ACCESS_GRANTS`; Cloudflare Access authentication remains required. Neither client-supplied permission headers nor `orders:read` grants confer capture authority.
+Apply migrations through `0013_capture_command_reconciliation.sql` before running this version (including `0011_operator_capture.sql`). Add `payments:capture` only to the intended operator's server-side `OPERATIONS_ACCESS_GRANTS`; Cloudflare Access authentication remains required. Neither client-supplied permission headers nor `orders:read` grants confer capture authority.
 
 The endpoint takes no amount or customer data. It captures the stored full authorised amount. `Idempotency-Key` is required: 1–128 ASCII letters/digits or `.`, `_`, `:`, `-`, starting with a letter or digit. The fingerprint binds the command type, order, operator and key. Reuse for another request returns `409`.
 
@@ -68,11 +68,45 @@ The endpoint takes no amount or customer data. It captures the stored full autho
 - Completed/failed/resolution-required commands replay their stored result without contacting the provider. A reserved command returns `409` and must not be resent.
 - A unique per-order capture reservation also blocks replacement idempotency keys, including after failure. There is no automatic capture retry or command reset endpoint.
 
-If the process stops after reservation, or persistence fails after the provider call, the command stays reserved. An operator must reconcile it with authoritative provider records; an HTTP failure is not evidence that capture failed. Likewise, pending and ambiguous outcomes require provider verification through the existing webhook/reconciliation process. Do not delete reservations or submit another capture to resolve uncertainty. A dedicated operator resolution endpoint remains separate work.
+If the process stops after reservation, or persistence fails after the provider call, the command stays reserved. An operator must reconcile it with authoritative provider records; an HTTP failure is not evidence that capture failed. Likewise, pending and ambiguous outcomes require provider verification through the existing webhook/reconciliation process. Do not delete reservations or submit another capture to resolve uncertainty. Use the explicit reconciliation endpoint below.
 
 Reservation and outcome audit events record the operator ID, generated correlation ID, internal payment/order identity and normalised outcome/reference only. Raw provider responses, customer addresses, credentials and provider error messages are not persisted by this path.
 
 The branch contains a test proving that a Mollie `captureBefore` value is surfaced by the adapter and that the capture endpoint is called with an idempotency key.
+
+## Explicit manual capture reconciliation
+
+An unresolved capture must never be retried with a new provider idempotency key: a timeout does not establish that the provider rejected the previous request. Order Control hides ordinary Capture when any capture command exists and offers **Reconcile capture** for unresolved commands. A failed reload keeps capture controls disabled.
+
+`POST /operations/orders/:orderId/capture/reconcile` uses the same Cloudflare Access authentication and `payments:capture` permission as capture. It accepts no amount, replacement key or override. The original stored command is the identity; a supplied client idempotency header cannot replace it. Missing commands return `404`; active attempts return `409`. This endpoint is an explicit operator action, never a scheduled retry.
+
+1. Lock and claim the existing command, preserving its original operator, fingerprint, payment binding and key. A two-minute lease excludes concurrent recovery; completed results replay locally.
+2. Through `PaymentProviderRegistry`, retrieve the current payment and complete capture list. Validate payment identity, full amount/currency and capture evidence. Incomplete, malformed, multiple or partial capture evidence remains manual resolution; no capture POST is sent.
+3. A matching completed capture (with authorised/captured payment), or authoritative captured payment with an empty complete capture list, reconciles locally without a POST. Normalised capture ID/status/amount/creation time are stored in the command result. Provider `paidAt`, when supplied, supplies the order timestamp. Pending/failed captures remain unresolved and are never replaced.
+4. Authorised payment with no capture can resume only with the original stored request/key and original operator metadata, a future verified deadline, matching financial state/revision and provider replay evidence. The recovering operator and a fresh correlation ID are audited separately. There is no new command and no reset.
+5. Failed/cancelled/expired provider payments reconcile through the existing payment state machine without capture. Other non-authorised or conflicting local states remain held for review. Provider lookup or replay errors remain resolution-required. Paid/order/outbox writes are atomic, and fulfilment still requires **order paid AND payment captured**.
+
+### Mollie replay guarantee
+
+[Mollie's idempotency documentation](https://docs.mollie.com/reference/api-idempotency), reviewed 2026-09-29, states that POST responses are cached for one hour and keys are credential-bound. Reusing a key after expiry can create a **new** request. CYPH/1 therefore allows replay for **less than 55 minutes** from the durable first-attempt timestamp, retaining five minutes of headroom. The adapter rechecks this immediately before sending. Negative/unknown age fails closed.
+
+Migration `apps/commerce-api/db/migrations/0013_capture_command_reconciliation.sql` adds the immutable request, payment binding, first-attempt timestamp, replay-context digest and lease fields to `operator_commands`. The digest binds the credential, API base and capture wire-format version without storing the credential itself. Credential/endpoint/wire-format changes disable replay of earlier requests. The request stores internal identifiers, amount and original operator identity only, with no customer payload. Only allowlisted status/outcome information is exposed to Order Control; the original request, key, fingerprint and context digest are not exposed.
+
+**Legacy commands lack reliable request/credential/attempt evidence.** Migration backfills only an unambiguous payment binding, never inferred replay evidence. An authorised legacy payment with no capture will therefore remain manual resolution, even if the dashboard shows Authorized. This includes the reported staging scenario if its command predates this migration. Existing provider captures can still be reconciled. Do not edit timestamps, fabricate evidence, delete commands or generate a replacement key to make the old fixture capture. Escalate to the payments owner for a separately reviewed provider/order resolution.
+
+No environment variables or secrets are added. `CAPTURE_TEST_DATABASE_URL` is the existing local rehearsal guard only. No deployed migrations, scheduling, customer enablement or deployment are performed by this change.
+
+### Validation after separately approved staging deployment
+
+1. Keep the existing unresolved staging command untouched. Confirm the intended staging database and Mollie **test** credential. Pause operator capture during migration/runtime rollout; apply migration `0013` through the normal release mechanism and replace all old Operations instances before resuming. Keep customer enablement and fulfilment settings unchanged.
+2. Sign in through Cloudflare Access as an operator granted `orders:read` and `payments:capture`. Open the affected order in Order Control. Verify provider reference, amount, currency, current Mollie payment status, capture list and `captureBefore`. Do not infer state solely from the earlier dashboard check.
+3. Confirm ordinary Capture is hidden and **Reconcile capture** is available. Click once (equivalently POST the route above through the existing authenticated session, with no body or new key). Record HTTP status/outcome and the restricted audit correlation ID.
+4. For the legacy staging fixture, expect `202` / `manual_resolution_required` when Mollie is still authorised with no capture. Verify **zero capture POSTs**, unchanged command key/fingerprint, unpaid order and blocked fulfilment. This refusal is the intended safe result, not a reason to reset the command.
+5. If Mollie already has a matching completed capture, expect `200` / `capture_reconciled`, persisted capture details, payment captured and order paid. Repeat reconciliation and confirm the stored result returns without another provider request. Any actual fulfilment still follows its existing approved gates.
+6. To prove safe resume, use a **separate approved synthetic test order created under this version**, in an isolated test harness with a controlled lost response and the same credential. Within 55 minutes, reconcile while the verified deadline is future. Confirm the wire request uses the exact original key/body once; outcome is `capture_resumed` or pending resolution. Never inject failures into the shared staging service or use the legacy fixture to fabricate this evidence.
+7. Verify a read-only operator receives `403`, an unauthenticated request `401`, and a different ordinary capture key remains blocked. Confirm expired/ambiguous cases remain unpaid; inspect audits for the recovering operator without raw payloads/secrets.
+
+Local evidence: `npm run test:commerce`, `npm run test:operations-capture-ui` and `npm run db:rehearse:capture-reconciliation --workspace @cyph1/commerce-api`. The PostgreSQL 17 rehearsal uses a migrated disposable local `*_capture_test` database and synthetic provider, covering concurrent claims, original-key replay, expired/legacy refusal, provider capture persistence, terminal state, revision fencing, atomic rollback, privacy and fulfilment gating. It does not contact Mollie or modify the real staging fixture.
 
 ## Capture safety controls
 
@@ -157,7 +191,7 @@ Run serially at a cadence comfortably inside the critical window. A suggested in
 3. For warning/critical payments, confirm fulfilment readiness before invoking the protected `payments:capture` workflow. Its fresh preflight still requires an authorised payment and future deadline. Urgency does not authorise capture.
 4. For overdue/missing/conflicting data, withhold capture/fulfilment. A verified extension must be reconciled before protected release. Verified expiry/cancellation/failure leaves the order non-paid for manual customer/order resolution. Verified capture may enter the existing paid/fulfilment pipeline.
 5. Never clear a reserved/failed/resolution-required capture command or use another key to work around it. The monitor does not retry or reset capture commands. Non-authorised resolution records remain visible through protected operations rather than deadline polling.
-6. Rerun the monitor to confirm active conditions clear, preserving audit/history. A dedicated command-resolution endpoint and production notification-route rehearsal remain outstanding.
+6. Rerun the monitor to confirm active conditions clear, preserving audit/history. Use capture reconciliation for unresolved commands; production notification-route rehearsal remains outstanding.
 
 ## Customer data and privacy
 
@@ -224,7 +258,7 @@ Klarna must remain disabled for real customer traffic until the following are ex
 
 ## Remaining implementation work
 
-The branch remains an implementation branch rather than evidence that Klarna is production-ready. Protected capture, provider deadline persistence, monitoring/alert events, fulfilment gating and local PostgreSQL rehearsals are implemented. Outstanding operational work: approved migration/deployment, scheduler cadence/capacity, missing-run detection and the existing human notification-route wiring/rehearsal. A dedicated operator resolution workflow, live Mollie verification and the other production gates above also remain. No customer enablement is authorised by this implementation.
+The branch remains an implementation branch rather than evidence that Klarna is production-ready. Protected capture, provider deadline persistence, monitoring/alert events, fulfilment gating and local PostgreSQL rehearsals are implemented. Outstanding operational work: approved migration/deployment, scheduler cadence/capacity, missing-run detection and the existing human notification-route wiring/rehearsal. Live Mollie reconciliation verification and the other production gates above also remain. No customer enablement is authorised by this implementation.
 
 ## Relevant code
 

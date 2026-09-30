@@ -42,6 +42,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Test Operations capture controls
+        run: npm run test:operations-capture-ui
+
       - name: Test staging monitor behaviour
         run: npm run test:staging-monitor
 
