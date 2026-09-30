@@ -13,16 +13,15 @@ export type OrderDetails = Readonly<{ order: OrderSummary; payments: readonly Re
 export type RefundReservation = Readonly<{ outcome: "reserved" | "replayed"; refundId: string; paymentId: string; provider: string; providerPaymentId: string; currency: string; amountMinor: number; refundableMinor: number; result?: Readonly<Record<string, unknown>> }>;
 
 export type CaptureCommand = Readonly<{ orderId: string; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>;
-export type CaptureResult = Readonly<{ status: "completed" | "failed" | "resolution_required"; providerCaptureId?: string }>;
+export type CaptureResult = Readonly<{ status: "pending" | "completed" | "failed" | "resolution_required"; providerCaptureId?: string; captures?: readonly NormalisedCapture[] }>;
 export type CaptureReservation = Readonly<{ outcome: "reserved"; paymentId: string; provider: string; providerPaymentId: string; amountMinor: number; currency: string }> | Readonly<{ outcome: "replayed"; result: CaptureResult }>;
 export type CaptureReconciliationResult = CaptureResult & Readonly<{
   outcome: "capture_reconciled" | "capture_resumed" | "payment_captured" | "payment_not_eligible" | "manual_resolution_required" | "provider_ambiguous" | "capture_pending";
-  captures?: readonly NormalisedCapture[];
 }>;
 export type CaptureRecovery = Readonly<{
   orderId: string; paymentId: string; provider: string; providerPaymentId: string; amountMinor: number; currency: string;
   idempotencyKey: string; fingerprint: string; originalOperatorId: string; request: CaptureInput | null;
-  firstAttemptAt: string | null; providerContext: string | null; revision: string; claimId: string;
+  firstAttemptAt: string | null; providerContext: string | null; revision: string; claimId: string; providerCaptureId?: string;
 }>;
 export type CaptureRecoveryReservation = Readonly<{ outcome: "reserved"; recovery: CaptureRecovery }> | Readonly<{ outcome: "replayed"; result: CaptureReconciliationResult }>;
 export interface OperationsRepository {
@@ -83,9 +82,10 @@ export class OperationsService {
       await this.repository.prepareCaptureAttempt({ ...command, paymentId: reservation.paymentId, request, providerContext: provider.captureReplayContext?.() ?? null });
       const captured = await provider.capture(request);
       const verified = captured.provider === reservation.provider && captured.providerPaymentId === reservation.providerPaymentId &&
-        captured.amount.value === amount.value && captured.amount.currency === amount.currency && !!captured.providerCaptureId;
+        captured.amount.value === amount.value && captured.amount.currency === amount.currency && !!captured.providerCaptureId &&
+        ["pending", "completed", "failed"].includes(captured.status) && !!providerTimestamp(captured.createdAt);
       result = verified
-        ? { status: captured.status === "pending" ? "resolution_required" : captured.status, providerCaptureId: captured.providerCaptureId }
+        ? { status: captured.status, providerCaptureId: captured.providerCaptureId, captures: [captured] }
         : { status: "resolution_required" };
     } catch (error) {
       result = { status: error instanceof PaymentProviderError && !error.retryable &&
@@ -114,12 +114,13 @@ export class OperationsService {
       const listed = await provider.listCaptures({ providerPaymentId: recovery.providerPaymentId, correlationId: recovery.claimId });
       stage = "validate_capture_evidence";
       if (!listed.complete || listed.captures.some((capture) => capture.provider !== recovery.provider || capture.providerPaymentId !== recovery.providerPaymentId ||
-          capture.amount.currency !== recovery.currency || capture.amount.value !== recovery.amountMinor || !capture.providerCaptureId || !providerTimestamp(capture.createdAt)) || listed.captures.length > 1) throw new Error("capture_evidence_ambiguous");
+          capture.amount.currency !== recovery.currency || capture.amount.value !== recovery.amountMinor || !capture.providerCaptureId || (recovery.providerCaptureId && capture.providerCaptureId !== recovery.providerCaptureId) || !["pending", "completed", "failed"].includes(capture.status) || !providerTimestamp(capture.createdAt)) || listed.captures.length > 1) throw new Error("capture_evidence_ambiguous");
       verifiedPayment = payment;
       const capture = listed.captures[0];
       if (capture) {
         const completed = capture.status === "completed" && ["authorised", "captured"].includes(payment.status);
-        result = { status: completed ? "completed" : "resolution_required", outcome: completed ? "capture_reconciled" : capture.status === "pending" ? "capture_pending" : "manual_resolution_required", providerCaptureId: capture.providerCaptureId, captures: listed.captures };
+        const pending = capture.status === "pending" && payment.status === "authorised";
+        result = { status: completed ? "completed" : pending ? "pending" : "resolution_required", outcome: completed ? "capture_reconciled" : pending ? "capture_pending" : "manual_resolution_required", providerCaptureId: capture.providerCaptureId, captures: listed.captures };
       } else if (payment.status === "captured") {
         result = { status: "completed", outcome: "payment_captured" };
       } else if (payment.status !== "authorised") {
@@ -132,7 +133,8 @@ export class OperationsService {
           request.operatorId === recovery.originalOperatorId && request.idempotencyKey === recovery.idempotencyKey &&
           request.amount.value === recovery.amountMinor && request.amount.currency === recovery.currency &&
           request.authorisedAmount.value === recovery.amountMinor && request.authorisedAmount.currency === recovery.currency;
-        if (!safeRequest || !evidence || !provider.capture || !provider.canReplayCapture?.(evidence, this.clock()) ||
+        // A known accepted capture is lookup-only, even if a later list omits it.
+        if (recovery.providerCaptureId || !safeRequest || !evidence || !provider.capture || !provider.canReplayCapture?.(evidence, this.clock()) ||
             payment.captureMode === "automatic" || !payment.captureBefore || Date.parse(payment.captureBefore) <= this.clock().getTime() ||
             !await this.repository.permitCaptureReplay(recovery, operatorId)) {
           result = { status: "resolution_required", outcome: "manual_resolution_required" };
@@ -141,8 +143,8 @@ export class OperationsService {
           const resumed = await provider.capture({ ...request, correlationId: recovery.claimId, replay: evidence });
           stage = "validate_resumed_capture";
           if (resumed.provider !== recovery.provider || resumed.providerPaymentId !== recovery.providerPaymentId || !resumed.providerCaptureId ||
-              resumed.amount.value !== recovery.amountMinor || resumed.amount.currency !== recovery.currency || !providerTimestamp(resumed.createdAt)) throw new Error("capture_mismatch");
-          result = { status: resumed.status === "completed" ? "completed" : "resolution_required", outcome: resumed.status === "completed" ? "capture_resumed" : "capture_pending", providerCaptureId: resumed.providerCaptureId, captures: [resumed] };
+              resumed.amount.value !== recovery.amountMinor || resumed.amount.currency !== recovery.currency || !["pending", "completed", "failed"].includes(resumed.status) || !providerTimestamp(resumed.createdAt)) throw new Error("capture_mismatch");
+          result = { status: resumed.status === "completed" ? "completed" : resumed.status === "pending" ? "pending" : "resolution_required", outcome: resumed.status === "completed" ? "capture_resumed" : resumed.status === "pending" ? "capture_pending" : "manual_resolution_required", providerCaptureId: resumed.providerCaptureId, captures: [resumed] };
         }
       }
     } catch (error) {

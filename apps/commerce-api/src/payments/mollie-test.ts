@@ -18,7 +18,7 @@ type MolliePayment = {
   metadata?: { orderId?: string; orderNumber?: string; correlationId?: string };
   _links?: { checkout?: { href?: string } };
 };
-type MollieCapture = { id: string; status?: string; amount: MollieAmount; createdAt: string };
+type MollieCapture = { id: string; paymentId?: string; status?: string; amount: MollieAmount; createdAt: string };
 type MollieCaptureList = { count: number; _embedded: { captures: (MollieCapture & { paymentId: string })[] }; _links: { next: { href: string } | null } };
 type MollieRefund = { id: string; status: string; amount: MollieAmount; createdAt: string };
 type MollieRefundList = { _embedded?: { refunds?: MollieRefund[] } };
@@ -181,6 +181,7 @@ export class MollieTestPaymentProvider implements PaymentProvider {
       method: "POST", headers: { "Idempotency-Key": requireText(input.idempotencyKey, "Idempotency key") },
       body: JSON.stringify({ amount: { currency: input.amount.currency, value: formatAmount(input.amount.value) }, description: `CYPH/1 order ${input.orderId}`, metadata: { orderId: input.orderId, operatorId: input.operatorId } }),
     }, requireText(input.correlationId, "Correlation ID"));
+    if (!/^cpt_[A-Za-z0-9]+$/.test(capture.id) || (capture.paymentId !== undefined && capture.paymentId !== input.providerPaymentId) || !["pending", "succeeded", "failed"].includes(capture.status ?? "") || !providerTimestamp(capture.createdAt)) throw new PaymentProviderError("unknown_provider_error", "Invalid capture response.");
     return Object.freeze({ provider: this.key, providerPaymentId: input.providerPaymentId, providerCaptureId: capture.id, amount: parseAmount(capture.amount), status: capture.status === "failed" ? "failed" : capture.status === "succeeded" ? "completed" : "pending", createdAt: capture.createdAt });
   }
 

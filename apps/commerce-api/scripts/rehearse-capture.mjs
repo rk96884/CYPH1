@@ -24,7 +24,7 @@ const provider = { key: "capture-test", async getPayment(input) {
   const command = await pool.query("SELECT status FROM operator_commands WHERE idempotency_key=$1", [input.idempotencyKey]);
   assert.equal(command.rows[0]?.status, "reserved");
   calls++;
-  return { provider: "capture-test", providerPaymentId: input.providerPaymentId, providerCaptureId: `capture-${randomUUID()}`, amount: input.amount, status: outcome };
+  return { provider: "capture-test", providerPaymentId: input.providerPaymentId, providerCaptureId: `capture-${randomUUID()}`, amount: input.amount, status: outcome, createdAt: new Date().toISOString() };
 } };
 const service = new OperationsService(repository, { getProvider: () => provider }, () => new Date("2026-09-28T12:00:00Z"));
 const createOrder = async () => {
@@ -58,9 +58,9 @@ try {
 
   outcome = "pending";
   const ambiguous = await createOrder(); const ambiguousKey = randomUUID();
-  assert.equal((await capture(ambiguous, ambiguousKey)).status, "resolution_required");
+  assert.equal((await capture(ambiguous, ambiguousKey)).status, "pending");
   const beforeReplay = calls;
-  assert.equal((await capture(ambiguous, ambiguousKey)).status, "resolution_required");
+  assert.equal((await capture(ambiguous, ambiguousKey)).status, "pending");
   await assert.rejects(() => capture(ambiguous, randomUUID()), /authorised|already exists/);
   assert.equal(calls, beforeReplay);
   await assert.rejects(() => fulfilment.reservePaidOrder(ambiguous, "test", randomUUID(), randomUUID()), /verified captured/);

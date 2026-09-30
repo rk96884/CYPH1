@@ -92,6 +92,20 @@ try {
      VALUES ('verify-invalid-fingerprint', 'not-a-sha256-fingerprint')`,
   );
 
+  await client.query(`INSERT INTO operator_commands
+    (idempotency_key,command_type,target_type,target_id,operator_id,request_fingerprint,status,result)
+    VALUES ('verify-pending-capture','payment.capture','order',$1,'schema-verifier',$2,'pending',$3::jsonb)`,
+    [order.rows[0].id, 'a'.repeat(64), JSON.stringify({ status: 'pending', providerCaptureId: 'cpt_verify' })]);
+  console.log("Verified pending capture command status.");
+  await expectConstraintFailure("pending is capture only", `INSERT INTO operator_commands
+    (idempotency_key,command_type,target_type,target_id,operator_id,request_fingerprint,status)
+    VALUES ('verify-pending-refund','refund.create','order',$1,'schema-verifier',$2,'pending')`,
+    [order.rows[0].id, 'b'.repeat(64)]);
+  await expectConstraintFailure("pending capture blocks replacement key", `INSERT INTO operator_commands
+    (idempotency_key,command_type,target_type,target_id,operator_id,request_fingerprint)
+    VALUES ('verify-replacement','payment.capture','order',$1,'schema-verifier',$2)`,
+    [order.rows[0].id, 'c'.repeat(64)]);
+
   await client.query("ROLLBACK");
   console.log("Schema verification passed; all test records were rolled back.");
 } catch (error) {

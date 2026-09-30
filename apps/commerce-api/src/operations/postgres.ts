@@ -46,15 +46,15 @@ export class PostgresOperationsRepository implements OperationsRepository {
         amountMinor: Number(payment.amount_minor), currency: payment.currency, revision: payment.capture_revision,
         idempotencyKey: command.idempotency_key, fingerprint: command.request_fingerprint, originalOperatorId: command.operator_id,
         request: command.capture_request, firstAttemptAt: command.capture_first_attempt_at?.toISOString() ?? null,
-        providerContext: command.capture_provider_context, claimId } };
+        providerContext: command.capture_provider_context, claimId, ...(command.result.providerCaptureId ? { providerCaptureId: command.result.providerCaptureId as string } : {}) } };
     });
   }
 
   async permitCaptureReplay(recovery: CaptureRecovery, operatorId: string): Promise<boolean> {
     return this.transaction(async (client) => {
-      const command = await client.query(`SELECT status FROM operator_commands WHERE idempotency_key=$1 AND request_fingerprint=$2
+      const command = await client.query(`SELECT status,result FROM operator_commands WHERE idempotency_key=$1 AND request_fingerprint=$2
         AND capture_claim_id=$3 AND capture_claimed_at > clock_timestamp()-interval '2 minutes' FOR UPDATE`, [recovery.idempotencyKey, recovery.fingerprint, recovery.claimId]);
-      if (command.rowCount !== 1 || command.rows[0].status === "completed") return false;
+      if (command.rowCount !== 1 || ["completed", "pending"].includes(command.rows[0].status) || command.rows[0]?.result?.providerCaptureId) return false;
       const payments = await client.query("SELECT status,capture_revision,amount_minor,currency FROM payments WHERE id=$1 FOR UPDATE", [recovery.paymentId]);
       const orders = await client.query("SELECT status,total_minor,currency FROM orders WHERE id=$1 FOR UPDATE", [recovery.orderId]);
       const payment = payments.rows[0]; const order = orders.rows[0];
@@ -67,17 +67,23 @@ export class PostgresOperationsRepository implements OperationsRepository {
 
   async finishCaptureReconciliation(recovery: CaptureRecovery, operatorId: string, result: CaptureReconciliationResult, snapshot?: NormalisedPayment): Promise<CaptureReconciliationResult> {
     return this.transaction(async (client) => {
-      const commands = await client.query(`SELECT status FROM operator_commands WHERE idempotency_key=$1 AND request_fingerprint=$2 AND capture_claim_id=$3 FOR UPDATE`, [recovery.idempotencyKey, recovery.fingerprint, recovery.claimId]);
+      const commands = await client.query(`SELECT status,result FROM operator_commands WHERE idempotency_key=$1 AND request_fingerprint=$2 AND capture_claim_id=$3 FOR UPDATE`, [recovery.idempotencyKey, recovery.fingerprint, recovery.claimId]);
       if (commands.rowCount !== 1) throw new OperationsError("conflict", "Capture reconciliation ownership changed. Reload the order.");
       const payments = await client.query("SELECT status,amount_minor,currency,provider,provider_payment_id,order_id,capture_revision FROM payments WHERE id=$1 FOR UPDATE", [recovery.paymentId]);
       const orders = await client.query("SELECT status,total_minor,currency FROM orders WHERE id=$1 FOR UPDATE", [recovery.orderId]);
       const payment = payments.rows[0]; const order = orders.rows[0];
-      let persisted = result;
+      // Preserve accepted-capture evidence through later ambiguous reads. It permanently
+      // prevents replay, even if the provider temporarily omits the capture from its list.
+      const previous = commands.rows[0].result as CaptureResult;
+      let persisted: CaptureReconciliationResult = { ...result,
+        ...(!result.providerCaptureId && previous.providerCaptureId ? { providerCaptureId: previous.providerCaptureId } : {}),
+        ...(!result.captures && previous.captures ? { captures: previous.captures } : {}) };
+
       if (!payment || !order || payment.order_id !== recovery.orderId || payment.provider !== recovery.provider || payment.provider_payment_id !== recovery.providerPaymentId || Number(payment.amount_minor) !== recovery.amountMinor || Number(order.total_minor) !== recovery.amountMinor || payment.currency !== recovery.currency || order.currency !== recovery.currency) throw new OperationsError("conflict", "Reconciliation financial state changed.");
-      const target = result.status === "completed" ? "captured" : snapshot && ["failed", "cancelled", "expired"].includes(snapshot.status) ? snapshot.status : "resolution_required";
+      const target = result.status === "completed" ? "captured" : result.status === "pending" ? "authorised" : snapshot && ["failed", "cancelled", "expired"].includes(snapshot.status) ? snapshot.status : "resolution_required";
       const transition = transitionPayment(payment.status as PaymentStatus, target);
       if ((result.status !== "completed" && payment.capture_revision !== recovery.revision) || transition.status !== target || (target === "captured" && !["pending_payment", "paid"].includes(order.status))) {
-        persisted = { ...result, status: "resolution_required", outcome: "manual_resolution_required" };
+        persisted = { ...persisted, status: "resolution_required", outcome: "manual_resolution_required" };
       } else {
         await client.query("UPDATE payments SET status=$2 WHERE id=$1", [recovery.paymentId, transition.status]);
         if (snapshot) await client.query(`UPDATE payments SET capture_before=$2,authorised_at=COALESCE($3,authorised_at),capture_mode=COALESCE($4,capture_mode) WHERE id=$1`,

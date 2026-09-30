@@ -4,6 +4,8 @@ import pg from "pg";
 import { PostgresOperationsRepository } from "../../../build/commerce-api/apps/commerce-api/src/operations/postgres.js";
 import { OperationsService } from "../../../build/commerce-api/apps/commerce-api/src/operations/service.js";
 import { PostgresFulfilmentRepository } from "../../../build/commerce-api/apps/commerce-api/src/fulfilment/postgres.js";
+import { PaymentWebhookProcessor } from "../../../build/commerce-api/apps/commerce-api/src/webhooks/processor.js";
+import { PostgresTransactionRunner } from "../../../build/commerce-api/apps/commerce-api/src/webhooks/postgres.js";
 import { mollieCaptureReplaySafe } from "../../../build/commerce-api/apps/commerce-api/src/payments/mollie-capture-replay.js";
 
 const url = new URL(process.env.CAPTURE_TEST_DATABASE_URL ?? "http://invalid");
@@ -17,25 +19,25 @@ const fulfilment = new PostgresFulfilmentRepository(pool);
 const states=new Map();const posts=[];
 const provider={key:'capture-test',captureReplayContext:()=> 'synthetic-context',canReplayCapture:(evidence,now)=>mollieCaptureReplaySafe(evidence,'synthetic-context',now),
   async getPayment(input){const state=states.get(input.providerPaymentId);return {provider:'capture-test',providerPaymentId:input.providerPaymentId,status:state.paymentStatus,amount:{value:1000,currency:'GBP'},refundableAmount:{value:0,currency:'GBP'},createdAt:new Date().toISOString(),captureMode:'manual',captureBefore:new Date(Date.now()+86400000).toISOString()};},
-  async listCaptures(input){return {captures:states.get(input.providerPaymentId).captures,complete:true};},
+  async listCaptures(input){if(states.get(input.providerPaymentId).lookupFailure)throw new Error('synthetic lookup uncertainty');return {captures:states.get(input.providerPaymentId).captures,complete:true};},
   async capture(input){
     posts.push(input);
     const evidence=await pool.query('SELECT capture_request,capture_first_attempt_at,capture_claim_id FROM operator_commands WHERE idempotency_key=$1',[input.idempotencyKey]);
     assert.ok(evidence.rows[0].capture_first_attempt_at);assert.ok(evidence.rows[0].capture_claim_id);
     assert.equal(evidence.rows[0].capture_request.idempotencyKey,input.idempotencyKey);
-    if(!input.replay)throw new Error('synthetic uncertain response');
+    if(!input.replay&&states.get(input.providerPaymentId).mode!=='pending')throw new Error('synthetic uncertain response');
     assert.equal(input.operatorId,'original-operator');
-    const result={provider:'capture-test',providerPaymentId:input.providerPaymentId,providerCaptureId:`cpt_${randomUUID().replaceAll('-','')}`,amount:input.amount,status:'completed',createdAt:new Date().toISOString()};
+    const result={provider:'capture-test',providerPaymentId:input.providerPaymentId,providerCaptureId:`cpt_${randomUUID().replaceAll('-','')}`,amount:input.amount,status:input.replay?'completed':'pending',createdAt:new Date().toISOString()};
     states.get(input.providerPaymentId).captures=[result];return result;
   }
 };
 const service=new OperationsService(repository,{getProvider:()=>provider});
-async function fixture(){
+async function fixture(mode='uncertain',captureNow=true){
   const order=randomUUID(),key=randomUUID(),ref=`tr_${randomUUID()}`;
   await pool.query(`INSERT INTO orders (id,order_number,status,currency,subtotal_minor,discount_minor,tax_minor,delivery_minor,total_minor,delivery_address_snapshot) VALUES ($1,$2,'pending_payment','GBP',1000,0,0,0,1000,'{}')`,[order,`RECONCILE-${order}`]);
   const payment=await pool.query(`INSERT INTO payments (order_id,provider,provider_payment_id,status,amount_minor,currency,idempotency_key) VALUES ($1,'capture-test',$2,'authorised',1000,'GBP',$3) RETURNING id`,[order,ref,randomUUID()]);
-  states.set(ref,{paymentStatus:'authorised',captures:[]});
-  assert.equal((await service.capture({orderId:order,operatorId:'original-operator',idempotencyKey:key})).status,'resolution_required');
+  states.set(ref,{paymentStatus:'authorised',captures:[],mode});
+  if(captureNow)assert.equal((await service.capture({orderId:order,operatorId:'original-operator',idempotencyKey:key})).status,mode==='pending'?'pending':'resolution_required');
   return {order,key,ref,payment:payment.rows[0].id};
 }
 async function assertHeld(f){
@@ -76,6 +78,50 @@ try{
     assert.equal(posts.length,before);
     if(kind!=='existing')await assertHeld(current);
   }
+  // Initial pending response, concurrent same-key requests and replacement keys.
+  const pending=await fixture('pending',false);const beforePending=posts.length;
+  const capturePending=()=>service.capture({orderId:pending.order,operatorId:'original-operator',idempotencyKey:pending.key});
+  const firstPending=await Promise.allSettled(Array.from({length:8},capturePending));
+  assert.ok(firstPending.some(r=>r.status==='fulfilled'&&r.value.status==='pending'));
+  for(const r of firstPending)if(r.status==='rejected')assert.equal(r.reason.code,'conflict');
+  assert.equal(posts.length-beforePending,1);await assertHeld(pending);
+  const savedPending=(await pool.query('SELECT * FROM operator_commands WHERE idempotency_key=$1',[pending.key])).rows[0];
+  assert.equal(savedPending.status,'pending');assert.equal(savedPending.result.captures[0].status,'pending');
+  assert.ok(savedPending.capture_first_attempt_at);assert.ok(savedPending.capture_provider_context);
+  const pendingId=savedPending.result.providerCaptureId;
+  const pendingEvidence=savedPending.result.captures;
+  for(const result of await Promise.all(Array.from({length:8},capturePending)))assert.equal(result.status,'pending');
+  for(let i=0;i<2;i++){
+    await assert.rejects(()=>service.capture({orderId:pending.order,operatorId:'original-operator',idempotencyKey:randomUUID()}),/already exists/);
+    assert.equal((await service.reconcileCapture(pending.order,'recovering-operator')).status,'pending');
+    await assertHeld(pending);
+  }
+  const state=states.get(pending.ref);
+  state.lookupFailure=true;
+  assert.equal((await service.reconcileCapture(pending.order,'recovering-operator')).status,'resolution_required');
+  state.lookupFailure=false;state.captures=[];
+  for(let i=0;i<2;i++)assert.equal((await service.reconcileCapture(pending.order,'recovering-operator')).outcome,'manual_resolution_required');
+  const retained=(await pool.query('SELECT * FROM operator_commands WHERE idempotency_key=$1',[pending.key])).rows[0];
+  assert.equal(retained.result.providerCaptureId,pendingId);assert.deepEqual(retained.result.captures,pendingEvidence);
+  assert.equal(retained.request_fingerprint,savedPending.request_fingerprint);assert.deepEqual(retained.capture_request,savedPending.capture_request);
+  const claim=await repository.reserveCaptureReconciliation(pending.order,'recovering-operator',randomUUID());
+  assert.equal(await repository.permitCaptureReplay(claim.recovery,'recovering-operator'),false);
+  await repository.finishCaptureReconciliation(claim.recovery,'recovering-operator',{status:'resolution_required',outcome:'manual_resolution_required'});
+  state.captures=pendingEvidence.map(c=>({...c,status:'completed'}));
+  assert.equal((await service.reconcileCapture(pending.order,'recovering-operator')).status,'completed');
+  assert.equal(posts.length-beforePending,1);
+  assert.equal((await fulfilment.reservePaidOrder(pending.order,'test',randomUUID(),randomUUID())).outcome,'reserved');
+  assert.equal(Number((await pool.query("SELECT count(*) FROM outbox_events WHERE aggregate_id=$1 AND event_type='payment.paid'",[pending.payment])).rows[0].count),1);
+
+  // Existing verified-webhook processing still releases a pending capture only on paid evidence.
+  const webhook=await fixture('pending');await assertHeld(webhook);const postsBeforeWebhook=posts.length;
+  const webhookProvider={key:'capture-test',verifyWebhook:async()=>({outcome:'actionable',provider:'capture-test',providerEventId:'verified'}),
+    normaliseWebhook:async()=>[{eventId:`paid:${webhook.payment}`,provider:'capture-test',providerPaymentId:webhook.ref,type:'payment.paid',amount:{value:1000,currency:'GBP'},occurredAt:new Date().toISOString()}]};
+  await new PaymentWebhookProcessor(webhookProvider,new PostgresTransactionRunner(pool)).process({rawBody:new Uint8Array(),headers:{},endpointUrl:'https://test.invalid'});
+  assert.equal((await fulfilment.reservePaidOrder(webhook.order,'test',randomUUID(),randomUUID())).outcome,'reserved');
+  states.get(webhook.ref).paymentStatus='captured';states.get(webhook.ref).captures[0].status='completed';
+  assert.equal((await service.reconcileCapture(webhook.order,'recovering-operator')).status,'completed');assert.equal(posts.length,postsBeforeWebhook);
+  assert.equal(Number((await pool.query("SELECT count(*) FROM outbox_events WHERE aggregate_id=$1 AND event_type='payment.paid'",[webhook.payment])).rows[0].count),1);
   // A failed atomic commit must not expose paid state or permit a replacement command.
   const interrupted=await fixture();
   states.get(interrupted.ref).captures=[{provider:'capture-test',providerPaymentId:interrupted.ref,providerCaptureId:'cpt_interrupted',amount:{value:1000,currency:'GBP'},status:'completed',createdAt:new Date().toISOString()}];
@@ -86,5 +132,5 @@ try{
   await assert.rejects(()=>service.reconcileCapture(interrupted.order,'recovering-operator'),/still processing/);
   await pool.query("UPDATE operator_commands SET capture_claimed_at=now()-interval '3 minutes' WHERE idempotency_key=$1",[interrupted.key]);
   const beforeRecovery=posts.length;assert.equal((await service.reconcileCapture(interrupted.order,'recovering-operator')).status,'completed');assert.equal(posts.length,beforeRecovery);
-  console.log('PostgreSQL reconciliation rehearsal passed: original-key replay, concurrent claims, legacy/expired refusal, provider capture persistence, terminal states, revision fencing, atomic rollback, audit/UI privacy and fulfilment gates. Synthetic data only; no provider network calls.');
+  console.log('PostgreSQL reconciliation rehearsal passed: pending acceptance/concurrency, evidence retention, webhook confirmation, original-key replay, concurrent claims, legacy/expired refusal, provider capture persistence, terminal states, revision fencing, atomic rollback, audit/UI privacy and fulfilment gates. Synthetic data only; no provider network calls.');
 }finally{await pool.end();}

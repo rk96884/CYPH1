@@ -11,8 +11,10 @@ import { createCloudflareAccessAuthenticator, loadCloudflareAccessConfig } from 
 // Stateful SQL test double exercises the real repositories and their transaction boundaries.
 // It deliberately rejects unknown SQL so state-changing queries cannot silently pass.
 function fixture() {
-  const state = { payment: "authorised", order: "pending_payment", calls: 0, commits: 0, outbox: 0, audits: [] as unknown[][],
-    commands: new Map<string, { command_type: string; request_fingerprint: string; status: string; result: Record<string, unknown> }>() };
+  const state = {
+    payment: "authorised", order: "pending_payment", calls: 0, commits: 0, outbox: 0, audits: [] as unknown[][],
+    commands: new Map<string, { command_type: string; request_fingerprint: string; status: string; result: Record<string, unknown> }>()
+  };
   const query = async (sql: string, args: unknown[] = []) => {
     const s = sql.replace(/\s+/g, " ").trim();
     const rows = (values: Record<string, unknown>[]) => ({ rowCount: values.length, rows: values });
@@ -48,22 +50,26 @@ function fixture() {
     if (s.startsWith("UPDATE orders SET fulfilment_status")) return rows([]);
     throw new Error(`Unexpected SQL: ${s}`);
   };
-  const pool = { connect: async () => ({ query, release() {} }) } as unknown as pg.Pool;
+  const pool = { connect: async () => ({ query, release() { } }) } as unknown as pg.Pool;
   const repository = new PostgresOperationsRepository(pool);
   let capture: NonNullable<PaymentProvider["capture"]> = async (input) => ({ provider: "mollie-test", providerPaymentId: input.providerPaymentId, providerCaptureId: "cpt_1", amount: input.amount, status: "completed", createdAt: "2026-09-28T00:00:00Z" });
   const unused = async (): Promise<never> => { throw new Error("unused"); };
   let deadline: string | undefined = "2026-10-01T12:00:00Z";
-  const provider: PaymentProvider = { key: "mollie-test", createCheckout: unused, getPayment: async () => ({ provider: "mollie-test", providerPaymentId: "tr_1", status: "authorised", captureMode: "manual", ...(deadline ? { captureBefore: deadline } : {}), amount: money(1000, "GBP"), refundableAmount: money(0, "GBP"), createdAt: "2026-09-28T00:00:00Z" }), refund: unused, verifyWebhook: unused, normaliseWebhook: unused,
+  const provider: PaymentProvider = {
+    key: "mollie-test", createCheckout: unused, getPayment: async () => ({ provider: "mollie-test", providerPaymentId: "tr_1", status: "authorised", captureMode: "manual", ...(deadline ? { captureBefore: deadline } : {}), amount: money(1000, "GBP"), refundableAmount: money(0, "GBP"), createdAt: "2026-09-28T00:00:00Z" }), refund: unused, verifyWebhook: unused, normaliseWebhook: unused,
     capture: async (input) => {
       assert.ok(state.commits > 0, "reservation committed before contacting provider");
       assert.equal(state.commands.get(input.idempotencyKey)?.status, "reserved");
       assert.equal(input.operatorId, "operator@example.test"); assert.ok(input.correlationId);
       assert.deepEqual(input.amount, input.authorisedAmount);
       state.calls++; return capture(input);
-    } };
+    }
+  };
   const service = new OperationsService(repository, { getProvider: () => provider, getConfiguredProvider: () => provider }, () => new Date("2026-09-28T12:00:00Z"));
-  const config = loadCloudflareAccessConfig({ CLOUDFLARE_ACCESS_TEAM_DOMAIN: "https://test.cloudflareaccess.com", CLOUDFLARE_ACCESS_AUDIENCE: "test",
-    OPERATIONS_ACCESS_GRANTS: JSON.stringify({ "operator@example.test": ["payments:capture"], "viewer@example.test": ["orders:read"] }) });
+  const config = loadCloudflareAccessConfig({
+    CLOUDFLARE_ACCESS_TEAM_DOMAIN: "https://test.cloudflareaccess.com", CLOUDFLARE_ACCESS_AUDIENCE: "test",
+    OPERATIONS_ACCESS_GRANTS: JSON.stringify({ "operator@example.test": ["payments:capture"], "viewer@example.test": ["orders:read"] })
+  });
   const access = createCloudflareAccessAuthenticator(config, async (token) => ({ payload: { email: token } }));
   const handler = createProtectedOperationsHandler(service, access);
   const request = (key: string | undefined = "capture-1", identity = "operator@example.test", order = "o1") => handler(new Request(`https://ops.test/operations/orders/${order}/capture`, {
@@ -120,7 +126,7 @@ test("in-flight capture replay is blocked before a second provider call", async 
   f.setCapture(async (input) => {
     assert.equal((await f.request()).status, 409);
     assert.equal((await f.request("replacement")).status, 409);
-    return { provider: "mollie-test", providerPaymentId: input.providerPaymentId, providerCaptureId: "cpt_1", amount: input.amount, status: "completed", createdAt: "now" };
+    return { provider: "mollie-test", providerPaymentId: input.providerPaymentId, providerCaptureId: "cpt_1", amount: input.amount, status: "completed", createdAt: "2026-09-28T12:00:00Z" };
   });
   assert.equal((await f.request()).status, 200); assert.equal(f.state.calls, 1);
 });
@@ -132,11 +138,19 @@ for (const scenario of ["declined", "retryable", "unknown", "pending", "failed",
       if (scenario === "declined") throw new PaymentProviderError("payment_declined", "private provider payload");
       if (scenario === "retryable") throw new PaymentProviderError("network_error", "private provider payload", true);
       if (scenario === "unknown") throw new Error("private provider payload");
-      return { provider: "mollie-test", providerPaymentId: scenario === "mismatch" ? "wrong" : input.providerPaymentId, providerCaptureId: "cpt_1", amount: input.amount, status: scenario === "mismatch" ? "completed" : scenario, createdAt: "now" };
+      return { provider: "mollie-test", providerPaymentId: scenario === "mismatch" ? "wrong" : input.providerPaymentId, providerCaptureId: "cpt_1", amount: input.amount, status: scenario === "mismatch" ? "completed" : scenario, createdAt: "2026-09-28T12:00:00Z" };
     });
-    const status: CaptureResult["status"] = ["declined", "failed"].includes(scenario) ? "failed" : "resolution_required";
+    const status: CaptureResult["status"] = ["declined", "failed"].includes(scenario) ? "failed" : scenario === "pending" ? "pending" : "resolution_required";
     const response = await f.request(); const result = await response.json() as CaptureResult;
     assert.equal(result.status, status); assert.equal(response.status, status === "failed" ? 502 : 202);
+    if (scenario === "pending") {
+      assert.equal(f.state.payment, "authorised");
+      assert.equal(f.state.commands.get("capture-1")?.status, "pending");
+      assert.equal(result.captures?.[0]?.status, "pending");
+      assert.equal(result.providerCaptureId, "cpt_1");
+      assert.equal(f.state.audits.at(-1)?.[2], "capture.pending");
+      assert.match(JSON.stringify(result), /awaiting provider confirmation/);
+    }
     assert.equal(f.state.order, "pending_payment"); assert.notEqual(f.state.payment, "captured"); assert.equal(f.state.outbox, 0);
     assert.deepEqual(await (await f.request()).json(), result);
     assert.equal((await f.request("replacement")).status, 409); assert.equal(f.state.calls, 1);
@@ -158,5 +172,15 @@ test("operator capture refreshes deadline and fails closed when overdue, exactly
     assert.equal((await f.request()).status, 202); assert.equal(f.state.calls, 0);
     assert.equal(f.state.order, "pending_payment");
     await assert.rejects(() => f.fulfilment.reservePaidOrder("o1", "test", "fulfil", "corr"), /verified captured/);
+  }
+});
+
+test("unverifiable pending capture remains manual resolution", async () => {
+  for (const malformed of [{ providerCaptureId: '' }, { createdAt: 'invalid' }, { status: 'unknown' as 'pending' }, { amount: money(999, 'GBP') }]) {
+    const f = fixture(); f.setCapture(async (input) => ({ provider: 'mollie-test', providerPaymentId: input.providerPaymentId, providerCaptureId: 'cpt_1', amount: input.amount, status: 'pending', createdAt: '2026-09-28T12:00:00Z', ...malformed }));
+    const body = await (await f.request()).json() as { status: string };
+    assert.equal(body.status, "resolution_required");
+    assert.equal(f.state.order, 'pending_payment'); assert.equal(f.state.outbox, 0);
+    await f.request(); assert.equal(f.state.calls, 1);
   }
 });

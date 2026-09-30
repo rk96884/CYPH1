@@ -47,7 +47,7 @@ test("existing completed provider capture is persisted without POST, including r
 for(const status of ["captured","failed","cancelled","expired","pending"] as const) {
   test(`provider ${status} never causes a capture POST`,async()=>{const f=fixture();f.setPayment({status});const result=await f.run();assert.equal(result.outcome,status==='captured'?'payment_captured':'payment_not_eligible');assert.equal(f.posted.length,0);});
 }
-for(const scenario of ["timeout","list-timeout","incomplete","multiple","partial","currency","wrong-payment","deadline","automatic","revision","pending-capture","failed-capture","request-mismatch"]){
+for(const scenario of ["timeout","list-timeout","incomplete","multiple","partial","currency","wrong-payment","deadline","automatic","revision","failed-capture","request-mismatch"]){
   test(`ambiguous or ineligible ${scenario} fails closed`,async()=>{
     const f=fixture();
     if(scenario==='timeout')f.fail();
@@ -60,7 +60,6 @@ for(const scenario of ["timeout","list-timeout","incomplete","multiple","partial
     if(scenario==='deadline')f.setPayment({captureBefore:now.toISOString()});
     if(scenario==='automatic')f.setPayment({captureMode:'automatic'});
     if(scenario==='revision')f.deny();
-    if(scenario==='pending-capture')f.setCaptures([{...f.captured,status:'pending'}]);
     if(scenario==='failed-capture')f.setCaptures([{...f.captured,status:'failed'}]);
     if(scenario==='request-mismatch')Object.assign(f.recovery,{request:{...request,idempotencyKey:'new-key'}});
     const result=await f.run();assert.equal(result.status,'resolution_required');assert.equal(f.posted.length,0);assert.doesNotMatch(JSON.stringify(result),/private provider payload/);
@@ -75,4 +74,21 @@ test("reconciliation is protected by the same payments:capture grant; client key
   const handler=createProtectedOperationsHandler(f.service,{authenticate:async()=>({id:'recovering-operator',permissions:['payments:capture']})});
   assert.equal((await handler(new Request('https://ops.test/operations/orders/o1/capture/reconcile',{method:'POST',headers:{'Idempotency-Key':'ignored-new-key'}}))).status,200);
   assert.equal(f.posted[0]?.idempotencyKey,'original-key');
+});
+
+test("known pending capture stays pending on lookup then completes without replay",async()=>{
+  const f=fixture();Object.assign(f.recovery,{providerCaptureId:'cpt_1'});
+  f.setCaptures([{...f.captured,status:'pending'}]);
+  for(let i=0;i<2;i++){const result=await f.run();assert.equal(result.status,'pending');assert.equal(result.outcome,'capture_pending');}
+  f.setCaptures([f.captured]);assert.equal((await f.run()).status,'completed');assert.equal(f.posted.length,0);
+});
+test("known accepted capture absent from a later list never qualifies for replay",async()=>{
+  const f=fixture();Object.assign(f.recovery,{providerCaptureId:'cpt_1'});
+  assert.equal((await f.run()).outcome,'manual_resolution_required');assert.equal(f.posted.length,0);
+  f.setCaptures([{...f.captured,providerCaptureId:'cpt_different'}]);
+  assert.equal((await f.run()).outcome,'provider_ambiguous');assert.equal(f.posted.length,0);
+});
+test("safe recovery replay returning pending records pending rather than ambiguity",async()=>{
+  const f=fixture();f.provider.capture=async(input)=>{f.posted.push(input);return {...f.captured,status:'pending'};};
+  assert.equal((await f.run()).status,'pending');assert.equal(f.posted.length,1);
 });
