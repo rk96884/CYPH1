@@ -47,3 +47,16 @@ test('truncated list is never evidence of no captures; malformed identity/status
   body={count:0,_embedded:{captures:[]}};
   await assert.rejects(()=>provider.listCaptures({providerPaymentId:'tr_1',correlationId:'corr'}));
 });
+
+for(const live of [false,true])test(`${live?'live':'test'} capture distinguishes pending, succeeded, failed and malformed responses`,async()=>{
+  let body:unknown=raw;
+  const config={apiKey:live?'live_example_key':'test_example_key',allowedCallbackOrigins:['https://checkout.example.test'],fetch:async()=>response(body)};
+  const provider=live?new MollieLivePaymentProvider(config):new MollieTestPaymentProvider(config);
+  const input:CaptureInput={orderId:'o1',paymentId:'p1',providerPaymentId:'tr_1',amount:money(1000,'GBP'),authorisedAmount:money(1000,'GBP'),operatorId:'operator',idempotencyKey:'key',correlationId:'corr'};
+  for(const [status,expected] of [['pending','pending'],['succeeded','completed'],['failed','failed']]){
+    body={...raw,status};assert.equal((await provider.capture(input)).status,expected);
+  }
+  for(const malformed of [{...raw,paymentId:'tr_other'},{...raw,status:'unknown'},{...raw,status:undefined},{...raw,id:''},{...raw,createdAt:'invalid'}]){
+    body=malformed;await assert.rejects(()=>provider.capture(input));
+  }
+});

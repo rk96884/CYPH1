@@ -34,7 +34,7 @@ const captureReconciliationMessages = {
   manual_resolution_required: "Safe automatic replay cannot be established; manual resolution required.",
   payment_not_eligible: "Payment is no longer eligible for capture.",
   provider_ambiguous: "Provider state could not be determined; manual resolution required.",
-  capture_pending: "Provider capture remains unresolved. Do not issue another capture.",
+  capture_pending: "Capture submitted — awaiting provider confirmation.",
 } as const;
 const safeError = (error: unknown): Readonly<{ name: string; message: string }> => {
   if (error instanceof Error) return Object.freeze({ name: error.name || "Error", message: error.message || "Unknown error" });
@@ -49,12 +49,12 @@ export const handleOperationsRequest = async (request: Request, service: Operati
     if (request.method === "POST" && path[0] === "orders" && path[1] && path[2] === "capture" && path[3] === "reconcile" && path.length === 4) {
       if (!allowed(principal, "payments:capture")) return json({ message: "Permission denied." }, 403);
       const result = await service.reconcileCapture(path[1], principal.id);
-      return json({ ...result, message: captureReconciliationMessages[result.outcome] }, result.status === "resolution_required" ? 202 : 200);
+      return json({ ...result, message: captureReconciliationMessages[result.outcome] }, ["pending", "resolution_required"].includes(result.status) ? 202 : 200);
     }
     if (request.method === "POST" && path[0] === "orders" && path[1] && path[2] === "capture" && path.length === 3) {
       if (!allowed(principal, "payments:capture")) return json({ message: "Permission denied." }, 403);
       const result = await service.capture({ orderId: path[1], operatorId: principal.id, idempotencyKey: request.headers.get("idempotency-key") ?? "" });
-      return json(result, result.status === "completed" ? 200 : result.status === "resolution_required" ? 202 : 502);
+      return json({ ...result, ...(result.status === "pending" ? { message: captureReconciliationMessages.capture_pending } : {}) }, result.status === "completed" ? 200 : result.status === "failed" ? 502 : 202);
     }
     if (request.method === "GET" && path[0] === "orders" && path.length === 1) {
       if (!allowed(principal, "orders:read")) return json({ message: "Permission denied." }, 403);

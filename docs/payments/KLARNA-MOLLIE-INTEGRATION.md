@@ -2,7 +2,7 @@
 
 Status: capture reconciliation implemented; deployment and provider rehearsal pending
 
-Last reviewed: 2026-09-29
+Last reviewed: 2026-09-30
 
 ## Purpose
 
@@ -58,17 +58,18 @@ The implemented physical-goods flow is:
 
 ### Endpoint and replay behaviour
 
-Apply migrations through `0013_capture_command_reconciliation.sql` before running this version (including `0011_operator_capture.sql`). Add `payments:capture` only to the intended operator's server-side `OPERATIONS_ACCESS_GRANTS`; Cloudflare Access authentication remains required. Neither client-supplied permission headers nor `orders:read` grants confer capture authority.
+Apply migrations through `0014_pending_capture_command.sql` before running this version (including `0011_operator_capture.sql`). Add `payments:capture` only to the intended operator's server-side `OPERATIONS_ACCESS_GRANTS`; Cloudflare Access authentication remains required. Neither client-supplied permission headers nor `orders:read` grants confer capture authority.
 
 The endpoint takes no amount or customer data. It captures the stored full authorised amount. `Idempotency-Key` is required: 1–128 ASCII letters/digits or `.`, `_`, `:`, `-`, starting with a letter or digit. The fingerprint binds the command type, order, operator and key. Reuse for another request returns `409`.
 
 - Confirmed capture returns `200` with `status: "completed"` and the capture reference.
 - A definitive provider rejection returns `502` with `status: "failed"`.
-- Pending, retryable, unknown or mismatched outcomes return `202` with `status: "resolution_required"`; no fulfilment event is emitted by this command.
-- Completed/failed/resolution-required commands replay their stored result without contacting the provider. A reserved command returns `409` and must not be resent.
+- Verified provider-pending captures return `202` with `status: "pending"` and “Capture submitted — awaiting provider confirmation.” No paid/fulfilment event is emitted.
+- Retryable, unknown or mismatched outcomes return `202` with `status: "resolution_required"`; no fulfilment event is emitted by this command.
+- Pending/completed/failed/resolution-required commands replay their stored result without contacting the provider. A reserved command returns `409` and must not be resent.
 - A unique per-order capture reservation also blocks replacement idempotency keys, including after failure. There is no automatic capture retry or command reset endpoint.
 
-If the process stops after reservation, or persistence fails after the provider call, the command stays reserved. An operator must reconcile it with authoritative provider records; an HTTP failure is not evidence that capture failed. Likewise, pending and ambiguous outcomes require provider verification through the existing webhook/reconciliation process. Do not delete reservations or submit another capture to resolve uncertainty. Use the explicit reconciliation endpoint below.
+If the process stops after reservation, or persistence fails after the provider call, the command stays reserved. An operator must reconcile it with authoritative provider records; an HTTP failure is not evidence that capture failed. Pending captures await verified provider confirmation through the existing webhook/reconciliation process; ambiguous outcomes require manual resolution. Do not delete reservations or submit another capture to resolve uncertainty. Use the explicit reconciliation endpoint below.
 
 Reservation and outcome audit events record the operator ID, generated correlation ID, internal payment/order identity and normalised outcome/reference only. Raw provider responses, customer addresses, credentials and provider error messages are not persisted by this path.
 
@@ -82,7 +83,7 @@ An unresolved capture must never be retried with a new provider idempotency key:
 
 1. Lock and claim the existing command, preserving its original operator, fingerprint, payment binding and key. A two-minute lease excludes concurrent recovery; completed results replay locally.
 2. Through `PaymentProviderRegistry`, retrieve the current payment and complete capture list. Validate payment identity, full amount/currency and capture evidence. Incomplete, malformed, multiple or partial capture evidence remains manual resolution; no capture POST is sent.
-3. A matching completed capture (with authorised/captured payment), or authoritative captured payment with an empty complete capture list, reconciles locally without a POST. Normalised capture ID/status/amount/creation time are stored in the command result. Provider `paidAt`, when supplied, supplies the order timestamp. Pending/failed captures remain unresolved and are never replaced.
+3. A matching completed capture (with authorised/captured payment), or authoritative captured payment with an empty complete capture list, reconciles locally without a POST. Normalised capture ID/status/amount/creation time are stored in the command result. Provider `paidAt`, when supplied, supplies the order timestamp. Pending captures retain command status `pending`; failed captures remain manual resolution. Neither is ever replaced.
 4. Authorised payment with no capture can resume only with the original stored request/key and original operator metadata, a future verified deadline, matching financial state/revision and provider replay evidence. The recovering operator and a fresh correlation ID are audited separately. There is no new command and no reset.
 5. Failed/cancelled/expired provider payments reconcile through the existing payment state machine without capture. Other non-authorised or conflicting local states remain held for review. Provider lookup or replay errors remain resolution-required. Paid/order/outbox writes are atomic, and fulfilment still requires **order paid AND payment captured**.
 
@@ -107,6 +108,35 @@ No environment variables or secrets are added. `CAPTURE_TEST_DATABASE_URL` is th
 7. Verify a read-only operator receives `403`, an unauthenticated request `401`, and a different ordinary capture key remains blocked. Confirm expired/ambiguous cases remain unpaid; inspect audits for the recovering operator without raw payloads/secrets.
 
 Local evidence: `npm run test:commerce`, `npm run test:operations-capture-ui` and `npm run db:rehearse:capture-reconciliation --workspace @cyph1/commerce-api`. The PostgreSQL 17 rehearsal uses a migrated disposable local `*_capture_test` database and synthetic provider, covering concurrent claims, original-key replay, expired/legacy refusal, provider capture persistence, terminal state, revision fencing, atomic rollback, privacy and fulfilment gating. It does not contact Mollie or modify the real staging fixture.
+
+## Provider-pending capture semantics (migration 0014)
+
+A verified Mollie `pending` capture means the provider accepted the capture and has not confirmed completion. It is **not** evidence of payment, and is distinct from `resolution_required`, where the outcome is uncertain or cannot be verified.
+
+| Provider outcome | Capture command / response | Payment and order |
+| --- | --- | --- |
+| `succeeded` | `completed`, HTTP 200; `capture.completed` audit | Existing domain transition to captured/paid and paid outbox event. |
+| `pending` with verified identity, amount/currency, capture ID and timestamp | `pending`, HTTP 202; `capture.pending` audit | Payment remains authorised, order remains pending_payment; no fulfilment release. |
+| `failed` | Existing `failed`, HTTP 502; `capture.failed` audit | No paid transition or fulfilment release. |
+| Timeout, unknown status, malformed or mismatched response | `resolution_required`, HTTP 202 | Held for manual resolution; no paid transition. |
+
+`apps/commerce-api/db/migrations/0014_pending_capture_command.sql` extends only the command-status constraint: `pending` is allowed only for `payment.capture`. It changes no existing rows, payment states, unique indexes or earlier migrations. The original request, operator, fingerprint, key, replay context and first-attempt timestamp remain intact. Normalised provider capture ID, status, amount and creation time are retained in the command result.
+
+Repeated ordinary capture with the original key returns the stored result; a replacement key is still blocked. Reconcile reads the provider first. A matching pending capture returns `pending` / `capture_pending` and records `capture.reconciled` with that status. A matching completed capture advances the existing command/payment/order atomically. **Any known accepted capture ID permanently blocks provider replay**, even after a lookup fails or a later complete list unexpectedly omits it. These inconsistent reads become resolution-required while retaining the earlier capture evidence. Unknown/legacy commands without accepted-capture evidence retain the existing bounded original-key recovery rules.
+
+The payment remains in the existing authorised state while pending, so the existing verified paid-webhook path can advance it to captured/paid. That path does not modify operator commands; a later reconciliation finalises the command without another capture POST. Webhook and reconciliation races do not regress captured payments or create a second paid event. Fulfilment still requires both order paid and payment captured.
+
+Order Control hides ordinary Capture for every existing command, shows awaiting-provider-confirmation wording for pending, and permits explicit Reconcile. After an operation it reloads authoritative order details and updates both the timeline summary and matching search-result row from that response; a successful operation response alone never fabricates a paid display.
+
+### Staging verification after separate approval
+
+1. Apply migration `0014` before rolling out this Operations runtime/UI; pause operator capture during rollout and replace older instances before resuming. No new environment variables or secrets are needed. Do not edit migrations `0011`–`0013` or reset any existing command.
+2. Use a separately approved synthetic staging payment. When Mollie returns pending, expect HTTP 202, command `pending`, `capture.pending` audit and awaiting-provider-confirmation wording. Confirm payment `authorised`, order `pending_payment` and blocked fulfilment and retained original request/key/evidence.
+3. Repeat the same operation or load the order again: verify no second Mollie capture POST and no ordinary Capture control. Different keys must remain blocked. While provider capture remains pending, Reconcile must remain pending with no POST.
+4. Once Mollie confirms completion, allow the existing verified webhook or explicitly Reconcile. Confirm payment captured/order paid, completed command after reconciliation, and both timeline and search row showing authoritative paid status. Verify no duplicate POST or paid event.
+5. For genuine provider uncertainty retain manual resolution. A legacy command with insufficient replay evidence must still be held, not reset. No staging records, remote migrations or real captures are changed by local validation of this patch.
+
+Automated evidence includes both test/live adapter pending/succeeded/failed/malformed cases, command replay and fulfilment gates, pending-to-pending/completed reconciliation, accepted-capture evidence surviving ambiguous/empty reads, authoritative UI refresh, PostgreSQL concurrent pending requests, paid-webhook convergence, schema constraints and existing capture/deadline/reconciliation rehearsals. All PostgreSQL rehearsals use local disposable data and synthetic providers.
 
 ## Capture safety controls
 
