@@ -5,7 +5,7 @@ import {
   type VerifyWebhookInput, type PaymentEvent,
 } from "../../../../packages/commerce-core/src/index.js";
 import { providerTimestamp } from "./capture-deadline.js";
-import type { CaptureList, CaptureReplayEvidence } from "../../../../packages/commerce-core/src/index.js";
+import type { CaptureList, CaptureReplayEvidence, PaymentProviderDiagnostic } from "../../../../packages/commerce-core/src/index.js";
 import { mollieCaptureContext, mollieCaptureReplaySafe } from "./mollie-capture-replay.js";
 
 type Fetch = typeof globalThis.fetch;
@@ -98,6 +98,36 @@ const providerError = (status: number): PaymentProviderError => {
   return new PaymentProviderError("unknown_provider_error", "Mollie returned an unexpected response.");
 };
 
+// https://docs.mollie.com/reference/handling-errors: never retain free-text detail or links.
+const errorDiagnostic = async (response: Response): Promise<PaymentProviderDiagnostic | undefined> => {
+  if (!/^application\/(?:hal\+)?json(?:\s*;|$)/i.test(response.headers.get("content-type") ?? "") || !response.body) return undefined;
+  const reader = response.body.getReader();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      (async (): Promise<PaymentProviderDiagnostic | undefined> => {
+        const bytes = new Uint8Array(4096); let size = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (size + value.byteLength > bytes.length) return undefined;
+          bytes.set(value, size); size += value.byteLength;
+        }
+        const body: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, size)));
+        if (!body || typeof body !== "object" || Array.isArray(body)) return undefined;
+        const { status, title, field } = body as Record<string, unknown>;
+        if (status !== response.status || typeof title !== "string") return undefined;
+        const titles: Readonly<Record<number, PaymentProviderDiagnostic["title"]>> = { 400: "Bad Request", 401: "Unauthorized Request", 403: "Forbidden", 404: "Not Found", 409: "Conflict", 422: "Unprocessable Entity", 429: "Too Many Requests", 500: "Internal Server Error", 502: "Bad Gateway", 503: "Service Unavailable", 504: "Gateway Timeout" };
+        const safeTitle = titles[response.status];
+        const safeField = (["amount", "amount.value", "amount.currency", "description"] as const).find((allowed) => allowed === field);
+        return Object.freeze({ status: response.status, ...(safeTitle && title === safeTitle ? { title: safeTitle } : {}), ...(safeField ? { field: safeField } : {}) });
+      })(),
+      new Promise<undefined>((resolve) => { timeout = setTimeout(() => resolve(undefined), 250); }),
+    ]);
+  } catch { return undefined; }
+  finally { clearTimeout(timeout); void reader.cancel().catch(() => {}); }
+};
+
 export class MollieTestPaymentProvider implements PaymentProvider {
   readonly key = "mollie-test";
   readonly #fetch: Fetch;
@@ -129,7 +159,11 @@ export class MollieTestPaymentProvider implements PaymentProvider {
       response = await this.#fetch(`${this.#apiBaseUrl}${path}`, { ...init, signal: controller.signal, headers: { Authorization: `Bearer ${this.config.apiKey}`, "Content-Type": "application/json", "X-CYPH1-Correlation-ID": correlationId, ...(init.headers ?? {}) } });
     } catch { throw new PaymentProviderError("network_error", "Mollie could not be reached.", true); }
     finally { clearTimeout(timeout); }
-    if (!response.ok) throw providerError(response.status);
+    if (!response.ok) {
+      const error = providerError(response.status);
+      const diagnostic = await errorDiagnostic(response).catch(() => undefined);
+      throw diagnostic ? new PaymentProviderError(error.category, error.message, error.retryable, diagnostic) : error;
+    }
     try { return await response.json() as Result; }
     catch { throw new PaymentProviderError("unknown_provider_error", "Mollie returned malformed JSON."); }
   }

@@ -124,6 +124,48 @@ test("Mollie HTTP failures map to safe retry categories", async () => {
     error instanceof PaymentProviderError && error.category === "provider_unavailable" && error.retryable && !error.message.includes("sensitive"));
 });
 
+test("Mollie structured errors retain only fixed safe diagnostics without changing HTTP mappings", async () => {
+  for (const [status, category, retryable] of [
+    [400, "validation_error", false], [401, "authentication_error", false], [403, "authentication_error", false],
+    [404, "not_found", false], [409, "conflict", true], [422, "validation_error", false],
+    [429, "rate_limited", true], [500, "provider_unavailable", true], [503, "provider_unavailable", true], [418, "unknown_provider_error", false],
+  ] as const) {
+    const provider = new MollieTestPaymentProvider({ apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"],
+      fetch: async () => response({ status, title: "Conflict", field: "amount", detail: "Authorization: Bearer test_example_key customer@example.test",
+        code: "unverified-code", metadata: { private: true }, headers: { Authorization: "test_example_key" }, arbitrary: "raw-body", _links: { href: "private" } }, status) });
+    await assert.rejects(() => provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" }), (error: unknown) => {
+      assert.ok(error instanceof PaymentProviderError);
+      assert.equal(error.category, category); assert.equal(error.retryable, retryable);
+      assert.deepEqual(error.providerDiagnostic, { status, ...(status === 409 ? { title: "Conflict" } : {}), field: "amount" });
+      assert.doesNotMatch(JSON.stringify(error), /Authorization|test_example_key|customer@example|unverified-code|metadata|raw-body|private|_links/);
+      return true;
+    });
+  }
+});
+
+test("Mollie error diagnostics discard untrusted text even in recognised fields", async () => {
+  const provider = new MollieTestPaymentProvider({ apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"],
+    fetch: async () => response({ status: 409, title: "Authorization: Bearer test_example_key", field: "customer@example.test", detail: "sensitive" }, 409) });
+  await assert.rejects(() => provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" }), (error: unknown) => {
+    assert.ok(error instanceof PaymentProviderError); assert.deepEqual(error.providerDiagnostic, { status: 409 }); return true;
+  });
+});
+
+test("Mollie malformed, missing, oversized and failed error bodies preserve generic conflict handling", async () => {
+  const bodies = ["{", "not JSON", "null", "[]", "{}", '{"status":422,"title":"Conflict"}', '{"status":409,"title":{}}', JSON.stringify({ status: 409, title: "Conflict", detail: "x".repeat(4096) })];
+  const responses = bodies.map((body) => new Response(body, { status: 409, headers: { "content-type": "application/json" } }));
+  responses.push(new Response("<html>private</html>", { status: 409, headers: { "content-type": "text/html" } }));
+  responses.push(new Response(new ReadableStream({ start(controller) { controller.error(new Error("secret stream failure")); } }), { status: 409, headers: { "content-type": "application/hal+json" } }));
+  responses.push(new Response(new ReadableStream({ start() { /* Never finishes: diagnostics must time out. */ } }), { status: 409, headers: { "content-type": "application/json" } }));
+  for (const result of responses) {
+    const provider = new MollieTestPaymentProvider({ apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"], fetch: async () => result });
+    await assert.rejects(() => provider.getPayment({ providerPaymentId: "tr_1", correlationId: "corr-1" }), (error: unknown) => {
+      assert.ok(error instanceof PaymentProviderError); assert.equal(error.category, "conflict"); assert.equal(error.retryable, true);
+      assert.equal(error.message, "Mollie reported a conflicting request."); assert.equal(error.providerDiagnostic, undefined); return true;
+    });
+  }
+});
+
 test("Mollie requests time out and surface an ambiguous retryable network error", async () => {
   const provider = new MollieTestPaymentProvider({
     apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"], requestTimeoutMs: 5,

@@ -3,6 +3,7 @@ import test from "node:test";
 import { money, PaymentProviderError, type PaymentProvider } from "../../../../packages/commerce-core/src/index.js";
 import { handleOperationsRequest, reconciliationCsvColumns } from "./handler.js";
 import { OperationsError, OperationsService, type OperationsRepository } from "./service.js";
+import { MollieTestPaymentProvider } from "../payments/mollie-test.js";
 
 const provider: PaymentProvider = {
   key:"mollie-test", createCheckout:async()=>{throw new Error("unused");}, verifyWebhook:async()=>({outcome:"irrelevant",provider:"mollie-test"}), normaliseWebhook:async()=>[],
@@ -154,10 +155,29 @@ test("refund diagnostic identifies lookup, payment, balance and persistence fail
   assert.equal(logs.length, 4); assert.doesNotMatch(logs.join(""), /private-provider-data/);
 });
 
+test("refund diagnostic routes safe Mollie 409 metadata and preserves resolution handling", async (t) => {
+  const logs: string[] = []; let resolved = 0; let calls = 0;
+  t.mock.method(console, "error", (entry: string) => { logs.push(entry); });
+  const mollie = new MollieTestPaymentProvider({ apiKey: "test_example_key", allowedCallbackOrigins: ["https://checkout.cyph1.co.uk"], fetch: async () => {
+    calls++;
+    return new Response(JSON.stringify({ status: 409, title: "Conflict", field: "amount", detail: "Authorization: Bearer test_example_key customer@example.test", metadata: "private", arbitrary: "raw-body" }), { status: 409, headers: { "content-type": "application/hal+json" } });
+  } });
+  const localProvider: PaymentProvider = { ...provider, refund: (input) => mollie.refund(input) };
+  const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { assert.equal(logs.length, 1); resolved++; },
+    failRefund: async () => { assert.fail("must remain resolution_required"); }, completeRefund: async () => { assert.fail("must not complete"); } },
+    { getProvider: () => localProvider, getConfiguredProvider: () => localProvider });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-mollie" }), /could not complete/);
+  assert.equal(resolved, 1); assert.equal(calls, 1);
+  const diagnostic = JSON.parse(logs[0]!);
+  assert.equal(diagnostic.event, "refund_provider_error"); assert.equal(diagnostic.stage, "submit_refund");
+  assert.deepEqual(diagnostic.error, { name: "PaymentProviderError", message: "Refund operation failed.", category: "conflict", retryable: true, providerDiagnostic: { status: 409, title: "Conflict", field: "amount" } });
+  assert.doesNotMatch(logs.join(""), /Authorization|test_example_key|customer@example|metadata|private|arbitrary|raw-body/);
+});
+
 test("refund diagnostic delivery failure does not change resolution handling", async (t) => {
   t.mock.method(console, "error", () => { throw new Error("logger unavailable"); });
   let resolved = 0;
-  const localProvider: PaymentProvider = { ...provider, refund: async () => { throw new PaymentProviderError("network_error", "timeout", true); } };
+  const localProvider: PaymentProvider = { ...provider, refund: async () => { throw new PaymentProviderError("conflict", "conflict", true, { status: 409, title: "Conflict", field: "amount" }); } };
   const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { resolved++; } }, { getProvider: () => localProvider, getConfiguredProvider: () => localProvider });
   await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-logger" }), /could not complete/);
   assert.equal(resolved, 1);
