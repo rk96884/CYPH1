@@ -40,7 +40,14 @@ for (const [name, file] of pages) {
   if (name === "Private operations") {
     assert(/id=["']message["'][^>]*role=["']status["'][^>]*aria-live=["']polite["']/i.test(html), name, "operations status is announced politely");
     assert(/id=["']query["'][^>]*required/i.test(html), name, "order search is required");
-    assert(/name=["']amountMinor["'][^>]*type=["']number["'][^>]*min=["']1["'][^>]*step=["']1["']/i.test(html), name, "refund amount accepts positive integer minor units");
+    const amount = inputs.find((control) => /\bid=["']amount["']/i.test(control)) ?? "";
+    assert(/<label\b[^>]*for=["']amount["'][^>]*>Refund amount \(GBP\)<\/label>/i.test(html), name, "refund amount has an associated GBP currency label");
+    assert(/\btype=["']text["']/i.test(amount) && /\binputmode=["']decimal["']/i.test(amount), name, "refund amount supports decimal currency entry");
+    assert(/\brequired(?:\s|=|\/?>)/i.test(amount), name, "refund amount remains required");
+    const descriptions = amount.match(/\baria-describedby=["']([^"']+)["']/i)?.[1].split(/\s+/) ?? [];
+    assert(descriptions.includes("refund-amount-error") && descriptions.includes("refund-message") && descriptions.every((id) => ids.includes(id)), name, "refund amount is associated with its validation error and status");
+    assert(/<p\b[^>]*id=["']refund-amount-error["'][^>]*role=["']alert["']/i.test(html), name, "refund amount validation errors are announced");
+    assert(/<h2\b[^>]*id=["']details-title["'][^>]*tabindex=["']-1["']/i.test(html), name, "order details heading is programmatically focusable");
   }
 }
 
@@ -51,7 +58,7 @@ assert(operationsSource.includes("@media(max-width:520px)"), "Private operations
 assert(checkoutSource.includes("font-size:1rem"), "Private checkout CSS", "avoids mobile input zoom");
 assert(operationsSource.includes("font-size:1rem"), "Private operations CSS", "avoids mobile input zoom");
 assert(checkoutSource.includes("status.focus()"), "Private checkout behaviour", "moves focus to a failed checkout status");
-assert(operationsSource.includes("#details-title') as HTMLElement|null)?.focus()"), "Private operations behaviour", "moves focus to revealed order details");
+assert(operationsSource.includes("details?.removeAttribute('hidden')") && operationsSource.includes("(details?.querySelector('#details-title'))?.focus()"), "Private operations behaviour", "reveals order details and moves focus to their heading");
 
 if (failures.length) {
   console.error(`\nPrivate commerce accessibility audit failed (${failures.length}):`);
