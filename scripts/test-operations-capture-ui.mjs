@@ -2,9 +2,14 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
-import ts from 'typescript';
 const source=await readFile(new URL('../src/pages/private-operations/[slug].astro',import.meta.url),'utf8');
-const script=ts.transpile(source.match(/<script>([\s\S]*?)<\/script>/)[1],{target:ts.ScriptTarget.ES2022});
+const html=process.env.OPERATIONS_UI_HTML?await readFile(process.env.OPERATIONS_UI_HTML,'utf8'):source;
+const inline=html.match(/<script\s+([^>]*type="module"[^>]*)>([\s\S]*?)<\/script>/);
+assert.ok(inline,'Operations script must remain inline');
+assert.doesNotMatch(inline[1],/\bsrc=/);
+assert.match(source,/<script is:inline type="module">/);
+const script=inline[2];
+new vm.Script(script); // Exercise browser JavaScript directly, without TypeScript transpilation.
 function fixture(){
   class Element {
     hidden=false;disabled=false;value='0.50';attributes={};_text='';dataset={};listeners={};button;description;children=[];
