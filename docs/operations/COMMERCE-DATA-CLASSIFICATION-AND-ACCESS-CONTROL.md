@@ -14,9 +14,16 @@ backups and restored environments.
 
 This document does not grant access, create a production role, approve a
 provider or replace the system-specific permission model. Current code exposes
-only a small permission baseline (`orders:read`, `refunds:create`,
-`fulfilment:retry` and `reconciliation:export`). Every additional permission in
+only a small permission baseline (`orders:read`, `payments:capture`,
+`refunds:create`, `returns:manage`, `returns:approve`, `fulfilment:retry` and
+`reconciliation:export`). Every additional permission in
 this document is a required design boundary, not an implemented capability.
+
+Phase 1 merchandise-return records use `returns:manage` for request, receipt,
+inspection and requested-case cancellation, and `returns:approve` for approval,
+rejection and closure. Reading uses `orders:read`. Neither new permission grants
+refund authority. Future return-driven refunds must require `returns:approve`
+and `refunds:create`; that money-movement integration is not implemented in Phase 1.
 
 Do not place names, personal contacts, account identifiers, credentials or
 private role assignments in source control. They belong in the approved

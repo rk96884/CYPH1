@@ -189,18 +189,19 @@ export class PostgresOperationsRepository implements OperationsRepository {
   async getOrder(orderId: string) {
     const order = await this.pool.query("SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at FROM orders WHERE id = $1", [orderId]);
     if (order.rowCount !== 1) return undefined;
-    const [payments, refunds, fulfilments, audit, commands] = await Promise.all([
+    const [payments, refunds, fulfilments, audit, commands, items] = await Promise.all([
       this.pool.query("SELECT id, provider, provider_payment_id, status, amount_minor, currency, capture_mode, capture_before, authorised_at, capture_deadline_state, capture_monitor_checked_at, created_at, updated_at FROM payments WHERE order_id = $1 ORDER BY created_at", [orderId]),
       this.pool.query(`SELECT r.id, r.payment_id, r.provider_refund_id, r.status, r.amount_minor, r.currency, r.reason, r.created_at, r.updated_at
         FROM refunds r JOIN payments p ON p.id = r.payment_id WHERE p.order_id = $1 ORDER BY r.created_at`, [orderId]),
       this.pool.query("SELECT id, provider, provider_reference, status, failure_code, tracking_carrier, tracking_reference, created_at, updated_at FROM fulfilments WHERE order_id = $1 ORDER BY created_at", [orderId]),
       this.pool.query(`SELECT id, entity_type, action, change_summary, created_at FROM audit_events
         WHERE (entity_type = 'order' AND entity_id = $1) OR entity_id IN
-          (SELECT id FROM payments WHERE order_id = $1 UNION SELECT id FROM refunds WHERE payment_id IN (SELECT id FROM payments WHERE order_id = $1) UNION SELECT id FROM fulfilments WHERE order_id = $1)
+          (SELECT id FROM payments WHERE order_id = $1 UNION SELECT id FROM refunds WHERE payment_id IN (SELECT id FROM payments WHERE order_id = $1) UNION SELECT id FROM fulfilments WHERE order_id = $1 UNION SELECT id FROM returns WHERE order_id = $1)
         ORDER BY created_at`, [orderId]),
       this.pool.query("SELECT status FROM operator_commands WHERE command_type='payment.capture' AND target_type='order' AND target_id=$1", [orderId]),
+      this.pool.query("SELECT id,sku_snapshot,name_snapshot,quantity FROM order_items WHERE order_id=$1 ORDER BY created_at", [orderId]),
     ]);
-    return Object.freeze({ ...(commands.rows[0] ? { captureCommand: { status: commands.rows[0].status as string } } : {}), order: summary(order.rows[0]), payments: Object.freeze(payments.rows), refunds: Object.freeze(refunds.rows), fulfilments: Object.freeze(fulfilments.rows), timeline: Object.freeze(audit.rows.map((row) => Object.freeze({ id: row.id, type: row.entity_type, action: row.action, occurredAt: row.created_at.toISOString(), summary: row.change_summary }))) });
+    return Object.freeze({ items: Object.freeze(items.rows), ...(commands.rows[0] ? { captureCommand: { status: commands.rows[0].status as string } } : {}), order: summary(order.rows[0]), payments: Object.freeze(payments.rows), refunds: Object.freeze(refunds.rows), fulfilments: Object.freeze(fulfilments.rows), timeline: Object.freeze(audit.rows.map((row) => Object.freeze({ id: row.id, type: row.entity_type, action: row.action, occurredAt: row.created_at.toISOString(), summary: row.change_summary }))) });
   }
 
   async reserveRefund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<RefundReservation> {

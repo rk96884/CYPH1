@@ -42,7 +42,7 @@ test("restore verification rejects malformed URLs and loose boolean values", () 
 test("matching aggregate snapshots pass without personal-data comparison", () => {
   const counts = new Proxy({}, { get: () => "3" });
   const snapshot = { migrations: [{ version: "0001", checksum: "abc" }], counts };
-  assert.deepEqual(compareRestoreSnapshots(snapshot, snapshot), { migrationCount: 1, tableCount: 23 });
+  assert.deepEqual(compareRestoreSnapshots(snapshot, snapshot), { migrationCount: 1, tableCount: 25 });
 });
 
 test("migration or row-count differences fail", () => {

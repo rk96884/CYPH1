@@ -12,7 +12,7 @@ const tscExecutable = join(repositoryRoot, "node_modules", "typescript", "bin", 
 
 try {
   execFileSync(nodeExecutable, [tscExecutable, "-p", join(packageRoot, "tsconfig.json"), "--noEmit", "false", "--outDir", outputDirectory], { stdio: "inherit" });
-  execFileSync(nodeExecutable, ["--test", join(outputDirectory, "domain.test.js")], { stdio: "inherit" });
+  execFileSync(nodeExecutable, ["--test", join(outputDirectory, "domain.test.js"), join(outputDirectory, "returns.test.js")], { stdio: "inherit" });
 } finally {
   rmSync(outputDirectory, { recursive: true, force: true });
 }
