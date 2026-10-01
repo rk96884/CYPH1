@@ -6,11 +6,18 @@ export type PaymentErrorCategory =
   | "payment_declined" | "rate_limited" | "provider_unavailable"
   | "network_error" | "conflict" | "not_found" | "unknown_provider_error";
 
+export type PaymentProviderDiagnostic = Readonly<{
+  status: number;
+  title?: "Bad Request" | "Unauthorized Request" | "Forbidden" | "Not Found" | "Conflict" | "Unprocessable Entity" | "Too Many Requests" | "Internal Server Error" | "Bad Gateway" | "Service Unavailable" | "Gateway Timeout";
+  field?: "amount" | "amount.value" | "amount.currency" | "description";
+}>;
+
 export class PaymentProviderError extends Error {
   constructor(
     readonly category: PaymentErrorCategory,
     message: string,
     readonly retryable = false,
+    readonly providerDiagnostic?: PaymentProviderDiagnostic,
   ) {
     super(message);
     this.name = "PaymentProviderError";

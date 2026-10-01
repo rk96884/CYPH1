@@ -59,7 +59,8 @@ const reconciliationDiagnostic = (stage: string, recovery: CaptureRecovery, erro
 const refundDiagnostic = (stage: string, provider: string, refundId: string, correlationId: string, error: unknown): void => {
   // Exception messages/extra properties may contain provider payloads or credentials.
   const detail = { name: error instanceof PaymentProviderError ? "PaymentProviderError" : error instanceof OperationsError ? "OperationsError" : error instanceof Error ? "Error" : "UnknownError",
-    message: "Refund operation failed.", ...(error instanceof PaymentProviderError ? { category: error.category, retryable: error.retryable } : {}) };
+    message: "Refund operation failed.", ...(error instanceof PaymentProviderError ? { category: error.category, retryable: error.retryable,
+      ...(error.providerDiagnostic ? { providerDiagnostic: { status: error.providerDiagnostic.status, title: error.providerDiagnostic.title, field: error.providerDiagnostic.field } } : {}) } : {}) };
   try { console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: "error", event: "refund_provider_error", stage, provider, refundId, correlationId, error: detail })); }
   catch { /* Diagnostic delivery must not change refund failure handling. */ }
 };
