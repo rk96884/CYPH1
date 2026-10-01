@@ -15,11 +15,14 @@ function fixture(){
     hidden=false;disabled=false;value='0.50';attributes={};_text='';dataset={};listeners={};button;description;children=[];
     get textContent(){return this._text;}set textContent(value){this._text=value;this.children=[];}
     constructor(form=false){if(form){this.button=new Element();this.description=new Element();}}
-    getAttribute(name){return name==='data-api'?'https://ops.test':this.attributes[name];}setAttribute(name,value){this.attributes[name]=value;}removeAttribute(name){delete this.attributes[name];}focus(){this.focused=true;}append(child){this.children.push(child);}reportValidity(){return true;}
+    getAttribute(name){return name==='data-api'?'https://ops.test':this.attributes[name];}setAttribute(name,value){this.attributes[name]=value;}removeAttribute(name){delete this.attributes[name];if(name==='hidden')this.hidden=false;}focus(){this.focused=true;}append(child){this.children.push(child);}reportValidity(){return true;}
     querySelector(selector){return selector==='button'?this.button:selector==='p'?this.description:undefined;}
     addEventListener(name,fn){this.listeners[name]=fn;}
   }
   const elements=Object.fromEntries(['.ops','#message','#search','#results','#details','#summary','#timeline','#capture','#reconcile-capture','#refund','#amount','#refund-message','#refund-warning','#refund-amount-error','#export'].map(id=>[id,new Element(['#capture','#reconcile-capture','#refund'].includes(id))]));
+  elements['#details'].hidden=true;
+  elements['#details-title']=new Element();
+  elements['#details'].querySelector=selector=>selector==='#details-title'?elements['#details-title']:undefined;
   let command,status='pending_payment',payment='authorised',failGet=false,postResult={status:'completed',outcome:'capture_reconciled',message:'Capture reconciled — provider capture already existed.'};
   let refunds=[];let currency='GBP';let responseStatus=200;let malformed=false;let failPost=false;let afterPost=()=>{};const requests=[];
   const context=vm.createContext({HTMLElement:Element,HTMLButtonElement:Element,document:{querySelector:id=>elements[id],createElement:()=>new Element()},FormData:class{get(name){return name==='reason'?'customer_request':'TEST';}},crypto:{randomUUID:()=> 'original-ui-key'},fetch:async(url,options)=>{
@@ -38,6 +41,8 @@ test('existing unresolved commands show Reconcile and hide ordinary Capture',asy
 });
 test('successful command hides capture controls; uncaptured order offers ordinary capture',async()=>{
   const f=fixture();await f.load();assert.equal(f.elements['#capture'].button.disabled,false);assert.equal(f.elements['#reconcile-capture'].hidden,true);
+  assert.equal(f.elements['#details'].hidden,false);assert.equal(f.elements['#details-title'].focused,true);
+  assert.match(f.elements['#summary'].textContent,/TEST/);
   f.command({status:'completed'});f.paid();await f.load();assert.equal(f.elements['#capture'].hidden,true);assert.equal(f.elements['#reconcile-capture'].hidden,true);
 });
 test('unknown POST and failed reload keep both buttons disabled',async()=>{
