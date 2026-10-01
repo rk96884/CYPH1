@@ -4,6 +4,8 @@ import { createCloudflareAccessAuthenticator, loadCloudflareAccessConfig } from 
 import { createProtectedOperationsHandler } from "../access/protected-operations.js";
 import { PostgresOperationsRepository } from "../operations/postgres.js";
 import { OperationsService } from "../operations/service.js";
+import { ReturnService } from "../returns/service.js";
+import { PostgresReturnRepository } from "../returns/postgres.js";
 import { createPaymentProviderRegistry } from "../payments/factory.js";
 import { createOperationsRuntime, requestHeaders } from "./http.js";
 import { createRequestId, createRuntimeRequestLog, writeRuntimeRequestLog } from "./observability.js";
@@ -22,7 +24,7 @@ const pool = new pg.Pool({
 const access = createCloudflareAccessAuthenticator(loadCloudflareAccessConfig(environment));
 const service = new OperationsService(new PostgresOperationsRepository(pool), createPaymentProviderRegistry(environment));
 const runtime = createOperationsRuntime(
-  createProtectedOperationsHandler(service, access),
+  createProtectedOperationsHandler(service, access, new ReturnService(new PostgresReturnRepository(pool))),
   async () => { await pool.query("SELECT 1"); },
 );
 

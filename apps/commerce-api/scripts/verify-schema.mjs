@@ -29,7 +29,7 @@ const expectConstraintFailure = async (name, sql, parameters = []) => {
 await client.connect();
 try {
   const expectedTables = [
-    "products", "inventory_levels", "customers", "customer_consents", "addresses",
+    "returns", "return_items", "products", "inventory_levels", "customers", "customer_consents", "addresses",
     "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates",
     "orders", "order_items", "payments", "refunds", "webhook_deliveries", "webhook_events", "fulfilments",
     "outbox_events", "checkout_sessions", "fulfilment_events", "operator_commands", "communication_deliveries", "audit_events", "schema_migrations",
@@ -91,6 +91,15 @@ try {
     `INSERT INTO checkout_sessions (idempotency_key, request_fingerprint)
      VALUES ('verify-invalid-fingerprint', 'not-a-sha256-fingerprint')`,
   );
+
+  const merchandiseReturn = await client.query(`INSERT INTO returns(order_id,request_category,currency)
+    VALUES($1,'fault_reported','GBP') RETURNING id`, [order.rows[0].id]);
+  await expectConstraintFailure("uncontrolled return category", `INSERT INTO returns(order_id,request_category,currency)
+    VALUES($1,'customer narrative','GBP')`, [order.rows[0].id]);
+  await expectConstraintFailure("negative return decision", "UPDATE returns SET approved_refund_minor=-1 WHERE id=$1", [merchandiseReturn.rows[0].id]);
+  await expectConstraintFailure("receipt waiver must be explicit", "UPDATE returns SET receipt_required=false WHERE id=$1", [merchandiseReturn.rows[0].id]);
+  await expectConstraintFailure("inspection requires separate receipt", "UPDATE returns SET inspection_outcome='inconclusive',inspected_at=now() WHERE id=$1", [merchandiseReturn.rows[0].id]);
+  await expectConstraintFailure("return cannot close without a decision", "UPDATE returns SET status='closed',closed_at=now(),closure_reason='no_refund_due' WHERE id=$1", [merchandiseReturn.rows[0].id]);
 
   await client.query(`INSERT INTO operator_commands
     (idempotency_key,command_type,target_type,target_id,operator_id,request_fingerprint,status,result)

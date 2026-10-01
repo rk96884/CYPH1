@@ -8,6 +8,7 @@
     "monitor:capture-deadlines": "node ../../build/commerce-api/apps/commerce-api/src/runtime/capture-deadline-monitor.js",
     "db:rehearse:capture": "npm run build:runtime && node scripts/rehearse-capture.mjs",
     "test": "node scripts/test.mjs",
+    "db:rehearse:returns": "npm run build:runtime && node scripts/rehearse-returns.mjs",
     "build:runtime": "tsc -p tsconfig.runtime.json",
     "start:operations": "node ../../build/commerce-api/apps/commerce-api/src/runtime/operations-server.js",
     "start:customer": "node ../../build/commerce-api/apps/commerce-api/src/runtime/customer-server.js",

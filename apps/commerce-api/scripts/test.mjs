@@ -14,6 +14,8 @@ try {
   symlinkSync(join(repositoryRoot, "node_modules"), join(outputDirectory, "node_modules"), process.platform === "win32" ? "junction" : "dir");
   execFileSync(nodeExecutable, [tscExecutable, "-p", join(packageRoot, "tsconfig.json"), "--rootDir", repositoryRoot, "--noEmit", "false", "--outDir", outputDirectory], { stdio: "inherit" });
   execFileSync(nodeExecutable, ["--test",
+    join(packageRoot, "scripts", "rehearse-returns.test.mjs"),
+    join(outputDirectory, "apps", "commerce-api", "src", "returns", "returns.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "payments", "payments.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "webhooks", "webhooks.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "webhooks", "handler.test.js"),

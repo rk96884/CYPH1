@@ -2,14 +2,14 @@ import { createHash, randomUUID } from "node:crypto";
 import { money, PaymentProviderError, type CaptureInput, type NormalisedCapture, type NormalisedPayment, type PaymentProviderRegistry } from "../../../../packages/commerce-core/src/index.js";
 import { providerTimestamp } from "../payments/capture-deadline.js";
 
-export const operationPermissions = ["orders:read", "payments:capture", "refunds:create", "fulfilment:retry", "reconciliation:export"] as const;
+export const operationPermissions = ["orders:read", "payments:capture", "refunds:create", "returns:manage", "returns:approve", "fulfilment:retry", "reconciliation:export"] as const;
 export type OperationPermission = typeof operationPermissions[number];
 export type OperationsPrincipal = Readonly<{ id: string; permissions: readonly OperationPermission[] }>;
 export type RefundReason = "customer_request" | "cancelled_order" | "returned_goods" | "operator_correction";
 
 export type OrderSummary = Readonly<{ id: string; orderNumber: string; status: string; fulfilmentStatus: string; currency: string; totalMinor: number; createdAt: string }>;
 export type TimelineEvent = Readonly<{ id: string; type: string; action: string; status?: string; occurredAt: string; summary: Readonly<Record<string, unknown>> }>;
-export type OrderDetails = Readonly<{ order: OrderSummary; payments: readonly Readonly<Record<string, unknown>>[]; refunds: readonly Readonly<Record<string, unknown>>[]; fulfilments: readonly Readonly<Record<string, unknown>>[]; timeline: readonly TimelineEvent[]; captureCommand?: Readonly<{ status: string }> }>;
+export type OrderDetails = Readonly<{ items?: readonly Readonly<{ id: string; sku_snapshot: string; name_snapshot: string; quantity: number }>[]; order: OrderSummary; payments: readonly Readonly<Record<string, unknown>>[]; refunds: readonly Readonly<Record<string, unknown>>[]; fulfilments: readonly Readonly<Record<string, unknown>>[]; timeline: readonly TimelineEvent[]; captureCommand?: Readonly<{ status: string }> }>;
 export type RefundReservation = Readonly<{ outcome: "reserved" | "replayed"; refundId: string; paymentId: string; provider: string; providerPaymentId: string; currency: string; amountMinor: number; refundableMinor: number; result?: Readonly<Record<string, unknown>> }>;
 
 export type CaptureCommand = Readonly<{ orderId: string; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>;

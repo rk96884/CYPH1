@@ -1,4 +1,6 @@
 import { operationPermissions, OperationsError, type OperationPermission, type OperationsPrincipal, type OperationsService, type RefundReason } from "./service.js";
+import { ReturnDomainError, type ReturnAction } from "../../../../packages/commerce-core/src/index.js";
+import type { ReturnService } from "../returns/service.js";
 
 const securityHeaders = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "Permissions-Policy": "camera=(), microphone=(), geolocation=()" };
 const headers = { "Content-Type": "application/json; charset=utf-8", ...securityHeaders };
@@ -41,11 +43,28 @@ const safeError = (error: unknown): Readonly<{ name: string; message: string }> 
   return Object.freeze({ name: "UnknownError", message: "Non-Error value thrown" });
 };
 
-export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal): Promise<Response> => {
+export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal, returns?: ReturnService): Promise<Response> => {
   if (!validPrincipal(principal)) return json({ message: "Authentication required." }, 401);
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
+    if (path[0] === "orders" && path[1] && path[2] === "returns") {
+      if (!returns) return json({ message: "Not found." }, 404);
+      if (request.method === "GET" && path.length === 3) {
+        if (!allowed(principal, "orders:read")) return json({ message: "Permission denied." }, 403);
+        return json({ returns: await returns.list(path[1]) });
+      }
+      if (request.method === "POST" && path.length === 3) {
+        if (!allowed(principal, "returns:manage")) return json({ message: "Permission denied." }, 403);
+        return json(await returns.request(path[1], await request.json(), principal.id, request.headers.get("idempotency-key") ?? ""), 201);
+      }
+      if (request.method === "POST" && path.length === 5 && path[3] && path[4] && ["approve", "reject", "cancel", "receive", "inspect", "close"].includes(path[4])) {
+        const permission = ["approve", "reject", "close"].includes(path[4]) ? "returns:approve" : "returns:manage";
+        if (!allowed(principal, permission)) return json({ message: "Permission denied." }, 403);
+        return json(await returns.act(path[1], path[3], path[4] as ReturnAction, await request.json(), principal.id, request.headers.get("idempotency-key") ?? ""));
+      }
+      return json({ message: "Not found." }, 404);
+    }
     if (request.method === "POST" && path[0] === "orders" && path[1] && path[2] === "capture" && path[3] === "reconcile" && path.length === 4) {
       if (!allowed(principal, "payments:capture")) return json({ message: "Permission denied." }, 403);
       const result = await service.reconcileCapture(path[1], principal.id);
@@ -84,6 +103,7 @@ export const handleOperationsRequest = async (request: Request, service: Operati
     }
     return json({ message: "Not found." }, 404);
   } catch(error) {
+    if(error instanceof ReturnDomainError)return json({message:error.message,code:error.code},{invalid_request:400,not_found:404,conflict:409}[error.code]);
     if(error instanceof SyntaxError)return json({message:"Invalid JSON request."},400);
     if(error instanceof OperationsError)return json({message:error.message,code:error.code},{invalid_request:400,not_found:404,conflict:409,provider_error:502}[error.code]);
     console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: "error", event: "operations_handler_error", error: safeError(error) }));

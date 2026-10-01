@@ -12,6 +12,7 @@ export * from "./fulfilment.js";
 export * from "./idempotency.js";
 export * from "./money.js";
 export * from "./payment-provider.js";
+export * from "./returns.js";
 export * from "./shipping.js";
 export * from "./state-machine.js";
 

@@ -5,7 +5,7 @@ import pg from "pg";
 const { Client } = pg;
 
 const expectedTables = Object.freeze([
-  "products", "inventory_levels", "customers", "customer_consents", "addresses",
+  "returns", "return_items", "products", "inventory_levels", "customers", "customer_consents", "addresses",
   "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates",
   "orders", "order_items", "payments", "refunds", "webhook_deliveries", "webhook_events",
   "fulfilments", "outbox_events", "checkout_sessions", "fulfilment_events", "operator_commands",
