@@ -28,6 +28,7 @@ let productId;
 try {
   assert.equal((await pool.query("SELECT count(*)::int AS count FROM schema_migrations WHERE version='0015_merchandise_returns.sql'")).rows[0].count, 1);
   productId = (await pool.query(`INSERT INTO products(sku,slug,name,description,status,price_minor,currency,tax_code,content_version) VALUES($1,$2,'Synthetic returns item','Not for sale','private',100,'GBP','TEST','returns-rehearsal') RETURNING id`, [`RET-${randomUUID()}`, `ret-${randomUUID()}`])).rows[0].id;
+  await pool.query("INSERT INTO inventory_levels(product_id,location_key,available_quantity,reserved_quantity,safety_stock,source,source_updated_at) VALUES($1,'returns-rehearsal',5,1,0,'synthetic-test',now())", [productId]);
   const order = await createOrder();
   let full = await request(order, order.items);
   assert.match(full.reference, /^RET-[A-F0-9]{16}$/); assert.equal(full.approvedRefundMinor, null);
@@ -43,6 +44,35 @@ try {
   await assert.rejects(() => act(rejected, "approve", { approvedRefundMinor: 0, receiptRequired: true, items: order.items }), /current state/);
   full = await request(order, order.items);
   pass("cancelled and rejected requests release allocation and remain terminal");
+  const decisionOrder = await createOrder(); const decisionRequest = await request(decisionOrder, decisionOrder.items);
+  const baselineState = async () => (await pool.query(`SELECT
+    (SELECT row_to_json(o) FROM orders o WHERE id=$1) AS order_state,
+    (SELECT jsonb_agg(to_jsonb(p) ORDER BY id) FROM payments p WHERE order_id=$1) AS payments,
+    (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.order_id=$1) AS refunds,
+    (SELECT jsonb_agg(to_jsonb(f) ORDER BY id) FROM fulfilments f WHERE order_id=$1) AS fulfilments,
+    (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM inventory_levels i WHERE product_id=$2) AS inventory`, [decisionOrder.id, productId])).rows[0];
+  const beforeDecision = await baselineState();
+  const approvalBody = { approvedRefundMinor: 50, receiptRequired: true, items: [{ orderItemId: decisionOrder.itemId, quantity: 1 }] };
+  await assert.rejects(() => act(decisionRequest, "approve", { ...approvalBody, items: [{ orderItemId: decisionOrder.itemId, quantity: 3 }] }), /exceed the request/);
+  const approvalKey = randomUUID();
+  const approved = await act(decisionRequest, "approve", approvalBody, approvalKey);
+  assert.deepEqual(await act(decisionRequest, "approve", approvalBody, approvalKey), approved);
+  assert.equal(approved.currency, "GBP"); assert.equal(approved.approvedRefundMinor, 50);
+  assert.equal(approved.items[0].requestedQuantity, 2); assert.equal(approved.items[0].approvedQuantity, 1);
+  assert.equal(approved.items[0].receivedQuantity, 0); assert.equal(approved.receivedAt, null);
+  await assert.rejects(() => act(decisionRequest, "approve", approvalBody), /changed/);
+  await assert.rejects(() => act(decisionRequest, "approve", { ...approvalBody, approvedRefundMinor: 100 }, approvalKey), /different request/);
+  await assert.rejects(() => act(approved, "reject", { reason: "not_approved" }), /current state/);
+  let declined = await request(decisionOrder, [{ orderItemId: decisionOrder.itemId, quantity: 1 }]);
+  const declinedOriginal = declined; const rejectionKey = randomUUID();
+  declined = await act(declined, "reject", { reason: "not_approved" }, rejectionKey);
+  assert.deepEqual(await act(declinedOriginal, "reject", { reason: "not_approved" }, rejectionKey), declined);
+  await assert.rejects(() => act(declinedOriginal, "reject", { reason: "not_approved" }), /changed/);
+  assert.deepEqual(await baselineState(), beforeDecision);
+  const decisionTimeline = (await new PostgresOperationsRepository(pool).getOrder(decisionOrder.id)).timeline;
+  assert.equal(decisionTimeline.filter(event => event.action === "return.approved").length, 1);
+  assert.equal(decisionTimeline.filter(event => event.action === "return.rejected").length, 1);
+  pass("approval/rejection replays preserve decisions, currency, allocation and audit uniqueness without financial, inventory or fulfilment effects");
   const other = await createOrder();
   await assert.rejects(() => request(other, order.items), /belong/);
   for (const quantity of [0, -1, 0.5]) await assert.rejects(() => request(other, [{ orderItemId: other.itemId, quantity }]));

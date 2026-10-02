@@ -57,6 +57,14 @@ test("missing or invalid return idempotency keys fail before repository mutation
   const f = fixture(); for (const key of ["", "bad key", "x".repeat(129)]) assert.equal((await f.send("", requestBody, ["returns:manage"], key)).status, 400);
   assert.equal(f.commands.length, 0);
 });
+test("approval cannot supply currency, narratives or silently approve zero total units", async () => {
+  const f = fixture();
+  for (const body of [{ ...approval, currency: "EUR" }, { ...approval, notes: "customer narrative" }, { ...approval, items: [{ orderItemId: itemId, quantity: 0 }] }]) {
+    assert.equal((await f.send(`/${returnId}/approve`, body, ["returns:approve"])).status, 400);
+  }
+  assert.equal(f.commands.length, 0);
+});
+
 test("Access accepts both canonical return permissions without widening arbitrary grants", () => {
   const config = loadCloudflareAccessConfig({ CLOUDFLARE_ACCESS_TEAM_DOMAIN: "https://test.cloudflareaccess.com", CLOUDFLARE_ACCESS_AUDIENCE: "test", OPERATIONS_ACCESS_GRANTS: JSON.stringify({ "operator@example.test": ["returns:manage", "returns:approve"] }) });
   assert.deepEqual(config.grants.get("operator@example.test"), ["returns:manage", "returns:approve"]);

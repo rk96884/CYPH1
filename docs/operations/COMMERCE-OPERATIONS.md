@@ -82,7 +82,9 @@ payment disputes. This backend is not staging-verified or launch-approved.
 
 No Operations UI, provider calls, refund initiation, automatic restocking,
 fulfilment orchestration, customer portal, exports or return emails are added.
-Phase 2 must link a refund inside the existing reservation transaction before
+The [Phase 2 decision UI](MERCHANDISE-RETURNS-PHASE-2.md) adds approval/rejection
+controls only; it does not initiate money movement. A future return-driven
+refund increment must link a refund inside the existing reservation transaction before
 provider contact, enforce `returns:approve` **and** `refunds:create`, and check
 unresolved refunds server-side. The existing global refund path is unchanged.
 

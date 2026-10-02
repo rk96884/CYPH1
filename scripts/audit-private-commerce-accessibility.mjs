@@ -48,6 +48,10 @@ for (const [name, file] of pages) {
     assert(descriptions.includes("refund-amount-error") && descriptions.includes("refund-message") && descriptions.every((id) => ids.includes(id)), name, "refund amount is associated with its validation error and status");
     assert(/<p\b[^>]*id=["']refund-amount-error["'][^>]*role=["']alert["']/i.test(html), name, "refund amount validation errors are announced");
     assert(/<h2\b[^>]*id=["']details-title["'][^>]*tabindex=["']-1["']/i.test(html), name, "order details heading is programmatically focusable");
+    assert(/id=["']returns["'][^>]*aria-labelledby=["']returns-title["']/i.test(html), name, "returns section has a heading association");
+    assert(/id=["']returns-message["'][^>]*role=["']status["'][^>]*aria-live=["']polite["']/i.test(html), name, "return outcomes are announced politely");
+    assert(/id=["']return-error["'][^>]*role=["']alert["']/i.test(html), name, "return validation failures are announced");
+    assert(/id=["']return-quantities["'][^>]*>\s*<legend\b[^>]*>/i.test(html), name, "approved quantities are grouped by a legend");
   }
 }
 
