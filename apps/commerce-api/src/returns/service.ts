@@ -4,6 +4,7 @@ import { ReturnDomainError, returnCategories, returnInspectionOutcomes, returnQu
 
 export type ReturnItem = Readonly<{ orderItemId: string; requestedQuantity: number; approvedQuantity: number | null; receivedQuantity: number }>;
 export type ReturnRecord = Readonly<{
+  refunds?: readonly Readonly<{ id: string; status: string; amountMinor: number; currency: string }>[];
   id: string; reference: string; orderId: string; status: ReturnStatus; category: ReturnCategory; currency: string;
   approvedRefundMinor: number | null; receiptRequired: boolean; receiptWaiverReason: string | null;
   inspectionOutcome: ReturnInspectionOutcome | null; decisionReason: string | null; closureReason: string | null;

@@ -19,9 +19,9 @@ function fixture(){
     addEventListener(name,fn){this.listeners[name]=fn;}dispatchEvent(event){return this.listeners[event.type]?.(event);}
     reportValidity(){return true;}focus(){this.focused=true;}
   }
-  const ids=['#returns','.ops','#return-choice','#return-summary','#return-items','#return-quantities','#return-approve','#return-reject','#return-amount','#return-receipt','#return-reason','#return-error','#returns-message','#returns-refresh','label[for="return-amount"]'];
+  const ids=['#returns','.ops','#return-choice','#return-summary','#return-items','#return-quantities','#return-approve','#return-reject','#return-refund','#return-linked-refunds','#return-amount','#return-receipt','#return-reason','#return-error','#returns-message','#returns-refresh','label[for="return-amount"]'];
   const elements=Object.fromEntries(ids.map(id=>[id,new Element()]));
-  for(const id of ['#return-approve','#return-reject'])elements[id].append(new Element('button'));
+  for(const id of ['#return-approve','#return-reject','#return-refund'])elements[id].append(new Element('button'));
   let records=[{id:'r1',reference:'RET-ABC123',orderId:'o1',status:'requested',version:1,category:'customer_choice',currency:'GBP',approvedRefundMinor:null,items:[{orderItemId:'i1',requestedQuantity:2,approvedQuantity:null,receivedQuantity:0}]}];
   const requests=[];let failure;let postStatus=200;let uuid=0;let gate;let readGate;
   const context=vm.createContext({document:{querySelector:id=>elements[id],createElement:tag=>new Element(tag)},CustomEvent:class{constructor(type){this.type=type;}},crypto:{randomUUID:()=>`key-${++uuid}`},fetch:async(url,options)=>{
@@ -31,7 +31,8 @@ function fixture(){
       if(failure)throw new Error('uncertain');
       if(postStatus>=400)return {ok:false,status:postStatus};
       const body=JSON.parse(options.body);const action=url.split('/').at(-1);
-      records=records.map(record=>({...record,status:action==='approve'?'approved':'rejected',version:2,approvedRefundMinor:action==='approve'?body.approvedRefundMinor:null}));
+      if(action==='refund')records=records.map(record=>({...record,refunds:[{id:'rf1',status:'pending',amountMinor:record.approvedRefundMinor,currency:record.currency}]}));
+      else records=records.map(record=>({...record,status:action==='approve'?'approved':'rejected',version:2,approvedRefundMinor:action==='approve'?body.approvedRefundMinor:null}));
       return {ok:true,status:200};
     }
     const snapshot=structuredClone(records);if(readGate){const waiting=readGate;readGate=undefined;await waiting;}
@@ -44,6 +45,24 @@ test('returns show controlled identifiers, quantities and currency without HTML 
   const f=fixture();await f.load();assert.match(f.elements['#return-summary'].textContent,/RET-ABC123.*customer_choice.*requested.*version 1.*GBP/);
   assert.match(f.elements['#return-items'].children[0].textContent,/<untrusted item>.*requested 2/);
   assert.equal(f.elements['#return-approve'].hidden,false);assert.equal(f.elements['#return-amount'].value,'');
+});
+const approvedRecord={id:'r1',reference:'RET-ABC123',orderId:'o1',status:'approved',version:2,category:'customer_choice',currency:'GBP',approvedRefundMinor:50,items:[],refunds:[]};
+test('approved positive return exposes explicit refund action with no amount override; linked pending refund prevents resubmission',async()=>{
+  const f=fixture();f.records([approvedRecord]);await f.load();assert.equal(f.elements['#return-refund'].hidden,false);
+  f.elements['#return-amount'].value='999';await f.submit('refund');
+  const post=f.requests.find(request=>request.options.method==='POST');assert.equal(post.url,'https://ops.test/operations/orders/o1/returns/r1/refund');
+  assert.deepEqual(JSON.parse(post.options.body),{expectedVersion:2});assert.equal(post.options.credentials,'include');
+  assert.match(f.elements['#return-linked-refunds'].textContent,/rf1.*pending.*GBP 50/);assert.equal(f.elements['#return-refund'].hidden,true);
+  await f.submit('refund');assert.equal(f.requests.filter(request=>request.options.method==='POST').length,1);
+});
+test('zero, non-approved and all linked refund outcomes suppress the money action',async()=>{
+  for(const record of [{...approvedRecord,approvedRefundMinor:0},...['requested','received','closed','rejected','cancelled'].map(status=>({...approvedRecord,status})),...['created','pending','completed','failed','resolution_required'].map(status=>({...approvedRecord,refunds:[{id:'rf1',status,amountMinor:50,currency:'GBP'}]}))]){
+    const f=fixture();f.records([record]);await f.load();assert.equal(f.elements['#return-refund'].hidden,true);await f.submit('refund');assert.equal(f.requests.filter(request=>request.options.method==='POST').length,0);
+  }
+});
+test('unconfirmed approved refund reuses its exact key/version rather than a new submission',async()=>{
+  const f=fixture();f.records([approvedRecord]);await f.load();f.fail(true);await f.submit('refund');f.fail(false);await f.submit('refund');
+  const posts=f.requests.filter(request=>request.options.method==='POST');assert.equal(posts.length,2);assert.equal(posts[0].options.headers['Idempotency-Key'],posts[1].options.headers['Idempotency-Key']);assert.equal(posts[0].options.body,posts[1].options.body);
 });
 test('approval sends explicit minor units, version and quantities; uses credentialed protected route only',async()=>{
   const f=fixture();await f.load();f.elements['#return-amount'].value='50';await f.submit('approve');

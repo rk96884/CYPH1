@@ -49,6 +49,12 @@ export const handleOperationsRequest = async (request: Request, service: Operati
   if (path[0] === "operations") path.shift();
   try {
     if (path[0] === "orders" && path[1] && path[2] === "returns") {
+      if (request.method === "POST" && path.length === 5 && path[3] && path[4] === "refund") {
+        if (!allowed(principal, "returns:approve") || !allowed(principal, "refunds:create")) return json({ message: "Permission denied." }, 403);
+        const body: unknown = await request.json();
+        if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some(key => key !== "expectedVersion")) throw new OperationsError("invalid_request", "Only the expected return version may be supplied.");
+        return json(await service.refundReturn({ orderId: path[1], returnId: path[3], expectedVersion: (body as { expectedVersion: number }).expectedVersion, operatorId: principal.id, idempotencyKey: request.headers.get("idempotency-key") ?? "" }), 201);
+      }
       if (!returns) return json({ message: "Not found." }, 404);
       if (request.method === "GET" && path.length === 3) {
         if (!allowed(principal, "orders:read")) return json({ message: "Permission denied." }, 403);
