@@ -17,6 +17,15 @@
     return { status: response.status, data: await response.json() };
   };
   const check = (condition, message) => { if (!condition) throw new Error(message); };
+  // PostgreSQL jsonb does not preserve object-key order. Canonicalise objects before
+  // comparing an idempotent replay with the original response so semantically
+  // identical stored JSON is not reported as different solely because keys moved.
+  const canonical = value => Array.isArray(value)
+    ? value.map(canonical)
+    : value && typeof value === 'object'
+      ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]))
+      : value;
+  const sameJson = (left, right) => JSON.stringify(canonical(left)) === JSON.stringify(canonical(right));
   const read = async suffix => { const result = await request(suffix); check(result.status === 200, `Read failed (${result.status}); stopped.`); return result.data; };
   const baseline = await read('');
   const before = (await read('/returns')).returns;
@@ -54,7 +63,7 @@
       const decided = await request(route, body, entry.decisionKey);
       check(decided.status === 200 && decided.data.status === (action === 'approve' ? 'approved' : 'rejected') && decided.data.version === 2, `Decision failed (${decided.status}); stopped.`);
       const replay = await request(route, body, entry.decisionKey);
-      check(replay.status === 200 && JSON.stringify(replay.data) === JSON.stringify(decided.data), 'Decision replay differed.');
+      check(replay.status === 200 && sameJson(replay.data, decided.data), 'Decision replay differed.');
       const stale = await request(route, body, crypto.randomUUID());
       check(stale.status === 409 && stale.data.code === 'conflict' && stale.data.message === 'The return changed. Reload it before acting.', 'Stale version was not rejected.');
       const details = await read('');
