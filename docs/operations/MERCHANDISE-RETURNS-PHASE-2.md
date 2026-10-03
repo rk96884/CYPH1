@@ -1,7 +1,7 @@
 # Merchandise returns Phase 2 — controlled decisions
 
-**Status:** Implementation; staging verification outstanding. Production use is
-not approved. Phase 1 staging evidence remains in
+**Status:** Implementation complete; staging decision verification passed on
+3 October 2026. Production use is not approved. Phase 1 staging evidence remains in
 [MERCHANDISE-RETURNS-PHASE-1-STAGING.md](MERCHANDISE-RETURNS-PHASE-1-STAGING.md).
 
 The earlier roadmap grouped UI and return-driven refunds into Phase 2. This
@@ -85,8 +85,46 @@ Type checks, static/runtime builds, accessibility/link/security/dependency audit
 and the existing performance audit passed. The production build retains inline
 browser scripts and generates zero JavaScript bundles. Synthetic local browser
 checks covered 320, 390, 768, 1280 and 1920 pixel widths and a zero-amount approval.
-This is local implementation evidence; the guarded staging script has **not**
-been run and staging decision verification remains outstanding.
+This is local implementation evidence. Staging decision verification was completed
+on 3 October 2026 as recorded below.
+
+## Staging decision verification — 3 October 2026
+
+The guarded rehearsal was run against the authenticated Operations Staging API
+using synthetic order `CYPH-T-4FFB876A8A9A` only. The first run created return
+`RET-1853B16A073049BD`, then rejected it at version 2 with decision reason
+`not_approved`. The rehearsal subsequently stopped at its replay-response
+comparison even though the replay returned HTTP 200.
+
+Inspection confirmed this was a rehearsal false negative rather than a return
+idempotency failure. The original response is assembled as a JavaScript return
+projection, while an idempotent replay is read from PostgreSQL `jsonb`, which
+does not preserve object-key ordering. The rehearsal had compared raw
+`JSON.stringify()` output and therefore treated semantically identical objects
+with different key order as different. The comparison was changed to recursively
+canonicalise object keys before comparing JSON, and an automated regression test
+was added for reordered replay JSON.
+
+The retained rejected return was then verified read-only against authoritative
+staging state: status `rejected`, version 2, decision reason `not_approved`, zero
+refunds and zero fulfilments. The order timeline contained one corresponding
+`return.requested` event and one `return.rejected` event from the Phase 2 attempt,
+confirming the idempotent replay did not duplicate the rejection audit event.
+
+The original two-case rehearsal was deliberately not rerun. A guarded continuation
+performed only the outstanding approval case and retained return
+`RET-789D073701344D5A`. It finished `approved` at version 2 with
+`approvedRefundMinor: 0` and `receiptRequired: true`. Exact-command idempotent
+replay passed using semantic JSON comparison, and a new-key stale-version attempt
+was rejected with the expected conflict. The continuation also verified exactly
+one new request and approval audit event and unchanged payment, refund and
+fulfilment projections.
+
+**Result: PASS for Phase 2 controlled decision staging verification.** Both
+synthetic records are retained as evidence and must not be deleted, closed or
+repurposed. No refund was issued, no goods were received or inspected, no return
+was closed, and no fulfilment action was initiated. Return-driven refunds and the
+remaining lifecycle UI continue to be deferred work below.
 
 ## Deferred work
 
