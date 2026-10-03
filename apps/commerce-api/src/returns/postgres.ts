@@ -25,11 +25,13 @@ export class PostgresReturnRepository implements ReturnRepository {
   constructor(private readonly pool: pg.Pool) {}
   async list(orderId: string): Promise<readonly ReturnRecord[]> {
     // One statement gives parent rows and quantities the same MVCC snapshot.
-    const rows = await this.pool.query<Row & { items: ItemRow[] }>(`SELECT r.*,
+    const rows = await this.pool.query<Row & { items: ItemRow[]; refunds: NonNullable<ReturnRecord["refunds"]> }>(`SELECT r.*,
+      COALESCE((SELECT jsonb_agg(jsonb_build_object('id',f.id,'status',f.status,'amountMinor',f.amount_minor::bigint,'currency',f.currency) ORDER BY f.created_at,f.id)
+        FROM refunds f WHERE f.return_id=r.id), '[]'::jsonb) AS refunds,
       COALESCE((SELECT jsonb_agg(to_jsonb(ri) ORDER BY ri.order_item_id)
         FROM return_items ri WHERE ri.return_id=r.id), '[]'::jsonb) AS items
       FROM returns r WHERE r.order_id=$1 ORDER BY r.created_at,r.id`, [orderId]);
-    return rows.rows.map((row) => record(row, row.items));
+    return rows.rows.map((row) => ({ ...record(row, row.items), refunds: row.refunds }));
   }
   async execute(command: ReturnCommand): Promise<ReturnRecord> {
     const client = await this.pool.connect();

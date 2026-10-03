@@ -6,6 +6,10 @@ export const operationPermissions = ["orders:read", "payments:capture", "refunds
 export type OperationPermission = typeof operationPermissions[number];
 export type OperationsPrincipal = Readonly<{ id: string; permissions: readonly OperationPermission[] }>;
 export type RefundReason = "customer_request" | "cancelled_order" | "returned_goods" | "operator_correction";
+export type RefundCommand = Readonly<{ orderId: string; operatorId: string; idempotencyKey: string }> & (
+  Readonly<{ amountMinor: number; reason: RefundReason; returnId?: never }> |
+  Readonly<{ returnId: string; expectedVersion: number; amountMinor?: never; reason?: never }>);
+export type RefundReservationCommand = RefundCommand & Readonly<{ fingerprint: string; correlationId: string }>;
 
 export type OrderSummary = Readonly<{ id: string; orderNumber: string; status: string; fulfilmentStatus: string; currency: string; totalMinor: number; createdAt: string }>;
 export type TimelineEvent = Readonly<{ id: string; type: string; action: string; status?: string; occurredAt: string; summary: Readonly<Record<string, unknown>> }>;
@@ -34,7 +38,7 @@ export interface OperationsRepository {
   finishCaptureReconciliation(recovery: CaptureRecovery, operatorId: string, result: CaptureReconciliationResult, payment?: NormalisedPayment): Promise<CaptureReconciliationResult>;
   searchOrders(query: string, limit: number): Promise<readonly OrderSummary[]>;
   getOrder(orderId: string): Promise<OrderDetails | undefined>;
-  reserveRefund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<RefundReservation>;
+  reserveRefund(input: RefundReservationCommand): Promise<RefundReservation>;
   completeRefund(input: Readonly<{ refundId: string; providerRefundId: string; status: "pending" | "completed" | "failed"; operatorId: string; correlationId: string }>): Promise<void>;
   failRefund(input: Readonly<{ refundId: string; failureCode: string; operatorId: string; correlationId: string }>): Promise<void>;
   markRefundResolutionRequired(input: Readonly<{ refundId: string; operatorId: string; correlationId: string }>): Promise<void>;
@@ -167,6 +171,16 @@ export class OperationsService {
   async refund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string }>) {
     if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) throw new OperationsError("invalid_request", "Refund amount must be a positive integer in minor units.");
     if (!(["customer_request", "cancelled_order", "returned_goods", "operator_correction"] as const).includes(input.reason)) throw new OperationsError("invalid_request", "An approved refund reason is required.");
+    return this.submitRefund(input);
+  }
+
+  async refundReturn(input: Readonly<{ orderId: string; returnId: string; expectedVersion: number; operatorId: string; idempotencyKey: string }>) {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuid.test(input.orderId) || !uuid.test(input.returnId) || !Number.isSafeInteger(input.expectedVersion) || input.expectedVersion < 1 || !/^[A-Za-z0-9._:-]{1,128}$/.test(input.idempotencyKey)) throw new OperationsError("invalid_request", "A valid return, version and idempotency key are required.");
+    return this.submitRefund({ ...input, orderId: input.orderId.toLowerCase(), returnId: input.returnId.toLowerCase() });
+  }
+
+  private async submitRefund(input: RefundCommand) {
     const correlationId = randomUUID();
     const reservation = await this.repository.reserveRefund({ ...input, fingerprint: fingerprint(input), correlationId });
     if (reservation.outcome === "replayed") return reservation.result;
@@ -181,7 +195,7 @@ export class OperationsService {
       const result = await provider.refund({
         paymentId: reservation.paymentId, orderId: input.orderId, providerPaymentId: reservation.providerPaymentId,
         amount: money(reservation.amountMinor, reservation.currency), refundableAmount: payment.refundableAmount,
-        reason: input.reason, operatorId: input.operatorId, idempotencyKey: input.idempotencyKey, correlationId,
+        reason: input.returnId ? "returned_goods" : input.reason!, operatorId: input.operatorId, idempotencyKey: input.idempotencyKey, correlationId,
       });
       stage = "persist_provider_result";
       await this.repository.completeRefund({ refundId: reservation.refundId, providerRefundId: result.providerRefundId, status: result.status, operatorId: input.operatorId, correlationId });

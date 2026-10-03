@@ -83,10 +83,12 @@ payment disputes. This backend is not staging-verified or launch-approved.
 No Operations UI, provider calls, refund initiation, automatic restocking,
 fulfilment orchestration, customer portal, exports or return emails are added.
 The [Phase 2 decision UI](MERCHANDISE-RETURNS-PHASE-2.md) adds approval/rejection
-controls only; it does not initiate money movement. A future return-driven
-refund increment must link a refund inside the existing reservation transaction before
-provider contact, enforce `returns:approve` **and** `refunds:create`, and check
-unresolved refunds server-side. The existing global refund path is unchanged.
+controls only; it does not initiate money movement. The explicit protected
+[Phase 3 approved refund action](MERCHANDISE-RETURNS-PHASE-3.md) links a refund
+inside the existing reservation transaction before provider contact, requires
+`returns:approve` **and** `refunds:create`, and blocks existing linked refunds
+server-side. It does not automatically refund on approval. The existing global
+refund path remains available separately.
 
 Local verification: `npm run db:rehearse:returns --workspace @cyph1/commerce-api`
 requires `RETURNS_TEST_DATABASE_URL` to name a migrated disposable local

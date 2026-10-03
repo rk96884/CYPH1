@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import pg from "pg";
 
@@ -8,6 +8,10 @@ if (process.env.NODE_ENV === "production" || url.href.includes("?") || !["postgr
 const { PostgresReturnRepository } = await import("../../../build/commerce-api/apps/commerce-api/src/returns/postgres.js");
 const { ReturnService } = await import("../../../build/commerce-api/apps/commerce-api/src/returns/service.js");
 const { PostgresOperationsRepository } = await import("../../../build/commerce-api/apps/commerce-api/src/operations/postgres.js");
+const { OperationsService } = await import("../../../build/commerce-api/apps/commerce-api/src/operations/service.js");
+const { PostgresCommunicationRepository } = await import("../../../build/commerce-api/apps/commerce-api/src/communications/postgres.js");
+const { TransactionalCommunicationConsumer } = await import("../../../build/commerce-api/apps/commerce-api/src/communications/service.js");
+const { PaymentProviderError } = await import("../../../build/commerce-api/packages/commerce-core/src/index.js");
 const pool = new pg.Pool({ connectionString: url.href, max: 12, application_name: "returns-rehearsal" });
 const service = new ReturnService(new PostgresReturnRepository(pool));
 const operator = "returns-rehearsal";
@@ -257,5 +261,110 @@ try {
     await constraintClient.query("ROLLBACK");
     pass("migration preserves pre-existing refunds as NULL-linked records; isolated schema rehearsal rolls back");
   } finally { await constraintClient.query("ROLLBACK"); constraintClient.release(); }
+  const operations = new PostgresOperationsRepository(pool);
+  const command = (record, key=randomUUID()) => ({orderId:record.orderId,returnId:record.id,expectedVersion:record.version,operatorId:operator,idempotencyKey:key,fingerprint:createHash('sha256').update(`return-refund:${record.id}:${record.version}:${key}`).digest('hex'),correlationId:randomUUID()});
+  const refundOrder=await createOrder();const requestedRefund=await request(refundOrder,refundOrder.items);
+  await assert.rejects(()=>operations.reserveRefund(command(requestedRefund)),/not eligible/);
+  const eligible=await approve(requestedRefund,50);
+  await assert.rejects(()=>operations.reserveRefund({...command(eligible),orderId:other.id}),/not found/);
+  await assert.rejects(()=>operations.reserveRefund({...command(eligible),expectedVersion:1}),/not eligible/);
+  const zeroOrder=await createOrder();const zero=await approve(await request(zeroOrder,zeroOrder.items),0);
+  await assert.rejects(()=>operations.reserveRefund(command(zero)),/not eligible/);
+  await pool.query("UPDATE returns SET currency='EUR' WHERE id=$1",[eligible.id]);
+  await assert.rejects(()=>operations.reserveRefund(command(eligible)),/not eligible/);
+  await pool.query("UPDATE returns SET currency='GBP' WHERE id=$1",[eligible.id]);
+  await pool.query("UPDATE payments SET currency='EUR' WHERE id=$1",[refundOrder.paymentId]);
+  await assert.rejects(()=>operations.reserveRefund(command(eligible)),/currencies/);
+  await pool.query("UPDATE payments SET currency='GBP',status='authorised' WHERE id=$1",[refundOrder.paymentId]);
+  await assert.rejects(()=>operations.reserveRefund(command(eligible)),/No captured/);
+  await pool.query("UPDATE payments SET status='captured' WHERE id=$1",[refundOrder.paymentId]);
+  await pool.query("UPDATE orders SET status='cancelled' WHERE id=$1",[refundOrder.id]);
+  await assert.rejects(()=>operations.reserveRefund(command(eligible)),/not eligible/);
+  await pool.query("UPDATE orders SET status='paid' WHERE id=$1",[refundOrder.id]);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM refunds WHERE return_id=$1",[eligible.id])).rows[0].n,0);
+  pass("return refunds reject wrong state/order/version/zero/return-order-payment currency and uncaptured payment before reservation");
+
+  // Rollback must undo the association, reservation, command and audit together.
+  const rollbackCommand=command(eligible);const rollbackRepository=new PostgresOperationsRepository(pool);
+  rollbackRepository.audit=async()=>{throw new Error('synthetic reservation rollback');};
+  await assert.rejects(()=>rollbackRepository.reserveRefund(rollbackCommand),/synthetic reservation rollback/);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM refunds WHERE return_id=$1",[eligible.id])).rows[0].n,0);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM operator_commands WHERE idempotency_key=$1",[rollbackCommand.idempotencyKey])).rows[0].n,0);
+  pass("linked refund reservation and command roll back atomically before provider contact");
+
+  let providerCalls=0;let lookups=0;let mode='completed';
+  const financialBaseline=async(id)=>(await pool.query(`SELECT
+    (SELECT jsonb_agg(to_jsonb(f)) FROM fulfilments f WHERE order_id=$1) AS fulfilments,
+    (SELECT jsonb_agg(to_jsonb(i) ORDER BY id) FROM inventory_levels i WHERE product_id=$2) AS inventory,
+    (SELECT row_to_json(r) FROM returns r WHERE id=$3) AS return_state`,[id,productId,eligible.id])).rows[0];
+  const beforeMoney=await financialBaseline(refundOrder.id);
+  const provider={key:'manual-test',getPayment:async()=>{
+    lookups++;const linked=(await pool.query("SELECT return_id,amount_minor,currency,status FROM refunds WHERE return_id=$1",[eligible.id])).rows;
+    if(mode==='completed'){assert.equal(linked.length,1);assert.equal(linked[0].status,'created');assert.equal(linked[0].amount_minor,'50');assert.equal(linked[0].currency,'GBP');}
+    return {amount:{value:200,currency:'GBP'},refundableAmount:{value:200,currency:'GBP'}};
+  },refund:async(input)=>{providerCalls++;if(mode==='ambiguous')throw new PaymentProviderError('network_error','Synthetic uncertainty',true);return {providerRefundId:`re_${input.idempotencyKey}`,status:mode,amount:input.amount};}};
+  const refundService=new OperationsService(operations,{getProvider:()=>provider});
+  const refundInput={orderId:eligible.orderId,returnId:eligible.id,expectedVersion:eligible.version,operatorId:operator,idempotencyKey:randomUUID()};
+  const result=await refundService.refundReturn(refundInput);assert.equal(result.status,'completed');
+  assert.deepEqual(await refundService.refundReturn(refundInput),result);
+  assert.equal(providerCalls,1);assert.equal(lookups,1);
+  await assert.rejects(()=>refundService.refundReturn({...refundInput,idempotencyKey:randomUUID()}),/already linked/);
+  await assert.rejects(()=>refundService.refundReturn({...refundInput,expectedVersion:1}),/different request/);
+  assert.deepEqual(await financialBaseline(refundOrder.id),beforeMoney);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM audit_events WHERE action='refund.reserved' AND change_summary->>'returnId'=$1",[eligible.id])).rows[0].n,1);
+  const linkedRefund=(await pool.query("SELECT * FROM refunds WHERE return_id=$1",[eligible.id])).rows[0];
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM outbox_events WHERE aggregate_id=$1 AND event_type='refund.completed'",[linkedRefund.id])).rows[0].n,1);
+  assert.equal((await new PostgresReturnRepository(pool).list(eligible.orderId))[0].refunds[0].status,'completed');
+  pass("provider sees committed return_id association; completed refund replays once, emits one refund.completed and leaves return/inventory/fulfilment unchanged");
+
+  for(const status of ['pending','failed','resolution_required']){
+    const testOrder=await createOrder();const testReturn=await approve(await request(testOrder,testOrder.items),50);
+    mode=status==='resolution_required'?'ambiguous':status;
+    const input={orderId:testReturn.orderId,returnId:testReturn.id,expectedVersion:2,operatorId:operator,idempotencyKey:randomUUID()};
+    if(mode==='ambiguous')await assert.rejects(()=>refundService.refundReturn(input),/provider/);else await refundService.refundReturn(input);
+    const linked=(await pool.query("SELECT id,status FROM refunds WHERE return_id=$1",[testReturn.id])).rows[0];assert.equal(linked.status,status);
+    const calls=providerCalls;await assert.rejects(()=>refundService.refundReturn({...input,idempotencyKey:randomUUID()}),/already linked/);assert.equal(providerCalls,calls);
+    assert.equal((await pool.query("SELECT count(*)::int AS n FROM outbox_events WHERE aggregate_id=$1 AND event_type='refund.completed'",[linked.id])).rows[0].n,0);
+  }
+  pass("pending/failed/ambiguous linked refunds block new submissions and emit no completion/customer message event");
+
+  const raceOrder=await createOrder();const raceReturn=await approve(await request(raceOrder,raceOrder.items),50);
+  const refundRace=await Promise.allSettled([operations.reserveRefund(command(raceReturn)),operations.reserveRefund(command(raceReturn))]);
+  assert.equal(refundRace.filter(result=>result.status==='fulfilled').length,1);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM refunds WHERE return_id=$1",[raceReturn.id])).rows[0].n,1);
+  pass("concurrent distinct return refund commands reserve exactly once");
+  const sameOrder=await createOrder();const sameReturn=await approve(await request(sameOrder,sameOrder.items),50);const sameCommand=command(sameReturn);
+  const sameRace=await Promise.allSettled([operations.reserveRefund(sameCommand),operations.reserveRefund(sameCommand)]);assert.equal(sameRace.filter(result=>result.status==='fulfilled').length,1);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM refunds WHERE return_id=$1",[sameReturn.id])).rows[0].n,1);
+  pass("same-key concurrent reservation cannot duplicate provider submission");
+  const balanceOrder=await createOrder(1);const balanceReturn=await approve(await request(balanceOrder,balanceOrder.items),70);
+  const ordinary={orderId:balanceOrder.id,amountMinor:70,reason:'customer_request',operatorId:operator,idempotencyKey:randomUUID(),fingerprint:createHash('sha256').update(randomUUID()).digest('hex'),correlationId:randomUUID()};
+  const balanceRace=await Promise.allSettled([operations.reserveRefund(command(balanceReturn)),operations.reserveRefund(ordinary)]);
+  assert.equal(balanceRace.filter(result=>result.status==='fulfilled').length,1);
+  assert.equal(Number((await pool.query("SELECT sum(amount_minor) AS n FROM refunds WHERE payment_id=$1",[balanceOrder.paymentId])).rows[0].n),70);
+  const ordinaryOrder=await createOrder();const ordinaryReservation=await operations.reserveRefund({...ordinary,orderId:ordinaryOrder.id,idempotencyKey:randomUUID(),fingerprint:createHash('sha256').update(randomUUID()).digest('hex')});
+  assert.equal((await pool.query("SELECT return_id FROM refunds WHERE id=$1",[ordinaryReservation.refundId])).rows[0].return_id,null);
+  pass("return and ordinary refunds contend for the same payment balance; ordinary refunds retain NULL return linkage");
+
+  const busyRefundOrder=await createOrder();const busyReturn=await approve(await request(busyRefundOrder,busyRefundOrder.items),50);
+  const busyClient=await pool.connect();
+  try {
+    await busyClient.query("BEGIN");await busyClient.query("SELECT id FROM payments WHERE id=$1 FOR UPDATE",[busyRefundOrder.paymentId]);
+    await assert.rejects(()=>operations.reserveRefund(command(busyReturn)),/busy/);
+    await busyClient.query("ROLLBACK");await busyClient.query("BEGIN");await busyClient.query("LOCK TABLE refunds IN SHARE MODE");
+    await assert.rejects(()=>operations.reserveRefund(command(busyReturn)),/busy/);
+    await busyClient.query("ROLLBACK");
+    assert.equal((await pool.query("SELECT count(*)::int AS n FROM refunds WHERE return_id=$1",[busyReturn.id])).rows[0].n,0);
+  } finally {await busyClient.query("ROLLBACK");busyClient.release();}
+  pass("busy completion/closure locks reject return refunds before reservation, avoiding lifecycle lock inversion");
+
+  const customer=(await pool.query("INSERT INTO customers(email_normalised,email_display) VALUES($1,$1) RETURNING id",[`returns-${randomUUID()}@example.test`])).rows[0].id;
+  await pool.query("UPDATE orders SET customer_id=$2 WHERE id=$1",[refundOrder.id,customer]);
+  await pool.query(`INSERT INTO outbox_events(event_key,event_type,aggregate_type,aggregate_id,payload)
+    SELECT $2,event_type,aggregate_type,aggregate_id,payload FROM outbox_events WHERE aggregate_id=$1 AND event_type='refund.completed' LIMIT 1`,[linkedRefund.id,`duplicate-source:${randomUUID()}`]);
+  let messages=0;const communications=new TransactionalCommunicationConsumer(true,new PostgresCommunicationRepository(pool),{key:'local-only',send:async()=>{messages++;return {providerReference:'synthetic-message'};}});
+  assert.equal((await communications.consumeOne()).outcome,'sent');assert.equal((await communications.consumeOne()).outcome,'empty');assert.equal(messages,1);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM communication_deliveries WHERE deduplication_key=$1",[`refund:${linkedRefund.id}`])).rows[0].n,1);
+  pass("existing refund-confirmation consumer semantically deduplicates repeated completion source events; no live provider used");
   console.log(`Returns PostgreSQL rehearsal passed: ${checks} checks. Synthetic records remain only in the disposable local database.`);
 } finally { await pool.end(); }

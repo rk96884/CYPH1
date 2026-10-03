@@ -17,10 +17,50 @@ const repository:OperationsRepository={
   reserveCaptureReconciliation:async()=>{throw new Error("unused");}, permitCaptureReplay:async()=>false,
   finishCaptureReconciliation:async(_recovery,_operator,result)=>result,
   searchOrders:async()=>[], getOrder:async()=>undefined, reconciliationRows:async()=>[], retryOutbox:async(input)=>({replayed:false,eventId:input.eventId}),
-  reserveRefund:async(input)=>({outcome:"reserved",refundId:"r1",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:input.amountMinor,refundableMinor:1000}),
+  reserveRefund:async(input)=>({outcome:"reserved",refundId:"r1",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:(input.amountMinor??0),refundableMinor:1000}),
   completeRefund:async(input)=>{state.completed=input.providerRefundId;}, failRefund:async()=>{}, markRefundResolutionRequired:async()=>{},
 };
 const service=new OperationsService(repository,{getConfiguredProvider:()=>provider,getProvider:()=>provider});
+
+const returnOrderId="00000000-0000-0000-0000-000000000001";
+const returnId="00000000-0000-0000-0000-000000000002";
+test("return refund requires both grants and rejects amount/currency overrides before reservation",async()=>{
+  let reservations=0;
+  const local=new OperationsService({...repository,reserveRefund:async()=>{reservations++;throw new Error("must not reserve");}},{getConfiguredProvider:()=>provider,getProvider:()=>provider});
+  const request=(body:unknown={expectedVersion:2},key="return-refund")=>new Request(`https://ops.test/operations/orders/${returnOrderId}/returns/${returnId}/refund`,{method:"POST",headers:{"content-type":"application/json","idempotency-key":key},body:JSON.stringify(body)});
+  assert.equal((await handleOperationsRequest(request(),local)).status,401);
+  for(const permissions of [[],["returns:approve"],["refunds:create"],["returns:manage","refunds:create"]] as const)assert.equal((await handleOperationsRequest(request(),local,{id:"operator",permissions})).status,403);
+  const principal={id:"operator",permissions:["returns:approve","refunds:create"] as const};
+  for(const body of [{expectedVersion:2,amountMinor:50},{expectedVersion:2,currency:"GBP"},{expectedVersion:0},{expectedVersion:2,reason:"returned_goods"},null])assert.equal((await handleOperationsRequest(request(body),local,principal)).status,400);
+  for(const key of ["","bad key","x".repeat(129)])assert.equal((await handleOperationsRequest(request({expectedVersion:2},key),local,principal)).status,400);
+  assert.equal(reservations,0);
+});
+
+test("return refund uses derived reservation and the existing submission/completion engine; replay skips provider",async()=>{
+  let calls=0;let completed=0;let replay=false;
+  const local=new OperationsService({...repository,reserveRefund:async input=>{
+    assert.equal(input.returnId,returnId);assert.equal(input.amountMinor,undefined);assert.equal(input.reason,undefined);
+    return {outcome:replay?"replayed":"reserved",refundId:"r1",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:50,refundableMinor:1000,result:{status:"completed"}};
+  },completeRefund:async()=>{completed++;}},{getConfiguredProvider:()=>provider,getProvider:()=>({...provider,refund:async input=>{calls++;assert.equal(input.amount.value,50);assert.equal(input.amount.currency,"GBP");assert.equal(input.reason,"returned_goods");return provider.refund(input);}})});
+  const input={orderId:returnOrderId,returnId,expectedVersion:2,operatorId:"operator",idempotencyKey:"return-refund"};
+  const response=await handleOperationsRequest(new Request(`https://ops.test/operations/orders/${returnOrderId}/returns/${returnId}/refund`,{method:"POST",headers:{"content-type":"application/json","idempotency-key":input.idempotencyKey},body:JSON.stringify({expectedVersion:2})}),local,{id:"operator",permissions:["returns:approve","refunds:create"]});
+  assert.equal(response.status,201);replay=true;await local.refundReturn(input);assert.equal(calls,1);assert.equal(completed,1);
+});
+
+test("return refund ambiguity retains resolution-required handling and never automatically retries",async()=>{
+  let uncertain=0;let failed=0;let calls=0;
+  const local=new OperationsService({...repository,reserveRefund:async()=>({outcome:"reserved",refundId:"r1",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:50,refundableMinor:1000}),markRefundResolutionRequired:async()=>{uncertain++;},failRefund:async()=>{failed++;}},{getConfiguredProvider:()=>provider,getProvider:()=>({...provider,refund:async()=>{calls++;throw new PaymentProviderError("network_error","Safe failure",true);}})});
+  await assert.rejects(()=>local.refundReturn({orderId:returnOrderId,returnId,expectedVersion:2,operatorId:"operator",idempotencyKey:"ambiguous-return"}),OperationsError);
+  assert.equal(uncertain,1);assert.equal(failed,0);assert.equal(calls,1);
+});
+test("return reservation conflicts/not-found remain safe API responses without contacting providers",async()=>{
+  for(const code of ["conflict","not_found"] as const){
+    let lookups=0;
+    const local=new OperationsService({...repository,reserveRefund:async()=>{throw new OperationsError(code,code==='conflict'?'Return is not eligible for its approved refund. Reload and review.':'Return was not found for this order.');}},{getConfiguredProvider:()=>provider,getProvider:()=>{lookups++;return provider;}});
+    const response=await handleOperationsRequest(new Request(`https://ops.test/operations/orders/${returnOrderId}/returns/${returnId}/refund`,{method:"POST",headers:{"content-type":"application/json","idempotency-key":"conflict-test"},body:JSON.stringify({expectedVersion:2})}),local,{id:"operator",permissions:["returns:approve","refunds:create"]});
+    assert.equal(response.status,code==='conflict'?409:404);assert.equal(lookups,0);assert.equal((await response.json() as {code:string}).code,code);
+  }
+});
 
 test("operations handler rejects unauthenticated and unauthorised callers",async()=>{
   assert.equal((await handleOperationsRequest(new Request("https://ops.test/operations/orders"),service)).status,401);
@@ -83,9 +123,9 @@ test("retryable refund failure keeps the amount reserved and blocks a replacemen
     ...repository,
     reserveRefund:async(input)=>{
       const available=1000-reservedMinor;
-      if(input.amountMinor>available) throw new OperationsError("conflict","Refund amount exceeds the unreserved payment balance.");
-      reservedMinor+=input.amountMinor;
-      return {outcome:"reserved" as const,refundId:"r-ambiguous",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:input.amountMinor,refundableMinor:available};
+      if((input.amountMinor??0)>available) throw new OperationsError("conflict","Refund amount exceeds the unreserved payment balance.");
+      reservedMinor+=(input.amountMinor??0);
+      return {outcome:"reserved" as const,refundId:"r-ambiguous",paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:(input.amountMinor??0),refundableMinor:available};
     },
     markRefundResolutionRequired:async()=>{resolutionRequired=true;},
   };
@@ -109,7 +149,7 @@ test("partial and full refund amounts remain explicit provider requests",async()
   };
   const amountRepository:OperationsRepository={
     ...repository,
-    reserveRefund:async(input)=>({outcome:"reserved" as const,refundId:`r${amounts.length+1}`,paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:input.amountMinor,refundableMinor:1000}),
+    reserveRefund:async(input)=>({outcome:"reserved" as const,refundId:`r${amounts.length+1}`,paymentId:"p1",provider:"mollie-test",providerPaymentId:"tr_1",currency:"GBP",amountMinor:(input.amountMinor??0),refundableMinor:1000}),
   };
   const amountService=new OperationsService(amountRepository,{getConfiguredProvider:()=>amountProvider,getProvider:()=>amountProvider});
   await amountService.refund({orderId:"o1",amountMinor:400,reason:"customer_request",operatorId:"operator",idempotencyKey:"partial"});
