@@ -98,7 +98,7 @@ test('loading another order locks decisions and ignores delayed old reads',async
 });
 
 const rehearsal=await readFile(new URL('../docs/operations/returns-phase-2-staging-console.js',import.meta.url),'utf8');
-function rehearsalFixture({api='https://operations-staging.cyph1.co.uk',permission=true}={}){
+function rehearsalFixture({api='https://operations-staging.cyph1.co.uk',permission=true,reorderReplay=false}={}){
   const orderId='4ffb876a-8a9a-4003-a2a8-f98b3963787c';const itemId='dcffdd62-7385-4128-b249-4b52a8879fa7';
   const records=[];const timeline=[];const commands=new Map();const storage=new Map();const requests=[];let counter=0;
   const details={order:{id:orderId,orderNumber:'CYPH-T-4FFB876A8A9A',currency:'GBP',status:'paid',fulfilmentStatus:'unfulfilled'},items:[{id:itemId,name_snapshot:'INTEGRATION TEST FIXTURE — NOT FOR SALE',quantity:1}],payments:[{status:'captured'}],refunds:[],fulfilments:[],timeline};
@@ -109,7 +109,7 @@ function rehearsalFixture({api='https://operations-staging.cyph1.co.uk',permissi
       const body=JSON.parse(options.body);const key=options.headers['Idempotency-Key'];
       if(!permission){status=403;data={message:'Permission denied.'};}
       else if(!Object.keys(body).length){status=400;data={code:'invalid_request'};}
-      else if(commands.has(key)){({status,data}=commands.get(key));}
+      else if(commands.has(key)){({status,data}=commands.get(key));if(reorderReplay&&data&&typeof data==='object'&&!Array.isArray(data))data=Object.fromEntries(Object.entries(data).reverse());}
       else if(url.endsWith('/returns')){
         data={id:`r${counter}`,reference:`RET-${counter.toString(16).toUpperCase().padStart(16,'0')}`,version:1,status:'requested',approvedRefundMinor:null,currency:'GBP',receivedAt:null,closedAt:null};records.push(data);status=201;timeline.push({action:'return.requested',summary:{orderId}});commands.set(key,{status,data:structuredClone(data)});
       }else{
@@ -127,6 +127,10 @@ test('staging console script uses synthetic guards, replay and stale checks with
   assert.equal(JSON.parse([...f.storage.values()][0]).result,'PASS');assert.ok(f.requests.every(request=>request.options.credentials==='include'));
   assert.ok(f.requests.every(request=>!request.url.includes('/refunds')&&!request.url.includes('/capture')&&!request.url.includes('/close')&&!request.url.includes('/receive')));
   await assert.rejects(f.run(),/active return/);
+});
+test('staging console accepts idempotent replay with reordered JSON object keys',async()=>{
+  const f=rehearsalFixture({reorderReplay:true});await f.run();assert.deepEqual(f.records.map(record=>record.status),['rejected','approved']);
+  assert.equal(JSON.parse([...f.storage.values()][0]).result,'PASS');
 });
 test('staging console rejects wrong origin or missing grants before lifecycle writes',async()=>{
   const wrong=rehearsalFixture({api:'https://production.example'});await assert.rejects(wrong.run(),/Unexpected API/);assert.equal(wrong.requests.length,0);
