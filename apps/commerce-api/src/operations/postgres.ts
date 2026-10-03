@@ -1,7 +1,7 @@
 import pg from "pg";
 import { transitionOrder, transitionPayment, type CaptureInput, type NormalisedPayment, type OrderStatus, type PaymentStatus } from "../../../../packages/commerce-core/src/index.js";
 import type { CaptureCommand, CaptureReservation, CaptureResult, CaptureRecovery, CaptureRecoveryReservation, CaptureReconciliationResult } from "./service.js";
-import { OperationsError, type OperationsRepository, type RefundReservation, type RefundReason } from "./service.js";
+import { OperationsError, type OperationsRepository, type RefundReservation, type RefundReservationCommand } from "./service.js";
 
 const summary = (row: Record<string, any>) => Object.freeze({
   id: row.id, orderNumber: row.order_number, status: row.status, fulfilmentStatus: row.fulfilment_status,
@@ -191,7 +191,7 @@ export class PostgresOperationsRepository implements OperationsRepository {
     if (order.rowCount !== 1) return undefined;
     const [payments, refunds, fulfilments, audit, commands, items] = await Promise.all([
       this.pool.query("SELECT id, provider, provider_payment_id, status, amount_minor, currency, capture_mode, capture_before, authorised_at, capture_deadline_state, capture_monitor_checked_at, created_at, updated_at FROM payments WHERE order_id = $1 ORDER BY created_at", [orderId]),
-      this.pool.query(`SELECT r.id, r.payment_id, r.provider_refund_id, r.status, r.amount_minor, r.currency, r.reason, r.created_at, r.updated_at
+      this.pool.query(`SELECT r.id, r.payment_id, r.return_id, r.provider_refund_id, r.status, r.amount_minor, r.currency, r.reason, r.created_at, r.updated_at
         FROM refunds r JOIN payments p ON p.id = r.payment_id WHERE p.order_id = $1 ORDER BY r.created_at`, [orderId]),
       this.pool.query("SELECT id, provider, provider_reference, status, failure_code, tracking_carrier, tracking_reference, created_at, updated_at FROM fulfilments WHERE order_id = $1 ORDER BY created_at", [orderId]),
       this.pool.query(`SELECT id, entity_type, action, change_summary, created_at FROM audit_events
@@ -204,7 +204,7 @@ export class PostgresOperationsRepository implements OperationsRepository {
     return Object.freeze({ items: Object.freeze(items.rows), ...(commands.rows[0] ? { captureCommand: { status: commands.rows[0].status as string } } : {}), order: summary(order.rows[0]), payments: Object.freeze(payments.rows), refunds: Object.freeze(refunds.rows), fulfilments: Object.freeze(fulfilments.rows), timeline: Object.freeze(audit.rows.map((row) => Object.freeze({ id: row.id, type: row.entity_type, action: row.action, occurredAt: row.created_at.toISOString(), summary: row.change_summary }))) });
   }
 
-  async reserveRefund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<RefundReservation> {
+  async reserveRefund(input: RefundReservationCommand): Promise<RefundReservation> {
     return this.transaction(async (client) => {
       await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [input.idempotencyKey]);
       const command = await client.query("SELECT request_fingerprint, status, result FROM operator_commands WHERE idempotency_key = $1 FOR UPDATE", [input.idempotencyKey]);
@@ -213,20 +213,43 @@ export class PostgresOperationsRepository implements OperationsRepository {
         if (command.rows[0].status === "completed") return Object.freeze({ outcome: "replayed" as const, refundId: "", paymentId: "", provider: "", providerPaymentId: "", currency: "GBP", amountMinor: 0, refundableMinor: 0, result: command.rows[0].result });
         throw new OperationsError("conflict", "The refund request is already being processed or previously failed.");
       }
+      let amountMinor = input.amountMinor;
+      let returnCurrency: string | undefined;
+      if (input.returnId) {
+        // Closure takes SHARE on refunds before order -> return locks. Fence it
+        // before taking a return lock, rather than waiting at the later INSERT.
+        await client.query("LOCK TABLE refunds IN ROW EXCLUSIVE MODE NOWAIT");
+        const result = await client.query(`SELECT r.status,r.version,r.approved_refund_minor,r.currency,o.currency AS order_currency,o.status AS order_status
+          FROM returns r JOIN orders o ON o.id=r.order_id WHERE r.id=$1 AND r.order_id=$2 FOR UPDATE OF r`, [input.returnId,input.orderId]);
+        const record = result.rows[0];
+        if (!record) throw new OperationsError("not_found", "Return was not found for this order.");
+        amountMinor = Number(record.approved_refund_minor); returnCurrency = record.currency;
+        if (record.status !== "approved" || record.version !== input.expectedVersion || !["paid","partially_refunded"].includes(record.order_status) || !Number.isSafeInteger(amountMinor) || amountMinor <= 0 || record.currency !== record.order_currency) throw new OperationsError("conflict", "Return is not eligible for its approved refund. Reload and review.");
+        const linked = await client.query("SELECT id FROM refunds WHERE return_id=$1 LIMIT 1", [input.returnId]);
+        if (linked.rowCount) throw new OperationsError("conflict", "A refund is already linked to this return. Review its existing outcome.");
+      }
       const payment = await client.query(`SELECT p.id, p.provider, p.provider_payment_id, p.amount_minor, p.currency
-        FROM payments p JOIN orders o ON o.id = p.order_id WHERE p.order_id = $1 AND p.status IN ('captured','partially_refunded') ORDER BY p.created_at DESC LIMIT 1 FOR UPDATE OF p`, [input.orderId]);
+        FROM payments p JOIN orders o ON o.id = p.order_id WHERE p.order_id = $1 AND p.status IN ('captured','partially_refunded') ORDER BY p.created_at DESC LIMIT 1 FOR UPDATE OF p${input.returnId ? " NOWAIT" : ""}`, [input.orderId]);
       if (payment.rowCount !== 1 || !payment.rows[0].provider_payment_id) throw new OperationsError("conflict", "No captured provider payment is available for refund.");
       const row = payment.rows[0];
-      // A separate statement sees reservations committed while the payment lock was awaited.
+      // Read balance after obtaining the payment lock, so a waited-for reservation
+      // is visible in this statement's fresh READ COMMITTED snapshot.
       const reserved = await client.query("SELECT COALESCE(sum(amount_minor),0) AS reserved_minor FROM refunds WHERE payment_id=$1 AND status IN ('created','pending','completed','resolution_required')", [row.id]);
       const refundableMinor = Number(row.amount_minor) - Number(reserved.rows[0].reserved_minor);
-      if (input.amountMinor > refundableMinor) throw new OperationsError("conflict", "Refund amount exceeds the unreserved payment balance.");
-      const refund = await client.query(`INSERT INTO refunds (payment_id, amount_minor, currency, reason, status, idempotency_key)
-        VALUES ($1,$2,$3,$4,'created',$5) RETURNING id`, [row.id, input.amountMinor, row.currency, input.reason, input.idempotencyKey]);
+      if (returnCurrency && row.currency !== returnCurrency) throw new OperationsError("conflict", "Return and payment currencies are incompatible.");
+      if (typeof amountMinor !== "number" || !Number.isSafeInteger(amountMinor) || amountMinor <= 0 || amountMinor > refundableMinor) throw new OperationsError("conflict", "Refund amount exceeds the unreserved payment balance.");
+      const reason = input.returnId ? "returned_goods" : input.reason;
+      const refund = await client.query(`INSERT INTO refunds (payment_id, amount_minor, currency, reason, status, idempotency_key, return_id)
+        VALUES ($1,$2,$3,$4,'created',$5,$6) RETURNING id`, [row.id, amountMinor, row.currency, reason, input.idempotencyKey, input.returnId ?? null]);
       await client.query(`INSERT INTO operator_commands (idempotency_key, command_type, target_type, target_id, operator_id, request_fingerprint)
         VALUES ($1,'refund.create','order',$2,$3,$4)`, [input.idempotencyKey, input.orderId, input.operatorId, input.fingerprint]);
-      await this.audit(client, "refund", refund.rows[0].id, "refund.reserved", input.operatorId, input.correlationId, { orderId: input.orderId, amountMinor: input.amountMinor, reason: input.reason });
-      return Object.freeze({ outcome: "reserved" as const, refundId: refund.rows[0].id, paymentId: row.id, provider: row.provider, providerPaymentId: row.provider_payment_id, currency: row.currency, amountMinor: input.amountMinor, refundableMinor });
+      await this.audit(client, "refund", refund.rows[0].id, "refund.reserved", input.operatorId, input.correlationId, { orderId: input.orderId, amountMinor, reason, ...(input.returnId ? { returnId: input.returnId } : {}) });
+      return Object.freeze({ outcome: "reserved" as const, refundId: refund.rows[0].id, paymentId: row.id, provider: row.provider, providerPaymentId: row.provider_payment_id, currency: row.currency, amountMinor, refundableMinor });
+    }).catch((error: unknown) => {
+      // Never wait return -> payment: a lifecycle writer may hold order while
+      // waiting for this return, and completion may hold payment waiting for order.
+      if (input.returnId && error instanceof Error && "code" in error && error.code === "55P03") throw new OperationsError("conflict", "Return refund is busy. Reload and review before acting.");
+      throw error;
     });
   }
 
