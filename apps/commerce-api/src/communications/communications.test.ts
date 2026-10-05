@@ -16,10 +16,10 @@ test("renders escaped, clearly transactional order confirmation",()=>{
 });
 
 test("renders the four approved transactional templates",()=>{
-  const order=renderTransactionalMessage(context);
+  const order=renderTransactionalMessage({...context,orderPlacedAt:"2026-10-05T12:00:00.000Z",deliveryMethod:"Standard UK Delivery",deliveryMinor:0,expectedDelivery:"2–3 working days"});
   assert.equal(order.subject,"CYPH/1 order CYPH-1 confirmed");
   assert.match(order.text,/£12\.99/);
-  assert.match(order.html,/ORDER CONFIRMED/);
+  assert.match(order.html,/ORDER CONFIRMED/);\n  assert.match(order.html,/5 October 2026/);\n  assert.match(order.html,/Standard UK Delivery/);\n  assert.match(order.html,/Amount paid/);\n  assert.match(order.html,/Warranty &amp; Returns/);\n  assert.match(order.html,/Company number 17455968/);
 
   const dispatch=renderTransactionalMessage({...context,template:"dispatch",deduplicationKey:"dispatch:f1",trackingCarrier:"Carrier & Co",trackingReference:"TRACK<1>"});
   assert.match(dispatch.subject,/dispatched/);
