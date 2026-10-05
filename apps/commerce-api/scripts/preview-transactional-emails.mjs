@@ -4,7 +4,7 @@ import { renderTransactionalMessage } from "../../../build/commerce-api/apps/com
 
 const output=resolve(process.cwd(),"tmp/transactional-email-previews");
 await mkdir(output,{recursive:true});
-const base={recipient:"preview@example.test",orderNumber:"CYPH-PREVIEW-1001",currency:"GBP",totalMinor:29900};
+const base={recipient:"preview@example.test",orderNumber:"CYPH-PREVIEW-1001",currency:"GBP",totalMinor:29900,deliveryMinor:0,orderPlacedAt:"2026-10-05T15:30:00.000Z",deliveryMethod:"Standard UK Delivery",expectedDelivery:"2–3 working days"};
 const examples=[
   {template:"order-confirmation",deduplicationKey:"preview:order"},
   {template:"dispatch",deduplicationKey:"preview:dispatch",trackingCarrier:"CYPH/1 Preview Carrier",trackingReference:"TRACK-123456"},
