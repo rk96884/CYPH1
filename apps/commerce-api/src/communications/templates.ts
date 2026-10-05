@@ -2,11 +2,11 @@ import type { TransactionalMessage, TransactionalTemplateKey } from "../../../..
 
 export type CommunicationContext = Readonly<{
   template: TransactionalTemplateKey; deduplicationKey: string; recipient: string; orderNumber: string;
-  currency: string; totalMinor?: number; refundMinor?: number; trackingCarrier?: string; trackingReference?: string;
+  currency: string; totalMinor?: number; refundMinor?: number; trackingCarrier?: string; trackingReference?: string;\n  orderPlacedAt?: string; deliveryMethod?: string; deliveryMinor?: number; expectedDelivery?: string;
 }>;
 
 const escape = (value: string) => value.replace(/[&<>"']/g, (character) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[character]!);
-const money = (minor: number, currency: string) => new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(minor / 100);
+const money = (minor: number, currency: string) => new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(minor / 100);\nconst date = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(value));\nconst website = "https://cyph1.co.uk";\nconst logo = `${website}/brand/generated/cyph1-lockup-clean-flat.svg`;\nconst returnsUrl = `${website}/warranty-returns/`;
 
 type TemplateCopy = Readonly<{ subject: string; eyebrow: string; heading: string; body: string; detail?: string }>;
 
@@ -16,7 +16,7 @@ const copyFor = (context: CommunicationContext): TemplateCopy => {
     subject: `CYPH/1 order ${context.orderNumber} confirmed`,
     eyebrow: "ORDER CONFIRMED",
     heading: "Thank you for your order.",
-    body: `We have received payment for order <strong>${order}</strong>${context.totalMinor === undefined ? "" : `, totalling <strong>${money(context.totalMinor, context.currency)}</strong>`}. We will contact you again when your order is dispatched.`,
+    body: `We have received payment for order <strong>${order}</strong>. We will contact you again when your order is dispatched.`,\n    detail: [\n      context.orderPlacedAt ? `Order placed: <strong>${date(context.orderPlacedAt)}</strong>` : undefined,\n      context.deliveryMethod ? `Delivery: <strong>${escape(context.deliveryMethod)}</strong>` : undefined,\n      context.deliveryMinor !== undefined ? `Delivery charge: <strong>${money(context.deliveryMinor, context.currency)}</strong>` : undefined,\n      context.totalMinor !== undefined ? `Amount paid: <strong>${money(context.totalMinor, context.currency)}</strong>` : undefined,\n      context.expectedDelivery ? `Expected delivery: <strong>${escape(context.expectedDelivery)}</strong>` : undefined,\n    ].filter(Boolean).join("<br>"),
   };
   if (context.template === "dispatch") {
     const tracking = context.trackingReference
@@ -66,11 +66,11 @@ export const renderTransactionalMessage = (context: CommunicationContext): Trans
 <div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#b78af2;margin-bottom:14px">${copy.eyebrow}</div>
 <h1 style="margin:0 0 18px;font-size:28px;line-height:1.2;color:#ffffff;font-weight:600">${escape(copy.heading)}</h1>
 <p style="margin:0;font-size:16px;line-height:1.65;color:#eee7f3">${copy.body}</p>
-${copy.detail ? `<div style="margin-top:22px;padding:16px 18px;background:#201729;border-radius:10px;font-size:14px;line-height:1.55;color:#d7ccde">${copy.detail}</div>` : ""}
+${copy.detail ? `<div style="margin-top:22px;padding:16px 18px;background:#201729;border-radius:10px;font-size:14px;line-height:1.75;color:#d7ccde">${copy.detail}</div>` : ""}\n${context.template === "order-confirmation" ? `<p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#cbbfd2">Need help with a return or warranty? <a href="${returnsUrl}" style="color:#c59bf7">View Warranty &amp; Returns</a>.</p>` : ""}
 </td></tr>
 <tr><td style="padding:24px 32px;border-top:1px solid #382a45">
 <p style="margin:0 0 8px;font-size:12px;line-height:1.5;color:#aa9bb4">This is a transactional message about your CYPH/1 order.</p>
-<p style="margin:0;font-size:11px;line-height:1.5;color:#7f7089">Please keep this email for your records.</p>
+<p style="margin:0 0 12px;font-size:11px;line-height:1.6;color:#7f7089">CYPH1 LTD · Unit 171614, PO Box 7169 · Poole, BH15 9EL · United Kingdom<br>Company number 17455968</p>\n<p style="margin:0;font-size:11px;line-height:1.8"><a href="https://www.instagram.com/cyph1uk/" style="color:#b78af2;text-decoration:none">Instagram</a> &nbsp;·&nbsp; <a href="https://www.tiktok.com/@cyph1uk" style="color:#b78af2;text-decoration:none">TikTok</a> &nbsp;·&nbsp; <a href="https://www.facebook.com/profile.php?id=61593666869093" style="color:#b78af2;text-decoration:none">Facebook</a> &nbsp;·&nbsp; <a href="https://www.linkedin.com/company/146602804/" style="color:#b78af2;text-decoration:none">LinkedIn</a> &nbsp;·&nbsp; <a href="https://www.youtube.com/@CY-PH-1" style="color:#b78af2;text-decoration:none">YouTube</a> &nbsp;·&nbsp; <a href="https://x.com/cyph1uk" style="color:#b78af2;text-decoration:none">X</a></p>
 </td></tr>
 </table>
 </td></tr></table>
