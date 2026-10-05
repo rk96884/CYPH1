@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { renderTransactionalMessage } from "../src/communications/templates.js";
+import { renderTransactionalMessage } from "../../../build/commerce-api/apps/commerce-api/src/communications/templates.js";
 
 const output=resolve(process.cwd(),"tmp/transactional-email-previews");
 await mkdir(output,{recursive:true});
