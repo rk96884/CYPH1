@@ -33,6 +33,11 @@ if (!configured) throw new Error("Private operations presentation is not configu
           <select id="return-receipt"><option value="required">Required</option><option value="receipt_not_required">Not required</option><option value="operator_waiver">Explicit operator waiver</option></select>
           <button type="submit">Approve return decision</button>
         </form>
+        <form id="return-refund" hidden>
+          <p>Issue the approved amount shown above. Requires returns:approve and refunds:create. Submission does not receive goods or close the return.</p>
+          <button type="submit">Issue approved refund</button>
+        </form>
+        <p id="return-linked-refunds" aria-live="polite"></p>
         <form id="return-reject" hidden>
           <h4>Reject requested return</h4>
           <label for="return-reason">Rejection reason</label>
@@ -143,6 +148,8 @@ if (!configured) throw new Error("Private operations presentation is not configu
     const quantities=document.querySelector('#return-quantities');
     const approveForm=document.querySelector('#return-approve');
     const rejectForm=document.querySelector('#return-reject');
+    const returnRefundForm=document.querySelector('#return-refund');
+    const linkedRefunds=document.querySelector('#return-linked-refunds');
     const amount=document.querySelector('#return-amount');
     const receipt=document.querySelector('#return-receipt');
     const reason=document.querySelector('#return-reason');
@@ -154,11 +161,14 @@ if (!configured) throw new Error("Private operations presentation is not configu
     const selectedRecord=()=>records.find(record=>record.id===selected);
     const commandId=record=>`${order}:${record.id}:${record.version}`;
     const announce=text=>{status.textContent=text;};
-    function lock(){ready=false;choice.disabled=true;approveForm.querySelector('button').disabled=true;rejectForm.querySelector('button').disabled=true;}
+    function lock(){ready=false;choice.disabled=true;approveForm.querySelector('button').disabled=true;rejectForm.querySelector('button').disabled=true;returnRefundForm.querySelector('button').disabled=true;}
     function render(){
       const record=selectedRecord();itemList.textContent='';quantities.textContent='';
       const legend=document.createElement('legend');legend.textContent='Approved quantities';quantities.append(legend);
       approveForm.hidden=rejectForm.hidden=!record||record.status!=='requested';
+      linkedRefunds.textContent=(record?.refunds??[]).map(refund=>`Linked refund ${refund.id} · ${refund.status} · ${refund.currency} ${refund.amountMinor} minor units`).join(' | ');
+      returnRefundForm.hidden=!record||record.status!=='approved'||!Number.isSafeInteger(record.approvedRefundMinor)||record.approvedRefundMinor<=0||(record.refunds??[]).length>0;
+      returnRefundForm.querySelector('button').disabled=!ready||busy||loading||returnRefundForm.hidden;
       if(!record){summary.textContent='';return;}
       summary.textContent=`${record.reference} · ${record.category} · ${record.status} · version ${record.version} · ${record.currency} · approved refund: ${record.approvedRefundMinor===null?'not decided':`${record.approvedRefundMinor} minor units`}`;
       const pending=commands.get(commandId(record));
@@ -191,14 +201,15 @@ if (!configured) throw new Error("Private operations presentation is not configu
         choice.textContent='';for(const record of records){const option=document.createElement('option');option.value=record.id;option.textContent=`${record.reference} — ${record.status}`;choice.append(option);}
         choice.value=selected;choice.disabled=!records.length||busy;ready=true;render();
         if(!records.length)announce('No merchandise returns for this order.');
-      }catch(problem){if(token===epoch){lock();approveForm.hidden=rejectForm.hidden=true;announce(problem instanceof Error?problem.message:'Returns could not be loaded.');}}
+      }catch(problem){if(token===epoch){lock();approveForm.hidden=rejectForm.hidden=returnRefundForm.hidden=true;announce(problem instanceof Error?problem.message:'Returns could not be loaded.');}}
     }
-    panel.addEventListener('operations-order-loading',()=>{loading=true;++epoch;lock();refreshButton.disabled=true;approveForm.hidden=rejectForm.hidden=true;});
+    panel.addEventListener('operations-order-loading',()=>{loading=true;++epoch;lock();refreshButton.disabled=true;approveForm.hidden=rejectForm.hidden=returnRefundForm.hidden=true;});
     panel.addEventListener('operations-order-loaded',event=>{loading=false;refreshButton.disabled=busy;if(order!==event.detail.id){selected='';announce('');error.textContent='';}order=event.detail.id;orderItems=event.detail.data.items??[];refresh();});
     refreshButton.addEventListener('click',()=>{if(!busy)refresh();});
     choice.addEventListener('change',()=>{if(!busy&&ready){selected=choice.value;error.textContent='';render();}});
     async function decide(event,action){
-      event.preventDefault();const record=selectedRecord();if(busy||!ready||record?.status!=='requested')return;
+      event.preventDefault();const record=selectedRecord();if(busy||!ready||loading||!record)return;
+      if(action==='refund'?(record.status!=='approved'||!Number.isSafeInteger(record.approvedRefundMinor)||record.approvedRefundMinor<=0||(record.refunds??[]).length>0):record.status!=='requested')return;
       error.textContent='';const id=order;const key=commandId(record);let command=commands.get(key);
       if(command&&command.action!==action){error.textContent='The previous decision is unconfirmed. Reload or replay that same decision.';return;}
       if(!command){
@@ -213,7 +224,7 @@ if (!configured) throw new Error("Private operations presentation is not configu
           const receiptRequired=receipt.value==='required';
           if(!['required','receipt_not_required','operator_waiver'].includes(receipt.value)){error.textContent='Choose a controlled receipt requirement.';return;}
           body={...body,approvedRefundMinor,receiptRequired,...(!receiptRequired?{receiptWaiverReason:receipt.value}:{}),items};
-        }else{
+        }else if(action==='reject'){
           if(!['not_approved','duplicate_request'].includes(reason.value)){error.textContent='Choose a controlled rejection reason.';return;}
           body={...body,reason:reason.value};
         }
@@ -222,7 +233,7 @@ if (!configured) throw new Error("Private operations presentation is not configu
       busy=true;choice.disabled=refreshButton.disabled=true;panel.setAttribute('aria-busy','true');render();announce('Submitting return decision…');
       try{
         const response=await fetch(`${api}/operations/orders/${id}/returns/${record.id}/${action}`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':command.key},body:JSON.stringify(command.body)});
-        if(response.ok){commands.delete(key);if(order===id&&!loading)announce(action==='approve'?'Return approved. No refund was issued.':'Return rejected.');}
+        if(response.ok){commands.delete(key);if(order===id&&!loading)announce(action==='refund'?'Approved refund submitted. Review its linked state below.':action==='approve'?'Return approved. No refund was issued.':'Return rejected.');}
         else if([400,401,403,409].includes(response.status)){commands.delete(key);if(order===id&&!loading){announce('Return decision not applied.');error.textContent=response.status===403||response.status===401?'You do not have permission to make this return decision.':response.status===409?'The return changed or the command conflicts. Reload and review before acting.':'The return decision was invalid. Review the controlled values.';}}
         else if(order===id&&!loading)announce('Decision outcome unconfirmed. Reload; if still requested, replay the same decision.');
       }catch{if(order===id&&!loading)announce('Decision outcome unconfirmed. Reload; if still requested, replay the same decision.');}
@@ -230,6 +241,7 @@ if (!configured) throw new Error("Private operations presentation is not configu
     }
     approveForm.addEventListener('submit',event=>decide(event,'approve'));
     rejectForm.addEventListener('submit',event=>decide(event,'reject'));
+    returnRefundForm.addEventListener('submit',event=>decide(event,'refund'));
   </script>
 </BaseLayout>
 <style>.ops{min-height:100vh;background:#080711;color:#f7f3fb;padding:clamp(1.25rem,3vw,2.5rem) clamp(1.25rem,6vw,6rem) clamp(2rem,6vw,6rem);font-family:Manrope,sans-serif}.ops-bar{display:flex;align-items:center;justify-content:space-between;max-width:70rem;margin:0 auto clamp(3rem,8vw,5rem);padding-bottom:var(--cyph-space-6);border-bottom:1px solid #76598c}.ops-bar span{color:#f2c66d;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}.ops header,.ops section{max-width:70rem;margin:0 auto clamp(3rem,8vw,4rem);overflow-wrap:anywhere}.eyebrow,label{font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#a371f7}.ops h1{font:400 clamp(2.75rem,10vw,8rem)/1.02 Michroma,sans-serif;margin:1rem 0}.ops h2,.ops h3{font-family:Michroma,sans-serif;font-weight:400;line-height:1.2}.ops section>h2+form{margin-top:1.25rem}.ops form[hidden]{display:none}.ops form{display:grid;gap:.75rem;max-width:42rem}.ops #details form{margin-top:2rem;padding-top:1.5rem;border-top:1px solid #76598c}.ops #capture p,.ops #reconcile-capture p{margin:.25rem 0 .5rem;max-width:38rem}.input-action{display:grid;grid-template-columns:minmax(0,1fr) auto}.ops #export label{display:grid;grid-template-columns:1fr;gap:.45rem;text-align:left}.ops input,.ops select,.ops button{min-width:0;min-height:2.75rem;font:inherit;font-size:1rem;padding:.9rem;border:1px solid #76598c;background:#21142d;color:#f7f3fb}.ops input[type="date"]{width:100%;padding-right:2.75rem;color-scheme:dark;text-align:left;background-color:#21142d;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f7f3fb' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M16 3v4M8 3v4M3 10h18'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .9rem center;background-size:1.1rem}.ops input[type="date"]::-webkit-calendar-picker-indicator{width:1.5rem;height:1.5rem;margin-left:auto;opacity:0;cursor:pointer}.ops button{cursor:pointer;background:#a371f7;color:#080711}.ops button:disabled{cursor:wait;opacity:.6}.ops form[aria-busy="true"]{opacity:.7}.ops #refund button:disabled{cursor:not-allowed}.ops #refund-amount-error{color:var(--cyph-color-error)}.ops #refund-message,.ops #refund-warning{margin:.25rem 0}.ops #message[data-state="error"]{color:var(--cyph-color-error)}.ops #message[data-state="success"]{color:var(--cyph-color-success)}.ops #results{display:grid;gap:.5rem;margin-top:1rem}.ops #timeline{border-left:1px solid #76598c;padding-left:2rem;display:grid;gap:1rem}@media(max-width:520px){.ops-bar{align-items:flex-start;gap:var(--cyph-space-4)}.ops-bar span{max-width:8rem;text-align:right}.input-action{grid-template-columns:1fr}.ops #timeline{padding-left:1.25rem}.ops header,.ops section{margin-bottom:3rem}}</style>
