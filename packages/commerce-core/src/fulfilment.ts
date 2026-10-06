@@ -51,7 +51,7 @@ export type CreateFulfilmentResult = Readonly<{
 export type FulfilmentProviderEvent = Readonly<{
   eventId: string; providerReference: string;
   status: "accepted" | "dispatched" | "delivered" | "cancelled" | "returned" | "failed";
-  trackingCarrier?: string; trackingReference?: string; failureCode?: string;
+  trackingCarrier?: string; trackingReference?: string; trackingUrl?: string; failureCode?: string;
 }>;
 
 export interface FulfilmentProvider {
