@@ -128,7 +128,7 @@ export class PaymentWebhookProcessor {
           if (event.amount.currency !== payment.currency || event.amount.value <= 0 || event.amount.value > Number(payment.amount_minor)) {
             throw new Error("refund_amount_mismatch");
           }
-          const refundStatus = event.type === "refund.completed" ? "completed" : event.type === "refund.failed" ? "failed" : "pending";
+          let refundStatus = event.type === "refund.completed" ? "completed" : event.type === "refund.failed" ? "failed" : "pending";
           const existingRefund = await client.query<{
             id: string;
             amount_minor: string;
@@ -153,6 +153,8 @@ export class PaymentWebhookProcessor {
               throw new Error("refund_amount_mismatch");
             }
 
+            // A delayed pending/failed observation cannot undo confirmed completion.
+            if (existing.status === "completed" || (existing.status === "failed" && refundStatus === "pending")) refundStatus = existing.status;
             completedTransition =
               refundStatus === "completed" && existing.status !== "completed";
 
@@ -199,6 +201,9 @@ export class PaymentWebhookProcessor {
               if (nextOrderStatus !== order.status) await client.query("UPDATE orders SET status = $1 WHERE id = $2", [nextOrderStatus, order.id]);
             }
           }
+          await client.query(`UPDATE operator_commands SET status='completed',failure_code=NULL,result=$2::jsonb
+            WHERE command_type='refund.create' AND idempotency_key=(SELECT idempotency_key FROM refunds WHERE id=$1)`,
+            [refundId, JSON.stringify({ providerRefundId: event.providerRefundId, status: refundStatus, amount: event.amount })]);
           if (completedTransition) {
             await client.query(`
     INSERT INTO audit_events
@@ -225,10 +230,18 @@ export class PaymentWebhookProcessor {
               }),
             ]);
           }
-          await client.query(`
-            INSERT INTO outbox_events (event_key, event_type, aggregate_type, aggregate_id, payload)
-            VALUES ($1, $2, 'payment', $3, $4::jsonb) ON CONFLICT (event_key) DO NOTHING
-          `, [`${event.provider}:${event.eventId}`, event.type, payment.id, JSON.stringify({ orderId: payment.order_id, refundId: event.providerRefundId, correlationId })]);
+          if (completedTransition) {
+            // Share the operator completion key, including repeated provider event IDs.
+            await client.query(`
+              INSERT INTO outbox_events (event_key, event_type, aggregate_type, aggregate_id, payload)
+              VALUES ($1, 'refund.completed', 'refund', $2, $3::jsonb) ON CONFLICT (event_key) DO NOTHING
+            `, [`refund:${refundId}:completed`, refundId, JSON.stringify({ orderId: payment.order_id, refundId, amountMinor: event.amount.value, currency: event.amount.currency, correlationId })]);
+          } else if (refundStatus !== "completed" && refundStatus === (event.type === "refund.failed" ? "failed" : "pending")) {
+            await client.query(`
+              INSERT INTO outbox_events (event_key, event_type, aggregate_type, aggregate_id, payload)
+              VALUES ($1, $2, 'payment', $3, $4::jsonb) ON CONFLICT (event_key) DO NOTHING
+            `, [`${event.provider}:${event.eventId}`, event.type, payment.id, JSON.stringify({ orderId: payment.order_id, refundId, correlationId })]);
+          }
           await client.query("UPDATE webhook_events SET processing_status = 'processed', processed_at = now(), last_error_code = NULL WHERE id = $1", [receipt.rows[0]!.id]);
           applied += 1;
           continue;

@@ -37,7 +37,7 @@ export interface OperationsRepository {
   reserveRefund(input: Readonly<{ orderId: string; amountMinor: number; reason: RefundReason; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<RefundReservation>;
   completeRefund(input: Readonly<{ refundId: string; providerRefundId: string; status: "pending" | "completed" | "failed"; operatorId: string; correlationId: string }>): Promise<void>;
   failRefund(input: Readonly<{ refundId: string; failureCode: string; operatorId: string; correlationId: string }>): Promise<void>;
-  markRefundResolutionRequired(input: Readonly<{ refundId: string; operatorId: string; correlationId: string }>): Promise<void>;
+  markRefundResolutionRequired(input: Readonly<{ refundId: string; operatorId: string; correlationId: string; providerRefundId?: string }>): Promise<void>;
   retryOutbox(input: Readonly<{ eventId: string; operatorId: string; idempotencyKey: string; fingerprint: string; correlationId: string }>): Promise<Readonly<{ replayed: boolean; eventId: string }>>;
   reconciliationRows(from: string, to: string, limit: number): Promise<readonly Readonly<Record<string, unknown>>[]>;
 }
@@ -171,27 +171,40 @@ export class OperationsService {
     const reservation = await this.repository.reserveRefund({ ...input, fingerprint: fingerprint(input), correlationId });
     if (reservation.outcome === "replayed") return reservation.result;
     let stage = "provider_lookup";
+    let providerRefundId: string | undefined;
     try {
       const provider = this.providers.getProvider(reservation.provider);
       stage = "get_payment";
       const payment = await provider.getPayment({ providerPaymentId: reservation.providerPaymentId, correlationId });
       stage = "validate_refundable_balance";
       if (payment.amount.currency !== reservation.currency || payment.refundableAmount.value < reservation.amountMinor) throw new OperationsError("conflict", "The provider no longer reports enough refundable value.");
+      // Persist the uncertainty fence before crossing the external financial boundary.
+      stage = "prepare_submission";
+      await this.repository.markRefundResolutionRequired({ refundId: reservation.refundId, operatorId: input.operatorId, correlationId });
       stage = "submit_refund";
       const result = await provider.refund({
         paymentId: reservation.paymentId, orderId: input.orderId, providerPaymentId: reservation.providerPaymentId,
         amount: money(reservation.amountMinor, reservation.currency), refundableAmount: payment.refundableAmount,
         reason: input.reason, operatorId: input.operatorId, idempotencyKey: input.idempotencyKey, correlationId,
       });
+      providerRefundId = result.providerRefundId;
       stage = "persist_provider_result";
       await this.repository.completeRefund({ refundId: reservation.refundId, providerRefundId: result.providerRefundId, status: result.status, operatorId: input.operatorId, correlationId });
       return result;
     } catch (error) {
       refundDiagnostic(stage, reservation.provider, reservation.refundId, correlationId, error);
-      if (error instanceof PaymentProviderError && error.retryable) {
-        await this.repository.markRefundResolutionRequired({ refundId: reservation.refundId, operatorId: input.operatorId, correlationId });
-      } else {
-        await this.repository.failRefund({ refundId: reservation.refundId, failureCode: error instanceof PaymentProviderError ? error.category : "provider_error", operatorId: input.operatorId, correlationId });
+      const submitted = stage === "submit_refund" || stage === "persist_provider_result";
+      const definiteRejection = error instanceof PaymentProviderError && !error.retryable &&
+        ["validation_error", "authentication_error", "not_found"].includes(error.category);
+      try {
+        if (submitted && (stage === "persist_provider_result" || !definiteRejection)) {
+          await this.repository.markRefundResolutionRequired({ refundId: reservation.refundId, operatorId: input.operatorId, correlationId, ...(providerRefundId ? { providerRefundId } : {}) });
+        } else {
+          await this.repository.failRefund({ refundId: reservation.refundId, failureCode: error instanceof PaymentProviderError ? error.category : "provider_error", operatorId: input.operatorId, correlationId });
+        }
+      } catch (persistenceError) {
+        refundDiagnostic("persist_failure_state", reservation.provider, reservation.refundId, correlationId, persistenceError);
+        throw new OperationsError("provider_error", "The refund outcome requires reconciliation.");
       }
       if (error instanceof OperationsError) throw error;
       throw new OperationsError("provider_error", "The refund provider could not complete the request.");
