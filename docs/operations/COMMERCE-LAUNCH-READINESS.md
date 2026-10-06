@@ -88,6 +88,18 @@ The following require accountable human sign-off and cannot be completed by auto
 - [ ] Final sellable product, claims and compliance evidence approved.
 - [ ] Legal entity, merchant account and settlement account approved.
 - [ ] UK consumer-contract, cancellation, returns, warranty and support terms approved.
+- [ ] Detailed customer-facing CYPH/1 returns page published only after policy
+      approval. The prepared source is preserved at `src/drafts/returns.astro`,
+      intentionally outside public routing; the existing pre-launch website
+      position remains in place until the IPL product is selected. Publication
+      requires final product selection; approved change-of-mind and hygiene/seal
+      rules; faulty/damaged goods handling; return postage responsibility;
+      deductions where legally permissible; refund timing/process; final warranty
+      terms; final shipping/fulfilment arrangements; and review of statutory
+      consumer-rights wording. Once approved, review the preserved page against
+      the final policy, promote it to the public `/returns` route, check links and
+      navigation, and rerun launch validation. Preservation in Git does not make
+      the draft wording approved policy.
 - [ ] Customer-support templates legally and operationally approved against the
       final product, policies, channels and authoritative provider/application
       states; accessible delivery and semantic deduplication tested.
