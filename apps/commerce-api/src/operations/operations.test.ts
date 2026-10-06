@@ -69,7 +69,7 @@ test("retryable refund failures are held for reconciliation and not marked defin
   };
   const ambiguousService=new OperationsService(ambiguousRepository,{getConfiguredProvider:()=>ambiguousProvider,getProvider:()=>ambiguousProvider});
   await assert.rejects(()=>ambiguousService.refund({orderId:"o1",amountMinor:500,reason:"customer_request",operatorId:"operator",idempotencyKey:"refund-timeout"}),/could not complete/);
-  assert.equal(resolutionRequired,1);
+  assert.equal(resolutionRequired,2);
   assert.equal(failed,0);
 });
 
@@ -127,12 +127,12 @@ test("refund diagnostic records retryable submit failure safely before resolutio
     });
   } };
   const failingRepository: OperationsRepository = { ...repository,
-    markRefundResolutionRequired: async () => { assert.equal(logs.length, 1); resolved++; },
+    markRefundResolutionRequired: async () => { assert.equal(logs.length, resolved === 0 ? 0 : 1); resolved++; },
     failRefund: async () => { failed++; },
   };
   const local = new OperationsService(failingRepository, { getProvider: () => failingProvider, getConfiguredProvider: () => failingProvider });
   await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-refund" }), /could not complete/);
-  assert.equal(resolved, 1); assert.equal(failed, 0); assert.equal(calls, 1);
+  assert.equal(resolved, 2); assert.equal(failed, 0); assert.equal(calls, 1);
   const diagnostic = JSON.parse(logs[0]!);
   assert.ok(Number.isFinite(Date.parse(diagnostic.timestamp)));
   assert.deepEqual({ ...diagnostic, timestamp: "verified" }, { timestamp: "verified", level: "error", event: "refund_provider_error", stage: "submit_refund", provider: "mollie-test", refundId: "r1", correlationId,
@@ -163,11 +163,11 @@ test("refund diagnostic routes safe Mollie 409 metadata and preserves resolution
     return new Response(JSON.stringify({ status: 409, title: "Conflict", field: "amount", detail: "Authorization: Bearer test_example_key customer@example.test", metadata: "private", arbitrary: "raw-body" }), { status: 409, headers: { "content-type": "application/hal+json" } });
   } });
   const localProvider: PaymentProvider = { ...provider, refund: (input) => mollie.refund(input) };
-  const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { assert.equal(logs.length, 1); resolved++; },
+  const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { assert.equal(logs.length, resolved === 0 ? 0 : 1); resolved++; },
     failRefund: async () => { assert.fail("must remain resolution_required"); }, completeRefund: async () => { assert.fail("must not complete"); } },
     { getProvider: () => localProvider, getConfiguredProvider: () => localProvider });
   await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-mollie" }), /could not complete/);
-  assert.equal(resolved, 1); assert.equal(calls, 1);
+  assert.equal(resolved, 2); assert.equal(calls, 1);
   const diagnostic = JSON.parse(logs[0]!);
   assert.equal(diagnostic.event, "refund_provider_error"); assert.equal(diagnostic.stage, "submit_refund");
   assert.deepEqual(diagnostic.error, { name: "PaymentProviderError", message: "Refund operation failed.", category: "conflict", retryable: true, providerDiagnostic: { status: 409, title: "Conflict", field: "amount" } });
@@ -180,5 +180,72 @@ test("refund diagnostic delivery failure does not change resolution handling", a
   const localProvider: PaymentProvider = { ...provider, refund: async () => { throw new PaymentProviderError("conflict", "conflict", true, { status: 409, title: "Conflict", field: "amount" }); } };
   const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { resolved++; } }, { getProvider: () => localProvider, getConfiguredProvider: () => localProvider });
   await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 500, reason: "customer_request", operatorId: "operator", idempotencyKey: "diagnostic-logger" }), /could not complete/);
-  assert.equal(resolved, 1);
+  assert.equal(resolved, 2);
+});
+
+test("refund success is fenced before provider submission and then completed normally", async () => {
+  const sequence: string[] = [];
+  const local = new OperationsService({ ...repository,
+    markRefundResolutionRequired: async () => { sequence.push("fence"); },
+    completeRefund: async () => { sequence.push("complete"); },
+    failRefund: async () => { assert.fail("must not fail"); },
+  }, { getProvider: () => ({ ...provider, refund: async input => { sequence.push("provider"); return provider.refund(input); } }), getConfiguredProvider: () => provider });
+  await local.refund({ orderId: "o1", amountMinor: 50, reason: "customer_request", operatorId: "operator", idempotencyKey: "success-fence" });
+  assert.deepEqual(sequence, ["fence", "provider", "complete"]);
+});
+
+test("refund persistence failure retains known provider ID and never calls definitive failure", async () => {
+  const references: (string | undefined)[] = []; let submitted = 0;
+  const local = new OperationsService({ ...repository,
+    markRefundResolutionRequired: async input => { references.push(input.providerRefundId); },
+    completeRefund: async () => { throw new Error("synthetic database failure"); },
+    failRefund: async () => { assert.fail("accepted refund must remain uncertain"); },
+  }, { getProvider: () => ({ ...provider, refund: async input => { submitted++; return { ...await provider.refund(input), providerRefundId: "re_known" }; } }), getConfiguredProvider: () => provider });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 50, reason: "customer_request", operatorId: "operator", idempotencyKey: "persist-failure" }), OperationsError);
+  assert.equal(submitted, 1); assert.deepEqual(references, [undefined, "re_known"]);
+});
+
+test("only definite rejection releases a submitted refund; unclassified and malformed responses remain uncertain", async () => {
+  for (const failure of [new PaymentProviderError("validation_error", "Rejected"), new Error("connection dropped"), new PaymentProviderError("unknown_provider_error", "Malformed response")]) {
+    let marked = 0; let failed = 0;
+    const local = new OperationsService({ ...repository,
+      markRefundResolutionRequired: async () => { marked++; }, failRefund: async () => { failed++; },
+    }, { getProvider: () => ({ ...provider, refund: async () => { throw failure; } }), getConfiguredProvider: () => provider });
+    await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 50, reason: "customer_request", operatorId: "operator", idempotencyKey: "submission-error" }), OperationsError);
+    const rejected = failure instanceof PaymentProviderError && failure.category === "validation_error";
+    assert.equal(marked, rejected ? 1 : 2); assert.equal(failed, rejected ? 1 : 0);
+  }
+});
+
+test("failure before submission cannot contact the provider and may release its reservation", async () => {
+  let submitted = 0; let failed = 0; let marked = 0;
+  const local = new OperationsService({ ...repository,
+    failRefund: async () => { failed++; }, markRefundResolutionRequired: async () => { marked++; },
+  }, { getProvider: () => ({ ...provider, getPayment: async () => { throw new Error("lookup failure"); }, refund: async input => { submitted++; return provider.refund(input); } }), getConfiguredProvider: () => provider });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 50, reason: "customer_request", operatorId: "operator", idempotencyKey: "lookup-error" }), OperationsError);
+  assert.equal(submitted, 0); assert.equal(failed, 1); assert.equal(marked, 0);
+});
+
+test("failure to persist submission fence prevents provider contact", async () => {
+  let submitted = 0;
+  const local = new OperationsService({ ...repository, markRefundResolutionRequired: async () => { throw new Error("fence unavailable"); } }, {
+    getProvider: () => ({ ...provider, refund: async input => { submitted++; return provider.refund(input); } }), getConfiguredProvider: () => provider,
+  });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 50, reason: "customer_request", operatorId: "operator", idempotencyKey: "fence-error" }), OperationsError);
+  assert.equal(submitted, 0);
+});
+
+test("fallback persistence outage preserves the fence and exposes only safe diagnostics", async (t) => {
+  const logs: string[] = []; let marked = 0; let failed = 0;
+  t.mock.method(console, "error", (entry: string) => { logs.push(entry); });
+  const local = new OperationsService({ ...repository,
+    markRefundResolutionRequired: async () => { if (++marked > 1) throw new Error("Authorization: secret customer@example.test"); },
+    completeRefund: async () => { throw new Error("private database details"); },
+    failRefund: async () => { failed++; },
+  }, { getProvider: () => provider, getConfiguredProvider: () => provider });
+  await assert.rejects(() => local.refund({ orderId: "o1", amountMinor: 50, reason: "customer_request", operatorId: "operator", idempotencyKey: "fallback-outage" }),
+    error => error instanceof OperationsError && error.message === "The refund outcome requires reconciliation.");
+  assert.equal(marked, 2); assert.equal(failed, 0);
+  assert.deepEqual(logs.map(entry => JSON.parse(entry).stage), ["persist_provider_result", "persist_failure_state"]);
+  assert.doesNotMatch(logs.join(""), /Authorization|secret|customer@example|private database/);
 });

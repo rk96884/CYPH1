@@ -39,6 +39,51 @@ Every mutation records the operator, correlation ID and a non-sensitive summary 
 
 ## Operational rules
 
+### Refund submission uncertainty
+
+Refund rows use the existing states `created`, `pending`, `completed`,
+`failed`, `cancelled` and `resolution_required`. Before provider submission,
+the reservation is durably moved to `resolution_required`. This state,
+`created`, `pending` and `completed` all reserve payment balance. A failed
+operator command with `ambiguous_provider_outcome` blocks replay; it does not
+mean the financial refund definitively failed.
+
+Lookup/pre-submission failures and definite non-retryable input/authentication/
+not-found rejections may release the reservation as `failed`. Submission
+timeouts, unexpected responses and completion-persistence failures remain
+protected. A known provider refund ID is saved by the fallback transaction.
+If that write also fails, the earlier uncertainty fence still protects balance.
+Do not submit a new refund key to replace the uncertain action.
+
+Inspect protected order details, audit events and the reconciliation export's
+`resolution_required_refund_minor` bucket. Confirm the exact provider operation
+before manual resolution. Known IDs allow verified webhooks to update the
+original refund and command. Completion is terminal against delayed pending/
+failed observations, and operator/webhook completion share one outbox key.
+No completion event is emitted merely because a reservation is uncertain.
+
+A process exit between provider acceptance and recording its ID cannot preserve
+an ID that existed only in memory. The reservation and original command/key
+remain durable. Unmatched provider webhooks must not be attached by matching
+amounts or timestamps: they remain separate records pending evidence-based
+manual resolution. This change adds no automatic retry, provider lookup worker
+or manual-resolution HTTP endpoint. Existing permissions and business decisions
+are unchanged.
+
+Run the guarded synthetic database regression after migrating/verifying a
+disposable local database whose name ends in `_refunds_test`:
+
+```text
+npm run build:runtime --workspace @cyph1/commerce-api
+# Set REFUND_TEST_DATABASE_URL to that disposable loopback database.
+node apps/commerce-api/scripts/rehearse-refund-uncertainty.mjs
+```
+
+It covers transaction rollback, known-ID retention, duplicate/retry suppression,
+webhook convergence, lost commit acknowledgements, concurrent balance protection
+and an actual child-process exit after synthetic provider success. No external
+payment or email provider is contacted.
+
 ### Phase 1 merchandise returns backend
 
 Migration `0015_merchandise_returns.sql` adds `returns`, `return_items` and a
