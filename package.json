@@ -47,8 +47,8 @@
     "test:operations-returns-ui": "node --test scripts/test-operations-returns-ui.mjs"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.3",
-    "astro": "^7.3.2",
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.5",
     "sharp": "^0.35.4"
   },
   "devDependencies": {
