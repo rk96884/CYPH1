@@ -112,7 +112,7 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
       await client.query("UPDATE fulfilment_events SET processing_status = 'processed', processed_at = now() WHERE id = $1", [receipt.rows[0].id]);
       await client.query(`INSERT INTO outbox_events (event_key, event_type, aggregate_type, aggregate_id, payload)
         VALUES ($1, $2, 'fulfilment', $3, $4::jsonb) ON CONFLICT (event_key) DO NOTHING`,
-      [`${provider}:${event.eventId}`, `fulfilment.${transition.status}`, fulfilment.id, JSON.stringify({ orderId: fulfilment.order_id, trackingCarrier: event.trackingCarrier, trackingReference: event.trackingReference })]);
+      [`${provider}:${event.eventId}`, `fulfilment.${transition.status}`, fulfilment.id, JSON.stringify({ orderId: fulfilment.order_id, trackingCarrier: event.trackingCarrier, trackingReference: event.trackingReference, trackingUrl: event.trackingUrl })]);
       await this.audit(client, "fulfilment", fulfilment.id, `fulfilment.${transition.status}`, correlationId, { eventId: event.eventId });
       return "applied" as const;
     });
