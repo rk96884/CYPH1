@@ -2,6 +2,42 @@
 
 ## Manufacturer guidance evidence — 7 October 2026
 
+### Supplier-listed branding options — Alibaba K-803 listing
+
+**Status: SUPPLIER-LISTED CAPABILITY — NOT YET CONFIRMED FOR THE CYPH/1
+20-UNIT ORDER.**
+
+Source: project-owner-supplied screenshot of the Alibaba K-803 listing.
+The live listing and its revision have not been independently verified
+for this record.
+
+Listed customisation options:
+- Packaging: Color Box.
+- Logo/graphic design: Laser Printing.
+
+These are supplier-listed capabilities, not confirmation that either
+option is available for the CYPH/1 20-unit order.
+
+Lyanna has been asked to confirm:
+- availability for 20 units;
+- MOQ;
+- additional cost;
+- lead time;
+- artwork/file requirements;
+- device-logo options;
+- packaging-branding options.
+
+Supplier confirmation and approved artwork/proof remain outstanding.
+Neither CYPH/1 device branding nor packaging branding is
+production-approved. Final logo reproduction must preserve the approved
+brand artwork, including the distinctive follicle element.
+
+Retain the supplier response and approved artwork/proof as evidence before
+recording production approval. Listing capability or branded development
+imagery alone does not complete GO-01. See
+../../../../docs/operations/COMMERCE-LAUNCH-READINESS.md for launch gate
+status and the provisional delivery proposition.
+
 ### Launch-kit contents from the supplied manual photograph
 
 The owner supplied `1791384991921.jpg`, a photograph of the manual's Product Structure / Product form page. Its labelled contents are Main Machine, Adaptor, Goggles, User Manual and Razor. The launch-kit section uses those five items, with customer-facing names CYPH/1 IPL Hair Removal Device, Power adaptor, Protective goggles, User manual and Razor. The photograph is evidence, not a new gallery asset. No accessory quantity, adaptor rating/plug type, eyewear certification or additional device capability is inferred. Verify final production pack contents before GO-01.

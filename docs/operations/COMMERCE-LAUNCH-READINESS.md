@@ -39,6 +39,62 @@ All target dates below are in 2026. Repository areas are unlocked for implementa
 | QA-01 — final launch QA | BLOCKED | WEB-01, OPS-01 and all final production configuration/policies | Final build/type/security/link/accessibility/mobile checks, approved price/policy consistency, route/secret boundaries, deployment/recovery and blocker triage | 2–9 Nov; blocker fixes/rechecks 9–15 Nov | Frozen release candidate and readiness recommendation | Prepare QA matrix now; start independent checks while OPS runs, close only on final evidence |
 | GO-01 — production go-live approval | BLOCKED | All gates above; retained governance/security/operations sign-offs | Dated accountable GO/NO-GO, named release/support owners, rollback/monitoring and controlled activation plan; genuine orders only after approval | 16 Nov internal target; 25 Nov absolute deadline | Authorised public commerce activation | Review progress at each window; reserve approval/release slot and escalate unresolved blockers |
 
+## Provisional launch decisions and supplier evidence — 7 October 2026
+
+### UK delivery proposition — SH-01 / PX-01
+
+**Status: PROVISIONAL — approved for launch planning; not approved for live
+checkout configuration.**
+
+Project-owner-supplied package facts:
+- Product retail box: 32 × 24 × 12 cm.
+- Known sample weight: under 1 kg.
+
+These are not verified final customer-ready shipment dimensions or weight.
+
+Planned customer-paid UK delivery options:
+
+| Option | Planning basis | Planned customer charge |
+| --- | --- | --- |
+| InPost Locker/Shop | InPost Medium parcel category | £2.99 |
+| Royal Mail Tracked 48 | Intended standard tracked home-delivery option | £3.99 |
+
+£74.99 GBP remains the intended product launch price. Customer delivery is
+additional and is not included in that price. The planned customer charges
+are not evidence of current carrier rates.
+
+Before GO-01, verify one final customer-ready packed shipment, including
+outer packaging, against each carrier's applicable dimensions, weight,
+service eligibility and rate. Confirm current carrier pricing and record
+the evidence and accountable approval before enabling either method.
+
+Do not configure these rates in commerce yet. SH-01 remains PENDING
+DECISION; this planning approval does not close SH-01, SH-02, PX-01 or GO-01.
+
+### K-803 branding options — PR-01 / CO-01 / WEB-01
+
+**Status: SUPPLIER-LISTED CAPABILITY — NOT YET CONFIRMED FOR THE CYPH/1
+20-UNIT ORDER.**
+
+The project owner reports that the Alibaba K-803 listing offers packaging
+customisation as “Color Box” and logo/graphic design as “Laser Printing”.
+These listing options do not establish availability or approval for the
+CYPH/1 order.
+
+Lyanna has been asked to confirm availability for 20 units, MOQ, additional
+cost, lead time, artwork/file requirements, device-logo options and
+packaging-branding options. Supplier confirmation remains outstanding.
+
+Do not record CYPH/1 device or packaging branding as production-approved
+until Lyanna confirms the applicable options and the artwork/proof has
+been approved. Final logo reproduction must preserve the approved CYPH/1
+brand artwork, including its distinctive follicle element.
+
+Detailed source and approval limitations are recorded in
+../../src/assets/products/ipl/README.md. Branding remains an open
+production-readiness item; this evidence does not close CO-01, WEB-01 or
+GO-01.
+
 ## Target plan
 
 | Window (2026) | Required outcome |
