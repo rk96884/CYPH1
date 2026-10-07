@@ -56,11 +56,19 @@
 /* Share the preview's compact caption height across all gallery frames. */
 .gallery-shell{--gallery-caption-height:calc(var(--cyph-space-6) + var(--cyph-space-3) * var(--cyph-leading-body));--gallery-hover-scale:1.025}
 .gallery-frame figcaption,.gallery-preview-caption{margin:0;min-block-size:var(--gallery-caption-height);padding:var(--cyph-space-3);font-size:var(--cyph-space-3);line-height:var(--cyph-leading-body)}
-.gallery-thumbnail{overflow:hidden}
+/* Detail crops apply only to thumbnails; rollover/full-size images stay complete. */
+.gallery-thumbnail{overflow:hidden;--thumbnail-zoom:1.35;--thumbnail-focus:50% 50%}
+.gallery-thumbnail img{transform:scale(var(--thumbnail-zoom));transform-origin:var(--thumbnail-focus)}
+.gallery-thumbnail[data-gallery-detail="included"]{--thumbnail-zoom:1.3;--thumbnail-focus:50% 70%}
+.gallery-thumbnail[data-gallery-detail="cooling"]{--thumbnail-zoom:1.5;--thumbnail-focus:80% 65%}
+.gallery-thumbnail[data-gallery-detail="areas"]{--thumbnail-zoom:1.45;--thumbnail-focus:100% 48%}
+.gallery-thumbnail[data-gallery-detail="technology"]{--thumbnail-zoom:1.45;--thumbnail-focus:55% 80%}
+.gallery-thumbnail[data-gallery-detail="lifestyle"]{--thumbnail-zoom:1.5;--thumbnail-focus:65% 75%}
+.gallery-thumbnail[data-gallery-detail="detail"]{--thumbnail-zoom:1.4;--thumbnail-focus:60% 70%}
 @media(max-width:29.99rem){.gallery-shell{--gallery-caption-height:calc(var(--cyph-space-6) + var(--cyph-space-3) * var(--cyph-leading-body) * 2)}}
 @media(prefers-reduced-motion:no-preference){
   .gallery-thumbnail img{transition:transform var(--cyph-motion-standard) var(--cyph-ease-standard)}
-  .gallery-thumbnail:is(:hover,:focus-visible) img{transform:scale(var(--gallery-hover-scale))}
+  .gallery-thumbnail:is(:hover,:focus-visible) img{transform:scale(calc(var(--thumbnail-zoom) * var(--gallery-hover-scale)))}
   .gallery-preview-foreground{animation:gallery-image-reveal var(--cyph-motion-standard) var(--cyph-ease-standard)}
 }
 @keyframes gallery-image-reveal{from{opacity:.65}to{opacity:1}}
