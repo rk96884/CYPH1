@@ -37,6 +37,9 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "checkout-admission.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "observability.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "communications", "communications.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "communications", "brevo.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "communications", "send-safety.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "runtime", "worker.test.js"),
   ], { stdio: "inherit" });
 } finally {
   rmSync(outputDirectory, { recursive: true, force: true });

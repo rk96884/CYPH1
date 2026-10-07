@@ -329,3 +329,18 @@ Production configuration must remain disabled until every applicable item is evi
 ### Historical staging payment-test closure — 21 September 2026
 
 After completion of the Mollie test-mode payment lifecycle and reconciliation work, `cyph1-commerce-customer-staging` was restored to the locked fail-closed baseline and redeployed successfully from current `main`. Final route verification passed: `/health` returned 200, `/ready` returned 200, `/checkout` returned 404, and `/webhooks/mollie` returned 404. Checkout, commerce, payment webhooks and the private checkout fixture are therefore closed again; payment and fulfilment providers are disabled. Remaining production-readiness work is tracked separately and does not require leaving the staging payment routes enabled.
+
+## Transactional provider / background-worker engineering — 7 October 2026
+
+Brevo HTTP adapter, independently gated fulfilment/communication polling runtime,
+claim-token fencing, durable send-start uncertainty handling and terminal-failure
+monitoring are implemented for review. Approved templates remain application
+rendered and semantic identities are unchanged. Marketing signup remains separate.
+No email has been sent and no worker, sender/DNS configuration, secret or migration
+has been deployed to production by this implementation.
+
+EM-01 remains DRAFT APPROVED; OPS-01, QA-01 and GO-01 remain BLOCKED. Required
+external sender/domain authentication, receipt/retry/reconciliation evidence,
+production monitoring/ownership, final commercial inputs and privacy approvals
+remain outstanding. See `TRANSACTIONAL-COMMUNICATIONS.md` for configuration and
+release requirements. Paid-order manual cancellation confirmation is separate.

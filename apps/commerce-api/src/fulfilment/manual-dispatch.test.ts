@@ -64,7 +64,7 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
   assert.ok(["localhost","127.0.0.1"].includes(url.hostname)&&url.pathname.endsWith("_dispatch_test")&&!url.search&&process.env.NODE_ENV!=="production","Only a disposable local *_dispatch_test database is permitted");
   const schema="dispatch_"+randomUUID().replaceAll("-","");
   const admin=new pg.Pool({connectionString:databaseUrl});
-  await admin.query(`CREATE SCHEMA "${schema}"`);
+  await admin.query("SELECT pg_advisory_lock(80317)");await admin.query(`CREATE SCHEMA "${schema}"`);
   const pool=new pg.Pool({connectionString:databaseUrl,max:12,options:`-c search_path=${schema},public`});
   try {
     for(const file of (await readdir(resolve("db/migrations"))).filter(name=>name.endsWith(".sql")).sort()) await pool.query(await readFile(resolve("db/migrations",file),"utf8"));

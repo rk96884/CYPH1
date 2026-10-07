@@ -5,7 +5,7 @@ import { ManualTestCommunicationProvider } from "./manual-test.js";
 import { TransactionalCommunicationConsumer } from "./service.js";
 import { PostgresCommunicationRepository } from "./postgres.js";
 
-const context={deliveryId:"d1",template:"order-confirmation" as const,deduplicationKey:"order-confirmation:o1",recipient:"buyer@example.test",orderNumber:"CYPH-1",currency:"GBP",totalMinor:1299};
+const context={deliveryId:"d1",claimToken:"claim-1",template:"order-confirmation" as const,deduplicationKey:"order-confirmation:o1",recipient:"buyer@example.test",orderNumber:"CYPH-1",currency:"GBP",totalMinor:1299};
 
 test("renders escaped, clearly transactional order confirmation",()=>{
   const message=renderTransactionalMessage({...context,orderNumber:"<order>"});
@@ -146,7 +146,7 @@ test("message idempotency key is semantic and stable",()=>{
 
 test("consumer is disabled by default and does not claim",async()=>{
   let claimed=false;
-  const repository={claimNext:async()=>{claimed=true;return context},markSent:async()=>{},markFailed:async()=>{}};
+  const repository={claimNext:async()=>{claimed=true;return context},beginSend:async()=>{},markReview:async()=>{},markSent:async()=>{},markFailed:async()=>{}};
   const result=await new TransactionalCommunicationConsumer(false,repository,new ManualTestCommunicationProvider()).consumeOne();
   assert.equal(result.outcome,"disabled");
   assert.equal(claimed,false);
@@ -154,20 +154,21 @@ test("consumer is disabled by default and does not claim",async()=>{
 
 test("consumer sends and records one claimed delivery",async()=>{
   let sent="";
-  const repository={claimNext:async()=>context,markSent:async(_id:string,_provider:string,reference:string)=>{sent=reference},markFailed:async()=>{}};
+  const repository={claimNext:async()=>context,beginSend:async()=>{},markReview:async()=>{},markSent:async(_id:string,_provider:string,reference:string)=>{sent=reference},markFailed:async()=>{}};
   const result=await new TransactionalCommunicationConsumer(true,repository,new ManualTestCommunicationProvider()).consumeOne();
   assert.equal(result.outcome,"sent");
   assert.match(sent,/^manual-/);
 });
 
-test("consumer records provider failure without marking sent",async()=>{
+test("consumer routes unknown provider failure to review without marking sent",async()=>{
   let failed=""; let sent=false;
   const provider={key:"failing",send:async()=>{throw new TypeError("provider unavailable")}};
-  const repository={claimNext:async()=>context,markSent:async()=>{sent=true},markFailed:async(_id:string,error:string)=>{failed=error}};
+  const repository={claimNext:async()=>context,beginSend:async()=>{},markReview:async()=>{},markSent:async()=>{sent=true},markFailed:async(_id:string,error:string)=>{failed=error}};
   const result=await new TransactionalCommunicationConsumer(true,repository,provider).consumeOne();
-  assert.equal(result.outcome,"failed");
+  assert.equal(result.outcome,"manual_review");
   assert.equal(sent,false);
-  assert.equal(failed,"TypeError");
+  assert.equal(failed,"");
+  assert.equal(result.outcome,"manual_review");
 });
 
 test("communication retries and claim leases have bounded configuration",()=>{

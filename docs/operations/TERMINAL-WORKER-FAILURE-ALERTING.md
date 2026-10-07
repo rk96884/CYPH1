@@ -5,9 +5,9 @@
 
 ## Alert condition
 
-The monitor fails when either fulfilment payment-event processing or transactional communication delivery has reached terminal `retry_exhausted`. It emits only aggregate counts and the age of the oldest outstanding failure. Customer identity, email, address, order contents, payment details and provider references must not be written to GitHub Actions logs.
+The monitor fails when either fulfilment payment-event processing or transactional communication delivery has reached terminal failure (including explicit final failures), or communication delivery requires `manual_review`. It emits only aggregate counts and the age of the oldest outstanding failure. Customer identity, email, address, order contents, payment details and provider references must not be written to GitHub Actions logs.
 
-The staging workflow runs four times per hour and may also be dispatched manually. A green run means no current `retry_exhausted` rows were found; it does not prove providers are healthy.
+The staging workflow runs four times per hour and may also be dispatched manually. A green run means no currently matched terminal/manual-review rows were found; it does not prove providers are healthy.
 
 ## Response
 
@@ -34,3 +34,13 @@ This proves the development alert path to the project owner. It does not appoint
 - [x] Verify the GitHub notification route reaches the project owner in development.
 - [ ] Name and accept production owner/deputy and response expectations.
 - [ ] Verify selected external providers' idempotency behaviour.
+
+## Send-safety engineering follow-up — 7 October 2026
+
+The updated monitor also counts `terminal_failure`, communication `manual_review`
+and ordinary failed rows at the current default three-attempt limit. The
+communication count includes uncertain sends requiring action. It uses verified
+TLS when enabled and rejects connection-string SSL overrides; production requires
+`DATABASE_SSL=true`. Apply migration `0017` before running the updated monitor.
+The existing scheduled workflow still targets development: no production target,
+owner/deputy or external notification evidence is approved by this change.
