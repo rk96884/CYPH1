@@ -3,6 +3,15 @@
 **Status:** Accepted direction; implementation and provider selection pending  
 **Date:** 15 September 2026
 
+## Initial-launch scope clarification — 7 October 2026
+
+Collection-point implementation is deferred for the initial approximately
+20-unit launch. The current launch register specifies Standard UK Delivery
+to the customer's address, with carrier-neutral manual booking/dispatch.
+No locker/collection-point option or carrier API is required for initial
+launch. This ADR remains future architectural direction, not permission to
+expose a collection-point option or activate shipping.
+
 ## Context
 
 CYPH/1 intends to offer convenient out-of-home delivery alongside home

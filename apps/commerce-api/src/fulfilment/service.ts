@@ -8,6 +8,8 @@ import {
   type FulfilmentStatus,
 } from "../../../../packages/commerce-core/src/index.js";
 
+import { manualDispatchCommand, type PackingInformation, type ManualDispatchCommand, type ManualDispatchResult } from "./manual-dispatch.js";
+
 export type FulfilmentReservation = Readonly<{
   outcome: "reserved" | "duplicate";
   fulfilmentId: string;
@@ -16,6 +18,8 @@ export type FulfilmentReservation = Readonly<{
 }>;
 
 export interface FulfilmentRepository {
+  packingInformation?(orderId: string, operatorId: string): Promise<PackingInformation | undefined>;
+  dispatchManual?(command: ManualDispatchCommand, provider: string): Promise<ManualDispatchResult>;
   reservePaidOrder(orderId: string, provider: string, idempotencyKey: string, correlationId: string): Promise<FulfilmentReservation>;
   confirmProviderCreation(input: Readonly<{ fulfilmentId: string; providerReference: string; status: "queued" | "accepted"; correlationId: string }>): Promise<void>;
   failProviderCreation(fulfilmentId: string, failureCode: string, correlationId: string): Promise<void>;
@@ -35,6 +39,18 @@ export class FulfilmentService {
     private readonly provider: FulfilmentProvider,
     private readonly repository: FulfilmentRepository,
   ) {}
+
+  async packingInformation(orderId: string, operatorId: string) {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId)) throw new FulfilmentError("not_found", "Order not found.");
+    if (!this.repository.packingInformation) throw new FulfilmentError("disabled", "Packing information is unavailable.");
+    const data = await this.repository.packingInformation(orderId, operatorId);
+    return data ? { ...data, eligible: data.eligible && data.shipments.every(shipment => shipment.provider === this.provider.key), dispatchEnabled: this.enabled } : undefined;
+  }
+
+  async dispatchManual(orderId: string, body: unknown, operatorId: string, idempotencyKey: string) {
+    if (!this.enabled || !["manual-live", "manual-test"].includes(this.provider.key) || !this.repository.dispatchManual) throw new FulfilmentError("disabled", "Manual dispatch is disabled.");
+    return this.repository.dispatchManual(manualDispatchCommand(orderId, body, operatorId, idempotencyKey), this.provider.key);
+  }
 
   async requestForPaidOrder(orderId: string, eventKey: string, correlationId: string = randomUUID()) {
     if (!this.enabled) throw new FulfilmentError("disabled", "Fulfilment is disabled.");

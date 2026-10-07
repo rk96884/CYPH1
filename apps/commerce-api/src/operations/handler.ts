@@ -2,6 +2,9 @@ import { operationPermissions, OperationsError, type OperationPermission, type O
 import { ReturnDomainError, type ReturnAction } from "../../../../packages/commerce-core/src/index.js";
 import type { ReturnService } from "../returns/service.js";
 
+import { FulfilmentError, type FulfilmentService } from "../fulfilment/service.js";
+import { ManualDispatchError } from "../fulfilment/manual-dispatch.js";
+
 const securityHeaders = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "Permissions-Policy": "camera=(), microphone=(), geolocation=()" };
 const headers = { "Content-Type": "application/json; charset=utf-8", ...securityHeaders };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
@@ -43,11 +46,24 @@ const safeError = (error: unknown): Readonly<{ name: string; message: string }> 
   return Object.freeze({ name: "UnknownError", message: "Non-Error value thrown" });
 };
 
-export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal, returns?: ReturnService): Promise<Response> => {
+export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal, returns?: ReturnService, fulfilment?: FulfilmentService): Promise<Response> => {
   if (!validPrincipal(principal)) return json({ message: "Authentication required." }, 401);
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
+    if (path[0] === "orders" && path[1] && path.length === 3 && ["packing","dispatch"].includes(path[2] ?? "")) {
+      const packing = path[2] === "packing";
+      if (!allowed(principal, packing ? "fulfilment:read" : "fulfilment:dispatch")) return json({ message: "Permission denied." }, 403);
+      if (!fulfilment) return json({ message: "Manual fulfilment unavailable." }, 503);
+      if (packing && request.method === "GET") {
+        const data = await fulfilment.packingInformation(path[1], principal.id);
+        return data ? json({ ...data, dispatchEnabled: data.dispatchEnabled && allowed(principal, "fulfilment:dispatch") }) : json({ message: "Order not found." }, 404);
+      }
+      if (!packing && request.method === "POST") {
+        return json(await fulfilment.dispatchManual(path[1], await request.json(), principal.id, request.headers.get("idempotency-key") ?? ""));
+      }
+      return json({ message: "Method not allowed." }, 405);
+    }
     if (path[0] === "orders" && path[1] && path[2] === "returns") {
       if (request.method === "POST" && path.length === 5 && path[3] && path[4] === "refund") {
         if (!allowed(principal, "returns:approve") || !allowed(principal, "refunds:create")) return json({ message: "Permission denied." }, 403);
@@ -109,6 +125,8 @@ export const handleOperationsRequest = async (request: Request, service: Operati
     }
     return json({ message: "Not found." }, 404);
   } catch(error) {
+    if (error instanceof ManualDispatchError) return json({ message: error.message, code: error.code }, { invalid_request: 400, not_found: 404, conflict: 409 }[error.code]);
+    if (error instanceof FulfilmentError) return json({ message: error.message, code: error.code }, error.code === "disabled" ? 503 : error.code === "not_found" ? 404 : 409);
     if(error instanceof ReturnDomainError)return json({message:error.message,code:error.code},{invalid_request:400,not_found:404,conflict:409}[error.code]);
     if(error instanceof SyntaxError)return json({message:"Invalid JSON request."},400);
     if(error instanceof OperationsError)return json({message:error.message,code:error.code},{invalid_request:400,not_found:404,conflict:409,provider_error:502}[error.code]);

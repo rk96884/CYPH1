@@ -1,0 +1,111 @@
+<section id="packing" aria-labelledby="packing-title">
+  <h3 id="packing-title">Packing and dispatch</h3>
+  <p>Review the order, pick and pack, then purchase a label manually. Label purchase alone is not dispatch.</p>
+  <button id="packing-refresh" type="button">Load packing information</button>
+  <p id="packing-message" role="status" aria-live="polite" aria-atomic="true"></p>
+  <div id="packing-information" hidden>
+    <p id="packing-state"></p>
+    <address id="packing-address"></address>
+    <ul id="packing-items"></ul>
+    <ul id="packing-shipments" aria-label="Shipment history"></ul>
+    <form id="manual-dispatch">
+      <h4>Confirm physical dispatch</h4>
+      <fieldset id="dispatch-fields" disabled>
+        <legend>Carrier shipment details</legend>
+        <label for="dispatch-carrier">Carrier</label><input id="dispatch-carrier" name="carrier" maxlength="100" autocomplete="off" required/>
+        <label for="dispatch-service">Service</label><input id="dispatch-service" name="service" maxlength="100" autocomplete="off" required/>
+        <label for="dispatch-reference">Tracking reference</label><input id="dispatch-reference" name="trackingReference" maxlength="200" autocomplete="off" required/>
+        <label for="dispatch-url">Tracking URL (optional, HTTPS)</label><input id="dispatch-url" name="trackingUrl" type="url" maxlength="2048" autocomplete="off" aria-describedby="dispatch-url-help"/>
+        <p id="dispatch-url-help">Copy the actual carrier tracking link. Leave blank if unavailable; no link will be invented.</p>
+        <label class="dispatch-handover"><input id="dispatch-handover" name="handoverConfirmed" type="checkbox" required/>I confirm this parcel has physically been handed to or dropped off with the carrier.</label>
+      </fieldset>
+      <p id="dispatch-review"></p>
+      <button id="dispatch-submit" type="submit" disabled>Review dispatch details</button>
+      <button id="dispatch-edit" type="button" hidden>Edit details</button>
+      <p id="dispatch-message" role="status" aria-live="polite" aria-atomic="true"></p>
+    </form>
+  </div>
+</section>
+<script is:inline type="module">
+  const packing=document.querySelector('#packing');
+  if(packing){
+    const api=document.querySelector('.ops')?.getAttribute('data-api')??'';
+    const info=document.querySelector('#packing-information');
+    const message=document.querySelector('#packing-message');
+    const form=document.querySelector('#manual-dispatch');
+    const fields=document.querySelector('#dispatch-fields');
+    const submit=document.querySelector('#dispatch-submit');
+    const edit=document.querySelector('#dispatch-edit');
+    const review=document.querySelector('#dispatch-review');
+    const feedback=document.querySelector('#dispatch-message');
+    const refresh=document.querySelector('#packing-refresh');
+    let order='',sequence=0,data,staged,ready=false,busy=false;
+    // Keep the exact command for uncertain retries; never generate a second
+    // identity or silently change its shipment details.
+    const pending=new Map();
+    function lock(){ready=false;fields.disabled=true;submit.disabled=true;edit.hidden=true;}
+    function clear(){lock();info.hidden=true;document.querySelector('#packing-address').textContent='';document.querySelector('#packing-items').textContent='';document.querySelector('#packing-shipments').textContent='';form.reset();staged=undefined;review.textContent='';feedback.textContent='';}
+    packing.addEventListener('operations-order-loading',()=>{sequence++;order='';data=undefined;clear();message.textContent='Select or reload an order.';});
+    packing.addEventListener('operations-order-loaded',event=>{order=event.detail.id;void loadPacking();});
+    async function loadPacking(){
+      if(!order)return;
+      const id=order,version=++sequence;clear();message.textContent='Loading restricted packing information…';
+      try{
+        const response=await fetch(api+'/operations/orders/'+encodeURIComponent(id)+'/packing',{credentials:'include',cache:'no-store'});
+        if(!response.ok)throw new Error(response.status===403?'Packing access requires fulfilment:read.':'Packing information is unavailable for this order.');
+        const value=await response.json();if(version!==sequence||id!==order)return;data=value;
+        document.querySelector('#packing-state').textContent=value.orderNumber+' · '+value.orderStatus+' · payment '+(value.captured?'captured':'not captured')+' · fulfilment '+value.fulfilmentStatus;
+        const address=value.address;document.querySelector('#packing-address').textContent=[address.recipientName,address.line1,address.line2,address.locality,address.region,address.postalCode,address.countryCode].filter(Boolean).join('\n');
+        for(const item of value.items){const li=document.createElement('li');li.textContent=item.name+' · '+item.sku+' · quantity '+item.quantity;document.querySelector('#packing-items').append(li);}
+        for(const shipment of value.shipments){const li=document.createElement('li');li.textContent=[shipment.status,shipment.carrier,shipment.service,shipment.reference,shipment.trackingUrl,shipment.dispatchedAt].filter(Boolean).join(' · ');document.querySelector('#packing-shipments').append(li);}
+        info.hidden=false;ready=value.eligible&&value.dispatchEnabled;
+        const previous=pending.get(id);
+        if(previous&&ready){staged=previous;review.textContent='Previous dispatch outcome was uncertain. Retry the same recorded details: '+previous.body.carrier+' / '+previous.body.service+' / '+previous.body.trackingReference;submit.textContent='Retry same dispatch';}
+        else {submit.textContent='Review dispatch details';if(!ready)pending.delete(id);}
+        fields.disabled=!ready||!!staged||busy;submit.disabled=!ready||busy;edit.hidden=true;
+        message.textContent=ready?'Restricted packing information loaded. Requires fulfilment:dispatch to submit.':value.fulfilmentStatus==='dispatched'?'Dispatch recorded. Review the order timeline.':'Dispatch unavailable: fulfilment must be accepted and eligible, manual fulfilment must be explicitly enabled, and fulfilment:dispatch is required.';
+      }catch(error){if(version===sequence){clear();message.textContent=error instanceof Error?error.message:'Packing could not be loaded.';}}
+    }
+    refresh.addEventListener('click',()=>{if(!busy)void loadPacking();});
+    edit.addEventListener('click',()=>{if(busy||pending.has(order))return;staged=undefined;review.textContent='';fields.disabled=false;edit.hidden=true;submit.textContent='Review dispatch details';});
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();if(!ready||busy||!order)return;
+      if(!staged){
+        if(!form.reportValidity())return;
+        const values=new FormData(form);
+        staged={key:crypto.randomUUID(),body:{fulfilmentId:data.shipments[0].id,carrier:String(values.get('carrier')).trim(),service:String(values.get('service')).trim(),trackingReference:String(values.get('trackingReference')).trim(),trackingUrl:String(values.get('trackingUrl')??'').trim(),handoverConfirmed:values.get('handoverConfirmed')==='on'}};
+        review.textContent='Confirm dispatch for '+data.orderNumber+': '+staged.body.carrier+' / '+staged.body.service+' / '+staged.body.trackingReference+'. Physical handover confirmed. This records dispatch and queues the dispatch email.';
+        fields.disabled=true;edit.hidden=false;submit.textContent='Confirm and mark dispatched';feedback.textContent='Review these details before confirming.';return;
+      }
+      const id=order,command=staged;pending.set(id,command);busy=true;lock();refresh.disabled=true;feedback.textContent='Recording dispatch…';
+      try{
+        const response=await fetch(api+'/operations/orders/'+encodeURIComponent(id)+'/dispatch',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':command.key},body:JSON.stringify(command.body)});
+        const result=await response.json();
+        if(!response.ok){if(response.status>=400&&response.status<500)pending.delete(id);throw new Error(result.message??'Dispatch could not be confirmed.');}
+        pending.delete(id);
+        if(order===id){feedback.textContent='Dispatch recorded at '+result.dispatchedAt+'. Email delivery is processed separately.';packing.dispatchEvent(new CustomEvent('operations-dispatch-recorded',{detail:{id}}));}
+      }catch(error){if(order===id){feedback.textContent=error instanceof Error?error.message:'Dispatch outcome uncertain.';message.textContent='Reload packing information before retrying. Do not create another shipment.';}}
+      finally{busy=false;refresh.disabled=false;if(order===id){const outcome=feedback.textContent;await loadPacking();if(order===id)feedback.textContent=outcome;}}
+    });
+  }
+</script>
+<style>
+  #packing{margin-block:var(--cyph-space-12);overflow-wrap:anywhere}
+  #packing h3,#packing h4{font-family:var(--cyph-font-display);font-weight:var(--cyph-font-weight-regular);line-height:var(--cyph-leading-heading)}
+  #packing label{font-size:var(--cyph-space-3);letter-spacing:.12em;text-transform:uppercase;color:var(--cyph-accent-highlight)}
+  #packing input,#packing button{min-width:0;min-block-size:var(--cyph-space-12);font:inherit;font-size:var(--cyph-space-4);padding:var(--cyph-space-3);border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:var(--cyph-surface-raised);color:var(--cyph-text-primary)}
+  #packing button{cursor:pointer;background:var(--cyph-accent-primary);color:var(--cyph-text-on-light);max-width:100%}
+  #packing button:disabled{cursor:not-allowed;opacity:.6}
+  #packing input:focus-visible,#packing button:focus-visible{outline:2px solid var(--cyph-focus-ring);outline-offset:3px}
+  #manual-dispatch{display:grid;gap:var(--cyph-space-3);max-width:42rem;margin-block-start:var(--cyph-space-8);padding-block-start:var(--cyph-space-6);border-top:var(--cyph-line-structural) solid var(--cyph-border-structural)}
+  #manual-dispatch[aria-busy="true"]{opacity:.7}
+  #packing [hidden]{display:none}
+  #packing-address{white-space:pre-line;font-style:normal;margin-block:var(--cyph-space-4);overflow-wrap:anywhere}
+  #packing ul{padding-inline-start:var(--cyph-space-6);overflow-wrap:anywhere}
+  #dispatch-fields{min-width:0;border:0;padding:0;display:grid;gap:var(--cyph-space-3)}
+  #dispatch-fields legend{margin-block-end:var(--cyph-space-4)}
+  #dispatch-fields input{width:100%;box-sizing:border-box}
+  .dispatch-handover{display:flex;align-items:flex-start;gap:var(--cyph-space-3);line-height:var(--cyph-leading-body)}
+  #dispatch-fields input[type="checkbox"]{width:1.25rem;min-height:1.25rem;flex:none;margin:0}
+  #dispatch-review,#dispatch-message{overflow-wrap:anywhere}
+</style>

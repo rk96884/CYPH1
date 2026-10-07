@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { money, PaymentProviderError, type CaptureInput, type NormalisedCapture, type NormalisedPayment, type PaymentProviderRegistry } from "../../../../packages/commerce-core/src/index.js";
 import { providerTimestamp } from "../payments/capture-deadline.js";
 
-export const operationPermissions = ["orders:read", "payments:capture", "refunds:create", "returns:manage", "returns:approve", "fulfilment:retry", "reconciliation:export"] as const;
+export const operationPermissions = ["orders:read", "payments:capture", "refunds:create", "returns:manage", "returns:approve", "fulfilment:retry", "fulfilment:read", "fulfilment:dispatch", "reconciliation:export"] as const;
 export type OperationPermission = typeof operationPermissions[number];
 export type OperationsPrincipal = Readonly<{ id: string; permissions: readonly OperationPermission[] }>;
 export type RefundReason = "customer_request" | "cancelled_order" | "returned_goods" | "operator_correction";

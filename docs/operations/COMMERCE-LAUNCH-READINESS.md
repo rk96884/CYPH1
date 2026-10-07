@@ -46,30 +46,54 @@ All target dates below are in 2026. Repository areas are unlocked for implementa
 **Status: PROVISIONAL — approved for launch planning; not approved for live
 checkout configuration.**
 
-Project-owner-supplied package facts:
+The current planning decision supersedes the earlier InPost Locker/Shop
+£2.99 and carrier-specific Royal Mail £3.99 customer propositions.
+
+Customer proposition: **Standard UK Delivery — £3.99**, tracked delivery to
+the customer's address. £74.99 GBP remains the intended product launch price;
+customer delivery is additional and is not included in that price.
+
+Royal Mail Tracked 48 is the preferred/default initial operational carrier.
+Evri, DPD and InPost Home Delivery are permitted operational alternatives,
+subject to final service/parcel approval. Carrier selection is operational:
+the customer is not promised a particular carrier. No locker/collection-point
+option is offered at initial launch. No carrier API or automatic label
+integration is required for approximately 20 units; automation is a
+post-launch enhancement.
+
+Project-owner-supplied facts:
 - Product retail box: 32 × 24 × 12 cm.
 - Known sample weight: under 1 kg.
+- K-803 is mains powered and has no internal battery.
 
 These are not verified final customer-ready shipment dimensions or weight.
+Before GO-01, verify one final packed shipment, including outer packaging,
+against each operational carrier's applicable dimensions, weight, current
+price, service and eligibility. Retain and verify carrier compensation/claims
+terms as part of operational approval.
 
-Planned customer-paid UK delivery options:
+£3.99 is planning-approved only. Do not configure it in live checkout yet.
+SH-01 remains PENDING DECISION; SH-02 remains BLOCKED. This decision does not
+close PX-01, EM-01, OPS-01, QA-01 or GO-01.
 
-| Option | Planning basis | Planned customer charge |
-| --- | --- | --- |
-| InPost Locker/Shop | InPost Medium parcel category | £2.99 |
-| Royal Mail Tracked 48 | Intended standard tracked home-delivery option | £3.99 |
+### Manual fulfilment / dispatch implementation — engineering evidence
 
-£74.99 GBP remains the intended product launch price. Customer delivery is
-additional and is not included in that price. The planned customer charges
-are not evidence of current carrier rates.
+The existing private operations architecture now provides separately
+permission-controlled packing reads and manual dispatch commands through the
+fulfilment service. Dispatch requires an eligible paid/captured order, one
+accepted manual fulfilment, shipment metadata and explicit physical handover.
+It uses the existing state machine and atomically records named-operator
+audit evidence, dispatch state, event/outbox evidence and the durable
+idempotent command result. The existing dispatch-email semantic identity is
+preserved; no live sender, worker or carrier integration is enabled.
 
-Before GO-01, verify one final customer-ready packed shipment, including
-outer packaging, against each carrier's applicable dimensions, weight,
-service eligibility and rate. Confirm current carrier pricing and record
-the evidence and accountable approval before enabling either method.
-
-Do not configure these rates in commerce yet. SH-01 remains PENDING
-DECISION; this planning approval does not close SH-01, SH-02, PX-01 or GO-01.
+This is implementation evidence, not operational release approval.
+Migration 0016, least-privilege grants, environment-specific deployment,
+accepted fulfilment preparation/consumer operation, live email provider and
+worker readiness, carrier verification, restricted retention/access,
+production-like rehearsal and accountable approval remain outstanding.
+See FULFILMENT-ADAPTER-OPERATIONS.md and
+FULFILMENT-OUTAGE-AND-MANUAL-REVIEW.md. No launch gate is closed.
 
 ### K-803 branding options — PR-01 / CO-01 / WEB-01
 

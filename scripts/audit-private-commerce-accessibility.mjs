@@ -40,6 +40,11 @@ for (const [name, file] of pages) {
   if (name === "Private operations") {
     assert(/id=["']message["'][^>]*role=["']status["'][^>]*aria-live=["']polite["']/i.test(html), name, "operations status is announced politely");
     assert(/id=["']query["'][^>]*required/i.test(html), name, "order search is required");
+    assert(/id=["']packing["'][^>]*aria-labelledby=["']packing-title["']/i.test(html), name, "packing section has a heading association");
+    assert(/id=["']packing-message["'][^>]*role=["']status["'][^>]*aria-live=["']polite["']/i.test(html), name, "packing outcomes are announced");
+    assert(/id=["']dispatch-message["'][^>]*role=["']status["'][^>]*aria-live=["']polite["']/i.test(html), name, "dispatch outcomes are announced");
+    assert(/id=["']dispatch-handover["'][^>]*type=["']checkbox["'][^>]*required/i.test(html), name, "physical handover requires an explicit checkbox");
+    assert(["dispatch-carrier","dispatch-service","dispatch-reference","dispatch-url"].every(id => html.includes(`for="${id}"`)), name, "shipment fields have associated labels");
     const amount = inputs.find((control) => /\bid=["']amount["']/i.test(control)) ?? "";
     assert(/<label\b[^>]*for=["']amount["'][^>]*>Refund amount \(GBP\)<\/label>/i.test(html), name, "refund amount has an associated GBP currency label");
     assert(/\btype=["']text["']/i.test(amount) && /\binputmode=["']decimal["']/i.test(amount), name, "refund amount supports decimal currency entry");
