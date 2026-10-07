@@ -6,7 +6,7 @@ export type FulfilmentStatus =
 
 export type OrderFulfilmentStatus =
   | "unfulfilled" | "queued" | "processing" | "dispatched"
-  | "delivered" | "cancelled" | "returned";
+  | "delivered" | "cancelled" | "returned" | "manual_review";
 
 const transitions: Record<FulfilmentStatus, readonly FulfilmentStatus[]> = {
   created: ["queued", "accepted", "cancelled", "failed"],
@@ -51,7 +51,7 @@ export type CreateFulfilmentResult = Readonly<{
 export type FulfilmentProviderEvent = Readonly<{
   eventId: string; providerReference: string;
   status: "accepted" | "dispatched" | "delivered" | "cancelled" | "returned" | "failed";
-  trackingCarrier?: string; trackingReference?: string; trackingUrl?: string; failureCode?: string;
+  trackingCarrier?: string; trackingService?: string; trackingReference?: string; trackingUrl?: string; failureCode?: string;
 }>;
 
 export interface FulfilmentProvider {

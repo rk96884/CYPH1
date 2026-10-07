@@ -39,6 +39,86 @@ All target dates below are in 2026. Repository areas are unlocked for implementa
 | QA-01 — final launch QA | BLOCKED | WEB-01, OPS-01 and all final production configuration/policies | Final build/type/security/link/accessibility/mobile checks, approved price/policy consistency, route/secret boundaries, deployment/recovery and blocker triage | 2–9 Nov; blocker fixes/rechecks 9–15 Nov | Frozen release candidate and readiness recommendation | Prepare QA matrix now; start independent checks while OPS runs, close only on final evidence |
 | GO-01 — production go-live approval | BLOCKED | All gates above; retained governance/security/operations sign-offs | Dated accountable GO/NO-GO, named release/support owners, rollback/monitoring and controlled activation plan; genuine orders only after approval | 16 Nov internal target; 25 Nov absolute deadline | Authorised public commerce activation | Review progress at each window; reserve approval/release slot and escalate unresolved blockers |
 
+## Provisional launch decisions and supplier evidence — 7 October 2026
+
+### UK delivery proposition — SH-01 / PX-01
+
+**Status: PROVISIONAL — approved for launch planning; not approved for live
+checkout configuration.**
+
+The current planning decision supersedes the earlier InPost Locker/Shop
+£2.99 and carrier-specific Royal Mail £3.99 customer propositions.
+
+Customer proposition: **Standard UK Delivery — £3.99**, tracked delivery to
+the customer's address. £74.99 GBP remains the intended product launch price;
+customer delivery is additional and is not included in that price.
+
+Royal Mail Tracked 48 is the preferred/default initial operational carrier.
+Evri, DPD and InPost Home Delivery are permitted operational alternatives,
+subject to final service/parcel approval. Carrier selection is operational:
+the customer is not promised a particular carrier. No locker/collection-point
+option is offered at initial launch. No carrier API or automatic label
+integration is required for approximately 20 units; automation is a
+post-launch enhancement.
+
+Project-owner-supplied facts:
+- Product retail box: 32 × 24 × 12 cm.
+- Known sample weight: under 1 kg.
+- K-803 is mains powered and has no internal battery.
+
+These are not verified final customer-ready shipment dimensions or weight.
+Before GO-01, verify one final packed shipment, including outer packaging,
+against each operational carrier's applicable dimensions, weight, current
+price, service and eligibility. Retain and verify carrier compensation/claims
+terms as part of operational approval.
+
+£3.99 is planning-approved only. Do not configure it in live checkout yet.
+SH-01 remains PENDING DECISION; SH-02 remains BLOCKED. This decision does not
+close PX-01, EM-01, OPS-01, QA-01 or GO-01.
+
+### Manual fulfilment / dispatch implementation — engineering evidence
+
+The existing private operations architecture now provides separately
+permission-controlled packing reads and manual dispatch commands through the
+fulfilment service. Dispatch requires an eligible paid/captured order, one
+accepted manual fulfilment, shipment metadata and explicit physical handover.
+It uses the existing state machine and atomically records named-operator
+audit evidence, dispatch state, event/outbox evidence and the durable
+idempotent command result. The existing dispatch-email semantic identity is
+preserved; no live sender, worker or carrier integration is enabled.
+
+This is implementation evidence, not operational release approval.
+Migration 0016, least-privilege grants, environment-specific deployment,
+accepted fulfilment preparation/consumer operation, live email provider and
+worker readiness, carrier verification, restricted retention/access,
+production-like rehearsal and accountable approval remain outstanding.
+See FULFILMENT-ADAPTER-OPERATIONS.md and
+FULFILMENT-OUTAGE-AND-MANUAL-REVIEW.md. No launch gate is closed.
+
+### K-803 branding options — PR-01 / CO-01 / WEB-01
+
+**Status: SUPPLIER-LISTED CAPABILITY — NOT YET CONFIRMED FOR THE CYPH/1
+20-UNIT ORDER.**
+
+The project owner reports that the Alibaba K-803 listing offers packaging
+customisation as “Color Box” and logo/graphic design as “Laser Printing”.
+These listing options do not establish availability or approval for the
+CYPH/1 order.
+
+Lyanna has been asked to confirm availability for 20 units, MOQ, additional
+cost, lead time, artwork/file requirements, device-logo options and
+packaging-branding options. Supplier confirmation remains outstanding.
+
+Do not record CYPH/1 device or packaging branding as production-approved
+until Lyanna confirms the applicable options and the artwork/proof has
+been approved. Final logo reproduction must preserve the approved CYPH/1
+brand artwork, including its distinctive follicle element.
+
+Detailed source and approval limitations are recorded in
+../../src/assets/products/ipl/README.md. Branding remains an open
+production-readiness item; this evidence does not close CO-01, WEB-01 or
+GO-01.
+
 ## Target plan
 
 | Window (2026) | Required outcome |
@@ -249,3 +329,18 @@ Production configuration must remain disabled until every applicable item is evi
 ### Historical staging payment-test closure — 21 September 2026
 
 After completion of the Mollie test-mode payment lifecycle and reconciliation work, `cyph1-commerce-customer-staging` was restored to the locked fail-closed baseline and redeployed successfully from current `main`. Final route verification passed: `/health` returned 200, `/ready` returned 200, `/checkout` returned 404, and `/webhooks/mollie` returned 404. Checkout, commerce, payment webhooks and the private checkout fixture are therefore closed again; payment and fulfilment providers are disabled. Remaining production-readiness work is tracked separately and does not require leaving the staging payment routes enabled.
+
+## Transactional provider / background-worker engineering — 7 October 2026
+
+Brevo HTTP adapter, independently gated fulfilment/communication polling runtime,
+claim-token fencing, durable send-start uncertainty handling and terminal-failure
+monitoring are implemented for review. Approved templates remain application
+rendered and semantic identities are unchanged. Marketing signup remains separate.
+No email has been sent and no worker, sender/DNS configuration, secret or migration
+has been deployed to production by this implementation.
+
+EM-01 remains DRAFT APPROVED; OPS-01, QA-01 and GO-01 remain BLOCKED. Required
+external sender/domain authentication, receipt/retry/reconciliation evidence,
+production monitoring/ownership, final commercial inputs and privacy approvals
+remain outstanding. See `TRANSACTIONAL-COMMUNICATIONS.md` for configuration and
+release requirements. Paid-order manual cancellation confirmation is separate.

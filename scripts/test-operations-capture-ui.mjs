@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import vm from 'node:vm';
 const source=await readFile(new URL('../src/pages/private-operations/[slug].astro',import.meta.url),'utf8');
 const html=process.env.OPERATIONS_UI_HTML?await readFile(process.env.OPERATIONS_UI_HTML,'utf8'):source;
-const inline=html.match(/<script\s+([^>]*type="module"[^>]*)>([\s\S]*?)<\/script>/);
+const inline=[...html.matchAll(/<script\s+([^>]*type="module"[^>]*)>([\s\S]*?)<\/script>/g)].find(match=>match[2].includes("const captureForm="));
 assert.ok(inline,'Operations script must remain inline');
 assert.doesNotMatch(inline[1],/\bsrc=/);
 assert.match(source,/<script is:inline type="module">/);

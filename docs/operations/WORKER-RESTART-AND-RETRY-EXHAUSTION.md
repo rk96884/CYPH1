@@ -103,3 +103,18 @@ migration run reported the schema current at ten migrations, and schema
 verification confirmed both worker claim lease columns before rolling back its
 test records. No database credential or personal data is retained in this
 record.
+
+## Communication send-safety follow-up — 7 October 2026
+
+Migration `0017` adds claim-generation tokens, a durable pre-send marker,
+`manual_review` and explicit terminal-failure evidence. The earlier rehearsals
+above remain historical evidence of leases; they do not establish live-provider
+exactly-once delivery or validate the new send boundary. Current PostgreSQL
+regressions exercise the production repository, not a duplicated claim algorithm.
+
+Stale pre-send claims are recoverable. Stale started sends require manual
+reconciliation and are not automatically replayed. Late writes from a superseded
+claim fail their token check. Explicit final failures are monitor-visible even
+when their original error code is retained. Follow `TRANSACTIONAL-COMMUNICATIONS.md`
+for Brevo uncertainty, configuration, release and reconciliation requirements.
+No production worker or external-provider rehearsal has been deployed/completed.

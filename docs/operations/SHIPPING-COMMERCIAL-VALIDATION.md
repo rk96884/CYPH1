@@ -15,6 +15,26 @@ Collection Point** proposition backed by a CYPH/1-owned carrier abstraction.
 Sendcloud is the leading aggregator candidate, subject to validation. InPost
 and Evri are candidate underlying carriers.
 
+## Current initial-launch decision — 7 October 2026
+
+The launch register supersedes the earlier multi-carrier/collection-point
+planning for initial launch: Standard UK Delivery — £3.99, tracked to the
+customer's address, additional to £74.99. Royal Mail Tracked 48 is the
+preferred/default operational carrier; Evri, DPD and InPost Home Delivery are
+alternatives subject to final verification. Do not promise a carrier or offer
+locker/collection-point selection. Carrier API/aggregator/label automation
+is a post-launch enhancement, not an initial launch dependency.
+
+The project owner confirms K-803 is mains powered with no internal battery.
+Retail box: 32 × 24 × 12 cm; known sample: under 1 kg. Final customer-ready
+packed dimensions/weight, current carrier rate/service/eligibility and
+compensation/claims terms still require verification and retained evidence.
+£3.99 is planning-approved only; no live checkout shipping rate is configured.
+SH-01/SH-02 and GO-01 remain open.
+
+The historical candidate enquiry brief below is retained as background;
+use the current launch register for product selection and planning facts.
+
 ## Product facts for enquiries
 
 Use only the following currently confirmed description:

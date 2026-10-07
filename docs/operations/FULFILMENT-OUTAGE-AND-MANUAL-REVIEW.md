@@ -110,7 +110,7 @@ be separately justified.
    idempotently.
 3. Treat an unsupported forward transition as manual review. Never skip states
    by overwriting the local status.
-4. Accept tracking carrier/reference only through an authenticated adapter event.
+4. Accept tracking carrier/reference through an authenticated adapter event or the permission-controlled manual dispatch command; both use the existing transactional state/event writer.
 5. Do not send dispatch/delivery communication until the local transition and
    outbox/communication record are consistent.
 
@@ -168,3 +168,28 @@ complete:
 
 Until then, equivalent tests may use `manual-test`, but they do not validate a
 future provider's API, idempotency, privacy, webhook or recovery behaviour.
+
+## Manual dispatch response/recovery
+
+For the initial home-delivery launch, labels are purchased manually; carrier
+API/label automation is deferred. The manual-live adapter creates only an
+internal accepted reference and does not book carriage. The protected manual
+dispatch command records confirmed physical handover; it does not perform
+external carrier actions.
+
+If a dispatch response is lost, reload the order and packing state. Retry the
+same saved command/key only; never purchase a second label or create another
+fulfilment to repair an uncertain response. The console preserves the exact
+pending payload/key in memory for same-page retries. After page closure,
+inspect authoritative state before any action.
+
+A busy/conflict response requires reload and review. Refunded/unpaid orders,
+refund activity, non-accepted or multiple fulfilments must not be overridden.
+Incorrect tracking after dispatch requires a separately reviewed audited
+correction operation; none is provided by this slice. Do not edit database
+records or replay dispatch to change tracking.
+
+Email sending failure does not undo physical dispatch. Inspect the independent
+communication delivery ledger/provider outcome; never redispatch the parcel
+to trigger another email. Live sending and exhausted-email recovery remain
+release tasks, not enabled by this implementation.

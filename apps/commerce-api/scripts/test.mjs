@@ -23,6 +23,8 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "checkout", "checkout.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "checkout", "handler.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "fulfilment", "fulfilment.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "fulfilment", "manual-dispatch.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "checkout", "status.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "operations.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "capture.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "operations", "capture-reconciliation.test.js"),
@@ -35,6 +37,9 @@ try {
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "checkout-admission.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "runtime", "observability.test.js"),
     join(outputDirectory, "apps", "commerce-api", "src", "communications", "communications.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "communications", "brevo.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "communications", "send-safety.test.js"),
+    join(outputDirectory, "apps", "commerce-api", "src", "runtime", "worker.test.js"),
   ], { stdio: "inherit" });
 } finally {
   rmSync(outputDirectory, { recursive: true, force: true });

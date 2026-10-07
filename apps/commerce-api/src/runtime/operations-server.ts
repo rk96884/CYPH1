@@ -10,6 +10,12 @@ import { createPaymentProviderRegistry } from "../payments/factory.js";
 import { createOperationsRuntime, requestHeaders } from "./http.js";
 import { createRequestId, createRuntimeRequestLog, writeRuntimeRequestLog } from "./observability.js";
 
+import { FulfilmentService } from "../fulfilment/service.js";
+import { PostgresFulfilmentRepository } from "../fulfilment/postgres.js";
+import { ManualLiveFulfilmentProvider } from "../fulfilment/manual-live.js";
+import { ManualTestFulfilmentProvider } from "../fulfilment/manual-test.js";
+import { loadCommerceConfig } from "../config.js";
+
 const environment = process.env;
 const databaseUrl = environment.DATABASE_URL?.trim();
 if (!databaseUrl) throw new Error("DATABASE_URL is required.");
@@ -23,8 +29,14 @@ const pool = new pg.Pool({
 });
 const access = createCloudflareAccessAuthenticator(loadCloudflareAccessConfig(environment));
 const service = new OperationsService(new PostgresOperationsRepository(pool), createPaymentProviderRegistry(environment));
+const fulfilmentConfig = loadCommerceConfig(environment);
+const manualEnabled = (fulfilmentConfig.fulfilmentMode === "live" && fulfilmentConfig.fulfilmentProvider === "manual-live") ||
+  (fulfilmentConfig.fulfilmentMode === "test" && fulfilmentConfig.fulfilmentProvider === "manual-test");
+const fulfilment = new FulfilmentService(manualEnabled,
+  fulfilmentConfig.fulfilmentProvider === "manual-live" ? new ManualLiveFulfilmentProvider() : new ManualTestFulfilmentProvider(),
+  new PostgresFulfilmentRepository(pool));
 const runtime = createOperationsRuntime(
-  createProtectedOperationsHandler(service, access, new ReturnService(new PostgresReturnRepository(pool))),
+  createProtectedOperationsHandler(service, access, new ReturnService(new PostgresReturnRepository(pool)), fulfilment),
   async () => { await pool.query("SELECT 1"); },
 );
 

@@ -15,7 +15,7 @@ backups and restored environments.
 This document does not grant access, create a production role, approve a
 provider or replace the system-specific permission model. Current code exposes
 only a small permission baseline (`orders:read`, `payments:capture`,
-`refunds:create`, `returns:manage`, `returns:approve`, `fulfilment:retry` and
+`refunds:create`, `returns:manage`, `returns:approve`, `fulfilment:retry`, `fulfilment:read`, `fulfilment:dispatch` and
 `reconciliation:export`). Every additional permission in
 this document is a required design boundary, not an implemented capability.
 
@@ -367,3 +367,16 @@ classification or governance baseline.
 - `PRODUCTION-COMMERCE-OWNERSHIP-AND-SUPPORT.md`
 - `PRODUCTION-OWNERSHIP-AND-DEPUTY-APPOINTMENT-PACK.md`
 - `SHIPPING-PRIVACY-AND-SECURITY.md`
+
+### Manual fulfilment access boundary
+
+fulfilment:read grants restricted packing details for paid/captured orders.
+orders:read alone does not grant delivery-address access through the packing
+endpoint. fulfilment:dispatch grants the handover-confirmed dispatch command;
+it does not grant payment, refund, carrier-account or live configuration
+authority. Assign these separately to named operators through the existing
+verified Cloudflare Access/server-grant mechanism. No grant is created here.
+Packing responses are no-store; packing reads and dispatch mutations are
+attributed. Address/label/tracking evidence remains restricted and must not be
+copied to source control or general logs. The public UUID status endpoint is
+unchanged.

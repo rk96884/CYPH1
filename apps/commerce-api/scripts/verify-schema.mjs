@@ -48,6 +48,12 @@ try {
       (('outbox_events','processing_started_at'),('communication_deliveries','processing_started_at'))`);
   if (leaseColumns.rowCount !== 2) throw new Error("Missing worker claim lease columns.");
   console.log("Verified worker claim lease columns.");
+  const sendSafetyColumns = await client.query(`SELECT column_name FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='communication_deliveries'
+    AND column_name IN ('claim_token','send_started_at','terminal_failure')`);
+  if (sendSafetyColumns.rowCount !== 3) throw new Error("Missing communication send-safety columns.");
+  console.log("Verified communication send-safety columns.");
+
 
   await client.query("BEGIN");
   await expectConstraintFailure(

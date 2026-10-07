@@ -50,10 +50,10 @@ const copyFor = (context: CommunicationContext): TemplateCopy => {
 const plain = (html: string) => html.replace(/<\/?strong>/g, "").replace(/&(?:amp|lt|gt|quot|#39);/g, (entity) => ({ "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'" })[entity]!);
 
 const validTrackingUrl = (value: string | undefined, preview: boolean): string | undefined => {
-  if (!value || !/^https?:\/\//i.test(value) || /[\u0000-\u0020\u007f\\]/.test(value)) return undefined;
+  if (!value || !/^https:\/\//i.test(value) || /[\u0000-\u0020\u007f\\]/.test(value)) return undefined;
   try {
     const url = new URL(value);
-    if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) return undefined;
+    if (url.protocol !== "https:" || url.username || url.password) return undefined;
     // Reserved non-resolving preview hosts must never appear in real messages.
     const hostname = url.hostname.replace(/\.$/, "");
     if ((hostname === "invalid" || hostname.endsWith(".invalid")) && !preview) return undefined;
