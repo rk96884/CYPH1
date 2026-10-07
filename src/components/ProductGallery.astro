@@ -1,0 +1,71 @@
+---
+import { Image, getImage } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { productGallery } from "../data/launch-product";
+const images = import.meta.glob<{ default: ImageMetadata }>("../assets/products/ipl/*.{webp,png}", { eager: true });
+// Match product.css: 80rem container, fluid gutters/cluster, 23:20 desktop split,
+// 12px gallery gaps, two columns below 30rem and three columns otherwise.
+const heroSizes = "(min-width: 1392px) 657px, (min-width: 1200px) calc(49.2093vw - 27.6744px), (min-width: 960px) calc(47.0698vw - 2px), (min-width: 500px) calc(92vw - 2px), calc(100vw - 42px)";
+const thumbnailSizes = "(min-width: 1392px) 210px, (min-width: 1200px) calc(16.4031vw - 18.5581px), (min-width: 960px) calc(15.6899vw - 10px), (min-width: 500px) calc(30.6667vw - 10px), (min-width: 480px) calc(33.3333vw - 23.3333px), calc(50vw - 28px)";
+const previewSizes = "(min-width: 1392px) 571px, (min-width: 1200px) calc(42.7907vw - 24.3256px), (min-width: 960px) calc(40.9302vw - 2px), calc(100vw - 42px)";
+const gallery = await Promise.all(productGallery.map(async (item, index) => {
+  const asset = images[`../assets/products/ipl/${item.filename}`]?.default;
+  const full = asset ? await getImage({ src: asset, width: asset.width, format: "webp" }) : undefined;
+  const previewWidths = asset && index > 0 ? [...new Set([240, 480, 640, 960, asset.width].filter(width => width <= asset.width))] : [];
+  const previews = asset ? await Promise.all(previewWidths.map(width => getImage({ src: asset, width, format: "webp" }))) : [];
+  const previewSrcset = previews.map((image, index) => `${image.src} ${previewWidths[index]}w`).join(", ");
+  return { ...item, asset, full, previewSrcset };
+}));
+---
+<div class="gallery-shell">
+  <div class="product-gallery" aria-label="Product gallery">
+    {gallery.map((item, index) => <figure class:list={["gallery-frame", { "gallery-primary": index === 0 }]}>
+      {item.asset ? index === 0 ? <Image src={item.asset} alt={item.alt} widths={[item.asset.width]} sizes={heroSizes} loading="eager" fetchpriority="high" /> : <a class="gallery-thumbnail" href={item.full?.src} data-gallery-preview data-gallery-label={item.label} data-gallery-preview-srcset={item.previewSrcset} data-gallery-preview-sizes={previewSizes} title={`View ${item.label} at full size`}><Image src={item.asset} alt={item.alt} width={Math.min(640, item.asset.width)} widths={[...new Set([160, 240, 320, 480, Math.min(640, item.asset.width)].filter(width => width <= item.asset!.width))]} sizes={thumbnailSizes} loading="lazy" /></a> : <div class="gallery-placeholder"><p>{item.label} · Image coming soon</p></div>}
+      <figcaption>{item.label}</figcaption>
+    </figure>)}
+  </div>
+  <aside class="gallery-preview" data-gallery-preview-panel hidden aria-hidden="true"><div class="gallery-preview-artwork"></div><p class="gallery-preview-caption"></p></aside>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>(".gallery-shell").forEach(shell => {
+    const panel = shell.querySelector<HTMLElement>("[data-gallery-preview-panel]");
+    const artwork = panel?.querySelector<HTMLElement>(".gallery-preview-artwork");
+    const caption = panel?.querySelector<HTMLElement>(".gallery-preview-caption");
+    const links = shell.querySelectorAll<HTMLAnchorElement>("[data-gallery-preview]");
+    if (!panel || !artwork || !caption) return;
+    let active: HTMLAnchorElement | undefined;
+    const show = (link: HTMLAnchorElement) => {
+      if (!window.matchMedia("(min-width: 60rem)").matches) return;
+      active = link;
+      const firstFrame = links[0]?.closest("figure");
+      if (!firstFrame) return;
+      const top = firstFrame.getBoundingClientRect().top - shell.getBoundingClientRect().top;
+      panel.style.top = `${top}px`;
+      const image = new window.Image();
+      image.sizes = link.dataset.galleryPreviewSizes ?? "100vw";
+      image.srcset = link.dataset.galleryPreviewSrcset ?? "";
+      image.src = link.href;
+      image.alt = "";
+      const background = new window.Image();
+      background.sizes = image.sizes;
+      background.srcset = image.srcset;
+      background.src = link.href;
+      background.alt = "";
+      background.className = "gallery-preview-background";
+      image.className = "gallery-preview-foreground";
+      artwork.replaceChildren(background, image);
+      caption.textContent = link.dataset.galleryLabel ?? "";
+      panel.hidden = false;
+    };
+    window.addEventListener("resize", () => {
+      if (active && !panel.hidden) show(active);
+    });
+    links.forEach(link => {
+      link.addEventListener("pointerenter", () => show(link));
+      link.addEventListener("focus", () => show(link));
+    });
+    shell.addEventListener("keydown", event => {
+      if (event.key === "Escape") panel.hidden = true;
+    });
+  });
+</script>

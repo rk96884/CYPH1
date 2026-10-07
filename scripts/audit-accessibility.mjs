@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 
 const pages = [
   ["Home", "dist/index.html"],
+  ["Product", "dist/ipl-hair-removal/index.html"],
   ["Website Terms", "dist/terms/index.html"],
   ["Privacy", "dist/privacy/index.html"],
   ["Accessibility", "dist/accessibility/index.html"],
