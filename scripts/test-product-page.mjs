@@ -109,3 +109,17 @@ test("Turbo description does not imply doubled results, speed or power", () => {
   assert.match(html, /<h3>Turbo Mode<\/h3>/);
   assert.doesNotMatch(html, /2[×x] (?:more effective|better results|more powerful)|twice as (?:fast|much hair)|faster results/i);
 });
+
+const home = await readFile(new URL("../dist/index.html", import.meta.url), "utf8");
+test("homepage and shared navigation expose the pre-launch product route", async () => {
+  assert.match(home, /Meet the CYPH\/1 IPL/);
+  assert.match(home, /href="\/ipl-hair-removal\/">Discover the device<\/a>/);
+  for (const page of [home, html]) {
+    const nav = page.match(/<nav aria-label="Primary navigation">(.*?)<\/nav>/s)?.[1];
+    assert.ok(nav);
+    assert.match(nav, /class="product-nav-link" href="\/ipl-hair-removal\/">IPL Device<\/a>/);
+    assert.doesNotMatch(page, /buy now|shop now|add to cart|order now|in stock|href="[^"]*(?:api\/checkout|private-commerce)[^"]*"/i);
+  }
+  const sitemap = await readFile(new URL("../dist/sitemap-0.xml", import.meta.url), "utf8");
+  assert.equal([...sitemap.matchAll(/<loc>[^<]*\/ipl-hair-removal\/<\/loc>/g)].length, 1);
+});

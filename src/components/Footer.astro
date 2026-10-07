@@ -26,4 +26,8 @@ const socials = [
   .social-links a{width:2.7rem!important;height:2.7rem!important;flex:0 0 2.7rem!important}
   .social-links svg{width:1.05rem!important;height:1.05rem!important}
 }
+/* Keep existing footer links within narrow viewports. */
+.footer-grid>*{min-width:0}
+.site-footer nav{flex-wrap:wrap}
+@media(max-width:360px){.social-links{flex-wrap:wrap!important}}
 </style>
