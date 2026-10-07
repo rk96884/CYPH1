@@ -1,0 +1,58 @@
+---
+import { Image, getImage } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { productGallery } from "../data/launch-product";
+const images = import.meta.glob<{ default: ImageMetadata }>("../assets/products/ipl/*.{webp,png}", { eager: true });
+const gallery = await Promise.all(productGallery.map(async item => {
+  const asset = images[`../assets/products/ipl/${item.filename}`]?.default;
+  const full = asset ? await getImage({ src: asset, width: asset.width, format: "webp" }) : undefined;
+  return { ...item, asset, full };
+}));
+---
+<div class="gallery-shell">
+  <div class="product-gallery" aria-label="Product gallery">
+    {gallery.map((item, index) => <figure class:list={["gallery-frame", { "gallery-primary": index === 0 }]}>
+      {item.asset ? index === 0 ? <Image src={item.asset} alt={item.alt} widths={[item.asset.width]} sizes="(min-width: 960px) 50vw, 100vw" loading="eager" /> : <a class="gallery-thumbnail" href={item.full?.src} data-gallery-preview data-gallery-label={item.label} title={`View ${item.label} at full size`}><Image src={item.asset} alt={item.alt} widths={[...new Set([240, 480, item.asset.width].filter(width => width <= item.asset!.width))]} sizes="(min-width: 960px) 16vw, 50vw" loading="lazy" /></a> : <div class="gallery-placeholder"><p>{item.label} · Image coming soon</p></div>}
+      <figcaption>{item.label}</figcaption>
+    </figure>)}
+  </div>
+  <aside class="gallery-preview" data-gallery-preview-panel hidden aria-hidden="true"><div class="gallery-preview-artwork"></div><p class="gallery-preview-caption"></p></aside>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>(".gallery-shell").forEach(shell => {
+    const panel = shell.querySelector<HTMLElement>("[data-gallery-preview-panel]");
+    const artwork = panel?.querySelector<HTMLElement>(".gallery-preview-artwork");
+    const caption = panel?.querySelector<HTMLElement>(".gallery-preview-caption");
+    const links = shell.querySelectorAll<HTMLAnchorElement>("[data-gallery-preview]");
+    if (!panel || !artwork || !caption) return;
+    let active: HTMLAnchorElement | undefined;
+    const show = (link: HTMLAnchorElement) => {
+      active = link;
+      const firstFrame = links[0]?.closest("figure");
+      if (!firstFrame) return;
+      const top = firstFrame.getBoundingClientRect().top - shell.getBoundingClientRect().top;
+      panel.style.top = `${top}px`;
+      const image = new window.Image();
+      image.src = link.href;
+      image.alt = "";
+      const background = new window.Image();
+      background.src = link.href;
+      background.alt = "";
+      background.className = "gallery-preview-background";
+      image.className = "gallery-preview-foreground";
+      artwork.replaceChildren(background, image);
+      caption.textContent = link.dataset.galleryLabel ?? "";
+      panel.hidden = false;
+    };
+    window.addEventListener("resize", () => {
+      if (active && !panel.hidden) show(active);
+    });
+    links.forEach(link => {
+      link.addEventListener("pointerenter", () => show(link));
+      link.addEventListener("focus", () => show(link));
+    });
+    shell.addEventListener("keydown", event => {
+      if (event.key === "Escape") panel.hidden = true;
+    });
+  });
+</script>
