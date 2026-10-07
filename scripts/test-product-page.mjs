@@ -79,8 +79,9 @@ test("all eight information sections and seven ordered Astro gallery assets rend
   for (const [index, image] of images.entries()) {
     const [filename, width, height, alt] = expected[index];
     assert.ok(image.includes(`alt="${alt}"`));
-    assert.ok(image.includes(`width="${width}"`));
-    assert.ok(image.includes(`height="${height}"`));
+    const renderedWidth = index === 0 ? width : Math.min(640, width);
+    assert.ok(image.includes(`width="${renderedWidth}"`));
+    assert.ok(image.includes(`height="${Math.round(height * renderedWidth / width)}"`));
     assert.ok(image.includes(`loading="${index === 0 ? "eager" : "lazy"}"`));
     const src = image.match(/\bsrc="([^"]+)"/)?.[1];
     assert.ok(src?.includes(`/_astro/cyph1-ipl-${filename}.`) && src.endsWith(".webp"));
@@ -122,4 +123,14 @@ test("homepage and shared navigation expose the pre-launch product route", async
   }
   const sitemap = await readFile(new URL("../dist/sitemap-0.xml", import.meta.url), "utf8");
   assert.equal([...sitemap.matchAll(/<loc>[^<]*\/ipl-hair-removal\/<\/loc>/g)].length, 1);
+});
+
+test("gallery prioritises only the hero and defers responsive desktop previews", () => {
+  const gallery = html.match(/<div class="product-gallery"[\s\S]*?<\/figure>\s*<\/div>/)?.[0];
+  assert.ok(gallery);
+  assert.equal([...gallery.matchAll(/loading="lazy"/g)].length, 6);
+  assert.equal([...gallery.matchAll(/fetchpriority="high"/g)].length, 1);
+  assert.equal([...gallery.matchAll(/data-gallery-preview-srcset=/g)].length, 6);
+  assert.match(gallery, /calc\(30\.6667vw - 10px\)/);
+  assert.doesNotMatch(gallery, /sizes="\(min-width: 960px\) 16vw, 50vw"/);
 });

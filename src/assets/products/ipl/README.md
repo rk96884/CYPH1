@@ -50,8 +50,16 @@ These generated visuals are not verified physical representations of the product
 
 ## Rendering and crop review
 
-ProductGallery uses Astro Image for local responsive WebP outputs. Candidate widths are capped at each source width; no output is upscaled. Intrinsic width/height are retained; the primary image loads eagerly and the remaining six lazily. The hero retains its natural proportions. The six smaller thumbnails use equal square frames with cover cropping. Hover or keyboard focus shows uncropped artwork to their right on desktop; each thumbnail links to the full optimized image on all screen sizes. The desktop preview fills any empty bands with a decorative blurred copy of the same cached image, behind the sharp uncropped foreground. Escape dismisses the desktop preview. Original extracted assets remain unchanged.
+ProductGallery uses Astro Image for local responsive WebP outputs. Candidate widths are capped at each source width; no output is upscaled. Intrinsic aspect ratios are retained; the primary image loads eagerly and the remaining six lazily. The hero retains its natural proportions. The six smaller thumbnails use equal square frames with cover cropping. Hover or keyboard focus shows uncropped artwork to their right on desktop; each thumbnail links to the full optimized image on all screen sizes. The desktop preview fills any empty bands with a decorative blurred copy of the same cached image, behind the sharp uncropped foreground. Escape dismisses the desktop preview. Original extracted assets remain unchanged.
 
 Each crop was visually inspected for adjacent content, clipped text/products/accessories and caption-strip remnants. No neighbouring panels or numbered/caption strips are included. Existing close-up edge framing within the supplied artwork is retained without alteration.
 
 The owner additionally confirmed inclusion of the supplied guidance card. The kit entry is now “User manual and guidance card”, supported by the manual photograph and the previously supplied usage-card photograph.
+
+## Responsive output and performance audit
+
+Native PNG sources and full-size WebP links are preserved. Thumbnail outputs are capped at 640px (or native width if smaller), with 160/240/320/480px candidates as appropriate. The `sizes` values follow the actual container, gutters, desktop split and gallery columns. The eager hero has high fetch priority. Six non-primary images remain lazy.
+
+The desktop preview uses responsive candidates for its actual width, created in the DOM only on hover/keyboard focus at desktop sizes. Hidden mobile previews do not request images. Full-resolution links remain available for deliberate viewing; generating a WebP at build time does not download it to the customer.
+
+The performance audit retains the 200 KiB compressed threshold per production document, estimating cold-cache loads at 320/430/768/1366/1920px and DPR 1/2. Ordinary links and explicitly lazy images are not guaranteed initial downloads. Deferred candidate payloads and site-wide referenced-resource totals are reported separately; native lazy-load proximity can still cause a browser to fetch images near the viewport.
