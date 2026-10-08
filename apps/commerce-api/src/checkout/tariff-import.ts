@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type pg from "pg";
 import { quoteShipping, money, normaliseCountryCode, shippingZoneForCountry, validateCarrierTariff, validatePackaging, type ShippingRate, type PackagingProfile } from "../../../../packages/commerce-core/src/index.js";
 import { shippingRateRevision } from "./service.js";
@@ -8,10 +9,21 @@ export type TariffSchedule = Readonly<{
 }>;
 /** JSON input uses ISO timestamps and a Money object; normalize once before validation or hashing. */
 export const parseTariffSchedule = (raw: unknown): TariffSchedule => {
-    const schedule = raw as TariffSchedule;
+    const schedule = raw as Omit<TariffSchedule, "rates"> & { rates: readonly (ShippingRate & { countryCodes?: readonly string[] })[] };
     if (!schedule?.revision || !Array.isArray(schedule.rates) || !schedule.rates.length || !Array.isArray(schedule.packagingProfiles))
         throw new Error("Incomplete tariff schedule");
-    const rates = schedule.rates.map(rate => ({ ...rate, effectiveFrom: new Date(rate.effectiveFrom), ...(rate.effectiveTo ? { effectiveTo: new Date(rate.effectiveTo) } : {}) }));
+    // A published carrier-zone band is stored once; only import expands its ISO destinations.
+    const rates = schedule.rates.flatMap(input => {
+        const { countryCodes, ...rate } = input;
+        if (countryCodes !== undefined && (!Array.isArray(countryCodes) || !countryCodes.length || rate.countryCode !== undefined
+            || new Set(countryCodes).size !== countryCodes.length)) throw new Error("Invalid grouped tariff destinations");
+        return (countryCodes ?? [rate.countryCode]).map((countryCode: string | undefined) => {
+            if (!countryCode || normaliseCountryCode(countryCode) !== countryCode) throw new Error("Invalid tariff destination");
+            const hex = createHash("sha256").update(`${rate.id}:${countryCode}`).digest("hex").slice(0, 32);
+            const id = countryCodes ? `${hex.slice(0,8)}-${hex.slice(8,12)}-5${hex.slice(13,16)}-a${hex.slice(17,20)}-${hex.slice(20)}` : rate.id;
+            return { ...rate, id, countryCode, effectiveFrom: new Date(rate.effectiveFrom), ...(rate.effectiveTo ? { effectiveTo: new Date(rate.effectiveTo) } : {}) };
+        });
+    });
     const ids = new Set<string>();
     for (const r of rates) {
         if (!r.carrierTariff)
@@ -99,4 +111,31 @@ export const validateTariffImportEnvironment = (env: Readonly<Record<string,stri
    || env.PAYMENT_PROVIDER!=="mollie-test" || env.TARIFF_IMPORT_APPROVED_REVISION!==revision) throw new Error("Disabled test gates and explicit revision approval required");
  const u=new URL(env.DATABASE_URL ?? "postgres://invalid/invalid");const name=decodeURIComponent(u.pathname.slice(1));
  if(!["postgres:","postgresql:"].includes(u.protocol) || !u.hostname || env.CONFIRM_NON_PRODUCTION_DATABASE!==name || !/(test|staging)/i.test(name) || /prod/i.test(name)) throw new Error("Named non-production database confirmation required");
+};
+
+/** Offline weight-band lookup only: deliberately does not grant service/checkout eligibility. */
+export const comparePublishedPostage = (schedule: TariffSchedule, packaging = {
+    unitWeightGrams: 953, singleUnitProtectionGrams: 108, multiUnitProtectionGrams: 150,
+}) => {
+    if (Object.values(packaging).some(value => !Number.isSafeInteger(value) || value < 0) || packaging.unitWeightGrams === 0)
+        throw new Error("Invalid comparison weight inputs");
+    const combinations = [...new Set(schedule.rates.map(rate => `${rate.countryCode}:${rate.methodKey}`))].sort();
+    return combinations.flatMap(key => Array.from({length:10}, (_, index) => {
+        const quantity = index + 1;
+        const [countryCode, methodKey] = key.split(":");
+        const weightGrams = quantity * packaging.unitWeightGrams + (quantity === 1 ? packaging.singleUnitProtectionGrams : packaging.multiUnitProtectionGrams);
+        const candidates = schedule.rates.filter(rate => rate.countryCode === countryCode && rate.methodKey === methodKey
+            && weightGrams >= rate.minimumWeightGrams! && weightGrams <= rate.maximumWeightGrams!);
+        if (candidates.length > 1) throw new Error("Ambiguous published comparison band");
+        const rate = candidates[0]; const tariff = rate?.carrierTariff;
+        const merchandiseMinor = quantity * 7499;
+        const included = tariff && merchandiseMinor <= tariff.includedCompensationMinor;
+        const optional = tariff?.additionalCompensation && merchandiseMinor <= tariff.additionalCompensation.coverMinor;
+        return { countryCode, methodKey, quantity, weightGrams, weightEvidence: quantity === 1 ? "measured-total" : "provisional-packaging",
+            basePostageMinor: rate?.price.value ?? null, currency: "GBP", maximumBandGrams: rate?.maximumWeightGrams ?? null,
+            additionalCompensationMinor: included ? 0 : optional ? tariff!.additionalCompensation!.costMinor : null,
+            compensationStatus: !rate ? "outside-published-weight-range" : included ? "published-included-cover-subject-to-eligibility" : optional ? "published-optional-cover-subject-to-eligibility" : "insufficient-published-cover",
+            customsChargesMinor: null, otherSurchargesMinor: null, finalQuote: false, approvalStatus: "unapproved",
+            sourceUrl: tariff?.sourceUrl ?? null, rateId: rate?.id ?? null };
+    }));
 };

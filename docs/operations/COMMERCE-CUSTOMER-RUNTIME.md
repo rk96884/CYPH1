@@ -698,3 +698,22 @@ plus the disposable PostgreSQL snapshot/integration script. TypeScript checks,
 site/runtime builds, commerce security audit and diff checks passed. Offline
 preview returned 1,061 g for one unit, 2,056 g for two and 3,009 g for three;
 multi-unit previews are explicitly provisional. No hosted data was changed.
+
+
+### Official published prices now recorded — disabled review data
+
+The [5 October 2026 tariff schedule](../../apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1.json)
+contains 152 verified published bands, expanding to 232 disabled country rows
+across 15 destinations. The existing importer accepts shared `countryCodes`
+for identical carrier-zone prices and expands them deterministically; checkout
+continues using the same country-specific shipping engine. No rates were imported,
+activated or approved. Available/contents approvals remain false, customs gaps
+remain explicit, and no packaging profile is granted by this schedule.
+
+The [320-row quantity comparison](../../apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1-comparison.csv)
+uses 1,061 g for one unit and provisional `(953 × quantity) + 150` g for 2–10.
+It separates base postage, published optional compensation and uncalculated
+customs/surcharges. These are not final quotations or customer shipping charges.
+See the [commercial review](SHIPPING-COMMERCIAL-VALIDATION.md#verified-published-tariff-tables--5-october-2026-guide-revision-v1)
+for coverage, price comparisons, remaining approvals and deployment sequence
+**0018 → 0019 → runtime**, with disabled gates throughout until separately approved.

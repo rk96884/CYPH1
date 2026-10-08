@@ -500,3 +500,124 @@ safeguard tests and restore-verifier tests passed. Private build flags were
 process-local; default site output was rebuilt afterward. Diff whitespace checks
 passed. No website markup/styles, dependencies, live configuration or gate
 statuses changed. Royal Mail infrastructure remains pending review/deployment.
+
+
+## Verified published tariff tables — 5 October 2026 guide, revision v1
+
+The outstanding price-table extraction is now complete. This supersedes the
+previous infrastructure-only status: **verified base prices are recorded, but
+no rates have been imported into a hosted database, approved or activated.**
+
+- [Versioned official tariff file](../../apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1.json):
+  **152 published service/destination-or-zone bands**, expanded by the existing
+  importer to **232 country-specific records**. Every row is `disabled`,
+  `available=false`, `contentsApproved=false`; the schedule is unapproved and
+  contains no packaging approvals. Source URL, printed page, destination label,
+  carrier zone, effective date and retrieval timestamp are retained per band.
+- [Quantity comparison CSV](../../apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1-comparison.csv):
+  **320 service/country/quantity comparisons**, quantities 1–10. Empty monetary
+  fields mean unavailable/not calculated, never zero cost. `finalQuote=false`
+  and `approvalStatus=unapproved` apply throughout.
+- The [synthetic fixture](../../apps/commerce-api/fixtures/royal-mail-synthetic-tariff.json)
+  remains separate and unchanged by this extraction.
+
+Coverage: UK Tracked 24 and Tracked 48, small and medium parcels; International
+Tracked small parcels and International Tracked Heavier medium parcels for
+Germany, France, Ireland, Spain, Turkey, UAE, Saudi Arabia, Qatar, Kuwait,
+Bahrain, Oman, USA, Canada and Australia. All published parcel bands are
+retained, including bands below/above the current reference shipment range:
+UK small through 2 kg; UK medium through 2/10/20 kg; international small through
+250/500/750/1,000/1,250/1,500/2,000 g; heavier through
+1/2/3/4/5/7.5/10/15/20 kg. Large letters cannot accommodate the reference device
+and are excluded. Signature add-ons and other services are outside this table.
+
+Carrier zone mapping follows the official country guide: DE/FR/IE Europe 1;
+ES Europe 2; TR Europe 3; Gulf destinations and CA World 1; AU World 2; US
+World 3. Country-specific price overrides are retained for Canada and the
+named European/Australian/US rows. The six Gulf countries share one published
+**Rest of World Zone 1** price per service/band via `countryCodes`; the parser
+expands these to stable distinct UUIDs without creating a second pricing engine.
+A published zone tariff is not confirmation that a service currently accepts a
+particular destination or the CYPH/1 contents.
+
+### Base-postage comparison — not final quotations
+
+The following shows the lowest **published weight-band base postage** among
+recorded services, ignoring unresolved service/contents/packaging eligibility.
+For the UK this selects Tracked 48 small parcel for one unit and medium parcel
+for multiple units. International one-unit entries select Tracked; quantities
+2–10 require Heavier because their estimated weight exceeds 2 kg. The CSV
+retains each service separately, rather than only the lowest price.
+
+Weights: 1,061 g measured for one unit; `(953 × quantity) + 150` g for 2–10,
+using the configurable **provisional** outer-packaging allowance. No multi-unit
+carton or shipment has been approved. Prices below are GBP, base postage only:
+
+| Destination | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| UK | £3.75 | £7.55 | £7.55 | £7.55 | £7.55 | £7.55 | £7.55 | £7.55 | £7.55 | £7.55 |
+| Germany | £9.95 | £12.60 | £13.70 | £13.70 | £14.35 | £15.75 | £15.75 | £19.35 | £19.35 | £19.35 |
+| France | £11.15 | £13.20 | £13.20 | £13.20 | £13.20 | £15.80 | £15.80 | £15.80 | £15.80 | £15.80 |
+| Ireland | £10.30 | £11.30 | £12.10 | £12.10 | £13.40 | £15.40 | £15.40 | £16.70 | £16.70 | £16.70 |
+| Spain | £11.85 | £19.80 | £24.50 | £24.50 | £29.00 | £38.00 | £38.00 | £46.00 | £46.00 | £46.00 |
+| Turkey | £16.75 | £27.35 | £34.85 | £34.85 | £41.25 | £58.00 | £58.00 | £79.60 | £79.60 | £79.60 |
+| UAE | £27.75 | £35.55 | £42.55 | £42.55 | £53.35 | £71.85 | £71.85 | £107.75 | £107.75 | £107.75 |
+| Saudi Arabia | £27.75 | £35.55 | £42.55 | £42.55 | £53.35 | £71.85 | £71.85 | £107.75 | £107.75 | £107.75 |
+| Qatar | £27.75 | £35.55 | £42.55 | £42.55 | £53.35 | £71.85 | £71.85 | £107.75 | £107.75 | £107.75 |
+| Kuwait | £27.75 | £35.55 | £42.55 | £42.55 | £53.35 | £71.85 | £71.85 | £107.75 | £107.75 | £107.75 |
+| Bahrain | £27.75 | £35.55 | £42.55 | £42.55 | £53.35 | £71.85 | £71.85 | £107.75 | £107.75 | £107.75 |
+| Oman | £27.75 | £35.55 | £42.55 | £42.55 | £53.35 | £71.85 | £71.85 | £107.75 | £107.75 | £107.75 |
+| USA | £20.20 | £32.40 | £39.80 | £39.80 | £45.50 | £59.50 | £59.50 | £76.00 | £76.00 | £76.00 |
+| Canada | £22.95 | £29.40 | £32.85 | £32.85 | £37.90 | £48.25 | £48.25 | £63.25 | £63.25 | £63.25 |
+| Australia | £25.10 | £38.85 | £45.50 | £45.50 | £49.50 | £63.95 | £63.95 | £80.30 | £80.30 | £80.30 |
+
+Additional compensation is separate: the guide publishes £50 included and
+optional cover to £250 for £3.10 internationally. Full merchandise values for
+quantities 1–3 require that optional cover; quantities 4–10 exceed the published
+ceiling. UK Tracked includes £75; only one £74.99 unit fits that published cover.
+No unpublished UK enhanced-cover option or cost is invented. Maximum-cover
+fields express only documented cover, not a claim that other arrangements exist.
+The CSV never adds cover to base postage or presents a completed checkout total.
+
+The dated guide's UK parcel prices include VAT; international tables state UK
+VAT at zero rate. Its printed page 2 separately states a 50p collection charge
+where collection applies; this is **not** added to every comparison. Other
+surcharges and destination taxes/duties/handling remain uncalculated, not zero.
+Current website starting-price promotions are not substituted for this fixed
+5 October schedule. Customer delivery charges/configuration remain unchanged.
+
+Outstanding eligibility: reconcile the applicable buying channel/account and
+current service/destination availability; confirm contents acceptance, exclusions,
+compensation eligibility, dimensional compliance and final packaging. US PDDP
+needs its own duties/handling workflow. EU, Turkey and Gulf customs arrangements
+remain pending service-specific review. A published price does not close any
+of these gaps. All rates remain unusable for checkout even if someone toggles
+only the rate status; contents/availability evidence is deliberately withheld.
+
+### Reproduce and validate offline
+
+```powershell
+npm run build:runtime --workspace @cyph1/commerce-api
+node apps/commerce-api/scripts/review-royal-mail-tariff.mjs apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1.json apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1.json
+node apps/commerce-api/scripts/compare-published-postage.mjs apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1.json
+```
+
+These commands need no database or environment changes. Offline review reports
+no eligible checkout options, as expected. The comparison command is an explicit
+published-band research lookup, not checkout eligibility. Its weight inputs
+remain configurable through `comparePublishedPostage`'s packaging argument.
+
+Focused validation: existing importer accepted all 232 expanded records;
+deterministic/unique IDs, destination coverage, disabled/unapproved controls,
+source/effective dates, representative real prices, all ten quantity weights,
+configurable allowance and separate incomplete charges passed regression tests.
+The current commerce run passed 25 core and 269 API tests; two existing local
+PostgreSQL-dependent tests were skipped in this focused run. Their preceding
+local integration evidence remains recorded above. No database migration was
+run during this extraction.
+
+Deployment remains separately authorised: back up and verify the target,
+keep gates disabled, apply **0018 then 0019**, then deploy the dependent runtime.
+These files are review evidence only; do not import/activate them before the
+outstanding operational approvals. Prior revision retirement/rollback and
+historical snapshot protections remain as documented above. GO-01 stays open.

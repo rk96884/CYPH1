@@ -431,3 +431,40 @@ test("checkout never treats provisional multi-unit packaging as verified", async
  await assert.rejects(()=>serviceFor(r,calls).quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}));
  assert.equal(calls.length,0);assert.equal(r.orders.length,0);
 });
+
+// Real published data are validated without importing or activating database rows.
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { comparePublishedPostage } from "./tariff-import.js";
+const publishedRaw=()=>JSON.parse(readFileSync(resolve(process.cwd(),"tariffs/royal-mail-online-2026-10-05-v1.json"),"utf8"));
+test("official schedule expands shared Royal Mail zone bands deterministically and remains disabled",()=>{
+ const raw=publishedRaw();const schedule=parseTariffSchedule(raw);assert.equal(raw.rates.length,152);assert.equal(schedule.rates.length,232);
+ assert.equal(new Set(schedule.rates.map(rate=>rate.id)).size,232);
+ assert.deepEqual(schedule,parseTariffSchedule(raw));
+ assert.deepEqual([...new Set(schedule.rates.map(rate=>rate.countryCode))].sort(),["AE","AU","BH","CA","DE","ES","FR","GB","IE","KW","OM","QA","SA","TR","US"]);
+ for(const rate of schedule.rates){assert.equal(rate.status,"disabled");assert.equal(rate.carrierTariff?.available,false);assert.equal(rate.carrierTariff?.contentsApproved,false);assert.equal(rate.carrierTariff?.evidenceKind,"official");assert.equal(rate.effectiveFrom.toISOString(),"2026-10-05T00:00:00.000Z");}
+ const gulf=schedule.rates.filter(rate=>rate.carrierTariff?.carrierZone==="world-1" && rate.countryCode!=="CA");
+ assert.equal(gulf.length,96);assert.ok(gulf.every(rate=>rate.carrierTariff?.carrierZone==="world-1"));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[{...raw.rates[0],countryCode:undefined,countryCodes:["GB","GB"]}]}));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[{...raw.rates[0],countryCodes:["GB"]}]}));
+});
+test("published quantity comparisons use confirmed weights, real bands and separate incomplete charges",()=>{
+ const rows=comparePublishedPostage(parseTariffSchedule(publishedRaw()));assert.equal(rows.length,320);
+ const find=(country:string,method:string,quantity:number)=>rows.find(row=>row.countryCode===country && row.methodKey===method && row.quantity===quantity)!;
+ assert.equal(find("GB","royal-mail-tracked-48-small-parcel",1).basePostageMinor,375);
+ assert.equal(find("GB","royal-mail-tracked-48-small-parcel",2).basePostageMinor,null);
+ assert.equal(find("DE","royal-mail-international-tracked",1).basePostageMinor,995);
+ assert.equal(find("DE","royal-mail-international-tracked-heavier",2).basePostageMinor,1260);
+ assert.equal(find("DE","royal-mail-international-tracked-heavier",3).basePostageMinor,1370);
+ assert.equal(find("TR","royal-mail-international-tracked",1).basePostageMinor,1675);
+ assert.equal(find("AE","royal-mail-international-tracked",1).basePostageMinor,2775);
+ assert.equal(find("US","royal-mail-international-tracked",1).basePostageMinor,2020);
+ assert.equal(find("CA","royal-mail-international-tracked",1).basePostageMinor,2295);
+ assert.equal(find("AU","royal-mail-international-tracked",1).basePostageMinor,2510);
+ for(const quantity of [1,2,3,4,5,6,7,8,9,10]) assert.equal(find("DE","royal-mail-international-tracked-heavier",quantity).weightGrams,quantity===1?1061:953*quantity+150);
+ assert.equal(find("DE","royal-mail-international-tracked",1).additionalCompensationMinor,310);
+ assert.equal(find("DE","royal-mail-international-tracked-heavier",4).compensationStatus,"insufficient-published-cover");
+ assert.ok(rows.every(row=>!row.finalQuote && row.approvalStatus==="unapproved" && row.customsChargesMinor===null && row.otherSurchargesMinor===null));
+ const changed=comparePublishedPostage(parseTariffSchedule(publishedRaw()),{unitWeightGrams:953,singleUnitProtectionGrams:108,multiUnitProtectionGrams:200});
+ assert.equal(changed.find(row=>row.quantity===2)?.weightGrams,2106);
+});
