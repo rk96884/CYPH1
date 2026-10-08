@@ -68,6 +68,7 @@ export const loadPrivateCheckoutFixtureEnabled = (environment: Environment): boo
 
 export const createCustomerRuntime = (input: Readonly<{
   checkout: Handler;
+  checkoutQuote?: Handler;
   paymentWebhook: Handler;
   orderStatus?: Handler;
   readiness: ReadinessCheck;
@@ -82,6 +83,10 @@ export const createCustomerRuntime = (input: Readonly<{
     } catch {
       return json({ status: "unavailable" }, 503);
     }
+  }
+  if (url.pathname === "/checkout/quote") {
+    if (!input.gates.checkoutEnabled) return json({ message: "Not found." }, 404);
+    return input.checkoutQuote ? input.checkoutQuote(request) : json({ message: "Not found." }, 404);
   }
   if (url.pathname === "/checkout") {
     if (!input.gates.checkoutEnabled) return json({ message: "Not found." }, 404);

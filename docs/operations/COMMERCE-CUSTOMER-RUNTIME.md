@@ -10,6 +10,7 @@ operations runtime. It exposes only:
 
 - `GET /health` — process liveness with no dependency detail;
 - `GET /ready` — database readiness with a generic success or unavailable body;
+- `/checkout/quote` — authoritative shipping/basket quote under the checkout gate;
 - `/checkout` — only when `CHECKOUT_HTTP_ENABLED=true`;
 - `/webhooks/mollie` — only when `PAYMENT_WEBHOOKS_ENABLED=true`.
 
@@ -32,7 +33,7 @@ When `CHECKOUT_HTTP_ENABLED=true`, the runtime also requires explicit
 `CHECKOUT_ADMISSION_MAX_CONCURRENT`, `CHECKOUT_ADMISSION_WINDOW_REQUESTS` and
 `CHECKOUT_ADMISSION_WINDOW_SECONDS` values. See
 `CHECKOUT-ABUSE-AND-RATE-LIMITING.md`. The application controller limits only
-checkout initiation; it never limits payment webhooks or health/readiness.
+checkout initiation and shipping quotes; it never limits payment webhooks or health/readiness.
 
 Setting `CHECKOUT_HTTP_ENABLED=true` does not override `COMMERCE_ENABLED` or
 the payment and fulfilment dependency checks. Disabling checkout must use both
@@ -353,3 +354,120 @@ For fresh order `CYPH-T-908A811154A7` (order `908a8111-54a7-4891-9351-f69bf0b58b
 ### Staging payment-test closure — 21 September 2026
 
 Following the completed Mollie lifecycle/reconciliation exercise, the customer staging service was returned to its fail-closed configuration and successfully redeployed from `main`. Post-deploy verification confirmed the expected locked-baseline route behaviour: `GET /health` → 200, `GET /ready` → 200, `GET /checkout` → 404, and `GET /webhooks/mollie` → 404. The active payment-test window is therefore closed; checkout, commerce, webhooks and the private checkout fixture are disabled, with payment and fulfilment providers disabled.
+
+## International shipping preparation
+
+**Controlled Mollie test checkout only; no live activation or gate closure.**
+Assigned ISO 3166-1 alpha-2 codes replace free-text country matching. The
+reviewed pricing map in `packages/commerce-core/src/countries.ts` assigns GB
+£3.99; UN M49 Europe plus Cyprus and Turkey £14.99; all other assigned codes
+£25.99. Crown dependencies/overseas territories use their own ISO code; GB is
+the only UK pricing code. Classification is not EU membership or approval to
+export to every listed country. Sources: [ISO country codes](https://www.iso.org/iso-3166-country-codes.html)
+and [UN M49 regions](https://unstats.un.org/unsd/methodology/m49/overview/).
+Charges are GBP, once per shipment/basket, including tracked postage and
+packing, additional to £74.99. The synthetic test product remains £1. The
+historical £1 shipping seed is no longer checkout-eligible; the new server
+quote replaces the optional legacy PUBLIC_COMMERCE_TEST_SHIPPING_RATE_ID.
+The private UI defaults to Mollie hosted test-method selection; the existing
+explicit Klarna test path remains selectable where the provider supports it.
+
+`POST /checkout/quote` accepts productSlug, quantity and countryCode; returns
+products, tax, postage/packing and total in integer minor units, and creates
+no order/payment. It shares existing checkout exposure, origin, request-bound
+and admission controls. Payment initiation recalculates the basket, ignoring
+client amounts/zone/currency; checks the rate ID, ISO destination, exact flat
+price, validity and weight/subtotal limits; rejects a changed reviewed total;
+and rechecks approval/price under row locks in the order transaction.
+Unconfigured, disabled and restricted destinations fail closed. Test approvals
+require the private fixture boundary AND Mollie test AND test/manual-test
+fulfilment. Live eligibility requires active destination, zone, method AND
+rate; test configuration cannot bypass this chain. Tax logic is unchanged:
+this implementation does not decide export VAT treatment or collect import tax.
+
+Before international payment, display and require acknowledgement:
+
+> International import duties, taxes and customs clearance charges are not
+> included in your order total and must be paid separately by the recipient
+> where applicable.
+
+Order snapshots retain country, charge/version and acknowledgement/notice
+version. Confirmation emails use persisted item and postage/packing totals
+and repeat the disclosure; international dispatch emails repeat it too.
+£299 preview fixtures remain unchanged. UAE addresses do not require a
+postcode; other addresses currently do. Review additional country-specific
+address exceptions before approving those destinations.
+
+### Isolated test setup
+
+Existing tables suffice; no new migration is required. Install the existing
+private fixture first. Against a reviewed non-production DATABASE_URL whose
+name contains a separate development/staging/test component, run:
+
+```powershell
+$env:NODE_ENV = "test"
+$env:PAYMENT_PROVIDER = "mollie-test"
+$env:COMMERCE_ENABLED = "false"
+$env:SHIPPING_SETUP_CONFIRM = "international-test-only"
+$env:SHIPPING_TEST_COUNTRIES = "GB,DE,FR,TR,AE,SA,US,CA,AU"
+# DATABASE_URL and DATABASE_SSL must already identify the reviewed isolated DB.
+npm run build:runtime --workspace @cyph1/commerce-api
+node apps/commerce-api/scripts/configure-international-shipping.mjs
+Remove-Item Env:SHIPPING_SETUP_CONFIRM
+Remove-Item Env:SHIPPING_TEST_COUNTRIES
+```
+
+Separate from deployment/startup, setup creates test zones/method and
+country-specific rates. Only explicitly listed codes receive test destination
+approval; all others are disabled. Empty list approves none; rerunning replaces
+the test allowlist, so include every intended test country. Existing active
+or restricted shipping configuration causes rollback. Existing legacy test
+zone/FKs are retained; ISO country determines price. Setup never enables
+commerce or changes credentials. Follow the existing authorised staging
+rehearsal procedure separately; do not change production environment values.
+
+### Individual live country approval after GO-01
+
+No code change is needed. A named operator records country-specific
+product/compliance, carrier/customs and policy approval, then reviews the exact
+destination, zone, tracked-postage-packing method and rate IDs in a transaction.
+If missing in production, provision those rows in disabled status through the
+reviewed database-configuration process first, using the ISO mapping and exact
+GBP flat amount above; never run the test setup command on production. No
+application code change is required for either provisioning or approval:
+
+```sql
+BEGIN;
+SELECT c.country_code,c.destination_status,z.id AS zone_id,z.status,
+       m.id AS method_id,m.status,r.id AS rate_id,r.rate_minor,r.currency,r.status
+FROM shipping_zone_countries c JOIN shipping_zones z ON z.id=c.zone_id
+JOIN shipping_rates r ON r.zone_id=z.id AND r.country_code=c.country_code
+JOIN shipping_methods m ON m.id=r.shipping_method_id
+WHERE c.country_code='DE' AND m.method_key='tracked-postage-packing';
+-- After approval: set ONLY the reviewed zone, method and DE rate IDs active.
+-- UPDATE shipping_zones SET status='active' WHERE id=<reviewed-zone-id>;
+-- UPDATE shipping_methods SET status='active' WHERE id=<reviewed-method-id>;
+-- UPDATE shipping_rates SET status='active' WHERE id=<reviewed-DE-rate-id>;
+UPDATE shipping_zone_countries SET destination_status='active',updated_at=now()
+WHERE country_code='DE' AND destination_status IN ('disabled','test');
+ROLLBACK;
+```
+
+Example deliberately rolls back. Substitute approved IDs and commit only
+under separately authorised activation. Shared zone/method activation cannot
+approve another country: its own destination AND rate must also be active.
+Do not promote every test country. The guarded setup command is test-only;
+production data changes require the reviewed operational process above.
+Restrict/revoke individual countries using disabled, or restricted plus a
+restriction_reason. This blocks new checkouts; already-issued Mollie sessions
+need existing in-flight-payment containment/reconciliation, not an assumption
+that changing configuration cancels a provider session.
+
+Rehearse GB, DE, FR, TR, AE, SA, US, CA, AU: 399/1499/2599 minor-unit charges,
+quantity changes, immutable totals/email breakdowns, international disclosure,
+rate/amount tampering, unapproved destinations, approval revocation and
+existing duplicate/uncertain-payment, webhook, status and dispatch behaviour.
+Automated provider-boundary tests are not real hosted Mollie test payments;
+retain separately authorised sandbox-payment evidence. No real payment,
+email, deployment or database setup is executed by these unit tests. Existing
+compliance/operational gates and GO-01 remain open.

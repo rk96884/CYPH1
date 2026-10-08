@@ -113,3 +113,15 @@ test("audit events are immutable and carry explicit aggregate identity", () => {
   assert.equal(event.metadata.from, "captured");
   assert.throws(() => createAuditEvent({ eventType: "", aggregateType: "payment", aggregateId: "pay_1", actorType: "system" }), CommerceDomainError);
 });
+
+import { countryCodes, normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor } from "./countries.js";
+test("ISO shipping classification is complete, deterministic and rejects non-country aliases", () => {
+  assert.equal(countryCodes.length, 249);
+  assert.equal(new Set(countryCodes).size, 249);
+  for (const code of countryCodes) assert.ok([399,1499,2599].includes(trackedPostageMinor[shippingZoneForCountry(code)]));
+  for (const code of ["DE","FR","TR","CY","NO","CH","RU"]) assert.equal(shippingZoneForCountry(code), "europe");
+  for (const code of ["AE","SA","US","CA","AU","GF"]) assert.equal(shippingZoneForCountry(code), "rest-of-world");
+  assert.equal(shippingZoneForCountry(" gb "), "uk");
+  assert.equal(normaliseCountryCode(" tr "), "TR");
+  for (const code of ["UK","EU","ZZ","XK","Turkey","GBR",""]) assert.throws(() => shippingZoneForCountry(code));
+});

@@ -64,7 +64,7 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
   async getShipping(destinationCountry: string) {
     const countryCode = destinationCountry.trim().toUpperCase();
     const destination = await this.pool.query(
-      `SELECT c.country_code, c.destination_status, z.id AS zone_id, z.zone_key
+      `SELECT c.country_code, c.destination_status, z.id AS zone_id, z.zone_key, z.status AS zone_status
          FROM shipping_zone_countries c
          JOIN shipping_zones z ON z.id = c.zone_id
         WHERE c.country_code = $1 AND z.status IN ('test', 'active')`,
@@ -74,7 +74,8 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     const destinationRow = destination.rows[0];
     const rates = await this.pool.query(
       `SELECT r.id, z.zone_key, r.country_code, m.method_key, m.name AS method_name,
-              r.rate_minor, r.currency, r.status, r.minimum_order_minor,
+              r.rate_minor, r.currency,
+              CASE WHEN r.status = 'test' OR z.status = 'test' OR m.status = 'test' THEN 'test' ELSE r.status END AS status, r.minimum_order_minor,
               r.maximum_order_minor, r.minimum_weight_grams, r.maximum_weight_grams,
               r.free_shipping_threshold_minor, r.effective_from, r.effective_to
          FROM shipping_rates r
@@ -90,7 +91,7 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
       destination: Object.freeze({
         countryCode: destinationRow.country_code,
         zoneKey: destinationRow.zone_key,
-        status: destinationRow.destination_status,
+        status: destinationRow.destination_status === "active" && destinationRow.zone_status === "test" ? "test" : destinationRow.destination_status,
       }),
       rates: Object.freeze(rates.rows.map((row): ShippingRate => Object.freeze({
         id: row.id,
@@ -172,7 +173,7 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
           order.deliveryAddress.region ?? null, order.deliveryAddress.postalCode,
           order.deliveryAddress.countryCode],
       );
-      const shipping = await this.shippingSnapshot(client, order.shippingRateId, order.deliveryAddress.countryCode);
+      const shipping = await this.shippingSnapshot(client, order);
       await client.query(
         `INSERT INTO orders
           (id, order_number, customer_id, status, currency, subtotal_minor, tax_minor,
@@ -266,23 +267,40 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     if (result.rowCount !== 1) throw new Error("Checkout session was not reserved for resolution.");
   }
 
-  private async shippingSnapshot(client: Queryable, rateId: string, countryCode: string) {
+  private async shippingSnapshot(client: Queryable, order: CheckoutOrder) {
     const result = await client.query(
-      `SELECT m.method_key, m.name, m.description, r.rate_minor, r.currency,
-              r.version, r.country_code, z.zone_key
+      `SELECT m.method_key, m.name, m.description, m.status AS method_status,
+              r.rate_minor, r.currency, r.status AS rate_status, r.version,
+              r.country_code, z.zone_key, z.status AS zone_status, c.destination_status,
+              r.effective_from, r.effective_to, r.minimum_order_minor, r.maximum_order_minor,
+              r.minimum_weight_grams, r.maximum_weight_grams, r.free_shipping_threshold_minor
          FROM shipping_rates r
          JOIN shipping_methods m ON m.id = r.shipping_method_id
          JOIN shipping_zones z ON z.id = r.zone_id
-        WHERE r.id = $1 AND (r.country_code IS NULL OR r.country_code = $2)`,
-      [rateId, countryCode],
+         JOIN shipping_zone_countries c ON c.zone_id = z.id AND c.country_code = $2
+        WHERE r.id = $1 AND (r.country_code IS NULL OR r.country_code = $2)
+        FOR SHARE OF r, m, z, c`,
+      [order.shippingRateId, order.deliveryAddress.countryCode],
     );
     if (result.rowCount !== 1) throw new CheckoutError("unavailable", "Shipping is no longer available.");
     const row = result.rows[0];
+    const approved = (status: string) => status === "active" || (order.shippingApproval === "test" && status === "test");
+    const weight = order.product.shippingWeightGrams * order.quantity;
+    if (![row.method_status, row.rate_status, row.zone_status, row.destination_status].every(approved)
+      || integer(row.rate_minor, "shipping rate") !== order.deliveryMinor || row.currency !== order.currency
+      || new Date(row.effective_from) > new Date() || (row.effective_to && new Date(row.effective_to) <= new Date())
+      || (row.minimum_order_minor !== null && order.subtotalMinor < Number(row.minimum_order_minor))
+      || (row.maximum_order_minor !== null && order.subtotalMinor > Number(row.maximum_order_minor))
+      || (row.minimum_weight_grams !== null && weight < Number(row.minimum_weight_grams))
+      || (row.maximum_weight_grams !== null && weight > Number(row.maximum_weight_grams))
+      || row.free_shipping_threshold_minor !== null) throw new CheckoutError("conflict", "Shipping approval or pricing changed. Review a new quote.");
     return {
       method: { key: row.method_key, name: row.name, description: row.description },
       rate: {
         amountMinor: integer(row.rate_minor, "shipping rate"), currency: row.currency,
-        version: row.version, zoneKey: row.zone_key, countryCode: row.country_code,
+        version: row.version, zoneKey: row.zone_key, countryCode: order.deliveryAddress.countryCode,
+        importChargesAccepted: order.importChargesAccepted === true,
+        ...(order.importChargesAccepted ? { importChargesNoticeVersion: "international-v1" } : {}),
       },
     };
   }
