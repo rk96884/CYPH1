@@ -11,7 +11,7 @@ import {
   type PaymentMethod,
   type PaymentProvider,
   type ShippingDestination,
-  type ShippingRate,
+  type ShippingRate, type PackagingProfile, type CarrierCalculation,
 } from "../../../../packages/commerce-core/src/index.js";
 import type { CommerceConfig } from "../config.js";
 
@@ -49,15 +49,21 @@ export type CheckoutOrder = Readonly<{
 
 export type ShippingPricingSnapshot = Readonly<{
   schemaVersion: 2; rateRevision: string; quoteRevision: string; selectedAt: string;
-  quantity: number; totalWeightGrams: number; billableWeightGrams: null;
+  quantity: number; totalWeightGrams: number; billableWeightGrams: number | null;
   minimumWeightGrams: number | null; maximumWeightGrams: number | null;
   minimumSubtotalMinor: number | null; maximumSubtotalMinor: number | null;
-  packagingProfileVersion: null; rateCountryCode: string | null;
+  carrierCalculation?: CarrierCalculation;
+  packagingProfileVersion: number | null; rateCountryCode: string | null;
   effectiveFrom: string; effectiveTo: string | null; freeShippingThresholdMinor: null;
 }>;
 
+export const canonicalShippingJson = (value: unknown): string => JSON.stringify(value, (_key, entry) =>
+  entry && typeof entry === "object" && !Array.isArray(entry)
+    ? Object.fromEntries(Object.entries(entry).sort(([a], [b]) => a.localeCompare(b))) : entry);
+
 /** Content identity supplements the persisted rate ID/version; no mutable lookup is needed to audit an order. */
-export const shippingRateRevision = (rate: ShippingRate): string => createHash("sha256").update(JSON.stringify({
+export const shippingRateRevision = (rate: ShippingRate): string => createHash("sha256").update(canonicalShippingJson({
+  ...(rate.carrierTariff ? { carrierTariff: rate.carrierTariff } : {}),
   id: rate.id, version: rate.version ?? null, zoneKey: rate.zoneKey, countryCode: rate.countryCode ?? null,
   methodKey: rate.methodKey, methodName: rate.methodName, amountMinor: rate.price.value, currency: rate.price.currency,
   minimumSubtotal: rate.minimumSubtotal ?? null, maximumSubtotal: rate.maximumSubtotal ?? null,
@@ -69,6 +75,7 @@ export const shippingRateRevision = (rate: ShippingRate): string => createHash("
 export type CheckoutResult = Readonly<{ orderId: string; orderNumber: string; status: "pending_payment"; checkoutUrl: string; replayed: boolean }>;
 
 export interface CheckoutRepository {
+  getPackagingProfiles?(productId: string): Promise<readonly PackagingProfile[]>;
   getProduct(slug: string): Promise<CheckoutProduct | undefined>;
   getShipping(destinationCountry: string): Promise<Readonly<{ destination: ShippingDestination; rates: readonly ShippingRate[] }> | undefined>;
   findCheckout(idempotencyKey: string, fingerprint: string): Promise<CheckoutResult | undefined>;
@@ -114,20 +121,29 @@ export class CheckoutService {
     const lines = [{ productId: product.id, sku: product.sku, quantity: input.quantity, unitPrice: money(product.priceMinor, product.currency), unitTax: money(product.unitTaxMinor, product.currency), unitWeightGrams: product.shippingWeightGrams }];
     const provisional = calculateBasket(lines, money(0, product.currency), money(0, product.currency));
     try {
-      const quotes = quoteShipping({ ...shipping, rates: shipping.rates.filter(rate => rate.methodKey === trackedPostageMethod && rate.price.currency === "GBP" && rate.price.value === trackedPostageMinor[zone] && rate.freeShippingThreshold === undefined), basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed });
-      if (quotes.length !== 1) throw new CheckoutError("unavailable", "Shipping configuration requires review.");
-      const quote = quotes[0]!;
+      const carrierRates = shipping.rates.filter(rate => rate.carrierTariff && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
+      const packagingProfiles = carrierRates.length ? await this.repository.getPackagingProfiles?.(product.id) ?? [] : [];
+      // Approved carrier configuration takes precedence, even when it yields no eligible service.
+      // Legacy flat rates remain a single-unit staging fallback, never a multi-unit packaging approval.
+      if (!carrierRates.length && input.quantity > 1) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
+      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : shipping.rates.filter(rate => rate.methodKey === trackedPostageMethod && rate.price.currency === "GBP" && rate.price.value === trackedPostageMinor[zone] && rate.freeShippingThreshold === undefined),
+        basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed,
+        shipment: {productId:product.id,quantity:input.quantity,unitWeightGrams:product.shippingWeightGrams,
+          merchandiseValueMinor:provisional.subtotal.value+provisional.tax.value,packagingProfiles} });
+      const quote = [...quotes].sort((a,b)=>a.price.value-b.price.value || a.rateId.localeCompare(b.rateId))[0]!;
       const basket = calculateBasket(lines, money(0, product.currency), quote.price);
       const rate = shipping.rates.find(candidate => candidate.id === quote.rateId)!;
       const rateRevision = shippingRateRevision(rate);
-      const quoteRevision = createHash("sha256").update(JSON.stringify({ rateRevision, countryCode: country,
+      const quoteRevision = createHash("sha256").update(canonicalShippingJson({ rateRevision, countryCode: country,
         productId: product.id, quantity: input.quantity, unitPriceMinor: product.priceMinor, unitTaxMinor: product.unitTaxMinor,
+        ...(quote.carrierCalculation ? { carrierCalculation: quote.carrierCalculation } : {}),
         totalWeightGrams: basket.totalWeightGrams, totalMinor: basket.total.value, currency: basket.total.currency })).digest("hex");
       const snapshot: ShippingPricingSnapshot = Object.freeze({ schemaVersion: 2, rateRevision, quoteRevision,
-        selectedAt: new Date().toISOString(), quantity: input.quantity, totalWeightGrams: basket.totalWeightGrams,
-        billableWeightGrams: null, minimumWeightGrams: rate.minimumWeightGrams ?? null,
+        selectedAt: new Date().toISOString(), quantity: input.quantity, totalWeightGrams: quote.carrierCalculation?.actualWeightGrams ?? basket.totalWeightGrams,
+        ...(quote.carrierCalculation ? { carrierCalculation: quote.carrierCalculation } : {}),
+        billableWeightGrams: quote.carrierCalculation?.billableWeightGrams ?? null, minimumWeightGrams: rate.minimumWeightGrams ?? null,
         maximumWeightGrams: rate.maximumWeightGrams ?? null, minimumSubtotalMinor: rate.minimumSubtotal ?? null,
-        maximumSubtotalMinor: rate.maximumSubtotal ?? null, packagingProfileVersion: null,
+        maximumSubtotalMinor: rate.maximumSubtotal ?? null, packagingProfileVersion: quote.carrierCalculation?.packaging.version ?? null,
         rateCountryCode: rate.countryCode ?? null, effectiveFrom: rate.effectiveFrom.toISOString(),
         effectiveTo: rate.effectiveTo?.toISOString() ?? null, freeShippingThresholdMinor: null });
       return { product, quote, basket, snapshot };

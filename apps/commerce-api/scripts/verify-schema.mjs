@@ -30,7 +30,7 @@ await client.connect();
 try {
   const expectedTables = [
     "returns", "return_items", "products", "inventory_levels", "customers", "customer_consents", "addresses",
-    "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates",
+    "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates", "shipping_packaging_profiles",
     "orders", "order_items", "payments", "refunds", "webhook_deliveries", "webhook_events", "fulfilments",
     "outbox_events", "checkout_sessions", "fulfilment_events", "operator_commands", "communication_deliveries", "audit_events", "schema_migrations",
   ];
@@ -42,6 +42,12 @@ try {
   const missing = expectedTables.filter((table) => !found.has(table));
   if (missing.length > 0) throw new Error(`Missing database tables: ${missing.join(", ")}`);
   console.log(`Verified ${expectedTables.length} required tables.`);
+
+  const carrierColumns = await client.query("SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='shipping_rates' AND column_name='carrier_tariff'");
+  if (carrierColumns.rowCount !== 1) throw new Error("Missing carrier tariff evidence column.");
+  const shippingTriggers = await client.query("SELECT tgname FROM pg_trigger WHERE NOT tgisinternal AND tgname = ANY($1)", [["shipping_rates_immutable_revision","orders_immutable_shipping_evidence","shipping_packaging_immutable_revision"]]);
+  if (shippingTriggers.rowCount !== 3) throw new Error("Missing immutable shipping/packaging evidence triggers.");
+  console.log("Verified carrier tariff and immutable shipping/packaging schema.");
 
   const leaseColumns = await client.query(`SELECT table_name,column_name FROM information_schema.columns
     WHERE table_schema='public' AND (table_name,column_name) IN

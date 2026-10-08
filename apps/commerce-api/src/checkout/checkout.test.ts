@@ -174,15 +174,15 @@ for (const [countryCode, deliveryMinor] of [["GB", 399], ["DE", 1499], ["FR", 14
     const repository = new MemoryCheckoutRepository();
     const captured: CreateCheckoutInput[] = [];
     const service = serviceFor(repository, captured);
-    const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode });
+    const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode });
     assert.equal(quote.deliveryMinor, deliveryMinor);
-    assert.equal(quote.totalMinor, 24_000 + deliveryMinor);
+    assert.equal(quote.totalMinor, 12_000 + deliveryMinor);
     assert.equal(quote.importChargesNotice === null, countryCode === "GB");
-    await service.initiate(request({ quantity: 2, importChargesAccepted: true, expectedTotalMinor: quote.totalMinor,
+    await service.initiate(request({ quantity: 1, importChargesAccepted: true, expectedTotalMinor: quote.totalMinor,
       deliveryMinor: 0, totalMinor: 1, shippingZone: "uk", currency: "USD",
       deliveryAddress: { ...request().deliveryAddress, countryCode, postalCode: countryCode === "AE" ? "" : "TEST POSTCODE" } }));
     assert.equal(repository.orders[0]?.deliveryMinor, deliveryMinor);
-    assert.equal(repository.orders[0]?.totalMinor, 24_000 + deliveryMinor);
+    assert.equal(repository.orders[0]?.totalMinor, 12_000 + deliveryMinor);
     assert.equal(captured[0]?.amount.value, quote.totalMinor);
     assert.equal(captured[0]?.amount.currency, "GBP");
     assert.equal(captured[0]?.lines.reduce((sum, line) => sum + line.totalAmount.value, 0), quote.totalMinor);
@@ -349,11 +349,8 @@ test("shipping snapshots bind revision, quantity, destination and weight; stale 
   assert.equal(replay.replayed, true);
   assert.equal(calls.length, 1);
   assert.deepEqual(repository.orders[0], original);
-  const two = await service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode: "DE" });
-  await assert.rejects(() => service.initiate({ ...input, quantity: 2, idempotencyKey: "stale-quantity" }), /quote changed/);
-  await service.initiate({ ...input, quantity: 2, idempotencyKey: "fresh-quantity", shippingQuoteRevision: two.shippingQuoteRevision, expectedTotalMinor: two.totalMinor });
-  assert.equal(repository.orders[1]?.shippingPricingSnapshot?.totalWeightGrams, 1000);
-  assert.equal(repository.orders[1]?.shippingPricingSnapshot?.quantity, 2);
+  await assert.rejects(() => service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode: "DE" }), /packaging requires approval/);
+
 });
 
 test("failed or ambiguous payment attempts retain their original atomic pricing evidence", async () => {
@@ -368,4 +365,69 @@ test("failed or ambiguous payment attempts retain their original atomic pricing 
     assert.equal(repository.attached, undefined);
     assert.equal((retryable ? repository.resolutionRequired : repository.abandoned).length, 1);
   }
+});
+
+// Entirely synthetic carrier rules: not a Royal Mail rate approval.
+import { type CarrierTariff, type PackagingProfile } from "../../../../packages/commerce-core/src/index.js";
+import { parseTariffSchedule, previewTariff, tariffChanges, validateTariffImportEnvironment } from "./tariff-import.js";
+const syntheticTariff:CarrierTariff={carrier:"royal-mail",serviceId:"test-tracked",carrierZone:"test-uk",revision:"test-v1",sourceUrl:"https://example.invalid",retrievedAt:"2026-10-08T00:00:00Z",evidenceKind:"synthetic",available:true,tracked:true,
+ maximumWeightGrams:20000,maximumDimensions:{lengthMm:610,widthMm:460,heightMm:460},weightBasis:"actual",fulfilmentMethod:"manual",includedCompensationMinor:100000,maximumInsurableValueMinor:100000,
+ customs:"domestic",contentsApproved:true,restrictions:"Synthetic only",eligibilityEvidenceUrl:"https://example.invalid"};
+const syntheticPackaging:PackagingProfile={id:"test-package",version:1,productId:"product_test",minimumQuantity:1,maximumQuantity:10,additionalWeightGrams:100,verificationStatus:"synthetic",dimensions:{lengthMm:400,widthMm:300,heightMm:300},fulfilmentMethod:"manual",status:"test"};
+class CarrierRepository extends MemoryCheckoutRepository {
+ tariff=syntheticTariff; packages:PackagingProfile[]=[syntheticPackaging];
+ override async getShipping(countryCode="GB") {return {destination:{countryCode,zoneKey:shippingZoneForCountry(countryCode),status:"test" as const},rates:[
+  {id:"carrier",version:1,zoneKey:shippingZoneForCountry(countryCode),countryCode,methodKey:"test-carrier",methodName:"Test carrier",price:money(777,"GBP"),status:"test" as const,effectiveFrom:new Date("2026-01-01"),minimumWeightGrams:1,maximumWeightGrams:20000,carrierTariff:this.tariff},
+  ...(await super.getShipping(countryCode)).rates]};}
+ async getPackagingProfiles(){return this.packages;}
+}
+test("carrier quote and checkout preserve packaging, tariff and payment totals; stale changes never pay",async()=>{
+ const repository=new CarrierRepository();const calls:CreateCheckoutInput[]=[];const service=serviceFor(repository,calls);
+ const quote=await service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"});assert.equal(quote.deliveryMinor,777);
+ const one=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});
+ assert.notEqual(one.shippingQuoteRevision,quote.shippingQuoteRevision);
+ await assert.rejects(()=>service.initiate(request({quantity:2,shippingRateId:quote.shippingRateId,shippingQuoteRevision:one.shippingQuoteRevision})),/quote changed/);
+ const input=request({quantity:2,shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+ await service.initiate(input);assert.equal(calls[0]?.amount.value,24777);
+ const saved=repository.orders[0]!.shippingPricingSnapshot;assert.equal(saved.totalWeightGrams,1100);assert.equal(saved.billableWeightGrams,1100);
+ assert.equal(saved.carrierCalculation?.merchandiseValueMinor,24000);assert.equal(saved.packagingProfileVersion,1);
+ repository.tariff={...syntheticTariff,revision:"test-v2"};
+ await assert.rejects(()=>service.initiate({...input,idempotencyKey:"stale-tariff"}),CheckoutError);
+ repository.tariff=syntheticTariff;repository.packages=[{...syntheticPackaging,version:2,additionalWeightGrams:200}];
+ await assert.rejects(()=>service.initiate({...input,idempotencyKey:"stale-packaging"}),CheckoutError);assert.equal(calls.length,1);
+ const replay=await service.initiate(input);assert.equal(replay.replayed,true);assert.deepEqual(repository.orders[0]!.shippingPricingSnapshot,saved);
+});
+test("approved carrier failure cannot fall back to a cheaper legacy flat rate",async()=>{
+ const r=new CarrierRepository();r.packages=[];await assert.rejects(()=>serviceFor(r,[]).quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}));
+ r.packages=[syntheticPackaging];r.tariff={...syntheticTariff,available:false};await assert.rejects(()=>serviceFor(r,[]).quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"}));
+});
+test("reviewed import requires disabled complete non-overlapping versioned evidence and previews without activation",()=>{
+ const rate:ShippingRate={id:"import",version:1,zoneKey:"uk",countryCode:"GB",methodKey:"test",methodName:"Test",price:money(777,"GBP"),status:"disabled",effectiveFrom:new Date("2026-01-01"),minimumWeightGrams:1,maximumWeightGrams:20000,carrierTariff:syntheticTariff};
+ const raw={revision:"test-v1",rates:[rate],packagingProfiles:[{...syntheticPackaging,status:"disabled"}]};
+ const schedule=parseTariffSchedule(JSON.parse(JSON.stringify(raw)));
+ assert.equal(previewTariff(schedule,"product_test",953,7499,new Date("2026-10-08"))[5]?.shippingMinor,777);
+ assert.equal(schedule.rates[0]?.status,"disabled");assert.throws(()=>parseTariffSchedule({...raw,rates:[{...rate,status:"active"}]}));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[rate,{...rate,id:"overlap",version:2}]}));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[{...rate,carrierTariff:{...syntheticTariff,evidenceKind:"official"}}]}));
+ const revised=parseTariffSchedule({...raw,rates:[{...rate,id:"new",version:2,price:money(888,"GBP"),maximumWeightGrams:19000}]});
+ assert.equal(tariffChanges(schedule,revised)[0]?.previousPriceMinor,777);assert.equal(tariffChanges(schedule,revised)[0]?.priceMinor,888);
+});
+
+test("tariff import guards reject production, enabled gates, non-test payments and unconfirmed revisions/databases",()=>{
+ const env={NODE_ENV:"test",COMMERCE_ENABLED:"false",CHECKOUT_HTTP_ENABLED:"false",PAYMENT_WEBHOOKS_ENABLED:"false",PRIVATE_CHECKOUT_FIXTURE_ENABLED:"false",PAYMENT_PROVIDER:"mollie-test",TARIFF_IMPORT_APPROVED_REVISION:"v1",DATABASE_URL:"postgres://localhost/commerce_test",CONFIRM_NON_PRODUCTION_DATABASE:"commerce_test"};
+ validateTariffImportEnvironment(env,"v1");
+ for(const change of [{NODE_ENV:"production"},{COMMERCE_ENABLED:"true"},{CHECKOUT_HTTP_ENABLED:"true"},{PAYMENT_WEBHOOKS_ENABLED:"true"},{PRIVATE_CHECKOUT_FIXTURE_ENABLED:"true"},{PAYMENT_PROVIDER:"mollie-live"},{TARIFF_IMPORT_APPROVED_REVISION:"v2"},{CONFIRM_NON_PRODUCTION_DATABASE:"other"},{DATABASE_URL:"postgres://localhost/production_test",CONFIRM_NON_PRODUCTION_DATABASE:"production_test"}]) assert.throws(()=>validateTariffImportEnvironment({...env,...change},"v1"));
+});
+
+test("checkout selects the cheapest eligible carrier charge including optional cover",async()=>{
+ const r=new CarrierRepository();const original=r.getShipping.bind(r);
+ r.getShipping=async(country="GB")=>{const s=await original(country);const base=s.rates[0]!;return {...s,rates:[...s.rates,{...base,id:"lower-postage-but-cover",methodKey:"other",price:money(500,"GBP"),carrierTariff:{...syntheticTariff,includedCompensationMinor:5000,additionalCompensation:{coverMinor:100000,costMinor:500}}}]};};
+ const q=await serviceFor(r,[]).quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});assert.equal(q.shippingRateId,"carrier");assert.equal(q.deliveryMinor,777);
+});
+
+test("checkout never treats provisional multi-unit packaging as verified", async()=>{
+ const r=new CarrierRepository();r.packages=[{...syntheticPackaging,verificationStatus:"provisional"} as PackagingProfile];
+ const calls:CreateCheckoutInput[]=[];
+ await assert.rejects(()=>serviceFor(r,calls).quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}));
+ assert.equal(calls.length,0);assert.equal(r.orders.length,0);
 });

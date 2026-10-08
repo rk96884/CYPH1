@@ -623,3 +623,78 @@ transactional rollback. Never point it at staging or production.
 Local evidence — 8 October 2026: all 18 migrations and the integration verifier
 passed on a fresh PostgreSQL 17 loopback cluster. The test cluster was shut down
 afterwards. No staging or production migration or data change was performed.
+
+
+## Royal Mail tariff and multi-unit calculation infrastructure — 8 October 2026
+
+**Implemented, not deployed or commercially approved.** Requires migrations
+`0018_shipping_pricing_evidence.sql` then `0019_carrier_tariffs_and_packaging.sql`.
+Neither migration has been applied to staging/production by this work. No
+shipping rate, destination, product, payment credential or launch gate is enabled.
+
+`shipping_rates.carrier_tariff` adds service/zone/source/revision, dimensions,
+weight basis, tracking/availability, contents/customs and compensation evidence.
+Existing price, currency, country, version, effective dates and weight bands are
+reused. Carrier zones are explicit per ISO-country/service row; they are not
+CYPH/1 commercial zones. Packaging lives in versioned
+`shipping_packaging_profiles`, tied to the product and fulfilment method.
+The profile records quantity range, additional weight and outer dimensions.
+Approval is its table `status`; profile JSON is immutable and its stored status
+is informational. Status is overlaid from the authoritative column on reads.
+
+Checkout uses the existing `quoteShipping` engine. It calculates persisted unit
+weight × quantity + approved additional packaging weight, validates dimensions
+(including an optional total-dimensions limit), and uses actual or volumetric
+weight according to the reviewed service rule. Dimensions are millimetres;
+volumetric divisor is cm³/kg, so mm³/divisor gives grams. Weight bands are
+inclusive; adjacent bands must not overlap. Quantity is 1–10. Full merchandise
+value includes item tax; cover excludes shipping. Verified optional cover cost
+is added to postage. Excess weight/dimensions, insufficient cover, missing or
+ambiguous packaging, unavailable/untracked service, unapproved contents or
+incompatible customs produce no option. There is no automatic parcel splitting.
+
+Approved carrier rows take precedence over legacy flat rates. Failure of their
+eligibility checks never falls back to flat pricing. If no carrier rows are
+approved, the existing single-unit staging flat rates remain unchanged;
+quantities above one fail closed until approved carrier packaging/rates exist.
+Cheapest eligible service is selected deterministically (price, then rate ID).
+Only that option is returned; client-supplied prices cannot override it.
+
+The opaque quote revision includes carrier and packaging evidence. Checkout
+recalculates, rejects changed revisions/totals, then revalidates the selected
+rate and packaging under shared locks in the atomic order transaction.
+Snapshots retain the applied charge, base postage, actual/billable weights,
+full tariff source/revision/zone, packaging revision/dimensions/weight,
+merchandise value, compensation limit and cover cost. Existing country/method/
+band fields are reused. Carrier evidence is accessible only through the existing
+protected operations order detail (`orders:read`), not the list or customer APIs.
+Historical snapshots are not recalculated/backfilled. Existing idempotent
+replays retain their original evidence. Failed initiation retains a cancelled
+order's evidence; ambiguous payment outcomes remain resolution-required.
+
+For sources, reviewed import/approval, synthetic calculations and rollback see
+[shipping commercial validation](SHIPPING-COMMERCIAL-VALIDATION.md#royal-mail-tariff-readiness--8-october-2026).
+
+
+### Confirmed weight correction and provisional multi-unit packaging
+
+Owner-confirmed retail-packaged device: **953 g**. Complete single-unit shipping
+weight: **1,061 g**. The **108 g** protective packaging component is inferred by
+subtraction. Royal Mail profiles use 953 g as the persisted unit-weight basis:
+quantity 1 adds 108 g; quantities 2–10 add a configurable **150 g once per
+shipment**, currently provisional. Thus quantity 1 is 1,061 g and multi-unit
+estimates are `(quantity × 953) + 150` g. No hosted catalogue data is updated.
+
+Keep provisional multi-unit profiles disabled. `verificationStatus: provisional`
+is rejected by checkout regardless of approval status; missing multi-unit
+verification is also rejected. Offline review explicitly allows estimates,
+without authorising payment. After actual packed weight/carton verification
+and approval, create a new immutable profile revision marked `verified` and
+separately approve it. Synthetic packaging is permitted only in guarded tests.
+No multi-unit checkout, shipping rate or launch gate is activated by this change.
+
+Weight-correction validation: 25 core and 303 API tests passed with no skips,
+plus the disposable PostgreSQL snapshot/integration script. TypeScript checks,
+site/runtime builds, commerce security audit and diff checks passed. Offline
+preview returned 1,061 g for one unit, 2,056 g for two and 3,009 g for three;
+multi-unit previews are explicitly provisional. No hosted data was changed.
