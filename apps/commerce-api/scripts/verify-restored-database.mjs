@@ -6,7 +6,7 @@ const { Client } = pg;
 
 const expectedTables = Object.freeze([
   "returns", "return_items", "products", "inventory_levels", "customers", "customer_consents", "addresses",
-  "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates",
+  "shipping_zones", "shipping_zone_countries", "shipping_methods", "shipping_rates", "shipping_packaging_profiles",
   "orders", "order_items", "payments", "refunds", "webhook_deliveries", "webhook_events",
   "fulfilments", "outbox_events", "checkout_sessions", "fulfilment_events", "operator_commands",
   "communication_deliveries", "audit_events", "schema_migrations",

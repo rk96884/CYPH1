@@ -10,6 +10,7 @@ const validCheckoutInput = (value: unknown): value is Omit<InitiateCheckoutInput
   return typeof value.productSlug === "string"
     && typeof value.quantity === "number"
     && typeof value.shippingRateId === "string"
+    && typeof value.shippingQuoteRevision === "string" && /^[a-f0-9]{64}$/.test(value.shippingQuoteRevision)
     && typeof value.email === "string"
     && typeof value.correlationId === "string"
     && (value.importChargesAccepted === undefined || typeof value.importChargesAccepted === "boolean")

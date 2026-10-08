@@ -19,3 +19,5 @@ export * from "./state-machine.js";
 export const commerceCoreVersion = "0.1.0" as const;
 
 export * from "./countries.js";
+
+export * from "./carrier-tariff.js";

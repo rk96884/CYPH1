@@ -523,3 +523,197 @@ controls. Verify unauthenticated access remains rejected, then read these five
 orders through the protected endpoint and compare the table above. Do not create
 payments, refunds, dispatches or fulfilments to verify this read-only change.
 No deployment or launch-gate closure is authorised by this evidence.
+
+## Immutable shipping-pricing evidence (snapshot schema version 2)
+
+New application checkouts extend the existing `orders.shipping_rate_snapshot`
+JSON atomically with the order, item and idempotency reservation. Existing
+`shipping_rate_id`, `shipping_country_code`, `delivery_minor`, currency and
+`shipping_method_snapshot` fields are reused; no duplicate address or rate table
+is introduced. The method snapshot preserves the selected key, display name and
+description. The rate snapshot retains amountMinor, currency, numeric version,
+zoneKey, countryCode and import-charge acknowledgement, and adds:
+
+- schemaVersion: 2;
+- rateRevision: SHA-256 content identity of the selected rate ID/version, method,
+  zone/destination scope, amount/currency, eligibility/weight boundaries and dates;
+- quoteRevision: opaque calculation identity binding rate revision, destination,
+  product ID/unit price/tax, quantity, shipment weight and total;
+- selectedAt: server timestamp when checkout selects the rate;
+- rateCountryCode, effectiveFrom/effectiveTo and freeShippingThresholdMinor:
+  original rate scope/validity and threshold (null for current non-free rates);
+- quantity and totalWeightGrams (product shipping weight multiplied by quantity);
+- minimumWeightGrams / maximumWeightGrams and minimumSubtotalMinor /
+  maximumSubtotalMinor: applied boundaries, null when unrestricted;
+- billableWeightGrams and packagingProfileVersion: null. No separate volumetric,
+  rounded billable weight or packaging calculation currently exists; do not invent
+  these inputs or interpret totalWeightGrams as a verified final packed weight.
+
+### Quote consistency and privacy
+
+The private quote endpoint returns only an opaque shippingQuoteRevision in
+addition to its existing customer pricing response; it does not expose weight
+bands, packaging internals or detailed snapshots. The checkout HTTP endpoint
+requires this 64-character revision. The private UI forwards the reviewed
+revision with expectedTotalMinor. A changed rate revision, quantity, weight,
+product price/tax, destination or total requires a fresh quote before payment.
+The token is a change detector, not payment authority: the server independently
+calculates price and rechecks approval, rate content, quantity/weight, product
+price/weight/status and total under database locks before committing the order.
+No client amount can set the charge. In-process callers without a prior quote
+still obtain a new authoritative server calculation; they cannot supply a stale
+revision and have it ignored.
+
+The existing idempotency fingerprint includes the reviewed revision. Completed
+retries return the original order/session without repricing or replacing evidence;
+conflicting/in-progress keys fail closed. Database validation failures roll back
+the reservation, address and order before any provider call. Definite payment
+failure preserves the original evidence on the cancelled order; uncertain payment
+creation preserves it for resolution-required handling without blind retries.
+
+### Revision lifecycle and migration deployment
+
+Migration `0018_shipping_pricing_evidence.sql` adds two immutability triggers,
+without modifying any existing orders, payments, rates or snapshots. Pricing,
+weight/subtotal boundaries, currency, scope, effective dates and numeric version
+cannot be updated in place. Insert a new rate row with a new ID and incremented
+version for the same destination/method; retire the previous row using status.
+Do this transactionally to avoid overlapping eligible rates (checkout rejects
+ambiguous matches). Status changes remain available for immediate containment.
+Method/zone changes are also detected by content identity; old method names and
+applied zone values remain preserved in order snapshots.
+
+Order rate ID, destination, method/rate snapshots and original delivery charge
+cannot be overwritten after insertion, including on older records. Status,
+payment, refund and dispatch lifecycle updates remain permitted. Historical
+records missing all or some metadata remain readable; no backfill reconstructs
+unknown pricing evidence. Snapshot schema version absent means legacy evidence,
+not proof that weight or packaging inputs were recorded.
+
+Deployment order: contain checkout and verify in-flight session handling; apply
+0018 through the checksum-aware migration runner to the explicitly approved
+environment; deploy the API and private checkout UI together; verify a fresh
+quote/revision and protected detail read before any separately approved reopening.
+Old private clients without a revision now fail closed and must refresh. Do not
+re-run historical seed scripts that would change existing pricing revisions.
+No migration, rate activation or deployment is applied by this implementation.
+
+### Operations audit and verification
+
+`GET /operations/orders/:id` exposes shippingPricingEvidence containing rateId,
+countryCode, method and rate snapshots under the unchanged `orders:read` grant
+and Cloudflare Access boundary. Null means no rate snapshot exists; a legacy
+partial snapshot is returned as stored. Use its stored amount/revision/inputs and
+order delivery charge to audit; never recalculate historical charges from current
+shipping tables. General order lists retain only destinationCountryCode and
+deliveryMinor alongside their existing fields. Public order-status responses do
+not include pricing configuration.
+
+Automated regression: commerce tests cover revision/quantity changes, weight and
+destination capture, stale quotes, idempotent replay, protected historical detail
+reads and failed/uncertain initiation. For a fresh empty disposable **loopback**
+PostgreSQL database named `shipping_snapshot_test`, build the runtime, set
+SHIPPING_SNAPSHOT_TEST_DATABASE_URL to that local connection and run
+`node apps/commerce-api/scripts/test-shipping-snapshots.mjs` from repository root.
+The script refuses other hosts/database names and nonempty schemas, applies the
+migrations only there, and tests immutable revisions/order evidence, preserved
+historical charges, versioned weight bands, retries, failed initiation and
+transactional rollback. Never point it at staging or production.
+
+Local evidence — 8 October 2026: all 18 migrations and the integration verifier
+passed on a fresh PostgreSQL 17 loopback cluster. The test cluster was shut down
+afterwards. No staging or production migration or data change was performed.
+
+
+## Royal Mail tariff and multi-unit calculation infrastructure — 8 October 2026
+
+**Implemented, not deployed or commercially approved.** Requires migrations
+`0018_shipping_pricing_evidence.sql` then `0019_carrier_tariffs_and_packaging.sql`.
+Neither migration has been applied to staging/production by this work. No
+shipping rate, destination, product, payment credential or launch gate is enabled.
+
+`shipping_rates.carrier_tariff` adds service/zone/source/revision, dimensions,
+weight basis, tracking/availability, contents/customs and compensation evidence.
+Existing price, currency, country, version, effective dates and weight bands are
+reused. Carrier zones are explicit per ISO-country/service row; they are not
+CYPH/1 commercial zones. Packaging lives in versioned
+`shipping_packaging_profiles`, tied to the product and fulfilment method.
+The profile records quantity range, additional weight and outer dimensions.
+Approval is its table `status`; profile JSON is immutable and its stored status
+is informational. Status is overlaid from the authoritative column on reads.
+
+Checkout uses the existing `quoteShipping` engine. It calculates persisted unit
+weight × quantity + approved additional packaging weight, validates dimensions
+(including an optional total-dimensions limit), and uses actual or volumetric
+weight according to the reviewed service rule. Dimensions are millimetres;
+volumetric divisor is cm³/kg, so mm³/divisor gives grams. Weight bands are
+inclusive; adjacent bands must not overlap. Quantity is 1–10. Full merchandise
+value includes item tax; cover excludes shipping. Verified optional cover cost
+is added to postage. Excess weight/dimensions, insufficient cover, missing or
+ambiguous packaging, unavailable/untracked service, unapproved contents or
+incompatible customs produce no option. There is no automatic parcel splitting.
+
+Approved carrier rows take precedence over legacy flat rates. Failure of their
+eligibility checks never falls back to flat pricing. If no carrier rows are
+approved, the existing single-unit staging flat rates remain unchanged;
+quantities above one fail closed until approved carrier packaging/rates exist.
+Cheapest eligible service is selected deterministically (price, then rate ID).
+Only that option is returned; client-supplied prices cannot override it.
+
+The opaque quote revision includes carrier and packaging evidence. Checkout
+recalculates, rejects changed revisions/totals, then revalidates the selected
+rate and packaging under shared locks in the atomic order transaction.
+Snapshots retain the applied charge, base postage, actual/billable weights,
+full tariff source/revision/zone, packaging revision/dimensions/weight,
+merchandise value, compensation limit and cover cost. Existing country/method/
+band fields are reused. Carrier evidence is accessible only through the existing
+protected operations order detail (`orders:read`), not the list or customer APIs.
+Historical snapshots are not recalculated/backfilled. Existing idempotent
+replays retain their original evidence. Failed initiation retains a cancelled
+order's evidence; ambiguous payment outcomes remain resolution-required.
+
+For sources, reviewed import/approval, synthetic calculations and rollback see
+[shipping commercial validation](SHIPPING-COMMERCIAL-VALIDATION.md#royal-mail-tariff-readiness--8-october-2026).
+
+
+### Confirmed weight correction and provisional multi-unit packaging
+
+Owner-confirmed retail-packaged device: **953 g**. Complete single-unit shipping
+weight: **1,061 g**. The **108 g** protective packaging component is inferred by
+subtraction. Royal Mail profiles use 953 g as the persisted unit-weight basis:
+quantity 1 adds 108 g; quantities 2–10 add a configurable **150 g once per
+shipment**, currently provisional. Thus quantity 1 is 1,061 g and multi-unit
+estimates are `(quantity × 953) + 150` g. No hosted catalogue data is updated.
+
+Keep provisional multi-unit profiles disabled. `verificationStatus: provisional`
+is rejected by checkout regardless of approval status; missing multi-unit
+verification is also rejected. Offline review explicitly allows estimates,
+without authorising payment. After actual packed weight/carton verification
+and approval, create a new immutable profile revision marked `verified` and
+separately approve it. Synthetic packaging is permitted only in guarded tests.
+No multi-unit checkout, shipping rate or launch gate is activated by this change.
+
+Weight-correction validation: 25 core and 303 API tests passed with no skips,
+plus the disposable PostgreSQL snapshot/integration script. TypeScript checks,
+site/runtime builds, commerce security audit and diff checks passed. Offline
+preview returned 1,061 g for one unit, 2,056 g for two and 3,009 g for three;
+multi-unit previews are explicitly provisional. No hosted data was changed.
+
+
+### Official published prices now recorded — disabled review data
+
+The [5 October 2026 tariff schedule](../../apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1.json)
+contains 152 verified published bands, expanding to 232 disabled country rows
+across 15 destinations. The existing importer accepts shared `countryCodes`
+for identical carrier-zone prices and expands them deterministically; checkout
+continues using the same country-specific shipping engine. No rates were imported,
+activated or approved. Available/contents approvals remain false, customs gaps
+remain explicit, and no packaging profile is granted by this schedule.
+
+The [320-row quantity comparison](../../apps/commerce-api/tariffs/royal-mail-online-2026-10-05-v1-comparison.csv)
+uses 1,061 g for one unit and provisional `(953 × quantity) + 150` g for 2–10.
+It separates base postage, published optional compensation and uncalculated
+customs/surcharges. These are not final quotations or customer shipping charges.
+See the [commercial review](SHIPPING-COMMERCIAL-VALIDATION.md#verified-published-tariff-tables--5-october-2026-guide-revision-v1)
+for coverage, price comparisons, remaining approvals and deployment sequence
+**0018 → 0019 → runtime**, with disabled gates throughout until separately approved.

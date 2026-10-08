@@ -1,8 +1,8 @@
 import pg from "pg";
 import { providerTimestamp } from "../payments/capture-deadline.js";
-import { money, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
+import { money, quoteShipping, validatePackaging, type PackagingProfile, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
 import {
-  CheckoutError,
+  CheckoutError, shippingRateRevision, canonicalShippingJson,
   type CheckoutOrder,
   type CheckoutProduct,
   type CheckoutRepository,
@@ -31,6 +31,15 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     if (!Number.isSafeInteger(unitTaxMinor) || unitTaxMinor < 0) {
       throw new Error("Checkout tax fixture must be a non-negative integer in minor units.");
     }
+  }
+
+  async getPackagingProfiles(productId: string): Promise<readonly PackagingProfile[]> {
+    return this.packagingProfiles(this.pool, productId);
+  }
+
+  private async packagingProfiles(client: Queryable, productId: string, lock = false): Promise<readonly PackagingProfile[]> {
+    const result = await client.query(`SELECT profile, status FROM shipping_packaging_profiles WHERE product_id=$1 AND status IN ('test','active')${lock ? " FOR SHARE" : ""}`, [productId]);
+    return result.rows.map(row => { const p={...row.profile, status:row.status} as PackagingProfile; validatePackaging(p); return p; });
   }
 
   async getProduct(slug: string): Promise<CheckoutProduct | undefined> {
@@ -74,7 +83,7 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     const destinationRow = destination.rows[0];
     const rates = await this.pool.query(
       `SELECT r.id, z.zone_key, r.country_code, m.method_key, m.name AS method_name,
-              r.rate_minor, r.currency,
+              r.rate_minor, r.currency, r.version, r.carrier_tariff,
               CASE WHEN r.status = 'test' OR z.status = 'test' OR m.status = 'test' THEN 'test' ELSE r.status END AS status, r.minimum_order_minor,
               r.maximum_order_minor, r.minimum_weight_grams, r.maximum_weight_grams,
               r.free_shipping_threshold_minor, r.effective_from, r.effective_to
@@ -94,7 +103,8 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
         status: destinationRow.destination_status === "active" && destinationRow.zone_status === "test" ? "test" : destinationRow.destination_status,
       }),
       rates: Object.freeze(rates.rows.map((row): ShippingRate => Object.freeze({
-        id: row.id,
+        id: row.id, version: integer(row.version, "shipping version"),
+        ...(row.carrier_tariff ? {carrierTariff:row.carrier_tariff} : {}),
         zoneKey: row.zone_key,
         ...(row.country_code ? { countryCode: row.country_code } : {}),
         methodKey: row.method_key,
@@ -270,7 +280,7 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
   private async shippingSnapshot(client: Queryable, order: CheckoutOrder) {
     const result = await client.query(
       `SELECT m.method_key, m.name, m.description, m.status AS method_status,
-              r.rate_minor, r.currency, r.status AS rate_status, r.version,
+              r.rate_minor, r.currency, r.status AS rate_status, r.version, r.carrier_tariff,
               r.country_code, z.zone_key, z.status AS zone_status, c.destination_status,
               r.effective_from, r.effective_to, r.minimum_order_minor, r.maximum_order_minor,
               r.minimum_weight_grams, r.maximum_weight_grams, r.free_shipping_threshold_minor
@@ -285,19 +295,54 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
     if (result.rowCount !== 1) throw new CheckoutError("unavailable", "Shipping is no longer available.");
     const row = result.rows[0];
     const approved = (status: string) => status === "active" || (order.shippingApproval === "test" && status === "test");
-    const weight = order.product.shippingWeightGrams * order.quantity;
+    let weight = order.product.shippingWeightGrams * order.quantity;
+    const rate: ShippingRate = {
+      ...(row.carrier_tariff ? {carrierTariff:row.carrier_tariff} : {}),
+      id: order.shippingRateId, version: integer(row.version, "shipping version"), zoneKey: row.zone_key,
+      ...(row.country_code ? { countryCode: row.country_code } : {}), methodKey: row.method_key, methodName: row.name,
+      price: money(integer(row.rate_minor, "shipping rate"), row.currency), status: row.rate_status,
+      ...(row.minimum_order_minor != null ? { minimumSubtotal: integer(row.minimum_order_minor, "minimumSubtotal") } : {}),
+      ...(row.maximum_order_minor != null ? { maximumSubtotal: integer(row.maximum_order_minor, "maximumSubtotal") } : {}),
+      ...(row.minimum_weight_grams != null ? { minimumWeightGrams: integer(row.minimum_weight_grams, "minimumWeightGrams") } : {}),
+      ...(row.maximum_weight_grams != null ? { maximumWeightGrams: integer(row.maximum_weight_grams, "maximumWeightGrams") } : {}),
+      ...(row.free_shipping_threshold_minor != null ? { freeShippingThreshold: integer(row.free_shipping_threshold_minor, "freeShippingThreshold") } : {}),
+      effectiveFrom: new Date(row.effective_from), ...(row.effective_to ? { effectiveTo: new Date(row.effective_to) } : {}),
+    };
+    const snapshot = order.shippingPricingSnapshot;
+    let appliedCharge = rate.price.value;
+    if (rate.carrierTariff) {
+      const profiles = await this.packagingProfiles(client, order.product.id, true);
+      const quotes = quoteShipping({destination:{countryCode:order.deliveryAddress.countryCode,zoneKey:row.zone_key,status:row.destination_status},rates:[rate],
+        basketSubtotal:money(order.subtotalMinor,order.currency),totalWeightGrams:weight,allowTestRates:order.shippingApproval === "test",
+        shipment:{productId:order.product.id,quantity:order.quantity,unitWeightGrams:order.product.shippingWeightGrams,
+          merchandiseValueMinor:order.subtotalMinor+order.taxMinor,packagingProfiles:profiles}});
+      const calculation = quotes[0]!.carrierCalculation!;
+      // Compare canonical JSON independent of PostgreSQL jsonb key ordering.
+      if (canonicalShippingJson(calculation) !== canonicalShippingJson(snapshot.carrierCalculation) || snapshot.billableWeightGrams !== calculation.billableWeightGrams || snapshot.packagingProfileVersion !== calculation.packaging.version) throw new CheckoutError("conflict", "Packaging or carrier eligibility changed.");
+      weight=calculation.actualWeightGrams; appliedCharge=quotes[0]!.price.value;
+    } else if (snapshot.carrierCalculation) throw new CheckoutError("conflict", "Carrier evidence does not match rate.");
+    if (!snapshot || snapshot.rateRevision !== shippingRateRevision(rate) || snapshot.quantity !== order.quantity
+      || snapshot.totalWeightGrams !== weight || !Number.isSafeInteger(weight) || weight <= 0
+      || order.totalMinor !== order.subtotalMinor + order.taxMinor + order.deliveryMinor)
+      throw new CheckoutError("conflict", "Shipping calculation changed. Review a new quote.");
+    const product = await client.query("SELECT price_minor,shipping_weight_grams,status FROM products WHERE id=$1 FOR SHARE", [order.product.id]);
+    if (product.rowCount !== 1 || Number(product.rows[0].price_minor) !== order.product.priceMinor
+      || Number(product.rows[0].shipping_weight_grams) !== order.product.shippingWeightGrams
+      || product.rows[0].status !== order.product.status)
+      throw new CheckoutError("conflict", "Product calculation changed. Review a new quote.");
     if (![row.method_status, row.rate_status, row.zone_status, row.destination_status].every(approved)
-      || integer(row.rate_minor, "shipping rate") !== order.deliveryMinor || row.currency !== order.currency
+      || appliedCharge !== order.deliveryMinor || row.currency !== order.currency
       || new Date(row.effective_from) > new Date() || (row.effective_to && new Date(row.effective_to) <= new Date())
       || (row.minimum_order_minor !== null && order.subtotalMinor < Number(row.minimum_order_minor))
       || (row.maximum_order_minor !== null && order.subtotalMinor > Number(row.maximum_order_minor))
-      || (row.minimum_weight_grams !== null && weight < Number(row.minimum_weight_grams))
-      || (row.maximum_weight_grams !== null && weight > Number(row.maximum_weight_grams))
+      || (row.minimum_weight_grams !== null && (snapshot.billableWeightGrams ?? weight) < Number(row.minimum_weight_grams))
+      || (row.maximum_weight_grams !== null && (snapshot.billableWeightGrams ?? weight) > Number(row.maximum_weight_grams))
       || row.free_shipping_threshold_minor !== null) throw new CheckoutError("conflict", "Shipping approval or pricing changed. Review a new quote.");
     return {
       method: { key: row.method_key, name: row.name, description: row.description },
       rate: {
-        amountMinor: integer(row.rate_minor, "shipping rate"), currency: row.currency,
+        ...snapshot,
+        amountMinor: appliedCharge, basePostageMinor: integer(row.rate_minor, "shipping rate"), currency: row.currency,
         version: row.version, zoneKey: row.zone_key, countryCode: order.deliveryAddress.countryCode,
         importChargesAccepted: order.importChargesAccepted === true,
         ...(order.importChargesAccepted ? { importChargesNoticeVersion: "international-v1" } : {}),

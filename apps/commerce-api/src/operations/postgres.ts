@@ -195,7 +195,7 @@ export class PostgresOperationsRepository implements OperationsRepository {
   }
 
   async getOrder(orderId: string) {
-    const order = await this.pool.query("SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at FROM orders WHERE id = $1", [orderId]);
+    const order = await this.pool.query("SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at, shipping_rate_id, shipping_country_code, shipping_method_snapshot, shipping_rate_snapshot FROM orders WHERE id = $1", [orderId]);
     if (order.rowCount !== 1) return undefined;
     const [payments, refunds, fulfilments, audit, commands, items] = await Promise.all([
       this.pool.query("SELECT id, provider, provider_payment_id, status, amount_minor, currency, capture_mode, capture_before, authorised_at, capture_deadline_state, capture_monitor_checked_at, created_at, updated_at FROM payments WHERE order_id = $1 ORDER BY created_at", [orderId]),
@@ -209,7 +209,10 @@ export class PostgresOperationsRepository implements OperationsRepository {
       this.pool.query("SELECT status FROM operator_commands WHERE command_type='payment.capture' AND target_type='order' AND target_id=$1", [orderId]),
       this.pool.query("SELECT id,sku_snapshot,name_snapshot,quantity FROM order_items WHERE order_id=$1 ORDER BY created_at", [orderId]),
     ]);
-    return Object.freeze({ items: Object.freeze(items.rows), ...(commands.rows[0] ? { captureCommand: { status: commands.rows[0].status as string } } : {}), order: summary(order.rows[0]), payments: Object.freeze(payments.rows), refunds: Object.freeze(refunds.rows), fulfilments: Object.freeze(fulfilments.rows), timeline: Object.freeze(audit.rows.map((row) => Object.freeze({ id: row.id, type: row.entity_type, action: row.action, occurredAt: row.created_at.toISOString(), summary: row.change_summary }))) });
+    return Object.freeze({ items: Object.freeze(items.rows), ...(commands.rows[0] ? { captureCommand: { status: commands.rows[0].status as string } } : {}), order: summary(order.rows[0]), shippingPricingEvidence: order.rows[0].shipping_rate_snapshot == null ? null : Object.freeze({
+      rateId: order.rows[0].shipping_rate_id, countryCode: order.rows[0].shipping_country_code,
+      method: order.rows[0].shipping_method_snapshot, rate: order.rows[0].shipping_rate_snapshot,
+    }), payments: Object.freeze(payments.rows), refunds: Object.freeze(refunds.rows), fulfilments: Object.freeze(fulfilments.rows), timeline: Object.freeze(audit.rows.map((row) => Object.freeze({ id: row.id, type: row.entity_type, action: row.action, occurredAt: row.created_at.toISOString(), summary: row.change_summary }))) });
   }
 
   async reserveRefund(input: RefundReservationCommand): Promise<RefundReservation> {

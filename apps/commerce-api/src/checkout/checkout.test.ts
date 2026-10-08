@@ -22,7 +22,7 @@ class MemoryCheckoutRepository implements CheckoutRepository {
   async getShipping(countryCode = "GB") {
     const zoneKey = shippingZoneForCountry(countryCode);
     const rate: ShippingRate = {
-      id: "rate_test", zoneKey, countryCode, methodKey: "tracked-postage-packing",
+      id: "rate_test", version: 1, zoneKey, countryCode, methodKey: "tracked-postage-packing",
       methodName: "Test delivery", price: money(trackedPostageMinor[zoneKey], "GBP"), status: "test",
       effectiveFrom: new Date("2026-01-01T00:00:00Z"),
     };
@@ -174,15 +174,15 @@ for (const [countryCode, deliveryMinor] of [["GB", 399], ["DE", 1499], ["FR", 14
     const repository = new MemoryCheckoutRepository();
     const captured: CreateCheckoutInput[] = [];
     const service = serviceFor(repository, captured);
-    const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode });
+    const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode });
     assert.equal(quote.deliveryMinor, deliveryMinor);
-    assert.equal(quote.totalMinor, 24_000 + deliveryMinor);
+    assert.equal(quote.totalMinor, 12_000 + deliveryMinor);
     assert.equal(quote.importChargesNotice === null, countryCode === "GB");
-    await service.initiate(request({ quantity: 2, importChargesAccepted: true, expectedTotalMinor: quote.totalMinor,
+    await service.initiate(request({ quantity: 1, importChargesAccepted: true, expectedTotalMinor: quote.totalMinor,
       deliveryMinor: 0, totalMinor: 1, shippingZone: "uk", currency: "USD",
       deliveryAddress: { ...request().deliveryAddress, countryCode, postalCode: countryCode === "AE" ? "" : "TEST POSTCODE" } }));
     assert.equal(repository.orders[0]?.deliveryMinor, deliveryMinor);
-    assert.equal(repository.orders[0]?.totalMinor, 24_000 + deliveryMinor);
+    assert.equal(repository.orders[0]?.totalMinor, 12_000 + deliveryMinor);
     assert.equal(captured[0]?.amount.value, quote.totalMinor);
     assert.equal(captured[0]?.amount.currency, "GBP");
     assert.equal(captured[0]?.lines.reduce((sum, line) => sum + line.totalAmount.value, 0), quote.totalMinor);
@@ -252,14 +252,14 @@ test("shipping setup never permits production/live and defaults every destinatio
 });
 
 test("shipping snapshot rechecks destination approval and price under database locks before payment", async () => {
-  const validRow = { method_key: "tracked-postage-packing", name: "Tracked postage and packing", description: "Includes packing", method_status: "test", rate_minor: 399, currency: "GBP", rate_status: "test", version: 1, country_code: "GB", zone_key: "uk", zone_status: "test", destination_status: "test", effective_from: new Date("2026-01-01"), effective_to: null, minimum_order_minor: null, maximum_order_minor: null, minimum_weight_grams: null, maximum_weight_grams: null, free_shipping_threshold_minor: null };
+  const validRow = { method_key: "tracked-postage-packing", name: "Test delivery", description: "Includes packing", method_status: "test", rate_minor: 399, currency: "GBP", rate_status: "test", version: 1, country_code: "GB", zone_key: "uk", zone_status: "test", destination_status: "test", effective_from: new Date("2026-01-01"), effective_to: null, minimum_order_minor: null, maximum_order_minor: null, minimum_weight_grams: null, maximum_weight_grams: null, free_shipping_threshold_minor: null };
   for (const override of [{}, { destination_status: "disabled" }, { method_status: "disabled" }, { zone_status: "disabled" }, { rate_status: "disabled" }, { rate_minor: 1 }, { effective_to: new Date("2020-01-01") }]) {
     const statements: string[] = [];
-    const client = { query: async (sql: string) => { statements.push(sql); if (sql.includes("FOR SHARE OF r")) return { rowCount: 1, rows: [{ ...validRow, ...override }] }; return { rowCount: 1, rows: [{ id: "customer" }] }; }, release() {} };
+    const client = { query: async (sql: string) => { statements.push(sql); if (sql.includes("SELECT price_minor,shipping_weight_grams")) return { rowCount: 1, rows: [{price_minor:10000,shipping_weight_grams:500,status:"private"}] }; if (sql.includes("FOR SHARE OF r")) return { rowCount: 1, rows: [{ ...validRow, ...override }] }; return { rowCount: 1, rows: [{ id: "customer" }] }; }, release() {} };
     const repository = new PostgresCheckoutRepository({ connect: async () => client } as unknown as pg.Pool);
     const memory = new MemoryCheckoutRepository(); await serviceFor(memory, []).initiate(request());
     const work = () => repository.createOrder(memory.orders[0]!, "key", "fingerprint");
-    if (Object.keys(override).length) { await assert.rejects(work, /Shipping approval or pricing changed/); assert.ok(statements.includes("ROLLBACK")); }
+    if (Object.keys(override).length) { await assert.rejects(work, /Shipping .*changed/); assert.ok(statements.includes("ROLLBACK")); }
     else { await work(); assert.ok(statements.includes("COMMIT")); }
     assert.ok(statements.some(statement => statement.includes("FOR SHARE OF r, m, z, c")));
   }
@@ -316,3 +316,155 @@ for (const countryCode of ["GB","DE","FR","TR","AE","SA","US","CA","AU"]) {
     assert.equal(repository.orders[0]?.totalMinor, expectedMinor);
   });
 }
+
+
+test("shipping snapshots bind revision, quantity, destination and weight; stale quotes cannot pay", async () => {
+  class RevisedRepository extends MemoryCheckoutRepository {
+    revision = 1;
+    override async getShipping(country = "GB") {
+      const shipping = await super.getShipping(country);
+      return { ...shipping, rates: shipping.rates.map(rate => ({ ...rate, version: this.revision,
+        minimumWeightGrams: 100, maximumWeightGrams: this.revision === 1 ? 2000 : 3000 })) };
+    }
+  }
+  const repository = new RevisedRepository(); const calls: CreateCheckoutInput[] = [];
+  const service = serviceFor(repository, calls);
+  const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode: "DE" });
+  const input = request({ importChargesAccepted: true, shippingQuoteRevision: quote.shippingQuoteRevision,
+    expectedTotalMinor: quote.totalMinor, deliveryAddress: { ...request().deliveryAddress, countryCode: "DE" } });
+  await service.initiate(input);
+  const original = structuredClone(repository.orders[0]!);
+  assert.equal(original.deliveryMinor, 1499);
+  assert.equal(original.deliveryAddress.countryCode, "DE");
+  assert.equal(original.shippingPricingSnapshot?.totalWeightGrams, 500);
+  assert.equal(original.shippingPricingSnapshot?.minimumWeightGrams, 100);
+  assert.equal(original.shippingPricingSnapshot?.maximumWeightGrams, 2000);
+  assert.equal(original.shippingPricingSnapshot?.billableWeightGrams, null);
+  assert.ok(original.shippingPricingSnapshot?.selectedAt);
+  repository.revision = 2;
+  const revised = await service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode: "DE" });
+  assert.notEqual(revised.shippingQuoteRevision, quote.shippingQuoteRevision);
+  await assert.rejects(() => service.initiate({ ...input, idempotencyKey: "stale-revision" }), /quote changed/);
+  const replay = await service.initiate(input);
+  assert.equal(replay.replayed, true);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(repository.orders[0], original);
+  await assert.rejects(() => service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode: "DE" }), /packaging requires approval/);
+
+});
+
+test("failed or ambiguous payment attempts retain their original atomic pricing evidence", async () => {
+  for (const retryable of [false, true]) {
+    const repository = new MemoryCheckoutRepository();
+    const payment = { ...provider([]), createCheckout: async () => { throw new PaymentProviderError("network_error", "synthetic failure", retryable); } };
+    const service = new CheckoutService({ commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test" }, repository, payment, urls, true);
+    await assert.rejects(() => service.initiate(request()), /could not be started/);
+    assert.equal(repository.orders.length, 1);
+    assert.equal(repository.orders[0]?.deliveryMinor, 399);
+    assert.equal(repository.orders[0]?.shippingPricingSnapshot?.totalWeightGrams, 500);
+    assert.equal(repository.attached, undefined);
+    assert.equal((retryable ? repository.resolutionRequired : repository.abandoned).length, 1);
+  }
+});
+
+// Entirely synthetic carrier rules: not a Royal Mail rate approval.
+import { type CarrierTariff, type PackagingProfile } from "../../../../packages/commerce-core/src/index.js";
+import { parseTariffSchedule, previewTariff, tariffChanges, validateTariffImportEnvironment } from "./tariff-import.js";
+const syntheticTariff:CarrierTariff={carrier:"royal-mail",serviceId:"test-tracked",carrierZone:"test-uk",revision:"test-v1",sourceUrl:"https://example.invalid",retrievedAt:"2026-10-08T00:00:00Z",evidenceKind:"synthetic",available:true,tracked:true,
+ maximumWeightGrams:20000,maximumDimensions:{lengthMm:610,widthMm:460,heightMm:460},weightBasis:"actual",fulfilmentMethod:"manual",includedCompensationMinor:100000,maximumInsurableValueMinor:100000,
+ customs:"domestic",contentsApproved:true,restrictions:"Synthetic only",eligibilityEvidenceUrl:"https://example.invalid"};
+const syntheticPackaging:PackagingProfile={id:"test-package",version:1,productId:"product_test",minimumQuantity:1,maximumQuantity:10,additionalWeightGrams:100,verificationStatus:"synthetic",dimensions:{lengthMm:400,widthMm:300,heightMm:300},fulfilmentMethod:"manual",status:"test"};
+class CarrierRepository extends MemoryCheckoutRepository {
+ tariff=syntheticTariff; packages:PackagingProfile[]=[syntheticPackaging];
+ override async getShipping(countryCode="GB") {return {destination:{countryCode,zoneKey:shippingZoneForCountry(countryCode),status:"test" as const},rates:[
+  {id:"carrier",version:1,zoneKey:shippingZoneForCountry(countryCode),countryCode,methodKey:"test-carrier",methodName:"Test carrier",price:money(777,"GBP"),status:"test" as const,effectiveFrom:new Date("2026-01-01"),minimumWeightGrams:1,maximumWeightGrams:20000,carrierTariff:this.tariff},
+  ...(await super.getShipping(countryCode)).rates]};}
+ async getPackagingProfiles(){return this.packages;}
+}
+test("carrier quote and checkout preserve packaging, tariff and payment totals; stale changes never pay",async()=>{
+ const repository=new CarrierRepository();const calls:CreateCheckoutInput[]=[];const service=serviceFor(repository,calls);
+ const quote=await service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"});assert.equal(quote.deliveryMinor,777);
+ const one=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});
+ assert.notEqual(one.shippingQuoteRevision,quote.shippingQuoteRevision);
+ await assert.rejects(()=>service.initiate(request({quantity:2,shippingRateId:quote.shippingRateId,shippingQuoteRevision:one.shippingQuoteRevision})),/quote changed/);
+ const input=request({quantity:2,shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+ await service.initiate(input);assert.equal(calls[0]?.amount.value,24777);
+ const saved=repository.orders[0]!.shippingPricingSnapshot;assert.equal(saved.totalWeightGrams,1100);assert.equal(saved.billableWeightGrams,1100);
+ assert.equal(saved.carrierCalculation?.merchandiseValueMinor,24000);assert.equal(saved.packagingProfileVersion,1);
+ repository.tariff={...syntheticTariff,revision:"test-v2"};
+ await assert.rejects(()=>service.initiate({...input,idempotencyKey:"stale-tariff"}),CheckoutError);
+ repository.tariff=syntheticTariff;repository.packages=[{...syntheticPackaging,version:2,additionalWeightGrams:200}];
+ await assert.rejects(()=>service.initiate({...input,idempotencyKey:"stale-packaging"}),CheckoutError);assert.equal(calls.length,1);
+ const replay=await service.initiate(input);assert.equal(replay.replayed,true);assert.deepEqual(repository.orders[0]!.shippingPricingSnapshot,saved);
+});
+test("approved carrier failure cannot fall back to a cheaper legacy flat rate",async()=>{
+ const r=new CarrierRepository();r.packages=[];await assert.rejects(()=>serviceFor(r,[]).quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}));
+ r.packages=[syntheticPackaging];r.tariff={...syntheticTariff,available:false};await assert.rejects(()=>serviceFor(r,[]).quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"}));
+});
+test("reviewed import requires disabled complete non-overlapping versioned evidence and previews without activation",()=>{
+ const rate:ShippingRate={id:"import",version:1,zoneKey:"uk",countryCode:"GB",methodKey:"test",methodName:"Test",price:money(777,"GBP"),status:"disabled",effectiveFrom:new Date("2026-01-01"),minimumWeightGrams:1,maximumWeightGrams:20000,carrierTariff:syntheticTariff};
+ const raw={revision:"test-v1",rates:[rate],packagingProfiles:[{...syntheticPackaging,status:"disabled"}]};
+ const schedule=parseTariffSchedule(JSON.parse(JSON.stringify(raw)));
+ assert.equal(previewTariff(schedule,"product_test",953,7499,new Date("2026-10-08"))[5]?.shippingMinor,777);
+ assert.equal(schedule.rates[0]?.status,"disabled");assert.throws(()=>parseTariffSchedule({...raw,rates:[{...rate,status:"active"}]}));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[rate,{...rate,id:"overlap",version:2}]}));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[{...rate,carrierTariff:{...syntheticTariff,evidenceKind:"official"}}]}));
+ const revised=parseTariffSchedule({...raw,rates:[{...rate,id:"new",version:2,price:money(888,"GBP"),maximumWeightGrams:19000}]});
+ assert.equal(tariffChanges(schedule,revised)[0]?.previousPriceMinor,777);assert.equal(tariffChanges(schedule,revised)[0]?.priceMinor,888);
+});
+
+test("tariff import guards reject production, enabled gates, non-test payments and unconfirmed revisions/databases",()=>{
+ const env={NODE_ENV:"test",COMMERCE_ENABLED:"false",CHECKOUT_HTTP_ENABLED:"false",PAYMENT_WEBHOOKS_ENABLED:"false",PRIVATE_CHECKOUT_FIXTURE_ENABLED:"false",PAYMENT_PROVIDER:"mollie-test",TARIFF_IMPORT_APPROVED_REVISION:"v1",DATABASE_URL:"postgres://localhost/commerce_test",CONFIRM_NON_PRODUCTION_DATABASE:"commerce_test"};
+ validateTariffImportEnvironment(env,"v1");
+ for(const change of [{NODE_ENV:"production"},{COMMERCE_ENABLED:"true"},{CHECKOUT_HTTP_ENABLED:"true"},{PAYMENT_WEBHOOKS_ENABLED:"true"},{PRIVATE_CHECKOUT_FIXTURE_ENABLED:"true"},{PAYMENT_PROVIDER:"mollie-live"},{TARIFF_IMPORT_APPROVED_REVISION:"v2"},{CONFIRM_NON_PRODUCTION_DATABASE:"other"},{DATABASE_URL:"postgres://localhost/production_test",CONFIRM_NON_PRODUCTION_DATABASE:"production_test"}]) assert.throws(()=>validateTariffImportEnvironment({...env,...change},"v1"));
+});
+
+test("checkout selects the cheapest eligible carrier charge including optional cover",async()=>{
+ const r=new CarrierRepository();const original=r.getShipping.bind(r);
+ r.getShipping=async(country="GB")=>{const s=await original(country);const base=s.rates[0]!;return {...s,rates:[...s.rates,{...base,id:"lower-postage-but-cover",methodKey:"other",price:money(500,"GBP"),carrierTariff:{...syntheticTariff,includedCompensationMinor:5000,additionalCompensation:{coverMinor:100000,costMinor:500}}}]};};
+ const q=await serviceFor(r,[]).quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});assert.equal(q.shippingRateId,"carrier");assert.equal(q.deliveryMinor,777);
+});
+
+test("checkout never treats provisional multi-unit packaging as verified", async()=>{
+ const r=new CarrierRepository();r.packages=[{...syntheticPackaging,verificationStatus:"provisional"} as PackagingProfile];
+ const calls:CreateCheckoutInput[]=[];
+ await assert.rejects(()=>serviceFor(r,calls).quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}));
+ assert.equal(calls.length,0);assert.equal(r.orders.length,0);
+});
+
+// Real published data are validated without importing or activating database rows.
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { comparePublishedPostage } from "./tariff-import.js";
+const publishedRaw=()=>JSON.parse(readFileSync(resolve(process.cwd(),"tariffs/royal-mail-online-2026-10-05-v1.json"),"utf8"));
+test("official schedule expands shared Royal Mail zone bands deterministically and remains disabled",()=>{
+ const raw=publishedRaw();const schedule=parseTariffSchedule(raw);assert.equal(raw.rates.length,152);assert.equal(schedule.rates.length,232);
+ assert.equal(new Set(schedule.rates.map(rate=>rate.id)).size,232);
+ assert.deepEqual(schedule,parseTariffSchedule(raw));
+ assert.deepEqual([...new Set(schedule.rates.map(rate=>rate.countryCode))].sort(),["AE","AU","BH","CA","DE","ES","FR","GB","IE","KW","OM","QA","SA","TR","US"]);
+ for(const rate of schedule.rates){assert.equal(rate.status,"disabled");assert.equal(rate.carrierTariff?.available,false);assert.equal(rate.carrierTariff?.contentsApproved,false);assert.equal(rate.carrierTariff?.evidenceKind,"official");assert.equal(rate.effectiveFrom.toISOString(),"2026-10-05T00:00:00.000Z");}
+ const gulf=schedule.rates.filter(rate=>rate.carrierTariff?.carrierZone==="world-1" && rate.countryCode!=="CA");
+ assert.equal(gulf.length,96);assert.ok(gulf.every(rate=>rate.carrierTariff?.carrierZone==="world-1"));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[{...raw.rates[0],countryCode:undefined,countryCodes:["GB","GB"]}]}));
+ assert.throws(()=>parseTariffSchedule({...raw,rates:[{...raw.rates[0],countryCodes:["GB"]}]}));
+});
+test("published quantity comparisons use confirmed weights, real bands and separate incomplete charges",()=>{
+ const rows=comparePublishedPostage(parseTariffSchedule(publishedRaw()));assert.equal(rows.length,320);
+ const find=(country:string,method:string,quantity:number)=>rows.find(row=>row.countryCode===country && row.methodKey===method && row.quantity===quantity)!;
+ assert.equal(find("GB","royal-mail-tracked-48-small-parcel",1).basePostageMinor,375);
+ assert.equal(find("GB","royal-mail-tracked-48-small-parcel",2).basePostageMinor,null);
+ assert.equal(find("DE","royal-mail-international-tracked",1).basePostageMinor,995);
+ assert.equal(find("DE","royal-mail-international-tracked-heavier",2).basePostageMinor,1260);
+ assert.equal(find("DE","royal-mail-international-tracked-heavier",3).basePostageMinor,1370);
+ assert.equal(find("TR","royal-mail-international-tracked",1).basePostageMinor,1675);
+ assert.equal(find("AE","royal-mail-international-tracked",1).basePostageMinor,2775);
+ assert.equal(find("US","royal-mail-international-tracked",1).basePostageMinor,2020);
+ assert.equal(find("CA","royal-mail-international-tracked",1).basePostageMinor,2295);
+ assert.equal(find("AU","royal-mail-international-tracked",1).basePostageMinor,2510);
+ for(const quantity of [1,2,3,4,5,6,7,8,9,10]) assert.equal(find("DE","royal-mail-international-tracked-heavier",quantity).weightGrams,quantity===1?1061:953*quantity+150);
+ assert.equal(find("DE","royal-mail-international-tracked",1).additionalCompensationMinor,310);
+ assert.equal(find("DE","royal-mail-international-tracked-heavier",4).compensationStatus,"insufficient-published-cover");
+ assert.ok(rows.every(row=>!row.finalQuote && row.approvalStatus==="unapproved" && row.customsChargesMinor===null && row.otherSurchargesMinor===null));
+ const changed=comparePublishedPostage(parseTariffSchedule(publishedRaw()),{unitWeightGrams:953,singleUnitProtectionGrams:108,multiUnitProtectionGrams:200});
+ assert.equal(changed.find(row=>row.quantity===2)?.weightGrams,2106);
+});

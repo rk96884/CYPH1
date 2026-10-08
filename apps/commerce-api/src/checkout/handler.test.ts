@@ -5,7 +5,7 @@ import { CheckoutError, type CheckoutService, type InitiateCheckoutInput } from 
 import { handleCheckoutRequest } from "./handler.js";
 
 const body = {
-  productSlug: "integration-test-fixture", quantity: 1, shippingRateId: "rate_test",
+  productSlug: "integration-test-fixture", quantity: 1, shippingQuoteRevision: "a".repeat(64), shippingRateId: "rate_test",
   email: "test@example.invalid", correlationId: "correlation-test",
   deliveryAddress: { givenName: "Test", familyName: "Customer", line1: "1 Test Street", locality: "London", postalCode: "SW1A 1AA", countryCode: "GB" },
 };
@@ -25,6 +25,8 @@ test("checkout handler rejects malformed structured input and unknown payment me
   const checkout = { async initiate() { calls += 1; throw new Error("must not run"); } };
   const malformed = [
     {},
+    { ...body, shippingQuoteRevision: undefined },
+    { ...body, shippingQuoteRevision: "invalid" },
     { ...body, email: 123 },
     { ...body, quantity: "1" },
     { ...body, paymentMethod: "not-klarna" },
@@ -77,7 +79,7 @@ test("checkout handler allows only the configured private storefront origin", as
 import { handleCheckoutQuoteRequest } from "./handler.js";
 test("shipping quote endpoint applies origin/method/schema checks and contains no payment creation", async () => {
   const requests: unknown[] = [];
-  const quote: Pick<CheckoutService, "quote"> = { quote: async (input: { productSlug: string; quantity: number; countryCode: string }) => { requests.push(input); return { shippingRateId: "r", countryCode: "TR", zoneKey: "europe", methodName: "Tracked postage and packing", subtotalMinor: 7499, taxMinor: 0, deliveryMinor: 1499, totalMinor: 8998, currency: money(0, "GBP").currency, importChargesNotice }; } };
+  const quote: Pick<CheckoutService, "quote"> = { quote: async (input: { productSlug: string; quantity: number; countryCode: string }) => { requests.push(input); return { shippingQuoteRevision: "a".repeat(64), shippingRateId: "r", countryCode: "TR", zoneKey: "europe", methodName: "Tracked postage and packing", subtotalMinor: 7499, taxMinor: 0, deliveryMinor: 1499, totalMinor: 8998, currency: money(0, "GBP").currency, importChargesNotice }; } };
   const options = { allowedOrigin: "https://store.example" };
   const request = (body: unknown, origin = options.allowedOrigin) => new Request("https://api.example/checkout/quote", { method: "POST", headers: { "Content-Type": "application/json", Origin: origin }, body: JSON.stringify(body) });
   assert.equal((await handleCheckoutQuoteRequest(request({}), quote, options)).status, 400);

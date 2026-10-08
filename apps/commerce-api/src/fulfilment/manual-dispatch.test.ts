@@ -1,3 +1,4 @@
+import { shippingRateRevision } from "../checkout/service.js";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
@@ -78,8 +79,10 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
     const service=new FulfilmentService(true,new ManualTestFulfilmentProvider(),repository);
     const checkout=new PostgresCheckoutRepository(pool);
     const fixture=async()=>{
+      const selectedRate=(await checkout.getShipping("GB"))!.rates[0]!;
+      const shippingPricingSnapshot={schemaVersion:2 as const,rateRevision:shippingRateRevision(selectedRate),quoteRevision:"f".repeat(64),selectedAt:new Date().toISOString(),quantity:1,totalWeightGrams:500,billableWeightGrams:null,minimumWeightGrams:null,maximumWeightGrams:null,minimumSubtotalMinor:null,maximumSubtotalMinor:null,packagingProfileVersion:null,rateCountryCode:selectedRate.countryCode ?? null,effectiveFrom:selectedRate.effectiveFrom.toISOString(),effectiveTo:selectedRate.effectiveTo?.toISOString() ?? null,freeShippingThresholdMinor:null};
       const id=randomUUID(),number="SYNTHETIC-"+id;
-      await checkout.createOrder({id,orderNumber:number,status:"draft",product:{id:product,sku:"SYNTHETIC",slug:"synthetic",name:"Synthetic test item",status:"private",priceMinor:100,unitTaxMinor:0,currency:"GBP",shippingWeightGrams:500,availableQuantity:1000},quantity:1,subtotalMinor:100,taxMinor:0,deliveryMinor:0,totalMinor:100,currency:"GBP",shippingRateId:rate,email:id+"@example.test",deliveryAddress:{givenName:"Synthetic",familyName:"Customer",line1:"1 Test Street",locality:"London",postalCode:"SW1A 1AA",countryCode:"GB"}},randomUUID(),"f".repeat(64));
+      await checkout.createOrder({id,orderNumber:number,status:"draft",product:{id:product,sku:"SYNTHETIC",slug:"synthetic",name:"Synthetic test item",status:"private",priceMinor:100,unitTaxMinor:0,currency:"GBP",shippingWeightGrams:500,availableQuantity:1000},quantity:1,subtotalMinor:100,taxMinor:0,deliveryMinor:0,totalMinor:100,currency:"GBP",shippingPricingSnapshot,shippingApproval:"test",shippingRateId:rate,email:id+"@example.test",deliveryAddress:{givenName:"Synthetic",familyName:"Customer",line1:"1 Test Street",locality:"London",postalCode:"SW1A 1AA",countryCode:"GB"}},randomUUID(),"f".repeat(64));
       await pool.query("UPDATE orders SET status='paid' WHERE id=$1",[id]);
       const payment=(await pool.query("INSERT INTO payments(order_id,provider,provider_payment_id,status,amount_minor,currency,idempotency_key) VALUES($1,'manual-test',$2,'captured',100,'GBP',$3) RETURNING id",[id,randomUUID(),randomUUID()])).rows[0].id;
       await service.requestForPaidOrder(id,"synthetic-paid:"+id);

@@ -1,0 +1,129 @@
+{
+  "revision": "SYNTHETIC-NOT-FOR-LAUNCH-v1",
+  "rates": [
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "version": 1,
+      "zoneKey": "europe",
+      "countryCode": "DE",
+      "methodKey": "synthetic-tracked",
+      "methodName": "Synthetic tracked service",
+      "price": {
+        "value": 1000,
+        "currency": "GBP"
+      },
+      "status": "disabled",
+      "minimumWeightGrams": 1,
+      "maximumWeightGrams": 2000,
+      "effectiveFrom": "2026-01-01T00:00:00Z",
+      "carrierTariff": {
+        "carrier": "royal-mail",
+        "serviceId": "synthetic-tracked",
+        "carrierZone": "SYNTHETIC-EUROPE",
+        "revision": "SYNTHETIC-NOT-FOR-LAUNCH-v1",
+        "sourceUrl": "https://example.invalid/synthetic-tariff",
+        "retrievedAt": "2026-10-08T00:00:00Z",
+        "evidenceKind": "synthetic",
+        "available": true,
+        "tracked": true,
+        "maximumWeightGrams": 20000,
+        "maximumDimensions": {
+          "lengthMm": 610,
+          "widthMm": 460,
+          "heightMm": 460
+        },
+        "weightBasis": "actual",
+        "fulfilmentMethod": "manual",
+        "includedCompensationMinor": 5000,
+        "maximumInsurableValueMinor": 25000,
+        "additionalCompensation": {
+          "coverMinor": 25000,
+          "costMinor": 310
+        },
+        "customs": "dap",
+        "contentsApproved": true,
+        "restrictions": "Synthetic test only; no actual device, carton, service, rate or contents approval.",
+        "eligibilityEvidenceUrl": "https://example.invalid/synthetic-eligibility"
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "version": 2,
+      "zoneKey": "europe",
+      "countryCode": "DE",
+      "methodKey": "synthetic-tracked",
+      "methodName": "Synthetic tracked service",
+      "price": {
+        "value": 2000,
+        "currency": "GBP"
+      },
+      "status": "disabled",
+      "minimumWeightGrams": 2001,
+      "maximumWeightGrams": 20000,
+      "effectiveFrom": "2026-01-01T00:00:00Z",
+      "carrierTariff": {
+        "carrier": "royal-mail",
+        "serviceId": "synthetic-tracked",
+        "carrierZone": "SYNTHETIC-EUROPE",
+        "revision": "SYNTHETIC-NOT-FOR-LAUNCH-v1",
+        "sourceUrl": "https://example.invalid/synthetic-tariff",
+        "retrievedAt": "2026-10-08T00:00:00Z",
+        "evidenceKind": "synthetic",
+        "available": true,
+        "tracked": true,
+        "maximumWeightGrams": 20000,
+        "maximumDimensions": {
+          "lengthMm": 610,
+          "widthMm": 460,
+          "heightMm": 460
+        },
+        "weightBasis": "actual",
+        "fulfilmentMethod": "manual",
+        "includedCompensationMinor": 5000,
+        "maximumInsurableValueMinor": 25000,
+        "additionalCompensation": {
+          "coverMinor": 25000,
+          "costMinor": 310
+        },
+        "customs": "dap",
+        "contentsApproved": true,
+        "restrictions": "Synthetic test only; no actual device, carton, service, rate or contents approval.",
+        "eligibilityEvidenceUrl": "https://example.invalid/synthetic-eligibility"
+      }
+    }
+  ],
+  "packagingProfiles": [
+    {
+      "id": "synthetic-single-unit",
+      "version": 1,
+      "productId": "00000000-0000-4000-8000-000000000001",
+      "fulfilmentMethod": "manual",
+      "minimumQuantity": 1,
+      "maximumQuantity": 1,
+      "additionalWeightGrams": 108,
+      "dimensions": {
+        "lengthMm": 400,
+        "widthMm": 300,
+        "heightMm": 300
+      },
+      "status": "disabled",
+      "verificationStatus": "synthetic"
+    },
+    {
+      "id": "provisional-multi-unit",
+      "version": 1,
+      "productId": "00000000-0000-4000-8000-000000000001",
+      "fulfilmentMethod": "manual",
+      "minimumQuantity": 2,
+      "maximumQuantity": 10,
+      "additionalWeightGrams": 150,
+      "dimensions": {
+        "lengthMm": 400,
+        "widthMm": 300,
+        "heightMm": 300
+      },
+      "status": "disabled",
+      "verificationStatus": "provisional"
+    }
+  ]
+}
