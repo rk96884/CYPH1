@@ -31,19 +31,35 @@ test("the exact development-only Astro advisory chain is temporarily accepted", 
   }), { exception: true, advisories: 4 });
 });
 
-test("production, new package, changed advisory and expired exception fail", () => {
+test("policy rejection cases use a controlled pre-expiry date even when the wall clock is later", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.parse("2036-10-08T00:00:00Z") });
+  const now = Date.parse("2026-09-07T12:00:00Z");
   assert.throws(() => evaluateDependencyAudits({
-    production: { metadata: { vulnerabilities: { total: 1 } } }, complete: clean,
+    production: { metadata: { vulnerabilities: { total: 1 } } }, complete: clean, now,
   }), /Production dependency audit/);
   assert.throws(() => evaluateDependencyAudits({
-    production: clean,
+    production: clean, now,
     complete: { vulnerabilities: { unexpected: { severity: "high", via: [] } } },
   }), /unapproved vulnerable packages/);
   assert.throws(() => evaluateDependencyAudits({
-    production: clean,
+    production: clean, now,
     complete: { vulnerabilities: { ...approved.vulnerabilities, "fast-uri": { severity: "high", via: [{ url: "https://github.com/advisories/GHSA-new" }] } } },
   }), /approved build-tool advisory set/);
-  assert.throws(() => evaluateDependencyAudits({
-    production: clean, complete: approved, now: Date.parse("2026-10-08T00:00:00Z"),
-  }), /exception has expired/);
+});
+
+const expiry = Date.parse("2026-10-08T00:00:00Z");
+test("approved exception is accepted only before the real expiry boundary", () => {
+  assert.deepEqual(evaluateDependencyAudits({ production: clean, complete: approved, now: expiry - 1 }), { exception: true, advisories: 4 });
+});
+
+for (const now of [expiry, expiry + 1, Date.parse("2036-10-08T00:00:00Z")]) {
+  test(`approved exception is rejected at controlled date ${new Date(now).toISOString()}`, () => {
+    assert.throws(() => evaluateDependencyAudits({ production: clean, complete: approved, now }), /exception has expired/);
+  });
+}
+
+test("default wall-clock evaluation rejects an expired exception but permits clean audits", (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: expiry + 1 });
+  assert.throws(() => evaluateDependencyAudits({ production: clean, complete: approved }), /exception has expired/);
+  assert.deepEqual(evaluateDependencyAudits({ production: clean, complete: clean }), { exception: false, advisories: 0 });
 });

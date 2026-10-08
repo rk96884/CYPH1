@@ -4,7 +4,7 @@ export type PrivateCommercePresentation = Readonly<{
   productSlug: string;
   productName: string;
   apiUrl: string;
-  shippingRateId: string;
+  shippingRateId?: string;
 }>;
 
 const text = (value: string | undefined): string | undefined => {
@@ -22,7 +22,7 @@ export const privateCommercePresentation = (): PrivateCommercePresentation | und
   const productName = text(import.meta.env.PUBLIC_COMMERCE_TEST_PRODUCT_NAME);
   const apiUrl = text(import.meta.env.PUBLIC_COMMERCE_API_URL);
   const shippingRateId = text(import.meta.env.PUBLIC_COMMERCE_TEST_SHIPPING_RATE_ID);
-  if (!productSlug || !productName || !apiUrl || !shippingRateId) {
+  if (!productSlug || !productName || !apiUrl) {
     throw new Error("Private commerce UI requires explicit test product and API presentation settings.");
   }
   const endpoint = new URL(apiUrl);

@@ -1,6 +1,7 @@
+import { money, importChargesNotice } from "../../../../packages/commerce-core/src/index.js";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CheckoutError, type InitiateCheckoutInput } from "./service.js";
+import { CheckoutError, type CheckoutService, type InitiateCheckoutInput } from "./service.js";
 import { handleCheckoutRequest } from "./handler.js";
 
 const body = {
@@ -71,4 +72,20 @@ test("checkout handler allows only the configured private storefront origin", as
     method: "OPTIONS", headers: { Origin: "https://untrusted.example" },
   }), checkout, { allowedOrigin: allowed });
   assert.equal(denied.status, 403);
+});
+
+import { handleCheckoutQuoteRequest } from "./handler.js";
+test("shipping quote endpoint applies origin/method/schema checks and contains no payment creation", async () => {
+  const requests: unknown[] = [];
+  const quote: Pick<CheckoutService, "quote"> = { quote: async (input: { productSlug: string; quantity: number; countryCode: string }) => { requests.push(input); return { shippingRateId: "r", countryCode: "TR", zoneKey: "europe", methodName: "Tracked postage and packing", subtotalMinor: 7499, taxMinor: 0, deliveryMinor: 1499, totalMinor: 8998, currency: money(0, "GBP").currency, importChargesNotice }; } };
+  const options = { allowedOrigin: "https://store.example" };
+  const request = (body: unknown, origin = options.allowedOrigin) => new Request("https://api.example/checkout/quote", { method: "POST", headers: { "Content-Type": "application/json", Origin: origin }, body: JSON.stringify(body) });
+  assert.equal((await handleCheckoutQuoteRequest(request({}), quote, options)).status, 400);
+  assert.equal((await handleCheckoutQuoteRequest(request({}, "https://evil.example"), quote, options)).status, 403);
+  const response = await handleCheckoutQuoteRequest(request({ productSlug: "fixture", quantity: 1, countryCode: "TR", deliveryMinor: 1 }), quote, options);
+  assert.equal(response.status, 200); assert.equal(response.headers.get("Cache-Control"), "no-store");
+  assert.deepEqual(requests, [{ productSlug: "fixture", quantity: 1, countryCode: "TR" }]);
+  assert.equal((await response.json() as { deliveryMinor: number }).deliveryMinor, 1499);
+  assert.equal((await handleCheckoutQuoteRequest(new Request("https://api.example/checkout/quote"), quote, options)).status, 405);
+  assert.equal((await handleCheckoutQuoteRequest(request({ productSlug: "fixture", quantity: 1, countryCode: "DE" }), { quote: async () => { throw new CheckoutError("unavailable", "Not approved."); } }, options)).status, 409);
 });

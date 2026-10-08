@@ -177,3 +177,15 @@ test("communication retries and claim leases have bounded configuration",()=>{
   assert.throws(()=>new PostgresCommunicationRepository(pool,0,300),/between 1 and 10/);
   assert.throws(()=>new PostgresCommunicationRepository(pool,3,29),/between 30 and 3600/);
 });
+
+test("international confirmation preserves postage/packing breakdown and excludes import charges", () => {
+  for (const [shippingCountryCode, deliveryMinor] of [["DE",1499],["TR",1499],["AE",2599],["US",2599]] as const) {
+    const message = renderTransactionalMessage({ ...context, shippingCountryCode, totalMinor: 7499 + deliveryMinor, deliveryMinor, deliveryMethod: "Tracked postage and packing", items: [{ name: "CYPH/1 IPL Hair Removal Device", quantity: 1, lineTotalMinor: 7499 }] });
+    assert.match(message.text, /Tracked postage and packing/);
+    assert.match(message.text, /£74.99/);
+    assert.match(message.text, /import duties, taxes and customs clearance charges are not included/);
+    assert.match(message.html, /import duties, taxes and customs clearance charges are not included/);
+  }
+  const uk = renderTransactionalMessage({ ...context, shippingCountryCode: "GB" });
+  assert.doesNotMatch(uk.text, /import duties/);
+});

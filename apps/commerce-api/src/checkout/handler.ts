@@ -1,4 +1,4 @@
-import { CheckoutError, type CheckoutResult, type InitiateCheckoutInput } from "./service.js";
+import { CheckoutError, type CheckoutResult, type CheckoutService, type InitiateCheckoutInput } from "./service.js";
 
 type CheckoutInitiator = Readonly<{ initiate(input: InitiateCheckoutInput): Promise<CheckoutResult> }>;
 type CheckoutHttpOptions = Readonly<{ allowedOrigin?: string }>;
@@ -12,6 +12,8 @@ const validCheckoutInput = (value: unknown): value is Omit<InitiateCheckoutInput
     && typeof value.shippingRateId === "string"
     && typeof value.email === "string"
     && typeof value.correlationId === "string"
+    && (value.importChargesAccepted === undefined || typeof value.importChargesAccepted === "boolean")
+    && (value.expectedTotalMinor === undefined || Number.isSafeInteger(value.expectedTotalMinor))
     && (value.paymentMethod === undefined || value.paymentMethod === "klarna")
     && typeof address.givenName === "string"
     && typeof address.familyName === "string"
@@ -46,5 +48,26 @@ export const handleCheckoutRequest = async (request: Request, checkout: Checkout
   } catch (error) {
     if (error instanceof CheckoutError) return json({ message: error.message, code: error.code }, errorStatus(error), corsHeaders);
     return json({ message: "Checkout could not be started." }, 500, corsHeaders);
+  }
+};
+
+/** Quote and payment creation share the same request bounds, origin and admission gate. */
+export const handleCheckoutQuoteRequest = async (request: Request, service: Pick<CheckoutService, "quote">, options: CheckoutHttpOptions = {}): Promise<Response> => {
+  const origin = request.headers.get("origin");
+  const headers: Record<string, string> = options.allowedOrigin && origin === options.allowedOrigin ? { "Access-Control-Allow-Origin": options.allowedOrigin, Vary: "Origin" } : {};
+  if (origin && options.allowedOrigin && origin !== options.allowedOrigin) return json({ message: "Origin not allowed." }, 403);
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { ...headers, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" } });
+  if (request.method !== "POST") return json({ message: "Method not allowed." }, 405, { ...headers, Allow: "POST, OPTIONS" });
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return json({ message: "Invalid request." }, 400, headers);
+  try {
+    const body = await request.text();
+    if (new TextEncoder().encode(body).length > 16_384) return json({ message: "Invalid request." }, 400, headers);
+    let input: unknown;
+    try { input = JSON.parse(body); } catch { return json({ message: "Invalid request." }, 400, headers); }
+    if (!isRecord(input) || typeof input.productSlug !== "string" || typeof input.quantity !== "number" || typeof input.countryCode !== "string") return json({ message: "Invalid request." }, 400, headers);
+    return json(await service.quote({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.countryCode }), 200, headers);
+  } catch (error) {
+    if (error instanceof CheckoutError) return json({ message: error.message, code: error.code }, errorStatus(error), headers);
+    return json({ message: "Shipping quote is unavailable." }, 500, headers);
   }
 };

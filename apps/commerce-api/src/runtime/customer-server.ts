@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import pg from "pg";
-import { handleCheckoutRequest } from "../checkout/handler.js";
+import { handleCheckoutRequest, handleCheckoutQuoteRequest } from "../checkout/handler.js";
 import { PostgresCheckoutRepository } from "../checkout/postgres.js";
 import { CheckoutService } from "../checkout/service.js";
 import { handleOrderStatusRequest, PostgresOrderStatusRepository } from "../checkout/status.js";
@@ -43,6 +43,7 @@ const notFound: CustomerHandler = async (_request): Promise<Response> => new Res
   status: 404,
   headers: { "Cache-Control": "no-store", "Content-Type": "application/json; charset=utf-8" },
 });
+let checkoutQuote: CustomerHandler = notFound;
 let checkout: CustomerHandler = notFound;
 let paymentWebhook: CustomerHandler = notFound;
 let orderStatus: CustomerHandler = notFound;
@@ -72,6 +73,7 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
       admission,
       allowedOrigin,
     );
+    checkoutQuote = withCheckoutAdmission((request) => handleCheckoutQuoteRequest(request, service, { allowedOrigin }), admission, allowedOrigin);
     const statusRepository = new PostgresOrderStatusRepository(pool);
     orderStatus = (request) => handleOrderStatusRequest(request, statusRepository, allowedOrigin);
   }
@@ -83,6 +85,7 @@ if (gates.checkoutEnabled || gates.paymentWebhooksEnabled) {
 
 const runtime = createCustomerRuntime({
   checkout,
+  checkoutQuote,
   paymentWebhook,
   orderStatus,
   readiness: async () => { await pool.query("SELECT 1"); },

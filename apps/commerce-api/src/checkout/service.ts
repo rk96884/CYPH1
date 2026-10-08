@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import {
   calculateBasket,
+  normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor, trackedPostageMethod, importChargesNotice,
+  CommerceDomainError,
   money,
   PaymentProviderError,
   quoteShipping,
@@ -32,6 +34,7 @@ export type CheckoutAddress = Readonly<{
 export type InitiateCheckoutInput = Readonly<{
   productSlug: string; quantity: number; shippingRateId: string; email: string;
   deliveryAddress: CheckoutAddress; paymentMethod?: PaymentMethod;
+  importChargesAccepted?: boolean; expectedTotalMinor?: number;
   idempotencyKey: string; correlationId: string;
 }>;
 
@@ -39,6 +42,7 @@ export type CheckoutOrder = Readonly<{
   id: string; orderNumber: string; status: "draft" | "pending_payment"; product: CheckoutProduct; quantity: number;
   subtotalMinor: number; taxMinor: number; deliveryMinor: number; totalMinor: number; currency: string;
   shippingRateId: string; email: string; deliveryAddress: CheckoutAddress;
+  shippingApproval?: "test" | "active"; importChargesAccepted?: boolean;
 }>;
 
 export type CheckoutResult = Readonly<{ orderId: string; orderNumber: string; status: "pending_payment"; checkoutUrl: string; replayed: boolean }>;
@@ -64,10 +68,47 @@ const requireText = (value: string, field: string): string => { const normalised
 const normaliseEmail = (value: string): string => { const email = requireText(value, "Email address").toLowerCase(); if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CheckoutError("invalid_request", "Enter a valid email address."); return email; };
 const paymentName = (value: string, field: string): string => { const name = requireText(value, field); if (name.length < 2 || /^\d+$/.test(name)) throw new CheckoutError("invalid_request", `${field} must contain at least two characters and cannot be only numbers.`); return name; };
 const orderReference = (id: string): string => `CYPH-T-${id.replaceAll("-", "").slice(0, 12).toUpperCase()}`;
-const fingerprint = (input: InitiateCheckoutInput): string => createHash("sha256").update(JSON.stringify({ productSlug: input.productSlug, quantity: input.quantity, shippingRateId: input.shippingRateId, email: input.email.trim().toLowerCase(), deliveryAddress: input.deliveryAddress, paymentMethod: input.paymentMethod ?? null })).digest("hex");
+const fingerprint = (input: InitiateCheckoutInput): string => createHash("sha256").update(JSON.stringify({ productSlug: input.productSlug, quantity: input.quantity, shippingRateId: input.shippingRateId, email: input.email.trim().toLowerCase(), deliveryAddress: input.deliveryAddress, paymentMethod: input.paymentMethod ?? null, importChargesAccepted: input.importChargesAccepted === true, expectedTotalMinor: input.expectedTotalMinor ?? null })).digest("hex");
 
 export class CheckoutService {
   constructor(private readonly config: CommerceConfig, private readonly repository: CheckoutRepository, private readonly paymentProvider: PaymentProvider, private readonly urls: CheckoutUrls, private readonly allowPrivateProducts = false) {}
+
+  private get testShippingAllowed(): boolean {
+    return this.allowPrivateProducts && this.config.paymentProvider === "mollie-test"
+      && this.config.fulfilmentMode === "test" && this.config.fulfilmentProvider === "manual-test";
+  }
+
+  private async price(input: Readonly<{ productSlug: string; quantity: number; countryCode: string }>) {
+    if (!this.config.commerceEnabled || this.config.paymentProvider !== this.paymentProvider.key) throw new CheckoutError("disabled", "Commerce is not enabled.");
+    if (!Number.isSafeInteger(input.quantity) || input.quantity < 1 || input.quantity > 10) throw new CheckoutError("invalid_request", "Quantity must be between 1 and 10.");
+    let country: string;
+    try { country = normaliseCountryCode(input.countryCode); }
+    catch { throw new CheckoutError("invalid_request", "Select a valid ISO country code."); }
+    const product = await this.repository.getProduct(requireText(input.productSlug, "Product"));
+    if (!product || (product.status !== "active" && !(this.testShippingAllowed && product.status === "private"))) throw new CheckoutError("unavailable", "This product is not available for checkout.");
+    if (product.availableQuantity < input.quantity || product.priceMinor <= 0) throw new CheckoutError("unavailable", "The requested quantity is not available.");
+    const shipping = await this.repository.getShipping(country);
+    const zone = shippingZoneForCountry(country);
+    if (!shipping || shipping.destination.countryCode !== country) throw new CheckoutError("unavailable", "Shipping is not approved for this destination.");
+    const lines = [{ productId: product.id, sku: product.sku, quantity: input.quantity, unitPrice: money(product.priceMinor, product.currency), unitTax: money(product.unitTaxMinor, product.currency), unitWeightGrams: product.shippingWeightGrams }];
+    const provisional = calculateBasket(lines, money(0, product.currency), money(0, product.currency));
+    try {
+      const quotes = quoteShipping({ ...shipping, rates: shipping.rates.filter(rate => rate.methodKey === trackedPostageMethod && rate.price.currency === "GBP" && rate.price.value === trackedPostageMinor[zone] && rate.freeShippingThreshold === undefined), basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed });
+      if (quotes.length !== 1) throw new CheckoutError("unavailable", "Shipping configuration requires review.");
+      const quote = quotes[0]!;
+      return { product, quote, basket: calculateBasket(lines, money(0, product.currency), quote.price) };
+    } catch (error) {
+      if (error instanceof CommerceDomainError) throw new CheckoutError("unavailable", "Shipping is not approved for this destination.");
+      throw error;
+    }
+  }
+
+  async quote(input: Readonly<{ productSlug: string; quantity: number; countryCode: string }>) {
+    const { quote, basket } = await this.price(input);
+    return Object.freeze({ shippingRateId: quote.rateId, countryCode: quote.countryCode, zoneKey: quote.zoneKey, methodName: quote.methodName,
+      subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency,
+      importChargesNotice: quote.countryCode === "GB" ? null : importChargesNotice });
+  }
 
   async initiate(input: InitiateCheckoutInput): Promise<CheckoutResult> {
     if (!this.config.commerceEnabled || this.config.paymentProvider !== this.paymentProvider.key) throw new CheckoutError("disabled", "Commerce is not enabled.");
@@ -75,20 +116,11 @@ export class CheckoutService {
     const requestFingerprint = fingerprint(input);
     const replay = await this.repository.findCheckout(idempotencyKey, requestFingerprint);
     if (replay) return Object.freeze({ ...replay, replayed: true });
-    if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0 || input.quantity > 10) throw new CheckoutError("invalid_request", "Quantity must be between 1 and 10.");
     if (input.paymentMethod !== undefined && input.paymentMethod !== "klarna") throw new CheckoutError("invalid_request", "Unsupported payment method.");
-
-    const product = await this.repository.getProduct(requireText(input.productSlug, "Product"));
-    if (!product || (product.status !== "active" && !(this.allowPrivateProducts && product.status === "private"))) throw new CheckoutError("unavailable", "This product is not available for checkout.");
-    if (product.availableQuantity < input.quantity || product.priceMinor <= 0) throw new CheckoutError("unavailable", "The requested quantity is not available.");
-
-    const shipping = await this.repository.getShipping(input.deliveryAddress.countryCode);
-    if (!shipping) throw new CheckoutError("unavailable", "Shipping is not available for this destination.");
-    const provisional = calculateBasket([{ productId: product.id, sku: product.sku, quantity: input.quantity, unitPrice: money(product.priceMinor, product.currency), unitTax: money(product.unitTaxMinor, product.currency), unitWeightGrams: product.shippingWeightGrams }], money(0, product.currency), money(0, product.currency));
-    const quotes = quoteShipping({ ...shipping, basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.allowPrivateProducts });
-    const quote = quotes.find((candidate) => candidate.rateId === input.shippingRateId);
-    if (!quote) throw new CheckoutError("invalid_request", "Select an available shipping method.");
-    const basket = calculateBasket([{ productId: product.id, sku: product.sku, quantity: input.quantity, unitPrice: money(product.priceMinor, product.currency), unitTax: money(product.unitTaxMinor, product.currency), unitWeightGrams: product.shippingWeightGrams }], money(0, product.currency), quote.price);
+    const { product, quote, basket } = await this.price({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.deliveryAddress.countryCode });
+    if (quote.rateId !== input.shippingRateId) throw new CheckoutError("invalid_request", "Select an available shipping method.");
+    if (quote.countryCode !== "GB" && input.importChargesAccepted !== true) throw new CheckoutError("invalid_request", "Acknowledge international import charges before payment.");
+    if (input.expectedTotalMinor !== undefined && input.expectedTotalMinor !== basket.total.value) throw new CheckoutError("conflict", "Your total has changed. Review a new quote before payment.");
 
     const orderId = randomUUID();
     const orderNumber = orderReference(orderId);
@@ -99,10 +131,10 @@ export class CheckoutService {
       familyName: paymentName(input.deliveryAddress.familyName, "Last name"),
       line1: requireText(input.deliveryAddress.line1, "Address line 1"),
       locality: requireText(input.deliveryAddress.locality, "Town or city"),
-      postalCode: requireText(input.deliveryAddress.postalCode, "Postcode"),
+      postalCode: quote.countryCode === "AE" ? input.deliveryAddress.postalCode.trim() : requireText(input.deliveryAddress.postalCode, "Postcode"),
       countryCode: quote.countryCode,
     });
-    const order: CheckoutOrder = Object.freeze({ id: orderId, orderNumber, status: "draft", product, quantity: input.quantity, subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency, shippingRateId: quote.rateId, email, deliveryAddress });
+    const order: CheckoutOrder = Object.freeze({ id: orderId, orderNumber, status: "draft", product, quantity: input.quantity, subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency, shippingRateId: quote.rateId, email, deliveryAddress, shippingApproval: this.testShippingAllowed ? "test" : "active", importChargesAccepted: quote.countryCode !== "GB" && input.importChargesAccepted === true });
     await this.repository.createOrder(order, idempotencyKey, requestFingerprint);
 
     try {

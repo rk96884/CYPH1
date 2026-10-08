@@ -76,6 +76,27 @@ terms as part of operational approval.
 SH-01 remains PENDING DECISION; SH-02 remains BLOCKED. This decision does not
 close PX-01, EM-01, OPS-01, QA-01 or GO-01.
 
+### International tracked postage and packing — 8 October 2026
+
+**Status: implementation prepared for controlled Mollie test checkout only;
+not approved for live destinations or production payment activation.**
+
+The project owner has approved these flat charges for checkout implementation:
+UK £3.99; Europe, including Turkey, £14.99; rest of world £25.99. Each includes
+tracked postage and packing and is additional to the intended £74.99 GBP
+product price. International import duties, taxes and customs clearance charges
+are excluded; disclose this before payment and require acknowledgement.
+
+This extends the UK-only engineering scope above; no country is approved for
+live fulfilment by this change. ISO pricing classification is separate from
+destination approval. Each country requires retained product/compliance,
+carrier/service, packed-parcel cost/weight/dimensions, customs/export/import
+and customer-policy approval before live activation. Enable countries
+individually through the existing shipping tables, without code changes; see
+[customer runtime](COMMERCE-CUSTOMER-RUNTIME.md#international-shipping-preparation).
+SH-01 remains PENDING DECISION; SH-02 and GO-01 remain BLOCKED. Other gate
+statuses are unchanged. No live configuration or carrier integration applied.
+
 ### Manual fulfilment / dispatch implementation — engineering evidence
 
 The existing private operations architecture now provides separately

@@ -1,4 +1,5 @@
 ---
+import { countryCodes, importChargesNotice } from "../../../packages/commerce-core/src/countries";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BrandMark from "../../components/BrandMark.astro";
 import { privateCommercePresentation } from "../../config/private-commerce";
@@ -9,6 +10,8 @@ export function getStaticPaths() {
 }
 
 const { presentation } = Astro.props;
+const names = new Intl.DisplayNames(["en-GB"], { type: "region" });
+const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code })).sort((a, b) => a.name.localeCompare(b.name, "en-GB"));
 ---
 <BaseLayout title={`Private checkout test — ${presentation.productName}`} description="Private CYPH/1 test checkout." robots="noindex, nofollow, noarchive">
   <header class="private-header container"><BrandMark/><span>Private test environment</span></header>
@@ -21,10 +24,11 @@ const { presentation } = Astro.props;
     </section>
     <form class="private-checkout-form" data-private-checkout data-api-url={presentation.apiUrl} aria-describedby="private-checkout-warning" novalidate>
       <input type="hidden" name="productSlug" value={presentation.productSlug}/>
-      <input type="hidden" name="shippingRateId" value={presentation.shippingRateId}/>
+
       <fieldset>
         <legend>Test basket</legend>
         <label>Quantity <input name="quantity" type="number" min="1" max="10" value="1" required/></label>
+        <label>Test payment method <select name="paymentMethod"><option value="">Available Mollie test methods</option><option value="klarna">Klarna test (where supported)</option></select></label>
       </fieldset>
       <fieldset>
         <legend>Test contact and delivery details</legend>
@@ -32,11 +36,22 @@ const { presentation } = Astro.props;
         <label>First name <input name="givenName" value="Test" autocomplete="off" required/></label>
         <label>Last name <input name="familyName" value="Customer" autocomplete="off" required/></label>
         <label>Address line 1 <input name="line1" value="1 Test Street" autocomplete="off" required/></label>
+        <label>Address line 2 (optional) <input name="line2" autocomplete="off"/></label>
+        <label>State / province / region (where applicable) <input name="region" autocomplete="off"/></label>
         <label>Town or city <input name="locality" value="London" autocomplete="off" required/></label>
         <label>Postcode <input name="postalCode" value="SW1A 1AA" autocomplete="off" required/></label>
-        <label>Country <input name="countryCode" value="GB" maxlength="2" readonly/></label>
+        <label>Country <select name="countryCode" required>{countries.map(country => <option value={country.code} selected={country.code === "GB"}>{country.name}</option>)}</select></label>
       </fieldset>
-      <button class="button" type="submit">Continue to Mollie test checkout</button>
+      <section aria-labelledby="quote-title" aria-live="polite">
+        <h2 id="quote-title">Order total</h2>
+        <p>Tracked postage and packing: UK £3.99 · Europe (including Turkey) £14.99 · Rest of world £25.99. Subject to destination approval.</p>
+        <dl data-quote-summary></dl>
+      </section>
+      <div data-import-charges hidden>
+        <p id="import-charges-notice">{importChargesNotice}</p>
+        <label class="import-acceptance"><input id="import-charges-accepted" type="checkbox" name="importChargesAccepted" aria-describedby="import-charges-notice"/> I understand that international import charges are excluded and payable separately.</label>
+      </div>
+      <button class="button" type="submit" disabled>Continue to Mollie test checkout</button>
       <p class="form-status" data-checkout-status role="status" aria-live="polite" tabindex="-1"></p>
     </form>
   </main>
@@ -44,14 +59,64 @@ const { presentation } = Astro.props;
     const form = document.querySelector("[data-private-checkout]");
     const status = document.querySelector("[data-checkout-status]");
     if (form instanceof HTMLFormElement && status instanceof HTMLElement) {
+      const button = form.querySelector<HTMLButtonElement>("button[type='submit']")!;
+      const summary = form.querySelector<HTMLElement>("[data-quote-summary]")!;
+      const imports = form.querySelector<HTMLElement>("[data-import-charges]")!;
+      const acceptance = form.querySelector<HTMLInputElement>("[name='importChargesAccepted']")!;
+      const country = form.querySelector<HTMLSelectElement>("[name='countryCode']")!;
+      const quantity = form.querySelector<HTMLInputElement>("[name='quantity']")!;
+      const postal = form.querySelector<HTMLInputElement>("[name='postalCode']")!;
+      type Quote = { shippingRateId: string; totalMinor: number; subtotalMinor: number; taxMinor: number; deliveryMinor: number; currency: string };
+      let quote: Quote | undefined;
+      let revision = 0;
+      let submitting = false;
+      const refreshQuote = async () => {
+        const current = ++revision;
+        quote = undefined;
+        button.disabled = true;
+        summary.replaceChildren();
+        acceptance.checked = false;
+        imports.hidden = country.value === "GB";
+        acceptance.required = !imports.hidden;
+        postal.required = country.value !== "AE";
+        status.textContent = "Checking destination approval and total…";
+        status.dataset.state = "";
+        try {
+          const response = await fetch(`${form.dataset.apiUrl}/checkout/quote`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productSlug: new FormData(form).get("productSlug"), quantity: Number(quantity.value), countryCode: country.value }),
+          });
+          const result: Quote = await response.json();
+          if (current !== revision || submitting) return;
+          if (!response.ok || typeof result.shippingRateId !== "string" || result.currency !== "GBP" || ![result.subtotalMinor, result.taxMinor, result.deliveryMinor, result.totalMinor].every(Number.isSafeInteger)) throw new Error("No approved quote.");
+          quote = result;
+          const format = (value: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: result.currency }).format(value / 100);
+          for (const [label, amount] of [["Products", result.subtotalMinor], ["Tax included in order calculation", result.taxMinor], ["Tracked postage and packing", result.deliveryMinor], ["Total payable", result.totalMinor]] as const) {
+            const term = document.createElement("dt"); term.textContent = label;
+            const value = document.createElement("dd"); value.textContent = format(amount);
+            summary.append(term, value);
+          }
+          status.textContent = "Test total confirmed. Review your details before continuing.";
+          button.disabled = false;
+        } catch {
+          if (current !== revision || submitting) return;
+          status.dataset.state = "error";
+          status.textContent = "This destination or basket is not approved for checkout. No payment can be taken.";
+        }
+      };
+      country.addEventListener("change", () => { void refreshQuote(); });
+      quantity.addEventListener("input", () => { void refreshQuote(); });
+      void refreshQuote();
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
-        if (!form.reportValidity()) return;
-        const button = form.querySelector("button[type='submit']");
-        if (!(button instanceof HTMLButtonElement)) return;
+        if (submitting || !quote || !form.reportValidity()) return;
         const data = new FormData(form);
+        const confirmed = quote;
+        submitting = true;
         button.disabled = true;
         form.setAttribute("aria-busy", "true");
+        // Freeze the reviewed destination/quantity while payment creation is in progress.
+        country.disabled = true; quantity.disabled = true;
         status.dataset.state = "";
         status.textContent = "Validating the test basket…";
         try {
@@ -60,11 +125,12 @@ const { presentation } = Astro.props;
             headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
             body: JSON.stringify({
               productSlug: data.get("productSlug"), quantity: Number(data.get("quantity")),
-              shippingRateId: data.get("shippingRateId"), email: data.get("email"),
-              paymentMethod: "klarna",
+              shippingRateId: confirmed.shippingRateId, expectedTotalMinor: confirmed.totalMinor, email: data.get("email"),
+              ...(data.get("paymentMethod") === "klarna" ? { paymentMethod: "klarna" } : {}),
+              importChargesAccepted: data.get("importChargesAccepted") === "on",
               correlationId: crypto.randomUUID(),
               deliveryAddress: {
-                givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), locality: data.get("locality"),
+                givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
               },
             }),
@@ -75,10 +141,13 @@ const { presentation } = Astro.props;
           window.location.assign(result.checkoutUrl);
         } catch {
           status.dataset.state = "error";
-          status.textContent = "The private test checkout could not be started. Please retry or inspect the commerce API logs.";
-          button.disabled = false;
+          status.textContent = "Checkout could not be started. Review a fresh quote before retrying; an uncertain payment requires operator review.";
+          quote = undefined;
+          submitting = false;
+          country.disabled = false; quantity.disabled = false;
           form.removeAttribute("aria-busy");
           status.focus();
+          // A new quote requires an explicit change; never automatically repeat payment creation.
         }
       });
     }
@@ -89,11 +158,15 @@ const { presentation } = Astro.props;
   .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
   .private-header span{color:var(--cyph-color-warning);font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase}
   .private-commerce{display:grid;grid-template-columns:minmax(0,.8fr) minmax(20rem,1fr);gap:var(--cyph-layout-cluster);padding-block:var(--cyph-layout-section-compact)}
-  .private-commerce>section{min-width:0}h1{max-width:100%;font-size:clamp(2rem,3.35vw,3.25rem);line-height:1.1;overflow-wrap:normal;word-break:normal}.private-commerce section>p{max-width:38rem;color:var(--cyph-text-secondary)}
+  .private-commerce>section{min-width:0}h1{max-width:100%;font-size:clamp(2rem,3.35vw,3.25rem);line-height:1.1;overflow-wrap:anywhere;word-break:normal}.private-commerce section>p{max-width:38rem;color:var(--cyph-text-secondary)}
   .private-warning{padding:var(--cyph-space-4);border-left:2px solid var(--cyph-color-warning);background:rgb(242 198 109/.08)}
   fieldset{display:grid;gap:var(--cyph-space-4);margin:0 0 var(--cyph-space-6);border:1px solid var(--cyph-border-structural);padding:var(--cyph-space-6)}
   legend{padding-inline:var(--cyph-space-2);font-family:var(--cyph-font-display);font-size:.85rem;text-transform:uppercase}
-  label{display:grid;gap:var(--cyph-space-2);color:var(--cyph-text-secondary);font-size:.8rem}input{width:100%;min-width:0;min-height:2.75rem;border:1px solid var(--cyph-border-structural);border-radius:var(--cyph-radius-control);padding:var(--cyph-space-3);font-size:1rem;color:var(--cyph-text-primary);background:rgb(8 7 17/.55)}
+  label{display:grid;gap:var(--cyph-space-2);color:var(--cyph-text-secondary);font-size:.8rem}input,select{width:100%;min-width:0;min-height:2.75rem;border:1px solid var(--cyph-border-structural);border-radius:var(--cyph-radius-control);padding:var(--cyph-space-3);font-size:1rem;color:var(--cyph-text-primary);background:rgb(8 7 17/.55)}
+  select option{background:var(--cyph-color-near-black,#080711);color:var(--cyph-text-primary)}
+  [data-quote-summary]{display:grid;grid-template-columns:1fr auto;gap:var(--cyph-space-3)}dd{margin:0;text-align:right}
+  .import-acceptance{display:flex;align-items:flex-start;gap:var(--cyph-space-3);margin-block:var(--cyph-space-4)}.import-acceptance input{width:1.25rem;min-height:1.25rem;flex:none}
+  [hidden]{display:none!important}
   .form-status:focus{outline:none}.form-status[data-state="error"]{color:var(--cyph-color-error)}
   @media(max-width:760px){.private-commerce{grid-template-columns:1fr}.private-header span{max-width:10rem;text-align:right}.private-checkout-form,fieldset{min-width:0}}
   @media(max-width:420px){.private-header{align-items:flex-start;gap:var(--cyph-space-4)}.private-header span{max-width:8rem}.private-commerce{padding-block:var(--cyph-space-8)}fieldset{padding:var(--cyph-space-4)}}

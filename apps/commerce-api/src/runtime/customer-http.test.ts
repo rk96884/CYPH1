@@ -132,3 +132,10 @@ test("customer request URLs use only the configured public HTTPS origin", () => 
   assert.throws(() => loadCustomerRuntimeOrigin({ CUSTOMER_RUNTIME_ORIGIN: "https://commerce-api.example/path" }), /HTTPS origin/);
   assert.throws(() => customerRequestUrl(origin, "https://attacker.example/webhook"), /configured customer origin/);
 });
+
+test("shipping quote exposure follows the existing checkout gate", async () => {
+  for (const enabled of [false, true]) {
+    const runtime = createCustomerRuntime({ checkout: response("checkout"), checkoutQuote: response("quote"), paymentWebhook: response("webhook"), readiness: async () => {}, gates: { checkoutEnabled: enabled, paymentWebhooksEnabled: true } });
+    assert.equal((await runtime(new Request("https://example.test/checkout/quote", { method: "POST" }))).status, enabled ? 200 : 404);
+  }
+});

@@ -17,3 +17,5 @@ export * from "./shipping.js";
 export * from "./state-machine.js";
 
 export const commerceCoreVersion = "0.1.0" as const;
+
+export * from "./countries.js";

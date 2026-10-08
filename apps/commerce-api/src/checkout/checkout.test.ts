@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { money, PaymentProviderError, type CreateCheckoutInput, type PaymentProvider, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type CreateCheckoutInput, type PaymentProvider, type ShippingRate, shippingZoneForCountry, trackedPostageMinor } from "../../../../packages/commerce-core/src/index.js";
 import { CheckoutError, CheckoutService, type CheckoutOrder, type CheckoutRepository, type CheckoutResult } from "./service.js";
 
 class MemoryCheckoutRepository implements CheckoutRepository {
@@ -19,13 +19,14 @@ class MemoryCheckoutRepository implements CheckoutRepository {
     };
   }
 
-  async getShipping() {
+  async getShipping(countryCode = "GB") {
+    const zoneKey = shippingZoneForCountry(countryCode);
     const rate: ShippingRate = {
-      id: "rate_test", zoneKey: "uk-test", countryCode: "GB", methodKey: "test-delivery",
-      methodName: "Test delivery", price: money(500, "GBP"), status: "test",
+      id: "rate_test", zoneKey, countryCode, methodKey: "tracked-postage-packing",
+      methodName: "Test delivery", price: money(trackedPostageMinor[zoneKey], "GBP"), status: "test",
       effectiveFrom: new Date("2026-01-01T00:00:00Z"),
     };
-    return { destination: { countryCode: "GB", zoneKey: "uk-test", status: "test" as const }, rates: [rate] };
+    return { destination: { countryCode, zoneKey, status: "test" as const }, rates: [rate] };
   }
 
   async findCheckout(idempotencyKey: string) { return this.completed.get(idempotencyKey); }
@@ -85,14 +86,14 @@ test("private checkout recalculates authoritative totals and creates a pending h
   const result = await serviceFor(repository, captured).initiate(request());
   assert.equal(result.status, "pending_payment");
   assert.equal(result.replayed, false);
-  assert.equal(captured[0]?.amount.value, 12_500);
-  assert.equal(captured[0]?.lines.reduce((sum, line) => sum + line.totalAmount.value, 0), 12_500);
+  assert.equal(captured[0]?.amount.value, 12_399);
+  assert.equal(captured[0]?.lines.reduce((sum, line) => sum + line.totalAmount.value, 0), 12_399);
   assert.deepEqual(captured[0]?.customer, { email: "test@example.com" });
   assert.equal(captured[0]?.method, undefined);
   assert.equal(captured[0]?.shippingAddress, undefined);
   assert.equal(repository.orders[0]?.subtotalMinor, 10_000);
   assert.equal(repository.orders[0]?.taxMinor, 2_000);
-  assert.equal(repository.orders[0]?.deliveryMinor, 500);
+  assert.equal(repository.orders[0]?.deliveryMinor, 399);
   assert.equal(repository.orders[0]?.email, "test@example.com");
   assert.equal(repository.orders[0]?.deliveryAddress.givenName, "Test");
   assert.equal(repository.orders[0]?.deliveryAddress.familyName, "Customer");
@@ -167,3 +168,151 @@ test("definitive non-retryable provider failures abandon the draft order", async
   assert.deepEqual(repository.abandoned, [repository.orders[0]?.id]);
   assert.deepEqual(repository.resolutionRequired, []);
 });
+
+for (const [countryCode, deliveryMinor] of [["GB", 399], ["DE", 1499], ["FR", 1499], ["TR", 1499], ["AE", 2599], ["SA", 2599], ["US", 2599], ["CA", 2599], ["AU", 2599]] as const) {
+  test(`international test checkout calculates ${countryCode} totals server-side`, async () => {
+    const repository = new MemoryCheckoutRepository();
+    const captured: CreateCheckoutInput[] = [];
+    const service = serviceFor(repository, captured);
+    const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode });
+    assert.equal(quote.deliveryMinor, deliveryMinor);
+    assert.equal(quote.totalMinor, 24_000 + deliveryMinor);
+    assert.equal(quote.importChargesNotice === null, countryCode === "GB");
+    await service.initiate(request({ quantity: 2, importChargesAccepted: true, expectedTotalMinor: quote.totalMinor,
+      deliveryMinor: 0, totalMinor: 1, shippingZone: "uk", currency: "USD",
+      deliveryAddress: { ...request().deliveryAddress, countryCode, postalCode: countryCode === "AE" ? "" : "TEST POSTCODE" } }));
+    assert.equal(repository.orders[0]?.deliveryMinor, deliveryMinor);
+    assert.equal(repository.orders[0]?.totalMinor, 24_000 + deliveryMinor);
+    assert.equal(captured[0]?.amount.value, quote.totalMinor);
+    assert.equal(captured[0]?.amount.currency, "GBP");
+    assert.equal(captured[0]?.lines.reduce((sum, line) => sum + line.totalAmount.value, 0), quote.totalMinor);
+  });
+}
+
+test("international import charges require acknowledgement before creating an order/payment", async () => {
+  const repository = new MemoryCheckoutRepository(); const captured: CreateCheckoutInput[] = [];
+  await assert.rejects(() => serviceFor(repository, captured).initiate(request({ deliveryAddress: { ...request().deliveryAddress, countryCode: "DE" } })), /Acknowledge international import/);
+  assert.equal(repository.orders.length, 0); assert.equal(captured.length, 0);
+});
+
+test("wrong-zone rate IDs and changed reviewed totals cannot initiate payment", async () => {
+  const repository = new MemoryCheckoutRepository(); const captured: CreateCheckoutInput[] = [];
+  const service = serviceFor(repository, captured);
+  await assert.rejects(() => service.initiate(request({ shippingRateId: "cheap-uk-rate", importChargesAccepted: true, deliveryAddress: { ...request().deliveryAddress, countryCode: "AU" } })), /Select an available/);
+  await assert.rejects(() => service.initiate(request({ expectedTotalMinor: 1 })), /total has changed/);
+  assert.equal(repository.orders.length, 0); assert.equal(captured.length, 0);
+});
+
+test("disabled, restricted and absent destinations cannot quote or create paid orders", async () => {
+  for (const approval of ["disabled", "restricted"] as const) {
+    const repository = new MemoryCheckoutRepository(); const captured: CreateCheckoutInput[] = [];
+    const original = repository.getShipping.bind(repository);
+    const blocked: CheckoutRepository = { ...repository,
+      getProduct: repository.getProduct.bind(repository), getShipping: async country => { const shipping = await original(country); return { ...shipping, destination: { ...shipping.destination, status: approval } }; },
+      findCheckout: repository.findCheckout.bind(repository), createOrder: repository.createOrder.bind(repository), attachPayment: repository.attachPayment.bind(repository), abandonOrder: repository.abandonOrder.bind(repository), markResolutionRequired: repository.markResolutionRequired.bind(repository) };
+    const service = new CheckoutService({ commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" }, blocked, provider(captured), urls, true);
+    await assert.rejects(() => service.quote({ productSlug: "fixture", quantity: 1, countryCode: "DE" }), /not approved/);
+    await assert.rejects(() => service.initiate(request({ importChargesAccepted: true, deliveryAddress: { ...request().deliveryAddress, countryCode: "DE" } })), /not approved/);
+    assert.equal(captured.length, 0);
+  }
+});
+
+test("mispriced rates and free-shipping overrides fail closed", async () => {
+  for (const overrides of [{ price: money(399, "GBP") }, { freeShippingThreshold: 1 }]) {
+    const repository = new MemoryCheckoutRepository();
+    const original = repository.getShipping.bind(repository);
+    repository.getShipping = async country => { const shipping = await original(country); return { ...shipping, rates: shipping.rates.map(rate => ({ ...rate, ...overrides })) }; };
+    await assert.rejects(() => serviceFor(repository, []).quote({ productSlug: "fixture", quantity: 1, countryCode: "TR" }), /not approved/);
+  }
+});
+
+test("private test boundary cannot permit test rates with a live provider", async () => {
+  const live = { ...provider([]), key: "mollie-live" };
+  const service = new CheckoutService({ commerceEnabled: true, paymentProvider: "mollie-live", fulfilmentMode: "live", fulfilmentProvider: "manual-live" }, new MemoryCheckoutRepository(), live, urls, true);
+  await assert.rejects(() => service.initiate(request()), /not available/);
+});
+
+import { shippingSetupCountries, configureInternationalShipping } from "../runtime/configure-international-shipping.js";
+import { PostgresCheckoutRepository } from "./postgres.js";
+import pg from "pg";
+
+test("shipping setup never permits production/live and defaults every destination to unapproved", async () => {
+  const env = { NODE_ENV: "test", PAYMENT_PROVIDER: "mollie-test", COMMERCE_ENABLED: "false", SHIPPING_SETUP_CONFIRM: "international-test-only", DATABASE_URL: "postgres://local/commerce_test" };
+  assert.deepEqual(shippingSetupCountries(env), []);
+  assert.deepEqual(shippingSetupCountries({ ...env, SHIPPING_TEST_COUNTRIES: "GB,DE,FR,TR,AE,SA,US,CA,AU" }), ["GB","DE","FR","TR","AE","SA","US","CA","AU"]);
+  for (const override of [{ NODE_ENV: "production" }, { PAYMENT_PROVIDER: "mollie-live" }, { COMMERCE_ENABLED: "true" }, { SHIPPING_SETUP_CONFIRM: "" }, { DATABASE_URL: "postgres://local/commerce" }, { SHIPPING_TEST_COUNTRIES: "UK" }]) assert.throws(() => shippingSetupCountries({ ...env, ...override }));
+  const statements: { sql: string; values: unknown[] | undefined }[] = [];
+  const client = { query: async (sql: string, values?: unknown[]) => { statements.push({ sql, values }); return { rowCount: sql.startsWith("SELECT country_code") ? 0 : 1, rows: [{ id: "method", zone_id: "zone" }] }; }, release() {} };
+  await configureInternationalShipping({ connect: async () => client } as unknown as pg.Pool, ["DE", "TR"]);
+  const destinations = statements.filter(statement => statement.sql.startsWith("UPDATE shipping_zone_countries"));
+  assert.equal(destinations.length, 249);
+  assert.deepEqual(destinations.filter(statement => statement.values?.[1] === "test").map(statement => statement.values?.[0]), ["DE","TR"]);
+  assert.equal(destinations.filter(statement => statement.values?.[1] === "disabled").length, 247);
+  assert.ok(statements.some(statement => statement.sql === "COMMIT"));
+});
+
+test("shipping snapshot rechecks destination approval and price under database locks before payment", async () => {
+  const validRow = { method_key: "tracked-postage-packing", name: "Tracked postage and packing", description: "Includes packing", method_status: "test", rate_minor: 399, currency: "GBP", rate_status: "test", version: 1, country_code: "GB", zone_key: "uk", zone_status: "test", destination_status: "test", effective_from: new Date("2026-01-01"), effective_to: null, minimum_order_minor: null, maximum_order_minor: null, minimum_weight_grams: null, maximum_weight_grams: null, free_shipping_threshold_minor: null };
+  for (const override of [{}, { destination_status: "disabled" }, { method_status: "disabled" }, { zone_status: "disabled" }, { rate_status: "disabled" }, { rate_minor: 1 }, { effective_to: new Date("2020-01-01") }]) {
+    const statements: string[] = [];
+    const client = { query: async (sql: string) => { statements.push(sql); if (sql.includes("FOR SHARE OF r")) return { rowCount: 1, rows: [{ ...validRow, ...override }] }; return { rowCount: 1, rows: [{ id: "customer" }] }; }, release() {} };
+    const repository = new PostgresCheckoutRepository({ connect: async () => client } as unknown as pg.Pool);
+    const memory = new MemoryCheckoutRepository(); await serviceFor(memory, []).initiate(request());
+    const work = () => repository.createOrder(memory.orders[0]!, "key", "fingerprint");
+    if (Object.keys(override).length) { await assert.rejects(work, /Shipping approval or pricing changed/); assert.ok(statements.includes("ROLLBACK")); }
+    else { await work(); assert.ok(statements.includes("COMMIT")); }
+    assert.ok(statements.some(statement => statement.includes("FOR SHARE OF r, m, z, c")));
+  }
+});
+
+test("live provider rejects test shipping even for an active product", async () => {
+  const memory = new MemoryCheckoutRepository();
+  const repository: CheckoutRepository = {
+    getProduct: async () => ({ ...await memory.getProduct(), status: "active" }),
+    getShipping: memory.getShipping.bind(memory), findCheckout: memory.findCheckout.bind(memory),
+    createOrder: memory.createOrder.bind(memory), attachPayment: memory.attachPayment.bind(memory),
+    abandonOrder: memory.abandonOrder.bind(memory), markResolutionRequired: memory.markResolutionRequired.bind(memory),
+  };
+  const captured: CreateCheckoutInput[] = [];
+  const service = new CheckoutService({ commerceEnabled: true, paymentProvider: "mollie-live", fulfilmentMode: "live", fulfilmentProvider: "manual-live" }, repository, { ...provider(captured), key: "mollie-live" }, urls, true);
+  await assert.rejects(() => service.initiate(request()), /not approved/);
+  assert.equal(captured.length, 0);
+  assert.equal(memory.orders.length, 0);
+});
+
+test("absent destination configuration never reaches the payment provider", async () => {
+  const memory = new MemoryCheckoutRepository();
+  const repository: CheckoutRepository = {
+    getProduct: memory.getProduct.bind(memory), getShipping: async () => undefined,
+    findCheckout: memory.findCheckout.bind(memory), createOrder: memory.createOrder.bind(memory),
+    attachPayment: memory.attachPayment.bind(memory), abandonOrder: memory.abandonOrder.bind(memory), markResolutionRequired: memory.markResolutionRequired.bind(memory),
+  };
+  const captured: CreateCheckoutInput[] = [];
+  const service = new CheckoutService({ commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" }, repository, provider(captured), urls, true);
+  await assert.rejects(() => service.initiate(request({ importChargesAccepted: true, deliveryAddress: { ...request().deliveryAddress, countryCode: "JP" } })), /not approved/);
+  assert.equal(captured.length, 0);
+});
+
+import { MollieTestPaymentProvider } from "../payments/mollie-test.js";
+for (const countryCode of ["GB","DE","FR","TR","AE","SA","US","CA","AU"]) {
+  test(`Mollie test adapter receives the authoritative ${countryCode} checkout amount`, async () => {
+    const repository = new MemoryCheckoutRepository();
+    const expectedMinor = 12_000 + trackedPostageMinor[shippingZoneForCountry(countryCode)];
+    let calls = 0;
+    const adapter = new MollieTestPaymentProvider({
+      apiKey: "test_example_key", allowedCallbackOrigins: ["https://preview.example", "https://api.example"],
+      fetch: async (url, init) => {
+        calls++;
+        assert.equal(String(url), "https://api.mollie.com/v2/payments");
+        const body = JSON.parse(String(init?.body)) as { amount: { value: string; currency: string } };
+        assert.deepEqual(body.amount, { value: (expectedMinor / 100).toFixed(2), currency: "GBP" });
+        return new Response(JSON.stringify({ id: "tr_fixture", status: "open", createdAt: "2026-10-08T10:00:00Z", amount: body.amount, _links: { checkout: { href: "https://www.mollie.com/checkout/test" } } }), { status: 201, headers: { "Content-Type": "application/json" } });
+      },
+    });
+    const service = new CheckoutService({ commerceEnabled: true, paymentProvider: "mollie-test", fulfilmentMode: "test", fulfilmentProvider: "manual-test" }, repository, adapter, urls, true);
+    const result = await service.initiate(request({ importChargesAccepted: true, deliveryAddress: { ...request().deliveryAddress, countryCode } }));
+    assert.equal(result.status, "pending_payment");
+    assert.equal(calls, 1);
+    assert.equal(repository.orders[0]?.totalMinor, expectedMinor);
+  });
+}

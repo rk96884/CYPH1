@@ -1,3 +1,4 @@
+import { normaliseCountryCode } from "./countries.js";
 import { CommerceDomainError } from "./errors.js";
 import { money, type Money } from "./money.js";
 
@@ -35,13 +36,7 @@ export type ShippingQuote = Readonly<{
   price: Money;
 }>;
 
-const countryCode = (value: string): string => {
-  const normalized = value.trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(normalized)) {
-    throw new CommerceDomainError("invalid_country", "Country must be a two-letter ISO code.");
-  }
-  return normalized;
-};
+const countryCode = normaliseCountryCode;
 
 export const quoteShipping = (input: Readonly<{
   destination: ShippingDestination;
