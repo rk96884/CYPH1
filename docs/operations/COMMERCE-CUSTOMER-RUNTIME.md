@@ -523,3 +523,103 @@ controls. Verify unauthenticated access remains rejected, then read these five
 orders through the protected endpoint and compare the table above. Do not create
 payments, refunds, dispatches or fulfilments to verify this read-only change.
 No deployment or launch-gate closure is authorised by this evidence.
+
+## Immutable shipping-pricing evidence (snapshot schema version 2)
+
+New application checkouts extend the existing `orders.shipping_rate_snapshot`
+JSON atomically with the order, item and idempotency reservation. Existing
+`shipping_rate_id`, `shipping_country_code`, `delivery_minor`, currency and
+`shipping_method_snapshot` fields are reused; no duplicate address or rate table
+is introduced. The method snapshot preserves the selected key, display name and
+description. The rate snapshot retains amountMinor, currency, numeric version,
+zoneKey, countryCode and import-charge acknowledgement, and adds:
+
+- schemaVersion: 2;
+- rateRevision: SHA-256 content identity of the selected rate ID/version, method,
+  zone/destination scope, amount/currency, eligibility/weight boundaries and dates;
+- quoteRevision: opaque calculation identity binding rate revision, destination,
+  product ID/unit price/tax, quantity, shipment weight and total;
+- selectedAt: server timestamp when checkout selects the rate;
+- rateCountryCode, effectiveFrom/effectiveTo and freeShippingThresholdMinor:
+  original rate scope/validity and threshold (null for current non-free rates);
+- quantity and totalWeightGrams (product shipping weight multiplied by quantity);
+- minimumWeightGrams / maximumWeightGrams and minimumSubtotalMinor /
+  maximumSubtotalMinor: applied boundaries, null when unrestricted;
+- billableWeightGrams and packagingProfileVersion: null. No separate volumetric,
+  rounded billable weight or packaging calculation currently exists; do not invent
+  these inputs or interpret totalWeightGrams as a verified final packed weight.
+
+### Quote consistency and privacy
+
+The private quote endpoint returns only an opaque shippingQuoteRevision in
+addition to its existing customer pricing response; it does not expose weight
+bands, packaging internals or detailed snapshots. The checkout HTTP endpoint
+requires this 64-character revision. The private UI forwards the reviewed
+revision with expectedTotalMinor. A changed rate revision, quantity, weight,
+product price/tax, destination or total requires a fresh quote before payment.
+The token is a change detector, not payment authority: the server independently
+calculates price and rechecks approval, rate content, quantity/weight, product
+price/weight/status and total under database locks before committing the order.
+No client amount can set the charge. In-process callers without a prior quote
+still obtain a new authoritative server calculation; they cannot supply a stale
+revision and have it ignored.
+
+The existing idempotency fingerprint includes the reviewed revision. Completed
+retries return the original order/session without repricing or replacing evidence;
+conflicting/in-progress keys fail closed. Database validation failures roll back
+the reservation, address and order before any provider call. Definite payment
+failure preserves the original evidence on the cancelled order; uncertain payment
+creation preserves it for resolution-required handling without blind retries.
+
+### Revision lifecycle and migration deployment
+
+Migration `0018_shipping_pricing_evidence.sql` adds two immutability triggers,
+without modifying any existing orders, payments, rates or snapshots. Pricing,
+weight/subtotal boundaries, currency, scope, effective dates and numeric version
+cannot be updated in place. Insert a new rate row with a new ID and incremented
+version for the same destination/method; retire the previous row using status.
+Do this transactionally to avoid overlapping eligible rates (checkout rejects
+ambiguous matches). Status changes remain available for immediate containment.
+Method/zone changes are also detected by content identity; old method names and
+applied zone values remain preserved in order snapshots.
+
+Order rate ID, destination, method/rate snapshots and original delivery charge
+cannot be overwritten after insertion, including on older records. Status,
+payment, refund and dispatch lifecycle updates remain permitted. Historical
+records missing all or some metadata remain readable; no backfill reconstructs
+unknown pricing evidence. Snapshot schema version absent means legacy evidence,
+not proof that weight or packaging inputs were recorded.
+
+Deployment order: contain checkout and verify in-flight session handling; apply
+0018 through the checksum-aware migration runner to the explicitly approved
+environment; deploy the API and private checkout UI together; verify a fresh
+quote/revision and protected detail read before any separately approved reopening.
+Old private clients without a revision now fail closed and must refresh. Do not
+re-run historical seed scripts that would change existing pricing revisions.
+No migration, rate activation or deployment is applied by this implementation.
+
+### Operations audit and verification
+
+`GET /operations/orders/:id` exposes shippingPricingEvidence containing rateId,
+countryCode, method and rate snapshots under the unchanged `orders:read` grant
+and Cloudflare Access boundary. Null means no rate snapshot exists; a legacy
+partial snapshot is returned as stored. Use its stored amount/revision/inputs and
+order delivery charge to audit; never recalculate historical charges from current
+shipping tables. General order lists retain only destinationCountryCode and
+deliveryMinor alongside their existing fields. Public order-status responses do
+not include pricing configuration.
+
+Automated regression: commerce tests cover revision/quantity changes, weight and
+destination capture, stale quotes, idempotent replay, protected historical detail
+reads and failed/uncertain initiation. For a fresh empty disposable **loopback**
+PostgreSQL database named `shipping_snapshot_test`, build the runtime, set
+SHIPPING_SNAPSHOT_TEST_DATABASE_URL to that local connection and run
+`node apps/commerce-api/scripts/test-shipping-snapshots.mjs` from repository root.
+The script refuses other hosts/database names and nonempty schemas, applies the
+migrations only there, and tests immutable revisions/order evidence, preserved
+historical charges, versioned weight bands, retries, failed initiation and
+transactional rollback. Never point it at staging or production.
+
+Local evidence — 8 October 2026: all 18 migrations and the integration verifier
+passed on a fresh PostgreSQL 17 loopback cluster. The test cluster was shut down
+afterwards. No staging or production migration or data change was performed.

@@ -35,6 +35,7 @@ export type InitiateCheckoutInput = Readonly<{
   productSlug: string; quantity: number; shippingRateId: string; email: string;
   deliveryAddress: CheckoutAddress; paymentMethod?: PaymentMethod;
   importChargesAccepted?: boolean; expectedTotalMinor?: number;
+  shippingQuoteRevision?: string;
   idempotencyKey: string; correlationId: string;
 }>;
 
@@ -42,8 +43,28 @@ export type CheckoutOrder = Readonly<{
   id: string; orderNumber: string; status: "draft" | "pending_payment"; product: CheckoutProduct; quantity: number;
   subtotalMinor: number; taxMinor: number; deliveryMinor: number; totalMinor: number; currency: string;
   shippingRateId: string; email: string; deliveryAddress: CheckoutAddress;
+  shippingPricingSnapshot: ShippingPricingSnapshot;
   shippingApproval?: "test" | "active"; importChargesAccepted?: boolean;
 }>;
+
+export type ShippingPricingSnapshot = Readonly<{
+  schemaVersion: 2; rateRevision: string; quoteRevision: string; selectedAt: string;
+  quantity: number; totalWeightGrams: number; billableWeightGrams: null;
+  minimumWeightGrams: number | null; maximumWeightGrams: number | null;
+  minimumSubtotalMinor: number | null; maximumSubtotalMinor: number | null;
+  packagingProfileVersion: null; rateCountryCode: string | null;
+  effectiveFrom: string; effectiveTo: string | null; freeShippingThresholdMinor: null;
+}>;
+
+/** Content identity supplements the persisted rate ID/version; no mutable lookup is needed to audit an order. */
+export const shippingRateRevision = (rate: ShippingRate): string => createHash("sha256").update(JSON.stringify({
+  id: rate.id, version: rate.version ?? null, zoneKey: rate.zoneKey, countryCode: rate.countryCode ?? null,
+  methodKey: rate.methodKey, methodName: rate.methodName, amountMinor: rate.price.value, currency: rate.price.currency,
+  minimumSubtotal: rate.minimumSubtotal ?? null, maximumSubtotal: rate.maximumSubtotal ?? null,
+  minimumWeightGrams: rate.minimumWeightGrams ?? null, maximumWeightGrams: rate.maximumWeightGrams ?? null,
+  freeShippingThreshold: rate.freeShippingThreshold ?? null,
+  effectiveFrom: rate.effectiveFrom.toISOString(), effectiveTo: rate.effectiveTo?.toISOString() ?? null,
+})).digest("hex");
 
 export type CheckoutResult = Readonly<{ orderId: string; orderNumber: string; status: "pending_payment"; checkoutUrl: string; replayed: boolean }>;
 
@@ -68,7 +89,7 @@ const requireText = (value: string, field: string): string => { const normalised
 const normaliseEmail = (value: string): string => { const email = requireText(value, "Email address").toLowerCase(); if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CheckoutError("invalid_request", "Enter a valid email address."); return email; };
 const paymentName = (value: string, field: string): string => { const name = requireText(value, field); if (name.length < 2 || /^\d+$/.test(name)) throw new CheckoutError("invalid_request", `${field} must contain at least two characters and cannot be only numbers.`); return name; };
 const orderReference = (id: string): string => `CYPH-T-${id.replaceAll("-", "").slice(0, 12).toUpperCase()}`;
-const fingerprint = (input: InitiateCheckoutInput): string => createHash("sha256").update(JSON.stringify({ productSlug: input.productSlug, quantity: input.quantity, shippingRateId: input.shippingRateId, email: input.email.trim().toLowerCase(), deliveryAddress: input.deliveryAddress, paymentMethod: input.paymentMethod ?? null, importChargesAccepted: input.importChargesAccepted === true, expectedTotalMinor: input.expectedTotalMinor ?? null })).digest("hex");
+const fingerprint = (input: InitiateCheckoutInput): string => createHash("sha256").update(JSON.stringify({ productSlug: input.productSlug, quantity: input.quantity, shippingRateId: input.shippingRateId, email: input.email.trim().toLowerCase(), deliveryAddress: input.deliveryAddress, paymentMethod: input.paymentMethod ?? null, importChargesAccepted: input.importChargesAccepted === true, shippingQuoteRevision: input.shippingQuoteRevision ?? null, expectedTotalMinor: input.expectedTotalMinor ?? null })).digest("hex");
 
 export class CheckoutService {
   constructor(private readonly config: CommerceConfig, private readonly repository: CheckoutRepository, private readonly paymentProvider: PaymentProvider, private readonly urls: CheckoutUrls, private readonly allowPrivateProducts = false) {}
@@ -96,7 +117,20 @@ export class CheckoutService {
       const quotes = quoteShipping({ ...shipping, rates: shipping.rates.filter(rate => rate.methodKey === trackedPostageMethod && rate.price.currency === "GBP" && rate.price.value === trackedPostageMinor[zone] && rate.freeShippingThreshold === undefined), basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed });
       if (quotes.length !== 1) throw new CheckoutError("unavailable", "Shipping configuration requires review.");
       const quote = quotes[0]!;
-      return { product, quote, basket: calculateBasket(lines, money(0, product.currency), quote.price) };
+      const basket = calculateBasket(lines, money(0, product.currency), quote.price);
+      const rate = shipping.rates.find(candidate => candidate.id === quote.rateId)!;
+      const rateRevision = shippingRateRevision(rate);
+      const quoteRevision = createHash("sha256").update(JSON.stringify({ rateRevision, countryCode: country,
+        productId: product.id, quantity: input.quantity, unitPriceMinor: product.priceMinor, unitTaxMinor: product.unitTaxMinor,
+        totalWeightGrams: basket.totalWeightGrams, totalMinor: basket.total.value, currency: basket.total.currency })).digest("hex");
+      const snapshot: ShippingPricingSnapshot = Object.freeze({ schemaVersion: 2, rateRevision, quoteRevision,
+        selectedAt: new Date().toISOString(), quantity: input.quantity, totalWeightGrams: basket.totalWeightGrams,
+        billableWeightGrams: null, minimumWeightGrams: rate.minimumWeightGrams ?? null,
+        maximumWeightGrams: rate.maximumWeightGrams ?? null, minimumSubtotalMinor: rate.minimumSubtotal ?? null,
+        maximumSubtotalMinor: rate.maximumSubtotal ?? null, packagingProfileVersion: null,
+        rateCountryCode: rate.countryCode ?? null, effectiveFrom: rate.effectiveFrom.toISOString(),
+        effectiveTo: rate.effectiveTo?.toISOString() ?? null, freeShippingThresholdMinor: null });
+      return { product, quote, basket, snapshot };
     } catch (error) {
       if (error instanceof CommerceDomainError) throw new CheckoutError("unavailable", "Shipping is not approved for this destination.");
       throw error;
@@ -104,8 +138,8 @@ export class CheckoutService {
   }
 
   async quote(input: Readonly<{ productSlug: string; quantity: number; countryCode: string }>) {
-    const { quote, basket } = await this.price(input);
-    return Object.freeze({ shippingRateId: quote.rateId, countryCode: quote.countryCode, zoneKey: quote.zoneKey, methodName: quote.methodName,
+    const { quote, basket, snapshot } = await this.price(input);
+    return Object.freeze({ shippingQuoteRevision: snapshot.quoteRevision, shippingRateId: quote.rateId, countryCode: quote.countryCode, zoneKey: quote.zoneKey, methodName: quote.methodName,
       subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency,
       importChargesNotice: quote.countryCode === "GB" ? null : importChargesNotice });
   }
@@ -117,7 +151,9 @@ export class CheckoutService {
     const replay = await this.repository.findCheckout(idempotencyKey, requestFingerprint);
     if (replay) return Object.freeze({ ...replay, replayed: true });
     if (input.paymentMethod !== undefined && input.paymentMethod !== "klarna") throw new CheckoutError("invalid_request", "Unsupported payment method.");
-    const { product, quote, basket } = await this.price({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.deliveryAddress.countryCode });
+    const { product, quote, basket, snapshot } = await this.price({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.deliveryAddress.countryCode });
+    if (input.shippingQuoteRevision !== undefined && input.shippingQuoteRevision !== snapshot.quoteRevision)
+      throw new CheckoutError("conflict", "Shipping quote changed. Review a new quote before payment.");
     if (quote.rateId !== input.shippingRateId) throw new CheckoutError("invalid_request", "Select an available shipping method.");
     if (quote.countryCode !== "GB" && input.importChargesAccepted !== true) throw new CheckoutError("invalid_request", "Acknowledge international import charges before payment.");
     if (input.expectedTotalMinor !== undefined && input.expectedTotalMinor !== basket.total.value) throw new CheckoutError("conflict", "Your total has changed. Review a new quote before payment.");
@@ -134,7 +170,7 @@ export class CheckoutService {
       postalCode: quote.countryCode === "AE" ? input.deliveryAddress.postalCode.trim() : requireText(input.deliveryAddress.postalCode, "Postcode"),
       countryCode: quote.countryCode,
     });
-    const order: CheckoutOrder = Object.freeze({ id: orderId, orderNumber, status: "draft", product, quantity: input.quantity, subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency, shippingRateId: quote.rateId, email, deliveryAddress, shippingApproval: this.testShippingAllowed ? "test" : "active", importChargesAccepted: quote.countryCode !== "GB" && input.importChargesAccepted === true });
+    const order: CheckoutOrder = Object.freeze({ id: orderId, orderNumber, status: "draft", product, quantity: input.quantity, subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency, shippingRateId: quote.rateId, shippingPricingSnapshot: snapshot, email, deliveryAddress, shippingApproval: this.testShippingAllowed ? "test" : "active", importChargesAccepted: quote.countryCode !== "GB" && input.importChargesAccepted === true });
     await this.repository.createOrder(order, idempotencyKey, requestFingerprint);
 
     try {

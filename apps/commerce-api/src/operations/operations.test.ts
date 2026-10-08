@@ -327,3 +327,22 @@ test("order list reads persisted shipping amounts and country without disclosing
   assert.deepEqual(await response.json(), { orders: result });
   assert.equal(reads, 1);
 });
+
+
+test("shipping evidence is detail-only, protected by orders:read, and absent historical evidence remains readable", async () => {
+  const { PostgresOperationsRepository } = await import("./postgres.js");
+  for (const snapshot of [null, { schemaVersion: 2, amountMinor: 1499, totalWeightGrams: 500, rateRevision: "test-revision" }]) {
+    const row = { id:returnOrderId,order_number:"CYPH-T-TEST",status:"paid",fulfilment_status:"unfulfilled",currency:"GBP",total_minor:1599,created_at:new Date(),shipping_rate_id:snapshot ? "rate" : null,shipping_country_code:snapshot ? "DE" : null,shipping_method_snapshot:snapshot ? {key:"tracked-postage-packing",name:"Tracked postage and packing"}:null,shipping_rate_snapshot:snapshot };
+    const pool = { query: async (sql:string) => sql.includes("FROM orders WHERE id") ? {rowCount:1,rows:[row]} : {rowCount:0,rows:[]} } as unknown as import("pg").default.Pool;
+    const detail = await new PostgresOperationsRepository(pool).getOrder(returnOrderId);
+    assert.equal(detail?.shippingPricingEvidence?.rate ?? null, snapshot);
+    const local = new OperationsService({...repository,getOrder:async()=>detail},{getConfiguredProvider:()=>provider,getProvider:()=>provider});
+    const req=()=>new Request(`https://ops.test/operations/orders/${returnOrderId}`);
+    assert.equal((await handleOperationsRequest(req(),local)).status,401);
+    assert.equal((await handleOperationsRequest(req(),local,{id:"operator",permissions:[]})).status,403);
+    const response=await handleOperationsRequest(req(),local,{id:"operator",permissions:["orders:read"]});
+    assert.equal(response.status,200);
+    const body = await response.json() as { shippingPricingEvidence: {rate: unknown} | null };
+    assert.deepEqual(body.shippingPricingEvidence?.rate ?? null,snapshot);
+  }
+});

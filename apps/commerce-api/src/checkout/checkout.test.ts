@@ -22,7 +22,7 @@ class MemoryCheckoutRepository implements CheckoutRepository {
   async getShipping(countryCode = "GB") {
     const zoneKey = shippingZoneForCountry(countryCode);
     const rate: ShippingRate = {
-      id: "rate_test", zoneKey, countryCode, methodKey: "tracked-postage-packing",
+      id: "rate_test", version: 1, zoneKey, countryCode, methodKey: "tracked-postage-packing",
       methodName: "Test delivery", price: money(trackedPostageMinor[zoneKey], "GBP"), status: "test",
       effectiveFrom: new Date("2026-01-01T00:00:00Z"),
     };
@@ -252,14 +252,14 @@ test("shipping setup never permits production/live and defaults every destinatio
 });
 
 test("shipping snapshot rechecks destination approval and price under database locks before payment", async () => {
-  const validRow = { method_key: "tracked-postage-packing", name: "Tracked postage and packing", description: "Includes packing", method_status: "test", rate_minor: 399, currency: "GBP", rate_status: "test", version: 1, country_code: "GB", zone_key: "uk", zone_status: "test", destination_status: "test", effective_from: new Date("2026-01-01"), effective_to: null, minimum_order_minor: null, maximum_order_minor: null, minimum_weight_grams: null, maximum_weight_grams: null, free_shipping_threshold_minor: null };
+  const validRow = { method_key: "tracked-postage-packing", name: "Test delivery", description: "Includes packing", method_status: "test", rate_minor: 399, currency: "GBP", rate_status: "test", version: 1, country_code: "GB", zone_key: "uk", zone_status: "test", destination_status: "test", effective_from: new Date("2026-01-01"), effective_to: null, minimum_order_minor: null, maximum_order_minor: null, minimum_weight_grams: null, maximum_weight_grams: null, free_shipping_threshold_minor: null };
   for (const override of [{}, { destination_status: "disabled" }, { method_status: "disabled" }, { zone_status: "disabled" }, { rate_status: "disabled" }, { rate_minor: 1 }, { effective_to: new Date("2020-01-01") }]) {
     const statements: string[] = [];
-    const client = { query: async (sql: string) => { statements.push(sql); if (sql.includes("FOR SHARE OF r")) return { rowCount: 1, rows: [{ ...validRow, ...override }] }; return { rowCount: 1, rows: [{ id: "customer" }] }; }, release() {} };
+    const client = { query: async (sql: string) => { statements.push(sql); if (sql.includes("SELECT price_minor,shipping_weight_grams")) return { rowCount: 1, rows: [{price_minor:10000,shipping_weight_grams:500,status:"private"}] }; if (sql.includes("FOR SHARE OF r")) return { rowCount: 1, rows: [{ ...validRow, ...override }] }; return { rowCount: 1, rows: [{ id: "customer" }] }; }, release() {} };
     const repository = new PostgresCheckoutRepository({ connect: async () => client } as unknown as pg.Pool);
     const memory = new MemoryCheckoutRepository(); await serviceFor(memory, []).initiate(request());
     const work = () => repository.createOrder(memory.orders[0]!, "key", "fingerprint");
-    if (Object.keys(override).length) { await assert.rejects(work, /Shipping approval or pricing changed/); assert.ok(statements.includes("ROLLBACK")); }
+    if (Object.keys(override).length) { await assert.rejects(work, /Shipping .*changed/); assert.ok(statements.includes("ROLLBACK")); }
     else { await work(); assert.ok(statements.includes("COMMIT")); }
     assert.ok(statements.some(statement => statement.includes("FOR SHARE OF r, m, z, c")));
   }
@@ -316,3 +316,56 @@ for (const countryCode of ["GB","DE","FR","TR","AE","SA","US","CA","AU"]) {
     assert.equal(repository.orders[0]?.totalMinor, expectedMinor);
   });
 }
+
+
+test("shipping snapshots bind revision, quantity, destination and weight; stale quotes cannot pay", async () => {
+  class RevisedRepository extends MemoryCheckoutRepository {
+    revision = 1;
+    override async getShipping(country = "GB") {
+      const shipping = await super.getShipping(country);
+      return { ...shipping, rates: shipping.rates.map(rate => ({ ...rate, version: this.revision,
+        minimumWeightGrams: 100, maximumWeightGrams: this.revision === 1 ? 2000 : 3000 })) };
+    }
+  }
+  const repository = new RevisedRepository(); const calls: CreateCheckoutInput[] = [];
+  const service = serviceFor(repository, calls);
+  const quote = await service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode: "DE" });
+  const input = request({ importChargesAccepted: true, shippingQuoteRevision: quote.shippingQuoteRevision,
+    expectedTotalMinor: quote.totalMinor, deliveryAddress: { ...request().deliveryAddress, countryCode: "DE" } });
+  await service.initiate(input);
+  const original = structuredClone(repository.orders[0]!);
+  assert.equal(original.deliveryMinor, 1499);
+  assert.equal(original.deliveryAddress.countryCode, "DE");
+  assert.equal(original.shippingPricingSnapshot?.totalWeightGrams, 500);
+  assert.equal(original.shippingPricingSnapshot?.minimumWeightGrams, 100);
+  assert.equal(original.shippingPricingSnapshot?.maximumWeightGrams, 2000);
+  assert.equal(original.shippingPricingSnapshot?.billableWeightGrams, null);
+  assert.ok(original.shippingPricingSnapshot?.selectedAt);
+  repository.revision = 2;
+  const revised = await service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode: "DE" });
+  assert.notEqual(revised.shippingQuoteRevision, quote.shippingQuoteRevision);
+  await assert.rejects(() => service.initiate({ ...input, idempotencyKey: "stale-revision" }), /quote changed/);
+  const replay = await service.initiate(input);
+  assert.equal(replay.replayed, true);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(repository.orders[0], original);
+  const two = await service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode: "DE" });
+  await assert.rejects(() => service.initiate({ ...input, quantity: 2, idempotencyKey: "stale-quantity" }), /quote changed/);
+  await service.initiate({ ...input, quantity: 2, idempotencyKey: "fresh-quantity", shippingQuoteRevision: two.shippingQuoteRevision, expectedTotalMinor: two.totalMinor });
+  assert.equal(repository.orders[1]?.shippingPricingSnapshot?.totalWeightGrams, 1000);
+  assert.equal(repository.orders[1]?.shippingPricingSnapshot?.quantity, 2);
+});
+
+test("failed or ambiguous payment attempts retain their original atomic pricing evidence", async () => {
+  for (const retryable of [false, true]) {
+    const repository = new MemoryCheckoutRepository();
+    const payment = { ...provider([]), createCheckout: async () => { throw new PaymentProviderError("network_error", "synthetic failure", retryable); } };
+    const service = new CheckoutService({ commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test" }, repository, payment, urls, true);
+    await assert.rejects(() => service.initiate(request()), /could not be started/);
+    assert.equal(repository.orders.length, 1);
+    assert.equal(repository.orders[0]?.deliveryMinor, 399);
+    assert.equal(repository.orders[0]?.shippingPricingSnapshot?.totalWeightGrams, 500);
+    assert.equal(repository.attached, undefined);
+    assert.equal((retryable ? repository.resolutionRequired : repository.abandoned).length, 1);
+  }
+});

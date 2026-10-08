@@ -66,7 +66,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
       const country = form.querySelector<HTMLSelectElement>("[name='countryCode']")!;
       const quantity = form.querySelector<HTMLInputElement>("[name='quantity']")!;
       const postal = form.querySelector<HTMLInputElement>("[name='postalCode']")!;
-      type Quote = { shippingRateId: string; totalMinor: number; subtotalMinor: number; taxMinor: number; deliveryMinor: number; currency: string };
+      type Quote = { shippingQuoteRevision: string; shippingRateId: string; totalMinor: number; subtotalMinor: number; taxMinor: number; deliveryMinor: number; currency: string };
       let quote: Quote | undefined;
       let revision = 0;
       let submitting = false;
@@ -88,7 +88,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
           });
           const result: Quote = await response.json();
           if (current !== revision || submitting) return;
-          if (!response.ok || typeof result.shippingRateId !== "string" || result.currency !== "GBP" || ![result.subtotalMinor, result.taxMinor, result.deliveryMinor, result.totalMinor].every(Number.isSafeInteger)) throw new Error("No approved quote.");
+          if (!response.ok || typeof result.shippingRateId !== "string" || typeof result.shippingQuoteRevision !== "string" || result.currency !== "GBP" || ![result.subtotalMinor, result.taxMinor, result.deliveryMinor, result.totalMinor].every(Number.isSafeInteger)) throw new Error("No approved quote.");
           quote = result;
           const format = (value: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: result.currency }).format(value / 100);
           for (const [label, amount] of [["Products", result.subtotalMinor], ["Tax included in order calculation", result.taxMinor], ["Tracked postage and packing", result.deliveryMinor], ["Total payable", result.totalMinor]] as const) {
@@ -125,7 +125,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
             headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
             body: JSON.stringify({
               productSlug: data.get("productSlug"), quantity: Number(data.get("quantity")),
-              shippingRateId: confirmed.shippingRateId, expectedTotalMinor: confirmed.totalMinor, email: data.get("email"),
+              shippingQuoteRevision: confirmed.shippingQuoteRevision, shippingRateId: confirmed.shippingRateId, expectedTotalMinor: confirmed.totalMinor, email: data.get("email"),
               ...(data.get("paymentMethod") === "klarna" ? { paymentMethod: "klarna" } : {}),
               importChargesAccepted: data.get("importChargesAccepted") === "on",
               correlationId: crypto.randomUUID(),

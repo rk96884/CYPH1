@@ -12,6 +12,7 @@ export type ShippingDestination = Readonly<{
 
 export type ShippingRate = Readonly<{
   id: string;
+  version?: number;
   zoneKey: string;
   countryCode?: string;
   methodKey: string;
