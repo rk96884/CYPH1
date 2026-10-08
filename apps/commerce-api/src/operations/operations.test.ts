@@ -289,3 +289,41 @@ test("fallback persistence outage preserves the fence and exposes only safe diag
   assert.deepEqual(logs.map(entry => JSON.parse(entry).stage), ["persist_provider_result", "persist_failure_state"]);
   assert.doesNotMatch(logs.join(""), /Authorization|secret|customer@example|private database/);
 });
+
+
+test("order list reads persisted shipping amounts and country without disclosing addresses", async () => {
+  const { PostgresOperationsRepository } = await import("./postgres.js");
+  const createdAt = new Date("2026-10-08T11:54:06.149Z");
+  const base = { id: returnOrderId, order_number: "CYPH-T-EXAMPLE", status: "paid", fulfilment_status: "unfulfilled", currency: "GBP", total_minor: "2699", created_at: createdAt };
+  const rows = [
+    { ...base, destination_country_code: "AE", delivery_minor: "2599" },
+    { ...base, destination_country_code: "US", delivery_minor: "2599" },
+    { ...base, destination_country_code: "DE", delivery_minor: "1499" },
+    { ...base, destination_country_code: null, delivery_minor: "0" },
+    { ...base, destination_country_code: "GB", delivery_minor: null },
+    { ...base, destination_country_code: "ZZ", delivery_minor: undefined },
+  ].map(row => ({ ...row, email: "private@example.invalid", delivery_address_snapshot: { line1: "PRIVATE ADDRESS" } }));
+  const pool = { query: async (sql: string, parameters: unknown[]) => {
+    assert.match(sql, /delivery_address_snapshot->>'countryCode' AS destination_country_code/);
+    assert.match(sql, /delivery_minor/);
+    assert.doesNotMatch(sql, /JOIN|shipping_rates|SELECT \*/i);
+    assert.deepEqual(parameters, ["%CYPH%", 20]);
+    return { rows };
+  } } as unknown as import("pg").default.Pool;
+  const result = await new PostgresOperationsRepository(pool).searchOrders("CYPH", 20);
+  assert.deepEqual(result.map(row => [row.destinationCountryCode, row.deliveryMinor]), [["AE",2599],["US",2599],["DE",1499],[null,0],["GB",null],[null,null]]);
+  assert.deepEqual(result[0], { id: base.id, orderNumber: base.order_number, status: "paid", fulfilmentStatus: "unfulfilled", currency: "GBP", totalMinor: 2699, createdAt: createdAt.toISOString(), destinationCountryCode: "AE", deliveryMinor: 2599 });
+  assert.ok(!JSON.stringify(result).includes("PRIVATE ADDRESS"));
+  assert.ok(!JSON.stringify(result).includes("private@example.invalid"));
+
+  let reads = 0;
+  const local = new OperationsService({ ...repository, searchOrders: async () => { reads++; return result; } }, { getConfiguredProvider: () => { throw new Error("No payment side effects allowed"); }, getProvider: () => { throw new Error("No provider calls allowed"); } });
+  const request = () => new Request("https://ops.test/operations/orders");
+  assert.equal((await handleOperationsRequest(request(), local)).status, 401);
+  assert.equal((await handleOperationsRequest(request(), local, { id: "operator", permissions: [] })).status, 403);
+  assert.equal(reads, 0);
+  const response = await handleOperationsRequest(request(), local, { id: "operator", permissions: ["orders:read"] });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { orders: result });
+  assert.equal(reads, 1);
+});

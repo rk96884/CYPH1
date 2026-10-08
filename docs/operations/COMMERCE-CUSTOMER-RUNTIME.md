@@ -471,3 +471,55 @@ Automated provider-boundary tests are not real hosted Mollie test payments;
 retain separately authorised sandbox-payment evidence. No real payment,
 email, deployment or database setup is executed by these unit tests. Existing
 compliance/operational gates and GO-01 remain open.
+
+## Operations order-list shipping reconciliation
+
+The protected `GET /operations/orders` response preserves all existing fields
+and adds these fields to each order:
+
+- `destinationCountryCode`: assigned ISO 3166-1 alpha-2 string or `null`, from
+  the persisted `orders.delivery_address_snapshot.countryCode`. Missing or
+  invalid codes return null; no zone, total or customer-email inference.
+- `deliveryMinor`: non-negative safe integer or `null`, from the original
+  `orders.delivery_minor` checkout charge. Missing/unrepresentable values return
+  null; recorded zero remains zero. Current shipping rates are never consulted.
+
+Example (synthetic identifiers):
+
+```json
+{"orders":[{"id":"00000000-0000-4000-8000-000000000001","orderNumber":"CYPH-T-EXAMPLE","status":"paid","fulfilmentStatus":"unfulfilled","currency":"GBP","totalMinor":1599,"destinationCountryCode":"DE","deliveryMinor":1499,"createdAt":"2026-10-08T11:54:06.149Z"}]}
+```
+
+Use the existing Cloudflare Access-protected operations origin and an authorised
+`orders:read` principal; search each synthetic order number using the existing
+`q` parameter. Compare country, deliveryMinor, currency, totalMinor and status
+against persisted order evidence, not against expected destination labels alone.
+Do not include addresses, names, email addresses, tokens or credentials in evidence.
+The customer runtime continues to reject `/operations/*`. No UI or detail-response
+change, migration, shipping configuration or payment/fulfilment mutation is required.
+
+Read-only verification on 8 October 2026 against the approved development database
+confirmed the following persisted synthetic records; all were paid/unfulfilled,
+with currency GBP:
+
+| Order number | Address country | deliveryMinor | totalMinor |
+| --- | --- | ---: | ---: |
+| CYPH-T-BFD36D955FDE | DE | 1499 | 1599 |
+| CYPH-T-6646BFD7281B | TR | 1499 | 1599 |
+| CYPH-T-3C619E4701A4 | AE | 2599 | 2699 |
+| CYPH-T-5AA204B91F85 | GB | 399 | 499 |
+| CYPH-T-EE574EB5BA0B | US | 2599 | 2699 |
+
+The compiled operations repository query and response mapper also passed against
+all five records inside a read-only PostgreSQL transaction. This verifies stored
+values and repository behaviour, not deployed API behaviour or webhook provenance.
+The schema historically makes delivery_minor non-null with default zero; a stored
+zero cannot establish whether an older importer omitted the original charge.
+No historical amount is reconstructed. Incomplete address snapshots return null.
+
+After approval, deploy only the operations staging service from the reviewed
+commit, preserving its Access configuration and all disabled commerce/worker
+controls. Verify unauthenticated access remains rejected, then read these five
+orders through the protected endpoint and compare the table above. Do not create
+payments, refunds, dispatches or fulfilments to verify this read-only change.
+No deployment or launch-gate closure is authorised by this evidence.
