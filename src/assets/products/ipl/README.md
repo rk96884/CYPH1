@@ -1,5 +1,16 @@
 # Product Page v1 gallery assets
 
+## Physical sample cooling evidence — 8 October 2026
+
+Source: project-owner-reported physical device testing. The owner confirms
+that ice cooling is always on and that no cooling on/off switch is present.
+Approved customer-facing copy: “Ice cooling stays active throughout treatment,
+with no separate setting to switch on.” This is a sample observation, not a
+manufacturer specification or comparative claim about other devices. No cooling
+temperature, efficacy or comfort outcome is inferred. Confirm this behaviour
+on the final production device before GO-01; no launch gate is closed by this
+record.
+
 ## Manufacturer guidance evidence — 7 October 2026
 
 ### Supplier-listed branding options — Alibaba K-803 listing
