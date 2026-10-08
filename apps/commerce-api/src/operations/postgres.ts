@@ -1,5 +1,5 @@
 import pg from "pg";
-import { transitionOrder, transitionPayment, type CaptureInput, type NormalisedPayment, type OrderStatus, type PaymentStatus } from "../../../../packages/commerce-core/src/index.js";
+import { countryCodes, transitionOrder, transitionPayment, type CaptureInput, type NormalisedPayment, type OrderStatus, type PaymentStatus } from "../../../../packages/commerce-core/src/index.js";
 import type { CaptureCommand, CaptureReservation, CaptureResult, CaptureRecovery, CaptureRecoveryReservation, CaptureReconciliationResult } from "./service.js";
 import { OperationsError, type OperationsRepository, type RefundReservation, type RefundReservationCommand } from "./service.js";
 
@@ -181,9 +181,17 @@ export class PostgresOperationsRepository implements OperationsRepository {
 
   async searchOrders(query: string, limit: number) {
     const term = query ? `%${query.replace(/[%_\\]/g, "\\$&")}%` : "%";
-    const result = await this.pool.query(`SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at
+    const result = await this.pool.query(`SELECT id, order_number, status, fulfilment_status, currency, total_minor, created_at, delivery_minor,
+      delivery_address_snapshot->>'countryCode' AS destination_country_code
       FROM orders WHERE order_number ILIKE $1 ESCAPE '\\' ORDER BY created_at DESC LIMIT $2`, [term, limit]);
-    return Object.freeze(result.rows.map(summary));
+    return Object.freeze(result.rows.map((row) => {
+      const deliveryMinor = row.delivery_minor == null ? null : Number(row.delivery_minor);
+      return Object.freeze({ ...summary(row),
+        destinationCountryCode: typeof row.destination_country_code === "string" && countryCodes.includes(row.destination_country_code)
+          ? row.destination_country_code : null,
+        deliveryMinor: deliveryMinor !== null && Number.isSafeInteger(deliveryMinor) && deliveryMinor >= 0 ? deliveryMinor : null,
+      });
+    }));
   }
 
   async getOrder(orderId: string) {

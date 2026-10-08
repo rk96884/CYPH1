@@ -13,6 +13,7 @@ export type RefundReservationCommand = RefundCommand & Readonly<{ fingerprint: s
 
 export type OrderSummary = Readonly<{ id: string; orderNumber: string; status: string; fulfilmentStatus: string; currency: string; totalMinor: number; createdAt: string }>;
 export type TimelineEvent = Readonly<{ id: string; type: string; action: string; status?: string; occurredAt: string; summary: Readonly<Record<string, unknown>> }>;
+export type OrderListSummary = OrderSummary & Readonly<{ destinationCountryCode: string | null; deliveryMinor: number | null }>;
 export type OrderDetails = Readonly<{ items?: readonly Readonly<{ id: string; sku_snapshot: string; name_snapshot: string; quantity: number }>[]; order: OrderSummary; payments: readonly Readonly<Record<string, unknown>>[]; refunds: readonly Readonly<Record<string, unknown>>[]; fulfilments: readonly Readonly<Record<string, unknown>>[]; timeline: readonly TimelineEvent[]; captureCommand?: Readonly<{ status: string }> }>;
 export type RefundReservation = Readonly<{ outcome: "reserved" | "replayed"; refundId: string; paymentId: string; provider: string; providerPaymentId: string; currency: string; amountMinor: number; refundableMinor: number; result?: Readonly<Record<string, unknown>> }>;
 
@@ -36,7 +37,7 @@ export interface OperationsRepository {
   reserveCaptureReconciliation(orderId: string, operatorId: string, claimId: string): Promise<CaptureRecoveryReservation>;
   permitCaptureReplay(recovery: CaptureRecovery, operatorId: string): Promise<boolean>;
   finishCaptureReconciliation(recovery: CaptureRecovery, operatorId: string, result: CaptureReconciliationResult, payment?: NormalisedPayment): Promise<CaptureReconciliationResult>;
-  searchOrders(query: string, limit: number): Promise<readonly OrderSummary[]>;
+  searchOrders(query: string, limit: number): Promise<readonly OrderListSummary[]>;
   getOrder(orderId: string): Promise<OrderDetails | undefined>;
   reserveRefund(input: RefundReservationCommand): Promise<RefundReservation>;
   completeRefund(input: Readonly<{ refundId: string; providerRefundId: string; status: "pending" | "completed" | "failed"; operatorId: string; correlationId: string }>): Promise<void>;
