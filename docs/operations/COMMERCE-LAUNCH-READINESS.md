@@ -43,38 +43,15 @@ All target dates below are in 2026. Repository areas are unlocked for implementa
 
 ### UK delivery proposition — SH-01 / PX-01
 
-**Status: PROVISIONAL — approved for launch planning; not approved for live
-checkout configuration.**
+**Status: PROVISIONAL — approved for launch planning; not approved for live checkout configuration. Updated 9 October 2026.**
 
-The current planning decision supersedes the earlier InPost Locker/Shop
-£2.99 and carrier-specific Royal Mail £3.99 customer propositions.
+The intended initial UK proposition remains **Standard UK Delivery — £3.99**, tracked home delivery, with Royal Mail Tracked 48 the preferred/default operational carrier. The £74.99 GBP intended product price excludes delivery. Final packed-parcel suitability, carrier pricing, compensation, stock/dispatch arrangements and customer-facing promises require approval before launch. Carrier API/automatic label integration is not required for the initial low-volume Royal Mail fulfilment workflow.
 
-Customer proposition: **Standard UK Delivery — £3.99**, tracked delivery to
-the customer's address. £74.99 GBP remains the intended product launch price;
-customer delivery is additional and is not included in that price.
+**InPost locker/shop collection — conditional launch enhancement, NOT a launch gate:** On 9 October 2026, the project owner submitted an InPost merchant enquiry. If InPost confirms suitable merchant/commercial terms, API/sandbox access and UK locker plus staffed-shop selection capabilities with enough time to implement and fully test before the approved launch freeze, add customer-selectable InPost locker/shop collection before launch. If approval/access is delayed, declined, unsuitable or cannot be safely integrated and tested in time, defer InPost to a post-launch enhancement. **Do not delay Royal Mail home-delivery launch solely for InPost.** Do not enable InPost rates, point selection, carrier booking or live checkout without provider-specific validation and accountable approval. The checkout currently has no live InPost point selector; documentation/architecture is not implementation evidence. The previous 7 October home-delivery-only statement is superseded only as to this conditional option, not the Royal Mail default or existing launch gates.
 
-Royal Mail Tracked 48 is the preferred/default initial operational carrier.
-Evri, DPD and InPost Home Delivery are permitted operational alternatives,
-subject to final service/parcel approval. Carrier selection is operational:
-the customer is not promised a particular carrier. No locker/collection-point
-option is offered at initial launch. No carrier API or automatic label
-integration is required for approximately 20 units; automation is a
-post-launch enhancement.
+Project-owner-supplied product facts: retail box 32 × 24 × 12 cm; known sample under 1 kg; mains-powered K-803 with no internal battery. These do not replace verification of the **final packed shipment**. Earlier measured packing evidence must be reconciled to the selected K-803 and actual outer packaging before carrier approval.
 
-Project-owner-supplied facts:
-- Product retail box: 32 × 24 × 12 cm.
-- Known sample weight: under 1 kg.
-- K-803 is mains powered and has no internal battery.
-
-These are not verified final customer-ready shipment dimensions or weight.
-Before GO-01, verify one final packed shipment, including outer packaging,
-against each operational carrier's applicable dimensions, weight, current
-price, service and eligibility. Retain and verify carrier compensation/claims
-terms as part of operational approval.
-
-£3.99 is planning-approved only. Do not configure it in live checkout yet.
-SH-01 remains PENDING DECISION; SH-02 remains BLOCKED. This decision does not
-close PX-01, EM-01, OPS-01, QA-01 or GO-01.
+**Economics evidence versus approval:** The £74.99 intended retail price, approximately £23 landed device cost and proposed £3.99 UK customer delivery charge have already been modelled/discussed. Do not restart economics analysis by default; reconcile existing work and record final cost/fee/margin sign-off for PX-01 after approved carrier and policy inputs. PX-01 and SH-01 remain PENDING DECISION; SH-02 and GO-01 remain BLOCKED.
 
 ### International tracked postage and packing — 8 October 2026
 
