@@ -1,0 +1,172 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+
+// Published from the approved policy draft; launch verification remains pending.
+const support = "mailto:customer-support@cyph1.co.uk";
+const contents = [
+  ["changing-your-mind", "Changing your mind"],
+  ["inspecting-your-product", "Inspecting your product"],
+  ["return-costs", "Change-of-mind return costs"],
+  ["refunds", "Refunds"],
+  ["faulty-products", "Faulty, damaged or incorrect products"],
+  ["delivery-damage", "Delivery damage"],
+  ["manufacturer-warranty", "12-month manufacturer's warranty"],
+  ["warranty-claims", "Making a warranty claim"],
+  ["hygiene-and-safety", "Hygiene & product safety"],
+  ["before-returning", "Before returning a device"],
+  ["contact", "Contact CYPH/1"],
+] as const;
+---
+<BaseLayout title="Returns, Refunds & Warranty | CYPH/1" description="Learn about CYPH/1 returns, refunds, faulty products and the 12-month manufacturer's warranty.">
+  <Header/>
+  <main id="main" class="legal-page returns-page">
+    <div class="container prose">
+      <p class="eyebrow">Customer care</p>
+      <h1>Returns, Refunds &amp; Warranty</h1>
+      <p class="policy-intro">We want you to be confident when purchasing from CYPH/1.</p>
+      <p>This page explains what to do if you change your mind, experience a problem with your product, or need to make a warranty claim.</p>
+      <p><strong>Nothing in this policy affects your statutory rights.</strong></p>
+
+      <dl class="policy-summary" aria-label="Returns and warranty at a glance">
+        <div><dt>14 days</dt><dd>Change your mind<br/><span>Contact us within 14 days of receiving your order.</span></dd></div>
+        <div><dt>12 months</dt><dd>Manufacturer's warranty<br/><span>In addition to your statutory rights.</span></dd></div>
+        <div><dt>Faulty product?</dt><dd>Contact CYPH/1 and we'll help<br/><span>We'll explain the appropriate next step.</span></dd></div>
+      </dl>
+      <div class="policy-actions">
+        <a class="button" href={support}>Contact customer support</a>
+        <a class="text-link" href={support}>Request return instructions</a>
+        <a class="text-link" href={support}>Report a faulty product</a>
+      </div>
+      <p class="action-note">Email us before returning anything. Sending an email does not itself authorise a return; we will provide the appropriate instructions and reference.</p>
+
+      <nav class="policy-contents" aria-label="On this page">
+        <h2>On this page</h2>
+        <ol>{contents.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ol>
+      </nav>
+
+      <section id="changing-your-mind" aria-labelledby="changing-your-mind-heading">
+        <h2 id="changing-your-mind-heading">1. Changing your mind</h2>
+        <p>If you purchase a product from CYPH/1 online, you have the right to change your mind and cancel your order within 14 days of receiving it.</p>
+        <p>To exercise your right to cancel, contact CYPH/1 within this 14-day period and tell us that you wish to return your order. After notifying us, you must return the product within 14 days.</p>
+        <p>Please contact us before sending anything back so that we can provide return instructions and a return reference. Email <a href={support}>customer-support@cyph1.co.uk</a>.</p>
+      </section>
+
+      <section id="inspecting-your-product" aria-labelledby="inspecting-your-product-heading">
+        <h2 id="inspecting-your-product-heading">2. Inspecting your product</h2>
+        <p>You may open the packaging and inspect the product as you reasonably would before deciding whether to keep it. Please take reasonable care of the product, packaging and accessories while they are in your possession.</p>
+        <p><strong>Simply opening the packaging does not automatically prevent the CYPH/1 device from being returned.</strong></p>
+        <p>If a product has been handled or used beyond what is reasonably necessary to establish its nature, characteristics and functioning, CYPH/1 may make an appropriate deduction from the refund to reflect any reduction in value, where permitted by law.</p>
+        <p>Extensive or repeated treatment use may therefore affect the amount refunded if that use has genuinely reduced the value of the product.</p>
+        <p>None of these conditions restrict your statutory rights where a product is faulty, damaged, incorrect or not as described.</p>
+      </section>
+
+      <section id="return-costs" aria-labelledby="return-costs-heading">
+        <h2 id="return-costs-heading">3. Change-of-mind return costs</h2>
+        <p>For a normal change-of-mind return, you are responsible for the direct cost of returning the product.</p>
+        <p>Where reasonably possible, please return products with their original packaging, accessories, manuals and other supplied items. We recommend an appropriate tracked delivery service and that you retain proof of postage.</p>
+        <p><strong>Please contact us before returning your product so that we can provide a return reference and the current return instructions.</strong></p>
+        <p>Returns address:</p>
+        <address>CYPH1 LTD<br/>102 Bassett Gardens<br/>Isleworth<br/>Middlesex<br/>TW7 4QY<br/>United Kingdom</address>
+      </section>
+
+      <section id="refunds" aria-labelledby="refunds-heading">
+        <h2 id="refunds-heading">4. Refunds</h2>
+        <p>Where you validly exercise your cancellation rights, CYPH/1 will refund the amount due, including the cost of the least expensive standard delivery option where required by law.</p>
+        <p>If you selected a more expensive delivery service, such as expedited delivery, CYPH/1 does not have to refund the additional amount above the standard delivery charge.</p>
+        <p>For change-of-mind returns, refunds will normally be made within 14 days of CYPH/1 receiving the returned goods or receiving evidence that they have been sent back, whichever occurs first, subject to applicable consumer law.</p>
+        <p>Refunds will normally be made using the same payment method used for the original purchase. CYPH/1 does not charge a fee for issuing a refund.</p>
+        <p>Your bank or payment provider may require additional processing time after CYPH/1 has issued the refund.</p>
+      </section>
+
+      <section id="faulty-products" aria-labelledby="faulty-products-heading">
+        <h2 id="faulty-products-heading">5. Faulty, damaged or incorrect products</h2>
+        <p>Faulty-product rights are separate from change-of-mind returns. CYPH/1 products must be of satisfactory quality, fit for purpose and as described.</p>
+        <p>Contact <a href={support}>customer-support@cyph1.co.uk</a> if your product:</p>
+        <ul><li>arrives damaged;</li><li>is incorrect;</li><li>develops a fault; or</li><li>otherwise does not conform to your contract.</li></ul>
+        <p>Depending on the circumstances and your statutory rights, remedies may include a refund, replacement, repair where appropriate, or a price reduction.</p>
+        <p>CYPH/1 will cover reasonable return costs where goods are returned because they are faulty, damaged, incorrect or otherwise do not conform to the contract.</p>
+        <p>Please contact CYPH/1 before returning the product so that the appropriate return procedure can be arranged. The 12-month manufacturer's warranty does not limit your statutory consumer rights.</p>
+      </section>
+
+      <section id="delivery-damage" aria-labelledby="delivery-damage-heading">
+        <h2 id="delivery-damage-heading">6. Delivery damage</h2>
+        <p>If the parcel or product appears to have been damaged during delivery, please contact CYPH/1 as soon as reasonably possible.</p>
+        <p>Where possible, retain the product, product packaging and delivery packaging while the issue is investigated. We may request photographs of the product and packaging to help assess delivery damage.</p>
+        <p class="policy-callout"><strong>Please do not continue using a product if you believe it may have been damaged in a way that could affect its safe operation.</strong></p>
+      </section>
+
+      <section id="manufacturer-warranty" aria-labelledby="manufacturer-warranty-heading">
+        <h2 id="manufacturer-warranty-heading">7. 12-month manufacturer's warranty</h2>
+        <p>Your CYPH/1 IPL device comes with a 12-month manufacturer's warranty from the date of purchase.</p>
+        <p>The manufacturer has confirmed warranty coverage for product quality issues involving damage or faults not caused by the customer. This is intended to cover manufacturing defects and faults arising during normal use in accordance with the supplied instructions.</p>
+        <p>If a problem arises during the warranty period, please contact CYPH/1 customer support. We will assess the issue and arrange an appropriate next step. Where a fault is covered, a replacement device may be provided.</p>
+        <p>Damage caused by misuse or accidental damage is not covered by the manufacturer's stated warranty. Any additional product-specific exclusions remain subject to confirmation and will not be applied in a way that restricts statutory rights.</p>
+        <p class="policy-callout"><strong>This manufacturer's warranty is in addition to, and does not affect, your statutory consumer rights.</strong></p>
+        <p>Expiry of the manufacturer's warranty does not necessarily mean that your rights under UK consumer law have ended.</p>
+      </section>
+
+      <section id="warranty-claims" aria-labelledby="warranty-claims-heading">
+        <h2 id="warranty-claims-heading">8. Making a warranty claim</h2>
+        <p>Email <a href={support}>customer-support@cyph1.co.uk</a> with:</p>
+        <ul><li>your order number;</li><li>a description of the problem; and</li><li>any other information reasonably required to identify or understand the fault.</li></ul>
+        <p>We may initially ask you to perform simple, safe troubleshooting. If the problem cannot be resolved remotely, we may arrange for the product to be returned for assessment.</p>
+        <p>Following assessment, the appropriate next step may include repair, replacement, refund or another remedy depending on the circumstances and your legal rights.</p>
+        <p><strong>Do not attempt to open, dismantle or repair the device yourself.</strong></p>
+      </section>
+
+      <section id="hygiene-and-safety" aria-labelledby="hygiene-and-safety-heading">
+        <h2 id="hygiene-and-safety-heading">9. Hygiene &amp; product safety</h2>
+        <p>Because CYPH/1 devices are designed for use in contact with skin, returned products may be inspected and handled in accordance with CYPH/1 hygiene and product-safety procedures.</p>
+        <p><strong>We do not automatically refuse a statutory change-of-mind return simply because the product packaging has been opened.</strong></p>
+        <p>Where a product has been used beyond what is reasonably necessary to inspect and assess it, CYPH/1 may make a lawful deduction from the refund where that use has reduced its value.</p>
+        <p>Any hygiene restrictions applicable to specific sealed accessories will be clearly identified where relevant. Hygiene considerations do not affect statutory rights for faulty or non-conforming goods.</p>
+      </section>
+
+      <section id="before-returning" aria-labelledby="before-returning-heading">
+        <h2 id="before-returning-heading">10. Before returning a device</h2>
+        <p>For safety and privacy reasons, please follow the return instructions supplied by CYPH/1. Where applicable, remove personal information or settings stored on a product before returning it.</p>
+        <p>Please return relevant components and accessories where they form part of the product being returned.</p>
+        <p><strong>Do not dispose of a product that you believe is faulty unless CYPH/1 specifically tells you to do so.</strong></p>
+      </section>
+
+      <section id="contact" aria-labelledby="contact-heading">
+        <h2 id="contact-heading">11. Contact CYPH/1</h2>
+        <p>Customer support: <a href={support}>customer-support@cyph1.co.uk</a></p>
+        <p><strong>Please contact customer support before returning anything so that we can provide a return reference and the current return instructions.</strong></p>
+        <p>Returns address:</p>
+        <address>CYPH1 LTD<br/>102 Bassett Gardens<br/>Isleworth<br/>Middlesex<br/>TW7 4QY<br/>United Kingdom</address>
+        <p class="action-note">This is the returns address. The company's registered information remains available in our website terms.</p>
+      </section>
+    </div>
+  </main>
+  <Footer/>
+</BaseLayout>
+
+<style>
+  .returns-page h1 { font-size: clamp(1.75rem, 5vw, 4rem); line-height: var(--cyph-leading-heading); overflow-wrap: anywhere; }
+  .returns-page a { text-underline-offset: var(--cyph-space-1); }
+  .returns-page p, .returns-page li { overflow-wrap: anywhere; }
+  .returns-page strong { color: var(--cyph-text-primary); font-weight: var(--cyph-font-weight-semibold); }
+  .policy-intro { font-size: 1.125rem; }
+  .policy-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--cyph-space-6); margin-block: var(--cyph-space-12) var(--cyph-space-8); padding-block: var(--cyph-space-6); border-block: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .policy-summary dt { margin-bottom: var(--cyph-space-3); color: var(--cyph-accent-highlight); font-weight: var(--cyph-font-weight-semibold); text-transform: uppercase; letter-spacing: var(--cyph-tracking-label); }
+  .policy-summary dd { margin: 0; }
+  .policy-summary dd span { display: inline-block; margin-top: var(--cyph-space-2); color: var(--cyph-text-secondary); font-size: .875rem; }
+  .policy-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cyph-space-4) var(--cyph-space-6); }
+  .policy-actions a { min-height: 2.75rem; display: inline-flex; align-items: center; }
+  .action-note { font-size: .875rem; }
+  .policy-contents { margin-block: var(--cyph-space-12); padding: var(--cyph-space-6); background: var(--cyph-surface-raised); }
+  .policy-contents h2 { margin-top: 0; }
+  .policy-contents ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--cyph-space-2) var(--cyph-space-8); padding-left: var(--cyph-space-6); margin-bottom: 0; }
+  .policy-contents a { display: inline-block; padding-block: var(--cyph-space-2); }
+  .returns-page section { scroll-margin-top: var(--cyph-space-8); }
+  .returns-page section h2 { line-height: var(--cyph-leading-heading); }
+  .returns-page li { padding-bottom: var(--cyph-space-2); color: var(--cyph-text-secondary); }
+  .policy-callout { padding: var(--cyph-space-4) var(--cyph-space-6); border-left: var(--cyph-line-emphasis) solid var(--cyph-accent-primary); background: var(--cyph-surface-raised); }
+  /* Contain the existing footer on this route without changing the shared component. */
+  :global(.returns-page + .site-footer .footer-grid > div) { min-width: 0; }
+  :global(.returns-page + .site-footer nav) { flex-wrap: wrap; }
+  :global(.returns-page + .site-footer .social-links) { flex-wrap: wrap !important; }
+</style>
