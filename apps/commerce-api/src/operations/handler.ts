@@ -51,14 +51,15 @@ export const handleOperationsRequest = async (request: Request, service: Operati
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
-    if (path[0] === "orders" && path[1] && path.length === 3 && ["packing","dispatch"].includes(path[2] ?? "")) {
+    if (path[0] === "orders" && path[1] && path.length === 3 && ["packing","dispatch","collection-review"].includes(path[2] ?? "")) {
       const packing = path[2] === "packing";
       if (!allowed(principal, packing ? "fulfilment:read" : "fulfilment:dispatch")) return json({ message: "Permission denied." }, 403);
       if (!fulfilment) return json({ message: "Manual fulfilment unavailable." }, 503);
       if (packing && request.method === "GET") {
         const data = await fulfilment.packingInformation(path[1], principal.id);
-        return data ? json({ ...data, dispatchEnabled: data.dispatchEnabled && allowed(principal, "fulfilment:dispatch") }) : json({ message: "Order not found." }, 404);
+        return data ? json({ ...data, dispatchEnabled: data.dispatchEnabled && allowed(principal, "fulfilment:dispatch"), collectionReviewEnabled: data.dispatchEnabled && allowed(principal,"fulfilment:dispatch") }) : json({ message: "Order not found." }, 404);
       }
+      if (path[2] === "collection-review" && request.method === "POST") return json(await fulfilment.reviewCollection(path[1],await request.json(),principal.id,request.headers.get("idempotency-key") ?? ""));
       if (!packing && request.method === "POST") {
         return json(await fulfilment.dispatchManual(path[1], await request.json(), principal.id, request.headers.get("idempotency-key") ?? ""));
       }

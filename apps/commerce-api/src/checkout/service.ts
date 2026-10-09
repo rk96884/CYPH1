@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import {
-  calculateBasket,
+  calculateBasket, inpostCollectionMethod, inpostCollectionMinor, normaliseCollectionPoint, normaliseUkMobile, type CollectionPoint,
   normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor, trackedPostageMethod, importChargesNotice,
   CommerceDomainError,
   money,
@@ -29,13 +29,14 @@ export type CheckoutAddress = Readonly<{
   region?: string;
   postalCode: string;
   countryCode: string;
+  phone?: string; collectionPoint?: CollectionPoint;
 }>;
 
 export type InitiateCheckoutInput = Readonly<{
   productSlug: string; quantity: number; shippingRateId: string; email: string;
   deliveryAddress: CheckoutAddress; paymentMethod?: PaymentMethod;
   importChargesAccepted?: boolean; expectedTotalMinor?: number;
-  shippingQuoteRevision?: string;
+  shippingQuoteRevision?: string; deliveryMethod?: string;
   idempotencyKey: string; correlationId: string;
 }>;
 
@@ -96,7 +97,7 @@ const requireText = (value: string, field: string): string => { const normalised
 const normaliseEmail = (value: string): string => { const email = requireText(value, "Email address").toLowerCase(); if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new CheckoutError("invalid_request", "Enter a valid email address."); return email; };
 const paymentName = (value: string, field: string): string => { const name = requireText(value, field); if (name.length < 2 || /^\d+$/.test(name)) throw new CheckoutError("invalid_request", `${field} must contain at least two characters and cannot be only numbers.`); return name; };
 const orderReference = (id: string): string => `CYPH-T-${id.replaceAll("-", "").slice(0, 12).toUpperCase()}`;
-const fingerprint = (input: InitiateCheckoutInput): string => createHash("sha256").update(JSON.stringify({ productSlug: input.productSlug, quantity: input.quantity, shippingRateId: input.shippingRateId, email: input.email.trim().toLowerCase(), deliveryAddress: input.deliveryAddress, paymentMethod: input.paymentMethod ?? null, importChargesAccepted: input.importChargesAccepted === true, shippingQuoteRevision: input.shippingQuoteRevision ?? null, expectedTotalMinor: input.expectedTotalMinor ?? null })).digest("hex");
+const fingerprint = (input: InitiateCheckoutInput): string => createHash("sha256").update(JSON.stringify({ productSlug: input.productSlug, quantity: input.quantity, shippingRateId: input.shippingRateId, email: input.email.trim().toLowerCase(), deliveryAddress: input.deliveryAddress, paymentMethod: input.paymentMethod ?? null, deliveryMethod: input.deliveryMethod ?? trackedPostageMethod, importChargesAccepted: input.importChargesAccepted === true, shippingQuoteRevision: input.shippingQuoteRevision ?? null, expectedTotalMinor: input.expectedTotalMinor ?? null })).digest("hex");
 
 export class CheckoutService {
   constructor(private readonly config: CommerceConfig, private readonly repository: CheckoutRepository, private readonly paymentProvider: PaymentProvider, private readonly urls: CheckoutUrls, private readonly allowPrivateProducts = false) {}
@@ -106,12 +107,16 @@ export class CheckoutService {
       && this.config.fulfilmentMode === "test" && this.config.fulfilmentProvider === "manual-test";
   }
 
-  private async price(input: Readonly<{ productSlug: string; quantity: number; countryCode: string }>) {
+  private async price(input: Readonly<{ productSlug: string; quantity: number; countryCode: string; deliveryMethod?: string }>) {
     if (!this.config.commerceEnabled || this.config.paymentProvider !== this.paymentProvider.key) throw new CheckoutError("disabled", "Commerce is not enabled.");
     if (!Number.isSafeInteger(input.quantity) || input.quantity < 1 || input.quantity > 10) throw new CheckoutError("invalid_request", "Quantity must be between 1 and 10.");
     let country: string;
     try { country = normaliseCountryCode(input.countryCode); }
     catch { throw new CheckoutError("invalid_request", "Select a valid ISO country code."); }
+    const deliveryMethod = input.deliveryMethod ?? trackedPostageMethod;
+    const collection = deliveryMethod === inpostCollectionMethod;
+    if (![trackedPostageMethod, inpostCollectionMethod].includes(deliveryMethod)) throw new CheckoutError("invalid_request", "Select an available delivery method.");
+    if (collection && (!this.testShippingAllowed || country !== "GB" || input.quantity !== 1)) throw new CheckoutError("unavailable", "InPost collection requires UK single-unit test checkout; launch approval remains pending.");
     const product = await this.repository.getProduct(requireText(input.productSlug, "Product"));
     if (!product || (product.status !== "active" && !(this.testShippingAllowed && product.status === "private"))) throw new CheckoutError("unavailable", "This product is not available for checkout.");
     if (product.availableQuantity < input.quantity || product.priceMinor <= 0) throw new CheckoutError("unavailable", "The requested quantity is not available.");
@@ -121,12 +126,12 @@ export class CheckoutService {
     const lines = [{ productId: product.id, sku: product.sku, quantity: input.quantity, unitPrice: money(product.priceMinor, product.currency), unitTax: money(product.unitTaxMinor, product.currency), unitWeightGrams: product.shippingWeightGrams }];
     const provisional = calculateBasket(lines, money(0, product.currency), money(0, product.currency));
     try {
-      const carrierRates = shipping.rates.filter(rate => rate.carrierTariff && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
+      const carrierRates = shipping.rates.filter(rate => !collection && rate.carrierTariff && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
       const packagingProfiles = carrierRates.length ? await this.repository.getPackagingProfiles?.(product.id) ?? [] : [];
       // Approved carrier configuration takes precedence, even when it yields no eligible service.
       // Legacy flat rates remain a single-unit staging fallback, never a multi-unit packaging approval.
       if (!carrierRates.length && input.quantity > 1) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
-      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : shipping.rates.filter(rate => rate.methodKey === trackedPostageMethod && rate.price.currency === "GBP" && rate.price.value === trackedPostageMinor[zone] && rate.freeShippingThreshold === undefined),
+      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : shipping.rates.filter(rate => rate.methodKey === deliveryMethod && rate.price.currency === "GBP" && rate.price.value === (collection ? inpostCollectionMinor : trackedPostageMinor[zone]) && rate.freeShippingThreshold === undefined),
         basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed,
         shipment: {productId:product.id,quantity:input.quantity,unitWeightGrams:product.shippingWeightGrams,
           merchandiseValueMinor:provisional.subtotal.value+provisional.tax.value,packagingProfiles} });
@@ -153,9 +158,9 @@ export class CheckoutService {
     }
   }
 
-  async quote(input: Readonly<{ productSlug: string; quantity: number; countryCode: string }>) {
+  async quote(input: Readonly<{ productSlug: string; quantity: number; countryCode: string; deliveryMethod?: string }>) {
     const { quote, basket, snapshot } = await this.price(input);
-    return Object.freeze({ shippingQuoteRevision: snapshot.quoteRevision, shippingRateId: quote.rateId, countryCode: quote.countryCode, zoneKey: quote.zoneKey, methodName: quote.methodName,
+    return Object.freeze({ shippingQuoteRevision: snapshot.quoteRevision, shippingRateId: quote.rateId, countryCode: quote.countryCode, zoneKey: quote.zoneKey, methodKey: quote.methodKey, methodName: quote.methodName,
       subtotalMinor: basket.subtotal.value, taxMinor: basket.tax.value, deliveryMinor: basket.delivery.value, totalMinor: basket.total.value, currency: basket.total.currency,
       importChargesNotice: quote.countryCode === "GB" ? null : importChargesNotice });
   }
@@ -167,18 +172,26 @@ export class CheckoutService {
     const replay = await this.repository.findCheckout(idempotencyKey, requestFingerprint);
     if (replay) return Object.freeze({ ...replay, replayed: true });
     if (input.paymentMethod !== undefined && input.paymentMethod !== "klarna") throw new CheckoutError("invalid_request", "Unsupported payment method.");
-    const { product, quote, basket, snapshot } = await this.price({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.deliveryAddress.countryCode });
+    const { product, quote, basket, snapshot } = await this.price({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.deliveryAddress.countryCode, ...(input.deliveryMethod ? {deliveryMethod:input.deliveryMethod} : {}) });
     if (input.shippingQuoteRevision !== undefined && input.shippingQuoteRevision !== snapshot.quoteRevision)
       throw new CheckoutError("conflict", "Shipping quote changed. Review a new quote before payment.");
     if (quote.rateId !== input.shippingRateId) throw new CheckoutError("invalid_request", "Select an available shipping method.");
     if (quote.countryCode !== "GB" && input.importChargesAccepted !== true) throw new CheckoutError("invalid_request", "Acknowledge international import charges before payment.");
     if (input.expectedTotalMinor !== undefined && input.expectedTotalMinor !== basket.total.value) throw new CheckoutError("conflict", "Your total has changed. Review a new quote before payment.");
 
+    let collectionPoint: CollectionPoint | undefined, phone: string | undefined;
+    if (quote.methodKey === inpostCollectionMethod) {
+      if (input.paymentMethod === "klarna") throw new CheckoutError("unavailable", "Klarna collection checkout requires separate provider validation.");
+      try { collectionPoint = normaliseCollectionPoint(input.deliveryAddress.collectionPoint); phone = normaliseUkMobile(input.deliveryAddress.phone); }
+      catch (error) { if (error instanceof CommerceDomainError) throw new CheckoutError("invalid_request", error.message); throw error; }
+    } else if (input.deliveryAddress.collectionPoint !== undefined) throw new CheckoutError("invalid_request", "Collection point details require InPost delivery.");
     const orderId = randomUUID();
     const orderNumber = orderReference(orderId);
     const email = normaliseEmail(input.email);
     const deliveryAddress = Object.freeze({
-      ...input.deliveryAddress,
+      ...(phone ? {phone} : {}), ...(collectionPoint ? {collectionPoint} : {}),
+      ...(input.deliveryAddress.line2 ? {line2:input.deliveryAddress.line2.trim()} : {}),
+      ...(input.deliveryAddress.region ? {region:input.deliveryAddress.region.trim()} : {}),
       givenName: paymentName(input.deliveryAddress.givenName, "First name"),
       familyName: paymentName(input.deliveryAddress.familyName, "Last name"),
       line1: requireText(input.deliveryAddress.line1, "Address line 1"),

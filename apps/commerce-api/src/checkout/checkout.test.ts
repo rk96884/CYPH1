@@ -5,6 +5,7 @@ import { CheckoutError, CheckoutService, type CheckoutOrder, type CheckoutReposi
 
 class MemoryCheckoutRepository implements CheckoutRepository {
   readonly orders: CheckoutOrder[] = [];
+  readonly fingerprints = new Map<string,string>();
   readonly completed = new Map<string, CheckoutResult>();
   readonly abandoned: string[] = [];
   readonly resolutionRequired: string[] = [];
@@ -29,8 +30,8 @@ class MemoryCheckoutRepository implements CheckoutRepository {
     return { destination: { countryCode, zoneKey, status: "test" as const }, rates: [rate] };
   }
 
-  async findCheckout(idempotencyKey: string) { return this.completed.get(idempotencyKey); }
-  async createOrder(order: CheckoutOrder) { this.orders.push(order); }
+  async findCheckout(idempotencyKey: string, fingerprint: string) { if(this.fingerprints.has(idempotencyKey) && this.fingerprints.get(idempotencyKey)!==fingerprint) throw new CheckoutError("conflict","Checkout key belongs to another request."); return this.completed.get(idempotencyKey); }
+  async createOrder(order: CheckoutOrder, key:string, fingerprint:string) { this.orders.push(order);this.fingerprints.set(key,fingerprint); }
   async attachPayment(input: Parameters<CheckoutRepository["attachPayment"]>[0]) {
     this.attached = input;
     const order = this.orders.find((candidate) => candidate.id === input.orderId);
@@ -467,4 +468,38 @@ test("published quantity comparisons use confirmed weights, real bands and separ
  assert.ok(rows.every(row=>!row.finalQuote && row.approvalStatus==="unapproved" && row.customsChargesMinor===null && row.otherSurchargesMinor===null));
  const changed=comparePublishedPostage(parseTariffSchedule(publishedRaw()),{unitWeightGrams:953,singleUnitProtectionGrams:108,multiUnitProtectionGrams:200});
  assert.equal(changed.find(row=>row.quantity===2)?.weightGrams,2106);
+});
+
+const collectionPoint={name:"Synthetic Locker",address:"1 Test Road, London",postalCode:"SW1A 1AA"};
+const collectionRequest=(overrides:Record<string,unknown>={})=>request({deliveryMethod:"inpost-locker-shop",shippingRateId:"inpost_test",deliveryAddress:{...request().deliveryAddress,phone:"07700 900123",collectionPoint},...overrides});
+class CollectionCheckoutRepository extends MemoryCheckoutRepository {
+  inpostPrice=259;
+  override async getShipping(country="GB") {
+    const shipping=await super.getShipping(country);
+    return {...shipping,rates:[...shipping.rates,{...shipping.rates[0]!,id:"inpost_test",methodKey:"inpost-locker-shop",methodName:"InPost locker/shop collection",price:money(this.inpostPrice,"GBP")}]};
+  }
+}
+test("InPost quote and payment use server price and persist recipient/point through replay",async()=>{
+  const repo=new CollectionCheckoutRepository(),capture:CreateCheckoutInput[]=[],service=serviceFor(repo,capture);
+  const home=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});assert.equal(home.deliveryMinor,399);
+  const quote=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB",deliveryMethod:"inpost-locker-shop"});assert.equal(quote.deliveryMinor,259);assert.equal(quote.totalMinor,12259);
+  const input=collectionRequest({shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+  const original=await service.initiate(input);const replay=await service.initiate(input);
+  assert.equal(replay.orderId,original.orderId);assert.equal(capture.length,1);assert.equal(repo.orders.length,1);
+  assert.equal(capture[0]!.amount.value,12259);assert.equal(repo.orders[0]!.deliveryMinor,259);
+  assert.deepEqual(repo.orders[0]!.deliveryAddress.collectionPoint,collectionPoint);assert.equal(repo.orders[0]!.deliveryAddress.phone,"+447700900123");
+  await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor,deliveryAddress:{...input.deliveryAddress,collectionPoint:{...collectionPoint,name:"Changed"}}})),/another request/);
+});
+test("InPost collection fails closed for incomplete details, foreign/multi-unit/live and manipulated charges",async()=>{
+  const repo=new CollectionCheckoutRepository(),capture:CreateCheckoutInput[]=[],service=serviceFor(repo,capture);
+  for(const deliveryAddress of [{...request().deliveryAddress},{...request().deliveryAddress,phone:"02012345678",collectionPoint},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,postalCode:"90210"}},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,address:""}}]) await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress})),e=>e instanceof CheckoutError&&e.code==="invalid_request");
+  await assert.rejects(()=>service.initiate(collectionRequest({quantity:2})),/single-unit/);
+  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/single-unit/);
+  await assert.rejects(()=>service.initiate(collectionRequest({expectedTotalMinor:1})),/total has changed/);
+  await assert.rejects(()=>service.initiate(collectionRequest({shippingRateId:"rate_test"})),/available shipping/);
+  await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:"0".repeat(64)})),/quote changed/);
+  await assert.rejects(()=>service.initiate(collectionRequest({paymentMethod:"klarna"})),/provider validation/);
+  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/single-unit/);
+  repo.inpostPrice=1;await assert.rejects(()=>service.initiate(collectionRequest()),/not approved/);
+  assert.equal(repo.orders.length,0);assert.equal(capture.length,0);
 });

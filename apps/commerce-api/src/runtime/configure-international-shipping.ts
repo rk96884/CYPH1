@@ -1,5 +1,5 @@
 import pg from "pg";
-import { countryCodes, normaliseCountryCode, shippingZoneForCountry, trackedPostageMethod, trackedPostageMinor } from "../../../../packages/commerce-core/src/index.js";
+import { countryCodes, normaliseCountryCode, shippingZoneForCountry, trackedPostageMethod, trackedPostageMinor, inpostCollectionMethod, inpostCollectionMinor } from "../../../../packages/commerce-core/src/index.js";
 
 // Deliberately separate from startup/migrations. Never configures a production database.
 export const shippingSetupCountries = (environment: Readonly<Record<string, string | undefined>>): readonly string[] => {
@@ -13,7 +13,7 @@ export const shippingSetupCountries = (environment: Readonly<Record<string, stri
   return Object.freeze((environment.SHIPPING_TEST_COUNTRIES ?? "").split(",").map(value => value.trim()).filter(Boolean).map(normaliseCountryCode));
 };
 
-export const configureInternationalShipping = async (pool: pg.Pool, testCountries: readonly string[]): Promise<void> => {
+export const configureInternationalShipping = async (pool: pg.Pool, testCountries: readonly string[], includeInpost = false): Promise<void> => {
   const approved = new Set(testCountries.map(normaliseCountryCode));
   const client = await pool.connect();
   try {
@@ -43,6 +43,13 @@ export const configureInternationalShipping = async (pool: pg.Pool, testCountrie
       await client.query(`INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version)
         VALUES($1,$2,$3,$4,'GBP','test',now(),1) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO UPDATE SET rate_minor=EXCLUDED.rate_minor,currency='GBP',status='test',updated_at=now()`,
       [destination.rows[0].zone_id, method.rows[0].id, code, trackedPostageMinor[zone]]);
+    }
+    if (includeInpost) {
+      if (!approved.has("GB")) throw new Error("InPost test configuration requires GB test approval.");
+      const method = await client.query("INSERT INTO shipping_methods(method_key,name,description,status) VALUES($1,'InPost locker/shop collection','UK single-unit Medium parcel; manually matched and booked. Launch approval pending.','test') ON CONFLICT(method_key) DO UPDATE SET status='test',updated_at=now() RETURNING id",[inpostCollectionMethod]);
+      const destination=await client.query("SELECT zone_id FROM shipping_zone_countries WHERE country_code='GB' AND destination_status='test'");
+      if(destination.rowCount!==1) throw new Error("GB test destination is required.");
+      await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',$3,'GBP','test',now(),1) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO UPDATE SET status='test',updated_at=now()",[destination.rows[0].zone_id,method.rows[0].id,inpostCollectionMinor]);
     }
     await client.query("COMMIT");
   } catch (error) { await client.query("ROLLBACK"); throw error; }

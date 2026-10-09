@@ -47,7 +47,7 @@ All target dates below are in 2026. Repository areas are unlocked for implementa
 
 The intended initial UK proposition remains **Standard UK Delivery — £3.99**, tracked home delivery, with Royal Mail Tracked 48 the preferred/default operational carrier. The £74.99 GBP intended product price excludes delivery. Final packed-parcel suitability, carrier pricing, compensation, stock/dispatch arrangements and customer-facing promises require approval before launch. Carrier API/automatic label integration is not required for the initial low-volume Royal Mail fulfilment workflow.
 
-**InPost locker/shop collection — conditional launch enhancement, NOT a launch gate:** On 9 October 2026, the project owner submitted an InPost merchant enquiry. If InPost confirms suitable merchant/commercial terms, API/sandbox access and UK locker plus staffed-shop selection capabilities with enough time to implement and fully test before the approved launch freeze, add customer-selectable InPost locker/shop collection before launch. If approval/access is delayed, declined, unsuitable or cannot be safely integrated and tested in time, defer InPost to a post-launch enhancement. **Do not delay Royal Mail home-delivery launch solely for InPost.** Do not enable InPost rates, point selection, carrier booking or live checkout without provider-specific validation and accountable approval. The checkout currently has no live InPost point selector; documentation/architecture is not implementation evidence. The previous 7 October home-delivery-only statement is superseded only as to this conditional option, not the Royal Mail default or existing launch gates.
+**InPost locker/shop collection — IMPLEMENTED FOR PRIVATE TEST / NOT LAUNCH-APPROVED (9 October 2026).** The project owner authorised manual InPost Send booking, replacing the earlier API/widget-dependent proposal. UK home delivery remains £3.99; collection is £2.59 for a Medium self-service parcel. No API, embedded widget, destination or shipping configuration is activated by this implementation. The owner accepts standard £50 compensation; do not add optional insurance. SH-01, SH-02, OPS-01 and GO-01 remain open.
 
 Project-owner-supplied product facts: retail box 32 × 24 × 12 cm; known sample under 1 kg; mains-powered K-803 with no internal battery. These do not replace verification of the **final packed shipment**. Earlier measured packing evidence must be reconciled to the selected K-803 and actual outer packaging before carrier approval.
 
@@ -352,3 +352,38 @@ external sender/domain authentication, receipt/retry/reconciliation evidence,
 production monitoring/ownership, final commercial inputs and privacy approvals
 remain outstanding. See `TRANSACTIONAL-COMMUNICATIONS.md` for configuration and
 release requirements. Paid-order manual cancellation confirmation is separate.
+
+## InPost locker/shop collection — implementation and verification
+
+**Status: IN PROGRESS — implemented, not launch-approved.** Outstanding K-803 IEC/EN 60335-2-113 testing and all other applicable CO-01/GO-01 requirements remain. Public purchasing stays disabled. Royal Mail tariffs and multi-unit packaging restrictions are unchanged.
+
+### Checkout and order evidence
+
+- Private UK single-unit test checkout offers Home delivery (£3.99) and InPost locker/shop collection (£2.59). The server validates the stored rate, method, destination, quantity and quote revision, then calculates the order/Mollie total. Client charges and mismatched/stale quotes are rejected.
+- Customers use [InPost's locker finder](https://inpost.co.uk/lockers) in a new tab and enter the preferred point name, full address and postcode. Recipient name/email fields are reused; a UK mobile is required. This is a requested point, not a reserved or automatically verified locker.
+- Original point/mobile persist in the order delivery-address JSON snapshot; method/price use existing immutable shipping snapshots. Retry fingerprints include the method and point. Original destinations cannot be edited after creation; authorised alternatives are separate append-only evidence.
+- InPost remains limited to the existing private Mollie-test/manual-test boundary. Active/live configuration alone cannot enable it. Klarna collection checkout is withheld until its structured collection-address requirements are validated; existing home-delivery Klarna behaviour is unchanged.
+- The existing guarded non-production shipping setup prepares the £2.59 test rate only with explicit `SHIPPING_TEST_INPOST_COLLECTION=true`, GB in `SHIPPING_TEST_COUNTRIES`, and all its existing Mollie-test, commerce-disabled and named non-production database checks. Omission preserves home-delivery setup. No setup has been run against staging/production for this PR. Live approval requires a separately reviewed release; do not promote a test rate to production.
+
+### Protected manual booking and exceptions
+
+1. Load the existing paid-order packing view with `fulfilment:read`. It exposes order reference, recipient name/email/mobile, original requested and current authorised point, Medium parcel size, IPL contents and persisted merchandise declared value. Intended real product value remains £74.99, subject to final PX-01 approval. Synthetic fixtures show their own test value and must not be booked as real shipments.
+2. Match the exact point in [InPost Send](https://inpost.co.uk/send/web). A `fulfilment:dispatch` operator records the match before booking/dispatch. If unavailable, record **unavailable**, contact the customer and request an alternative. Never silently substitute.
+3. Record an alternative with complete details, customer authorisation reference, review reason and explicit Send-match confirmation. Protected `POST /operations/orders/:id/collection-review` requires the current review version and idempotency key. Protected packing history retains operator/time/reason/authority; original checkout evidence stays intact. Unavailable sets manual review; this workflow cannot clear unrelated manual-review conditions.
+4. Book manually using Medium and accepted standard £50 compensation, without optional insurance. A match record does not create a carrier booking. After physical handover, record the actual InPost shipment reference and supplied HTTPS tracking URL using existing dispatch. No tracking reference/URL is inferred. Existing paid/refund locks, command idempotency and semantic email deduplication remain.
+5. Order confirmation identifies the requested point, method and charge. Dispatch confirmation uses the authorised booking point and actual shipment information. Customers wait for InPost to confirm collection readiness; no timing/readiness promise is introduced.
+
+### Migration and release order
+
+`0020_inpost_collection_review.sql` follows 0018 and 0019. It adds append-only review evidence and protects original order destinations, without populating rates, altering historical orders, approving packaging or changing gates. Use existing checksum-aware tooling after backup/target verification and reviewed approval, with exposure/processing contained. Apply 0020 before the API/communication worker querying its table, then the private UI. Historical orders without points/reviews remain readable. This PR applies no staging or production migration.
+
+### Remaining launch verification
+
+- Match a customer-selected locker/shop in Send; verify final packed Medium fit and shipment eligibility.
+- Complete an authorised manual test booking and verify actual tracking entry, dispatch communication and customer handoff, including unavailable-point/customer-authorised-alternative handling.
+- Approve shipping charge/final commercial terms, reconcile accepted £50 compensation with economics and confirm operational/support ownership.
+- Close broader compliance, payments, shipping, QA and GO-01 through accountable approval. Code/tests close no gate.
+
+Reuse the completed partial/full Mollie refund and duplicate-webhook reconciliation evidence in [COMMERCE-CUSTOMER-RUNTIME.md](COMMERCE-CUSTOMER-RUNTIME.md); no new hosted refund rehearsal was performed. Disposable local PostgreSQL tests cover persistence, review/version fencing, immutable destinations, concurrency, tracking and notification deduplication without sending emails or booking goods.
+
+Official source checked 9 October 2026: [InPost Send](https://inpost.co.uk/send/web) publishes Medium locker/shop £2.59 and standard £50 compensation. Published pricing/capabilities do not replace final parcel/commercial approval.

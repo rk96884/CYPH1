@@ -42,9 +42,21 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         <label>Postcode <input name="postalCode" value="SW1A 1AA" autocomplete="off" required/></label>
         <label>Country <select name="countryCode" required>{countries.map(country => <option value={country.code} selected={country.code === "GB"}>{country.name}</option>)}</select></label>
       </fieldset>
+      <fieldset>
+        <legend>Delivery method</legend>
+        <label>Delivery option <select name="deliveryMethod"><option value="tracked-postage-packing">Home delivery — £3.99 (UK)</option><option value="inpost-locker-shop">InPost locker/shop collection — £2.59 (UK)</option></select></label>
+        <div data-collection-fields hidden>
+          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Search for your preferred point and copy its name, full address and postcode below. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
+          <label>Collection point name <input name="collectionName" maxlength="150" autocomplete="off"/></label>
+          <label>Collection point full address <input name="collectionAddress" maxlength="500" autocomplete="off"/></label>
+          <label>Collection point postcode <input name="collectionPostcode" maxlength="10" autocomplete="off"/></label>
+          <label>Recipient UK mobile number <input name="phone" type="tel" maxlength="30" autocomplete="off"/></label>
+          <p>InPost uses your email and mobile number for collection notifications. Wait for InPost to confirm your parcel is ready to collect.</p>
+        </div>
+      </fieldset>
       <section aria-labelledby="quote-title" aria-live="polite">
         <h2 id="quote-title">Order total</h2>
-        <p>Tracked postage and packing: UK £3.99 · Europe (including Turkey) £14.99 · Rest of world £25.99. Subject to destination approval.</p>
+        <p>Tracked postage and packing: UK home delivery £3.99 / InPost collection £2.59 · Europe (including Turkey) £14.99 · Rest of world £25.99. Subject to destination approval.</p>
         <dl data-quote-summary></dl>
       </section>
       <div data-import-charges hidden>
@@ -56,6 +68,8 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
     </form>
   </main>
   <script>
+    // Compile out private checkout behaviour when its existing presentation gate is disabled.
+    if (import.meta.env.PUBLIC_COMMERCE_UI_ENABLED === "true") {
     const form = document.querySelector("[data-private-checkout]");
     const status = document.querySelector("[data-checkout-status]");
     if (form instanceof HTMLFormElement && status instanceof HTMLElement) {
@@ -64,6 +78,9 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
       const imports = form.querySelector<HTMLElement>("[data-import-charges]")!;
       const acceptance = form.querySelector<HTMLInputElement>("[name='importChargesAccepted']")!;
       const country = form.querySelector<HTMLSelectElement>("[name='countryCode']")!;
+      const method = form.querySelector<HTMLSelectElement>("[name='deliveryMethod']")!;
+      const collectionFields = form.querySelector<HTMLElement>("[data-collection-fields]")!;
+      const collectionInputs = [...collectionFields.querySelectorAll<HTMLInputElement>("input")];
       const quantity = form.querySelector<HTMLInputElement>("[name='quantity']")!;
       const postal = form.querySelector<HTMLInputElement>("[name='postalCode']")!;
       type Quote = { shippingQuoteRevision: string; shippingRateId: string; totalMinor: number; subtotalMinor: number; taxMinor: number; deliveryMinor: number; currency: string };
@@ -79,12 +96,22 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         imports.hidden = country.value === "GB";
         acceptance.required = !imports.hidden;
         postal.required = country.value !== "AE";
+        const uk = country.value === "GB";
+        method.options[0]!.textContent = uk ? "Home delivery — £3.99" : "International tracked postage and packing";
+        method.options[1]!.disabled = !uk;
+        if (!uk) method.value = "tracked-postage-packing";
+        const collecting = uk && method.value === "inpost-locker-shop";
+        collectionFields.hidden = !collecting;
+        const payment = form.querySelector<HTMLSelectElement>("[name='paymentMethod']")!;
+        payment.options[1]!.disabled = collecting;
+        if (collecting && payment.value === "klarna") payment.value = "";
+        for (const input of collectionInputs) { input.required = collecting; input.disabled = !collecting; }
         status.textContent = "Checking destination approval and total…";
         status.dataset.state = "";
         try {
           const response = await fetch(`${form.dataset.apiUrl}/checkout/quote`, {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productSlug: new FormData(form).get("productSlug"), quantity: Number(quantity.value), countryCode: country.value }),
+            body: JSON.stringify({ productSlug: new FormData(form).get("productSlug"), quantity: Number(quantity.value), countryCode: country.value, deliveryMethod: method.value }),
           });
           const result: Quote = await response.json();
           if (current !== revision || submitting) return;
@@ -104,6 +131,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
           status.textContent = "This destination or basket is not approved for checkout. No payment can be taken.";
         }
       };
+      method.addEventListener("change", () => { void refreshQuote(); });
       country.addEventListener("change", () => { void refreshQuote(); });
       quantity.addEventListener("input", () => { void refreshQuote(); });
       void refreshQuote();
@@ -116,7 +144,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         button.disabled = true;
         form.setAttribute("aria-busy", "true");
         // Freeze the reviewed destination/quantity while payment creation is in progress.
-        country.disabled = true; quantity.disabled = true;
+        country.disabled = true; quantity.disabled = true; method.disabled = true;
         status.dataset.state = "";
         status.textContent = "Validating the test basket…";
         try {
@@ -125,13 +153,14 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
             headers: { "Content-Type": "application/json", "Idempotency-Key": crypto.randomUUID() },
             body: JSON.stringify({
               productSlug: data.get("productSlug"), quantity: Number(data.get("quantity")),
-              shippingQuoteRevision: confirmed.shippingQuoteRevision, shippingRateId: confirmed.shippingRateId, expectedTotalMinor: confirmed.totalMinor, email: data.get("email"),
+              shippingQuoteRevision: confirmed.shippingQuoteRevision, shippingRateId: confirmed.shippingRateId, expectedTotalMinor: confirmed.totalMinor, deliveryMethod: data.get("deliveryMethod"), email: data.get("email"),
               ...(data.get("paymentMethod") === "klarna" ? { paymentMethod: "klarna" } : {}),
               importChargesAccepted: data.get("importChargesAccepted") === "on",
               correlationId: crypto.randomUUID(),
               deliveryAddress: {
                 givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
+                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:data.get("collectionName"),address:data.get("collectionAddress"),postalCode:data.get("collectionPostcode")}} : {}),
               },
             }),
           });
@@ -144,12 +173,13 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
           status.textContent = "Checkout could not be started. Review a fresh quote before retrying; an uncertain payment requires operator review.";
           quote = undefined;
           submitting = false;
-          country.disabled = false; quantity.disabled = false;
+          country.disabled = false; quantity.disabled = false; method.disabled = false;
           form.removeAttribute("aria-busy");
           status.focus();
           // A new quote requires an explicit change; never automatically repeat payment creation.
         }
       });
+    }
     }
   </script>
 </BaseLayout>

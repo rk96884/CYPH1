@@ -189,3 +189,11 @@ test("international confirmation preserves postage/packing breakdown and exclude
   const uk = renderTransactionalMessage({ ...context, shippingCountryCode: "GB" });
   assert.doesNotMatch(uk.text, /import duties/);
 });
+
+test("InPost emails escape the requested point and use actual tracking without collection-ready promises",()=>{
+  const collectionPoint={name:"Locker <test>",address:"1 Test Road & Shop",postalCode:"SW1A 1AA"};
+  const order=renderTransactionalMessage({...context,collectionPoint,deliveryMethod:"InPost locker/shop collection",deliveryMinor:259,totalMinor:7758});
+  assert.match(order.text,/£2.59/);assert.match(order.text,/£77.58/);assert.match(order.html,/Locker &lt;test&gt;/);assert.match(order.text,/Requested InPost collection point/);assert.match(order.text,/Wait for InPost to confirm collection readiness/);
+  const dispatch=renderTransactionalMessage({...context,template:"dispatch",deduplicationKey:"dispatch:inpost",collectionPoint,trackingCarrier:"InPost",trackingReference:"SYNTHETIC-ONLY",trackingUrl:"https://inpost.co.uk/track?reference=SYNTHETIC-ONLY"});
+  assert.match(dispatch.text,/SYNTHETIC-ONLY/);assert.match(dispatch.text,/https:\/\/inpost.co.uk\/track/);assert.doesNotMatch(dispatch.text,/ready to collect/);
+});

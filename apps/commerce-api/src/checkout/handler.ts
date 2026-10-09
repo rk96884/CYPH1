@@ -12,6 +12,9 @@ const validCheckoutInput = (value: unknown): value is Omit<InitiateCheckoutInput
     && typeof value.shippingRateId === "string"
     && typeof value.shippingQuoteRevision === "string" && /^[a-f0-9]{64}$/.test(value.shippingQuoteRevision)
     && typeof value.email === "string"
+    && (value.deliveryMethod === undefined || typeof value.deliveryMethod === "string")
+    && (address.phone === undefined || typeof address.phone === "string")
+    && (address.collectionPoint === undefined || (isRecord(address.collectionPoint) && ["name","address","postalCode"].every(key => typeof (address.collectionPoint as Record<string,unknown>)[key] === "string")))
     && typeof value.correlationId === "string"
     && (value.importChargesAccepted === undefined || typeof value.importChargesAccepted === "boolean")
     && (value.expectedTotalMinor === undefined || Number.isSafeInteger(value.expectedTotalMinor))
@@ -65,8 +68,8 @@ export const handleCheckoutQuoteRequest = async (request: Request, service: Pick
     if (new TextEncoder().encode(body).length > 16_384) return json({ message: "Invalid request." }, 400, headers);
     let input: unknown;
     try { input = JSON.parse(body); } catch { return json({ message: "Invalid request." }, 400, headers); }
-    if (!isRecord(input) || typeof input.productSlug !== "string" || typeof input.quantity !== "number" || typeof input.countryCode !== "string") return json({ message: "Invalid request." }, 400, headers);
-    return json(await service.quote({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.countryCode }), 200, headers);
+    if (!isRecord(input) || typeof input.productSlug !== "string" || typeof input.quantity !== "number" || typeof input.countryCode !== "string" || (input.deliveryMethod !== undefined && typeof input.deliveryMethod !== "string")) return json({ message: "Invalid request." }, 400, headers);
+    return json(await service.quote({ productSlug: input.productSlug, quantity: input.quantity, countryCode: input.countryCode, ...(typeof input.deliveryMethod === "string" ? {deliveryMethod:input.deliveryMethod} : {}) }), 200, headers);
   } catch (error) {
     if (error instanceof CheckoutError) return json({ message: error.message, code: error.code }, errorStatus(error), headers);
     return json({ message: "Shipping quote is unavailable." }, 500, headers);

@@ -1,11 +1,11 @@
 import { importChargesNotice } from "../../../../packages/commerce-core/src/index.js";
-import type { TransactionalMessage, TransactionalTemplateKey } from "../../../../packages/commerce-core/src/index.js";
+import type { CollectionPoint, TransactionalMessage, TransactionalTemplateKey } from "../../../../packages/commerce-core/src/index.js";
 
 export type CommunicationContext = Readonly<{
   template: TransactionalTemplateKey; deduplicationKey: string; recipient: string; orderNumber: string;
   currency: string; totalMinor?: number; refundMinor?: number; trackingCarrier?: string; trackingReference?: string;
   trackingUrl?: string;
-  shippingCountryCode?: string;
+  shippingCountryCode?: string; collectionPoint?:CollectionPoint;
   orderPlacedAt?: string; deliveryMethod?: string; deliveryMinor?: number; expectedDelivery?: string;
   items?: readonly Readonly<{ name: string; quantity: number; lineTotalMinor: number }>[];
 }>;
@@ -108,9 +108,11 @@ export const renderTransactionalMessage = (context: CommunicationContext, option
   const breakdown = orderBreakdown(context);
   const tracking = dispatchTracking(context, preview);
   const importNotice = context.shippingCountryCode && context.shippingCountryCode !== "GB" && ["order-confirmation", "dispatch"].includes(context.template) ? importChargesNotice : "";
+  const collection = context.collectionPoint && ["order-confirmation","dispatch"].includes(context.template) ?
+    (context.template === "dispatch" ? "InPost collection point: " : "Requested InPost collection point: ") + [context.collectionPoint.name,context.collectionPoint.address,context.collectionPoint.postalCode].join(", ") + ". Wait for InPost to confirm collection readiness." : "";
   const textBody = plain(copy.body);
   const textDetail = copy.detail ? `\n\n${plain(copy.detail)}` : "";
-  const text = `CYPH/1 — Cycle. Phase. One.\n\n${copy.heading}\n\n${textBody}${breakdown.text}${tracking.text}${importNotice ? `\n\n${importNotice}` : ""}${textDetail}\n\nThis is a transactional message about your order.\nPlease keep this email for your records.`;
+  const text = `CYPH/1 — Cycle. Phase. One.\n\n${copy.heading}\n\n${textBody}${breakdown.text}${tracking.text}${collection ? `\n\n${collection}` : ""}${importNotice ? `\n\n${importNotice}` : ""}${textDetail}\n\nThis is a transactional message about your order.\nPlease keep this email for your records.`;
   const html = `<!doctype html>
 <html lang="en-GB">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(copy.subject)}</title></head>
@@ -126,6 +128,7 @@ export const renderTransactionalMessage = (context: CommunicationContext, option
 <p style="margin:0;font-size:16px;line-height:1.65;color:#eee7f3">${copy.body}</p>
 ${breakdown.html}
 ${tracking.html}
+${collection ? `<p style="margin-top:18px;font-size:14px;line-height:1.6;color:#d7ccde">${escape(collection)}</p>` : ""}
 ${importNotice ? `<p style="margin-top:18px;font-size:14px;line-height:1.6;color:#d7ccde">${escape(importNotice)}</p>` : ""}
 ${copy.detail ? `<div style="margin-top:22px;padding:16px 18px;background:#201729;border-radius:10px;font-size:14px;line-height:1.75;color:#d7ccde">${copy.detail}</div>` : ""}
 </td></tr>
