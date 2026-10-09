@@ -47,10 +47,10 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         <legend>Delivery method</legend>
         <label><span class="field-label">Delivery option <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <select name="deliveryMethod"><option value="tracked-postage-packing">Home delivery — £3.99 (UK)</option><option value="inpost-locker-shop">InPost locker/shop collection — £2.59 (UK)</option></select></label>
         <div data-collection-fields hidden>
-          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Search for your preferred point and copy its name, full address and postcode below. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
-          <label><span class="field-label">Collection point name <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionName" maxlength="150" autocomplete="off"/></label>
-          <label><span class="field-label">Collection point full address <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionAddress" maxlength="500" autocomplete="off"/></label>
+          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Copy the point name and full address into one field, plus its postcode. The location ID is optional. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
+          <label><span class="field-label">Collection point name and address <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionNameAddress" maxlength="500" autocomplete="off"/></label>
           <label><span class="field-label">Collection point postcode <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionPostcode" maxlength="10" autocomplete="off"/></label>
+          <label><span class="field-label">InPost location ID (optional)</span> <input name="collectionLocationId" maxlength="40" autocomplete="off" placeholder="e.g. UK00373494"/></label>
           <label><span class="field-label">Recipient UK mobile number <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="phone" type="tel" maxlength="30" autocomplete="off"/></label>
           <p>InPost uses your email and mobile number for collection notifications. Wait for InPost to confirm your parcel is ready to collect.</p>
         </div>
@@ -108,7 +108,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         const payment = form.querySelector<HTMLSelectElement>("[name='paymentMethod']")!;
         payment.options[1]!.disabled = collecting;
         if (collecting && payment.value === "klarna") payment.value = "";
-        for (const input of collectionInputs) { input.required = collecting; input.disabled = !collecting; }
+        for (const input of collectionInputs) { input.required = collecting && input.name !== "collectionLocationId"; input.disabled = !collecting; }
         for (const node of form.querySelectorAll<HTMLElement>("[data-required-for='collection'],[data-required-text-for='collection']")) node.hidden = !collecting;
         status.textContent = "Checking destination approval and total…";
         status.dataset.state = "";
@@ -171,7 +171,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
               deliveryAddress: {
                 givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
-                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:data.get("collectionName"),address:data.get("collectionAddress"),postalCode:data.get("collectionPostcode")}} : {}),
+                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:[data.get("collectionNameAddress"),data.get("collectionLocationId") ? `Location ID: ${data.get("collectionLocationId")}` : ""].filter(Boolean).join(" | "),address:data.get("collectionNameAddress"),postalCode:data.get("collectionPostcode")}} : {}),
               },
             }),
           });
