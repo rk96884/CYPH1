@@ -28,30 +28,30 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
 
       <fieldset>
         <legend>Test basket</legend>
-        <label>Quantity <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <input name="quantity" type="number" min="1" max="10" value="1" required/></label>
+        <label><span class="field-label">Quantity <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <input name="quantity" type="number" min="1" max="10" value="1" required/></label>
         <label>Test payment method <select name="paymentMethod"><option value="">Available Mollie test methods</option><option value="klarna">Klarna test (where supported)</option></select></label>
       </fieldset>
       <fieldset>
         <legend>Test contact and delivery details</legend>
-        <label>Email address <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <input name="email" type="email" value="test@example.invalid" autocomplete="off" required/></label>
-        <label>First name <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <input name="givenName" value="Test" autocomplete="off" required/></label>
-        <label>Last name <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <input name="familyName" value="Customer" autocomplete="off" required/></label>
-        <label>Address line 1 <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <input name="line1" value="1 Test Street" autocomplete="off" required/></label>
+        <label><span class="field-label">Email address <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <input name="email" type="email" value="test@example.invalid" autocomplete="off" required/></label>
+        <label><span class="field-label">First name <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <input name="givenName" value="Test" autocomplete="off" required/></label>
+        <label><span class="field-label">Last name <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <input name="familyName" value="Customer" autocomplete="off" required/></label>
+        <label><span class="field-label">Address line 1 <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <input name="line1" value="1 Test Street" autocomplete="off" required/></label>
         <label>Address line 2 (optional) <input name="line2" autocomplete="off"/></label>
         <label>State / province / region (where applicable) <input name="region" autocomplete="off"/></label>
-        <label>Town or city <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <input name="locality" value="London" autocomplete="off" required/></label>
-        <label>Postcode <span class="required-mark" data-required-for="postcode" aria-hidden="true">*</span><span class="sr-only" data-required-text-for="postcode"> (required)</span> <input name="postalCode" value="SW1A 1AA" autocomplete="off" required/></label>
-        <label>Country <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <select name="countryCode" required>{countries.map(country => <option value={country.code} selected={country.code === "GB"}>{country.name}</option>)}</select></label>
+        <label><span class="field-label">Town or city <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <input name="locality" value="London" autocomplete="off" required/></label>
+        <label><span class="field-label">Postcode <span class="required-mark" data-required-for="postcode" aria-hidden="true">*</span><span class="sr-only" data-required-text-for="postcode"> (required)</span></span> <input name="postalCode" value="SW1A 1AA" autocomplete="off" required/></label>
+        <label><span class="field-label">Country <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <select name="countryCode" required>{countries.map(country => <option value={country.code} selected={country.code === "GB"}>{country.name}</option>)}</select></label>
       </fieldset>
       <fieldset>
         <legend>Delivery method</legend>
-        <label>Delivery option <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span> <select name="deliveryMethod"><option value="tracked-postage-packing">Home delivery — £3.99 (UK)</option><option value="inpost-locker-shop">InPost locker/shop collection — £2.59 (UK)</option></select></label>
+        <label><span class="field-label">Delivery option <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <select name="deliveryMethod"><option value="tracked-postage-packing">Home delivery — £3.99 (UK)</option><option value="inpost-locker-shop">InPost locker/shop collection — £2.59 (UK)</option></select></label>
         <div data-collection-fields hidden>
-          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Search for your preferred point and copy its name, full address and postcode below. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
-          <label>Collection point name <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span> <input name="collectionName" maxlength="150" autocomplete="off"/></label>
-          <label>Collection point full address <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span> <input name="collectionAddress" maxlength="500" autocomplete="off"/></label>
-          <label>Collection point postcode <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span> <input name="collectionPostcode" maxlength="10" autocomplete="off"/></label>
-          <label>Recipient UK mobile number <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span> <input name="phone" type="tel" maxlength="30" autocomplete="off"/></label>
+          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Copy the point name and full address into one field, plus its postcode. The location ID is optional. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
+          <label><span class="field-label">Collection point name and address <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionNameAddress" maxlength="500" autocomplete="off"/></label>
+          <label><span class="field-label">Collection point postcode <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionPostcode" maxlength="10" autocomplete="off"/></label>
+          <label><span class="field-label">InPost location ID (optional)</span> <input name="collectionLocationId" maxlength="40" autocomplete="off" placeholder="e.g. UK00373494"/></label>
+          <label><span class="field-label">Recipient UK mobile number <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="phone" type="tel" maxlength="30" autocomplete="off"/></label>
           <p>InPost uses your email and mobile number for collection notifications. Wait for InPost to confirm your parcel is ready to collect.</p>
         </div>
       </fieldset>
@@ -108,7 +108,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         const payment = form.querySelector<HTMLSelectElement>("[name='paymentMethod']")!;
         payment.options[1]!.disabled = collecting;
         if (collecting && payment.value === "klarna") payment.value = "";
-        for (const input of collectionInputs) { input.required = collecting; input.disabled = !collecting; }
+        for (const input of collectionInputs) { input.required = collecting && input.name !== "collectionLocationId"; input.disabled = !collecting; }
         for (const node of form.querySelectorAll<HTMLElement>("[data-required-for='collection'],[data-required-text-for='collection']")) node.hidden = !collecting;
         status.textContent = "Checking destination approval and total…";
         status.dataset.state = "";
@@ -171,7 +171,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
               deliveryAddress: {
                 givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
-                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:data.get("collectionName"),address:data.get("collectionAddress"),postalCode:data.get("collectionPostcode")}} : {}),
+                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:String(data.get("collectionNameAddress") ?? "").slice(0,150),address:[data.get("collectionNameAddress"),data.get("collectionLocationId") ? `InPost location ID: ${data.get("collectionLocationId")}` : ""].filter(Boolean).join(" | ").slice(0,500),postalCode:data.get("collectionPostcode")}} : {}),
               },
             }),
           });
@@ -203,6 +203,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
   .private-warning{padding:var(--cyph-space-4);border-left:2px solid var(--cyph-color-warning);background:rgb(242 198 109/.08)}
   fieldset{display:grid;gap:var(--cyph-space-4);margin:0 0 var(--cyph-space-6);border:1px solid var(--cyph-border-structural);padding:var(--cyph-space-6)}
   legend{padding-inline:var(--cyph-space-2);font-family:var(--cyph-font-display);font-size:.85rem;text-transform:uppercase}
+  .field-label{display:inline;line-height:1.5}
   .required-note{font-size:.8rem;color:var(--cyph-text-secondary)}
   .required-mark,.required-note>span{color:var(--cyph-color-error,#e66a7b);font-weight:700}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
