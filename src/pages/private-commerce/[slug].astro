@@ -171,7 +171,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
               deliveryAddress: {
                 givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
-                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:[data.get("collectionNameAddress"),data.get("collectionLocationId") ? `Location ID: ${data.get("collectionLocationId")}` : ""].filter(Boolean).join(" | "),address:data.get("collectionNameAddress"),postalCode:data.get("collectionPostcode")}} : {}),
+                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:String(data.get("collectionNameAddress") ?? "").slice(0,150),address:[data.get("collectionNameAddress"),data.get("collectionLocationId") ? `InPost location ID: ${data.get("collectionLocationId")}` : ""].filter(Boolean).join(" | ").slice(0,500),postalCode:data.get("collectionPostcode")}} : {}),
               },
             }),
           });
