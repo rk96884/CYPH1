@@ -19,6 +19,7 @@
             <label for="collection-alternative-name">Alternative point name</label><input id="collection-alternative-name" name="name" maxlength="150"/>
             <label for="collection-alternative-address">Alternative full address</label><input id="collection-alternative-address" name="address" maxlength="500"/>
             <label for="collection-alternative-postcode">Alternative postcode</label><input id="collection-alternative-postcode" name="postalCode" maxlength="10"/>
+            <label for="collection-alternative-location-id">Alternative InPost location ID (optional)</label><input id="collection-alternative-location-id" name="locationId" maxlength="40"/>
             <label for="collection-authorisation">Customer authorisation reference</label><input id="collection-authorisation" name="customerAuthorisationReference" maxlength="200"/>
           </div>
           <label class="dispatch-handover"><input name="matchedInSend" type="checkbox"/>I have matched this exact point in InPost Send (required for booking).</label>
@@ -82,8 +83,8 @@
         if(value.collection){
           const c=value.collection;
           document.querySelector('#collection-booking').hidden=false;
-          document.querySelector('#collection-booking-details').textContent=['Recipient: '+address.recipientName,'Email: '+c.email,'Mobile: '+c.phone,'Requested: '+[c.requested.name,c.requested.address,c.requested.postalCode].join(', '),'Booking point: '+[c.current.name,c.current.address,c.current.postalCode].join(', '),'Review: '+c.status+' / revision '+c.version,'Parcel: '+c.parcelSize,'Contents: '+c.contents,'Declared value: '+c.currency+' '+(c.declaredValueMinor/100).toFixed(2)+' (retail-price approval required)'].join('\n');
-          for(const entry of c.history ?? []){const li=document.createElement('li');li.textContent=[entry.version,entry.status,entry.point.name,entry.point.address,entry.point.postalCode,entry.customerAuthorisationReference,entry.reason,entry.operatorId,entry.createdAt].filter(value=>value!==null&&value!==undefined).join(' · ');document.querySelector('#collection-review-history').append(li);}
+          document.querySelector('#collection-booking-details').textContent=['Recipient: '+address.recipientName,'Email: '+c.email,'Mobile: '+c.phone,'Requested: '+[c.requested.name,c.requested.address,c.requested.postalCode,c.requested.locationId ? 'InPost location ID: '+c.requested.locationId : ''].filter(Boolean).join(', '),'Booking point: '+[c.current.name,c.current.address,c.current.postalCode,c.current.locationId ? 'InPost location ID: '+c.current.locationId : ''].filter(Boolean).join(', '),'Review: '+c.status+' / revision '+c.version,'Parcel: '+c.parcelSize,'Contents: '+c.contents,'Declared value: '+c.currency+' '+(c.declaredValueMinor/100).toFixed(2)+' (retail-price approval required)'].join('\n');
+          for(const entry of c.history ?? []){const li=document.createElement('li');li.textContent=[entry.version,entry.status,entry.point.name,entry.point.address,entry.point.postalCode,entry.point.locationId,entry.customerAuthorisationReference,entry.reason,entry.operatorId,entry.createdAt].filter(value=>value!==null&&value!==undefined).join(' · ');document.querySelector('#collection-review-history').append(li);}
           document.querySelector('#collection-review-fields').disabled=!value.collectionReviewEnabled || !['processing','manual_review'].includes(value.fulfilmentStatus);
         }
         info.hidden=false;ready=value.eligible&&value.dispatchEnabled;
@@ -99,12 +100,12 @@
     collectionAction.addEventListener('change',()=>{
       const alternative=collectionAction.value==='approve-alternative';
       const group=document.querySelector('#collection-alternative');group.hidden=!alternative;
-      for(const input of group.querySelectorAll('input')){input.required=alternative;input.disabled=!alternative;}
+      for(const input of group.querySelectorAll('input')){input.required=alternative && input.name!=="locationId";input.disabled=!alternative;}
     });
     collectionForm.addEventListener('submit',async event=>{
       event.preventDefault();if(busy || !order || !data?.collection || !collectionForm.reportValidity())return;
       const values=new FormData(collectionForm),id=order,action=String(values.get('action'));
-      const body={action,reason:String(values.get('reason')),expectedVersion:data.collection.version,matchedInSend:values.get('matchedInSend')==='on',...(action==='approve-alternative'?{point:{name:values.get('name'),address:values.get('address'),postalCode:values.get('postalCode')},customerAuthorisationReference:values.get('customerAuthorisationReference')}: {})};
+      const body={action,reason:String(values.get('reason')),expectedVersion:data.collection.version,matchedInSend:values.get('matchedInSend')==='on',...(action==='approve-alternative'?{point:{name:values.get('name'),address:values.get('address'),postalCode:values.get('postalCode'),...(values.get('locationId')?{locationId:values.get('locationId')}:{})},customerAuthorisationReference:values.get('customerAuthorisationReference')}: {})};
       busy=true;lock();document.querySelector('#collection-review-fields').disabled=true;const feedback=document.querySelector('#collection-review-message');feedback.textContent='Recording review…';
       try{const response=await fetch(api+'/operations/orders/'+encodeURIComponent(id)+'/collection-review',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw new Error(result.message ?? 'Review failed.');feedback.textContent='Review recorded. Reload before booking.';}
       catch(error){feedback.textContent=error instanceof Error?error.message:'Outcome uncertain; reload before retrying.';}

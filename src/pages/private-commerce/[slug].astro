@@ -69,6 +69,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
     </form>
   </main>
   <script>
+    import { collectionPointFromCombinedDetails, normaliseUkMobile } from "../../../packages/commerce-core/src/collection";
     // Compile out private checkout behaviour when its existing presentation gate is disabled.
     if (import.meta.env.PUBLIC_COMMERCE_UI_ENABLED === "true") {
     const form = document.querySelector("[data-private-checkout]");
@@ -171,17 +172,17 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
               deliveryAddress: {
                 givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
-                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:data.get("phone"),collectionPoint:{name:String(data.get("collectionNameAddress") ?? "").slice(0,150),address:[data.get("collectionNameAddress"),data.get("collectionLocationId") ? `InPost location ID: ${data.get("collectionLocationId")}` : ""].filter(Boolean).join(" | ").slice(0,500),postalCode:data.get("collectionPostcode")}} : {}),
+                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:normaliseUkMobile(String(data.get("phone") ?? "")),collectionPoint:collectionPointFromCombinedDetails(String(data.get("collectionNameAddress") ?? ""),String(data.get("collectionPostcode") ?? ""),String(data.get("collectionLocationId") ?? ""))} : {}),
               },
             }),
           });
           const result = await response.json();
-          if (!response.ok || typeof result.checkoutUrl !== "string") throw new Error("Checkout could not be started.");
+          if (!response.ok || typeof result.checkoutUrl !== "string") throw new Error(response.status < 500 && typeof result.message === "string" ? result.message : "Checkout could not be started.");
           status.textContent = "Opening Mollie test checkout…";
           window.location.assign(result.checkoutUrl);
-        } catch {
+        } catch (error) {
           status.dataset.state = "error";
-          status.textContent = "Checkout could not be started. Review a fresh quote before retrying; an uncertain payment requires operator review.";
+          status.textContent = (error instanceof Error ? error.message + " " : "Checkout could not be started. ") + "Review a fresh quote before retrying; an uncertain payment requires operator review.";
           quote = undefined;
           submitting = false;
           country.disabled = false; quantity.disabled = false; method.disabled = false;

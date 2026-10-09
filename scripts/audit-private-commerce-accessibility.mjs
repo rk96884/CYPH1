@@ -34,6 +34,9 @@ for (const [name, file] of pages) {
   if (name === "Private checkout") {
     assert(/<form\b[^>]*aria-describedby=["']private-checkout-warning["']/i.test(html), name, "test warning describes the checkout form");
     assert(/data-checkout-status[^>]*role=["']status["'][^>]*aria-live=["']polite["']/i.test(html), name, "checkout status is announced politely");
+    const collectionId=inputs.find(control=>/name="collectionLocationId"/.test(control)) ?? "";
+    assert(/maxlength="40"/.test(collectionId) && !/\srequired(?:\s|>|=)/.test(collectionId), name, "InPost location ID remains optional and bounded independently");
+    assert(/name="collectionNameAddress"[^>]*maxlength="500"/.test(html), name, "combined collection detail retains the full storage limit");
     assert(/name=["']quantity["'][^>]*type=["']number["'][^>]*min=["']1["']/i.test(html), name, "quantity has a positive numeric constraint");
   }
 

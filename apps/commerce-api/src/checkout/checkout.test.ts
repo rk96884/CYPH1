@@ -503,3 +503,16 @@ test("InPost collection fails closed for incomplete details, foreign/multi-unit/
   repo.inpostPrice=1;await assert.rejects(()=>service.initiate(collectionRequest()),/not approved/);
   assert.equal(repo.orders.length,0);assert.equal(capture.length,0);
 });
+
+import { collectionPointFromCombinedDetails } from "../../../../packages/commerce-core/src/collection.js";
+test("simplified InPost submission with and without ID persists and protects the 359p test payment",async()=>{
+ for(const locationId of [undefined,"UK00373494"]){
+  const repo=new class extends CollectionCheckoutRepository {override async getProduct(){return {...await super.getProduct(),priceMinor:100,unitTaxMinor:0};}}();
+  const payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+  const point=collectionPointFromCombinedDetails("Synthetic Locker, 1 Test Road, London","SW1A 1AA",locationId);
+  const quote=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB",deliveryMethod:"inpost-locker-shop"});assert.equal(quote.totalMinor,359);
+  const input=collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,collectionPoint:point},shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:359});
+  const result=await service.initiate(input);assert.equal((await service.initiate(input)).orderId,result.orderId);assert.equal(payments.length,1);assert.equal(payments[0]!.amount.value,359);assert.deepEqual(repo.orders[0]!.deliveryAddress.collectionPoint,point);
+  await assert.rejects(()=>service.initiate({...input,deliveryAddress:{...input.deliveryAddress,collectionPoint:{...point,locationId:"CHANGED"}}}),/another request/);
+ }
+});

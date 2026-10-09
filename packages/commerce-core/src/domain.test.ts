@@ -125,3 +125,20 @@ test("ISO shipping classification is complete, deterministic and rejects non-cou
   assert.equal(normaliseCountryCode(" tr "), "TR");
   for (const code of ["UK","EU","ZZ","XK","Turkey","GBR",""]) assert.throws(() => shippingZoneForCountry(code));
 });
+
+import { collectionPointFromCombinedDetails, normaliseCollectionPoint, normaliseUkMobile } from "./collection.js";
+test("simplified collection details retain a 500-character address and independent optional ID", () => {
+ const address="Synthetic collection point "+"x".repeat(473), id="I".repeat(40);
+ assert.equal(address.length,500);
+ const point=collectionPointFromCombinedDetails(address,"sw1a1aa",id);
+ assert.equal(point.address,address);assert.equal(point.locationId,id);assert.equal(point.name.length,150);assert.equal(point.postalCode,"SW1A 1AA");
+ assert.deepEqual(normaliseCollectionPoint(JSON.parse(JSON.stringify(point))),point);
+ assert.equal(collectionPointFromCombinedDetails(address,"SW1A 1AA").locationId,undefined);
+ assert.equal(collectionPointFromCombinedDetails(address,"SW1A 1AA"," ").locationId,undefined);
+ assert.throws(()=>collectionPointFromCombinedDetails(address+"x","SW1A 1AA",id));
+ assert.throws(()=>collectionPointFromCombinedDetails(address,"SW1A 1AA",id+"x"));
+ assert.throws(()=>collectionPointFromCombinedDetails(address,"SW1A 1AA","bad\nID"));
+ assert.throws(()=>normaliseCollectionPoint({...point,locationId:123}));
+ assert.equal(normaliseUkMobile("07700 900123"),"+447700900123");assert.equal(normaliseUkMobile("+44 7700 900123"),"+447700900123");assert.throws(()=>normaliseUkMobile("02012345678"));
+ const legacy={name:"Legacy",address:"Test address | InPost location ID: UK00373494",postalCode:"SW1A 1AA"};assert.deepEqual(normaliseCollectionPoint(legacy),legacy);
+});
