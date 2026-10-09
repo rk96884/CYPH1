@@ -144,6 +144,9 @@ test("approved public policy is indexable and linked without enabling commerce",
   assert.match(policy, /responsible for the direct cost of returning/);
   assert.match(policy, /least expensive standard delivery/);
   for (const page of [home, html, policy]) assert.match(page, /href="\/returns\/"/);
+  assert.match(policy, /Please contact us before returning your device so we can provide return instructions and a reference number. This does not affect your statutory right to cancel./);
+  assert.doesNotMatch(policy, /Sending an email does not itself authorise/);
+  assert.match(html, /Ice cooling stays active throughout treatment, with no separate setting to switch on./);
   assert.match(html, /14-day statutory cancellation right/);
   assert.match(html, /12-month manufacturer's warranty/);
   assert.doesNotMatch(html, /full returns policy will be available|Warranty terms and how to get support will be shared/);
