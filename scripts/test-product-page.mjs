@@ -100,8 +100,8 @@ test("all eight information sections and seven ordered Astro gallery assets rend
   assert.match(html, /learn\/hair-growth-cycle\//);
   assert.match(html, /learn\/why-ipl-consistency-matters\//);
 });
-test("returns draft and default private purchase page remain unpublished", async () => {
-  for (const path of ["../dist/returns/index.html", "../dist/private-commerce/index.html"]) {
+test("default private purchase page remains unpublished", async () => {
+  for (const path of ["../dist/private-commerce/index.html"]) {
     await assert.rejects(access(new URL(path, import.meta.url)));
   }
 });
@@ -133,4 +133,21 @@ test("gallery prioritises only the hero and defers responsive desktop previews",
   assert.equal([...gallery.matchAll(/data-gallery-preview-srcset=/g)].length, 6);
   assert.match(gallery, /calc\(30\.6667vw - 10px\)/);
   assert.doesNotMatch(gallery, /sizes="\(min-width: 960px\) 16vw, 50vw"/);
+});
+
+const policy = await readFile(new URL("../dist/returns/index.html", import.meta.url), "utf8");
+test("approved public policy is indexable and linked without enabling commerce", () => {
+  assert.match(policy, /name="robots" content="index, follow"/);
+  for (const text of ["14 days", "12-month", "statutory rights", "standard delivery", "customer-support@cyph1.co.uk"]) assert.ok(policy.includes(text), text);
+  assert.doesNotMatch(policy, /next stock order|next supplier order|replenishment|restocking fee|handling fee|administration fee/);
+  assert.match(policy, /reduction in value, where permitted by law/);
+  assert.match(policy, /responsible for the direct cost of returning/);
+  assert.match(policy, /least expensive standard delivery/);
+  for (const page of [home, html, policy]) assert.match(page, /href="\/returns\/"/);
+  assert.match(policy, /Please contact us before returning your device so we can provide return instructions and a reference number. This does not affect your statutory right to cancel./);
+  assert.doesNotMatch(policy, /Sending an email does not itself authorise/);
+  assert.match(html, /Ice cooling stays active throughout treatment, with no separate setting to switch on./);
+  assert.match(html, /14-day statutory cancellation right/);
+  assert.match(html, /12-month manufacturer's warranty/);
+  assert.doesNotMatch(html, /full returns policy will be available|Warranty terms and how to get support will be shared/);
 });
