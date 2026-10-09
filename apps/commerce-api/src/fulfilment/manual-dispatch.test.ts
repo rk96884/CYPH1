@@ -80,7 +80,7 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
     const checkout=new PostgresCheckoutRepository(pool);
     const collectionMethod=(await pool.query("INSERT INTO shipping_methods(method_key,name,description,status) VALUES('inpost-locker-shop','InPost locker/shop collection','Test only','test') RETURNING id")).rows[0].id;
     const collectionRate=(await pool.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from) VALUES($1,$2,'GB',259,'GBP','test',now()) RETURNING id",[zone,collectionMethod])).rows[0].id;
-    const requestedPoint={name:"Synthetic requested point",address:"1 Test Street, London",postalCode:"SW1A 1AA"};
+    const requestedPoint={name:"Synthetic requested point",address:"1 Test Street, London",postalCode:"SW1A 1AA",locationId:"UK00373494"};
     const fixture=async(collection=false)=>{
       const selectedRate=(await checkout.getShipping("GB"))!.rates.find(r=>r.id===(collection?collectionRate:rate))!;
       const shippingPricingSnapshot={schemaVersion:2 as const,rateRevision:shippingRateRevision(selectedRate),quoteRevision:"f".repeat(64),selectedAt:new Date().toISOString(),quantity:1,totalWeightGrams:500,billableWeightGrams:null,minimumWeightGrams:null,maximumWeightGrams:null,minimumSubtotalMinor:null,maximumSubtotalMinor:null,packagingProfileVersion:null,rateCountryCode:selectedRate.countryCode ?? null,effectiveFrom:selectedRate.effectiveFrom.toISOString(),effectiveTo:selectedRate.effectiveTo?.toISOString() ?? null,freeShippingThresholdMinor:null};
@@ -99,7 +99,7 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
       (SELECT count(*)::int FROM audit_events a JOIN fulfilments f ON f.id=a.entity_id WHERE f.order_id=$1 AND action='fulfilment.dispatched') audits`,[id])).rows[0];
     await t.test("InPost original snapshot, unavailable hold, authorised alternative and duplicate dispatch",async()=>{
       const f=await fixture(true);
-      const packing=await service.packingInformation(f.id,"operator");assert.equal(packing!.collection!.status,"pending");assert.equal(packing!.eligible,false);assert.equal(packing!.collection!.phone,"+447700900123");assert.equal(packing!.collection!.declaredValueMinor,100);
+      const packing=await service.packingInformation(f.id,"operator");assert.equal(packing!.collection!.status,"pending");assert.equal(packing!.collection!.requested.locationId,"UK00373494");assert.equal(packing!.eligible,false);assert.equal(packing!.collection!.phone,"+447700900123");assert.equal(packing!.collection!.declaredValueMinor,100);
       const command={carrier:"InPost",service:"Locker/shop Medium",trackingReference:"SYNTHETIC-INPOST",trackingUrl:"https://inpost.co.uk/track?ref=SYNTHETIC-INPOST"};
       await assert.rejects(()=>dispatch(f,randomUUID(),command),/matched authorised point/);
       const key=randomUUID(),unavailable={expectedVersion:0,action:"unavailable",reason:"Synthetic point unavailable"};
@@ -107,11 +107,11 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
       assert.deepEqual(await service.reviewCollection(f.id,unavailable,"operator",key),first);
       assert.equal((await pool.query("SELECT fulfilment_status FROM orders WHERE id=$1",[f.id])).rows[0].fulfilment_status,"manual_review");
       await assert.rejects(()=>dispatch(f,randomUUID(),command),/matched authorised point/);
-      const alternative={name:"Synthetic authorised shop",address:"2 Test Road, London",postalCode:"SW1A 1AA"};
+      const alternative={name:"Synthetic authorised shop",address:"2 Test Road, London",postalCode:"SW1A 1AA",locationId:"UK00373495"};
       await assert.rejects(()=>service.reviewCollection(f.id,{expectedVersion:1,action:"approve-alternative",reason:"Customer agreed",point:alternative,matchedInSend:true},"operator",randomUUID()),/authorisation/);
       const review=await service.reviewCollection(f.id,{expectedVersion:1,action:"approve-alternative",reason:"Customer requested alternative",point:alternative,customerAuthorisationReference:"SYNTHETIC-SUPPORT-1",matchedInSend:true},"operator",randomUUID());assert.equal(review.version,2);
       await assert.rejects(()=>service.reviewCollection(f.id,{expectedVersion:1,action:"unavailable",reason:"Stale"},"operator",randomUUID()),/review changed/);
-      const updated=await service.packingInformation(f.id,"operator");assert.deepEqual(updated!.collection!.requested,requestedPoint);assert.deepEqual(updated!.collection!.current,alternative);assert.equal(updated!.eligible,true);assert.equal(updated!.collection!.history.length,2);assert.equal(updated!.collection!.history[1]!.customerAuthorisationReference,"SYNTHETIC-SUPPORT-1");
+      const updated=await service.packingInformation(f.id,"operator");assert.deepEqual(updated!.collection!.requested,requestedPoint);assert.deepEqual(updated!.collection!.current,alternative);assert.equal(updated!.collection!.history[1]!.point.locationId,"UK00373495");assert.equal(updated!.eligible,true);assert.equal(updated!.collection!.history.length,2);assert.equal(updated!.collection!.history[1]!.customerAuthorisationReference,"SYNTHETIC-SUPPORT-1");
       await assert.rejects(()=>dispatch(f,key,command),/collection review/);
       await assert.rejects(()=>pool.query("UPDATE orders SET delivery_address_snapshot='{}'::jsonb WHERE id=$1",[f.id]),/destination is immutable/);
       await assert.rejects(()=>pool.query("UPDATE inpost_collection_reviews SET reason='changed' WHERE order_id=$1",[f.id]),/append-only/);

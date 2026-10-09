@@ -13,12 +13,16 @@ function fixture(){
   addEventListener(name,listener){this.listeners[name]=listener;}
   dispatchEvent(event){this.listeners[event.type]?.(event);}
   append(child){this.children.push(child);}
+  replaceChildren(){this.children=[];}
+  querySelectorAll(){return this.inputs??[];}
   getAttribute(name){return name==='data-api'?'https://ops.example':this.attributes[name];}
   reportValidity(){return this.valid;}
   reset(){elements['#dispatch-handover'].checked=false;}
  }
  const ids=['.ops','#packing','#packing-information','#packing-message','#manual-dispatch','#dispatch-fields','#dispatch-submit','#dispatch-edit','#dispatch-review','#dispatch-message','#packing-refresh','#packing-state','#packing-address','#packing-items','#packing-shipments','#dispatch-handover'];
+ ids.push('#collection-booking','#collection-booking-details','#collection-review-history','#collection-review-fields','#collection-review-form','#collection-review-action','#collection-alternative','#collection-review-message');
  const elements=Object.fromEntries(ids.map(id=>[id,new Element()]));
+ elements['#collection-alternative'].inputs=['name','address','postalCode','locationId','customerAuthorisationReference'].map(name=>Object.assign(new Element(),{name}));
  let response={orderId:'o1',orderNumber:'SYNTHETIC-1',orderStatus:'paid',fulfilmentStatus:'processing',captured:true,eligible:true,dispatchEnabled:true,address:{recipientName:'Synthetic Customer',line1:'1 Test Street',locality:'London',postalCode:'TEST',countryCode:'GB'},items:[{name:'Synthetic item',sku:'TEST',quantity:1}],shipments:[{id:'f1',status:'accepted'}]};
  let deny=false,fail=false,posts=0,postStatus=200,defer;const requests=[],events=[];
  const values={carrier:'Carrier',service:'Service',trackingReference:'REF',trackingUrl:'https://carrier.example/track'};
@@ -68,4 +72,14 @@ test('busy form rejects a concurrent click',async()=>{
 });
 test('confirmed validation refusal permits correction without a retained pending command',async()=>{
  const f=fixture();await f.load();f.confirm();await f.submit();f.postStatus(400);await f.submit();assert.equal(f.elements['#dispatch-fields'].disabled,false);assert.match(f.elements['#dispatch-message'].textContent,/Dispatch refused/);
+});
+
+
+test('operations shows requested, authorised and historical location IDs without HTML interpretation',async()=>{
+ const f=fixture(),point={name:'Synthetic point',address:'Test address',postalCode:'SW1A 1AA',locationId:'REQUESTED-ID'};
+ f.state({collectionReviewEnabled:true,collection:{requested:point,current:{...point,locationId:'CURRENT-ID'},status:'matched',version:1,email:'synthetic@example.invalid',phone:'+447700900123',parcelSize:'Medium',contents:'Test fixture',currency:'GBP',declaredValueMinor:100,history:[{version:1,status:'matched',point:{...point,locationId:'HISTORY-ID'}}]}});
+ await f.load();assert.equal(f.elements['#collection-booking'].hidden,false);assert.match(f.elements['#collection-booking-details'].textContent,/InPost location ID: REQUESTED-ID/);assert.match(f.elements['#collection-booking-details'].textContent,/InPost location ID: CURRENT-ID/);assert.match(f.elements['#collection-review-history'].children[0].textContent,/HISTORY-ID/);
+ f.elements['#collection-review-action'].value='approve-alternative';f.elements['#collection-review-action'].dispatchEvent({type:'change'});
+ for(const input of f.elements['#collection-alternative'].inputs){assert.equal(input.required,input.name!=='locationId');assert.equal(input.disabled,false);}
+ f.clear();assert.equal(f.elements['#collection-booking-details'].textContent,'');assert.equal(f.elements['#collection-review-history'].children.length,0);
 });
