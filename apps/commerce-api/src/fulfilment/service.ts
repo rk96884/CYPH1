@@ -10,6 +10,8 @@ import {
 
 import { manualDispatchCommand, type PackingInformation, type ManualDispatchCommand, type ManualDispatchResult } from "./manual-dispatch.js";
 
+import {collectionReviewCommand,type CollectionReviewCommand,type CollectionReview} from "./collection-review.js";
+
 export type FulfilmentReservation = Readonly<{
   outcome: "reserved" | "duplicate";
   fulfilmentId: string;
@@ -18,6 +20,7 @@ export type FulfilmentReservation = Readonly<{
 }>;
 
 export interface FulfilmentRepository {
+  reviewCollection?(command:CollectionReviewCommand):Promise<CollectionReview>;
   packingInformation?(orderId: string, operatorId: string): Promise<PackingInformation | undefined>;
   dispatchManual?(command: ManualDispatchCommand, provider: string): Promise<ManualDispatchResult>;
   reservePaidOrder(orderId: string, provider: string, idempotencyKey: string, correlationId: string): Promise<FulfilmentReservation>;
@@ -45,6 +48,11 @@ export class FulfilmentService {
     if (!this.repository.packingInformation) throw new FulfilmentError("disabled", "Packing information is unavailable.");
     const data = await this.repository.packingInformation(orderId, operatorId);
     return data ? { ...data, eligible: data.eligible && data.shipments.every(shipment => shipment.provider === this.provider.key), dispatchEnabled: this.enabled } : undefined;
+  }
+
+  async reviewCollection(orderId:string,body:unknown,operatorId:string,idempotencyKey:string) {
+    if (!this.enabled || !["manual-live","manual-test"].includes(this.provider.key) || !this.repository.reviewCollection) throw new FulfilmentError("disabled","Collection review is disabled.");
+    return this.repository.reviewCollection(collectionReviewCommand(orderId,body,operatorId,idempotencyKey));
   }
 
   async dispatchManual(orderId: string, body: unknown, operatorId: string, idempotencyKey: string) {

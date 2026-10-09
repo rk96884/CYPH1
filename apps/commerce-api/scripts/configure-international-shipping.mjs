@@ -3,6 +3,7 @@ import { shippingSetupCountries, configureInternationalShipping } from "../../..
 const countries = shippingSetupCountries(process.env);
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : false });
 try {
-  await configureInternationalShipping(pool, countries);
+  if (process.env.SHIPPING_TEST_INPOST_COLLECTION !== undefined && !["true","false"].includes(process.env.SHIPPING_TEST_INPOST_COLLECTION)) throw new Error("Invalid InPost test configuration flag.");
+  await configureInternationalShipping(pool, countries, process.env.SHIPPING_TEST_INPOST_COLLECTION === "true");
   console.log(`International shipping test configuration prepared; ${new Set(countries).size} explicitly approved test destinations. No live destinations enabled.`);
 } finally { await pool.end(); }

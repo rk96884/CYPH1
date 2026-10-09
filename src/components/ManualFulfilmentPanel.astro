@@ -6,6 +6,27 @@
   <div id="packing-information" hidden>
     <p id="packing-state"></p>
     <address id="packing-address"></address>
+    <section id="collection-booking" hidden aria-labelledby="collection-booking-title">
+      <h4 id="collection-booking-title">Manual InPost Send booking</h4>
+      <p id="collection-booking-details"></p><ul id="collection-review-history" aria-label="Collection review history"></ul>
+      <p><a href="https://inpost.co.uk/send/web" target="_blank" rel="noopener noreferrer">Open InPost Send (new tab)</a>. Match the requested point before booking. If unavailable, contact the customer and record their authorised alternative first. Use Medium and standard £50 compensation; do not add optional insurance. Do not book a real shipment for a synthetic test order.</p>
+      <form id="collection-review-form">
+        <fieldset id="collection-review-fields" disabled>
+          <legend>Collection point review</legend>
+          <label for="collection-review-action">Action</label><select id="collection-review-action" name="action"><option value="confirm-match">Confirm point matched in InPost Send</option><option value="unavailable">Unavailable — hold for customer contact</option><option value="approve-alternative">Record customer-authorised alternative</option></select>
+          <label for="collection-review-reason">Review reason</label><input id="collection-review-reason" name="reason" maxlength="500" required/>
+          <div id="collection-alternative" hidden>
+            <label for="collection-alternative-name">Alternative point name</label><input id="collection-alternative-name" name="name" maxlength="150"/>
+            <label for="collection-alternative-address">Alternative full address</label><input id="collection-alternative-address" name="address" maxlength="500"/>
+            <label for="collection-alternative-postcode">Alternative postcode</label><input id="collection-alternative-postcode" name="postalCode" maxlength="10"/>
+            <label for="collection-authorisation">Customer authorisation reference</label><input id="collection-authorisation" name="customerAuthorisationReference" maxlength="200"/>
+          </div>
+          <label class="dispatch-handover"><input name="matchedInSend" type="checkbox"/>I have matched this exact point in InPost Send (required for booking).</label>
+          <button type="submit">Record collection review</button>
+        </fieldset>
+        <p id="collection-review-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
     <ul id="packing-items"></ul>
     <ul id="packing-shipments" aria-label="Shipment history"></ul>
     <form id="manual-dispatch">
@@ -44,7 +65,7 @@
     // identity or silently change its shipment details.
     const pending=new Map();
     function lock(){ready=false;fields.disabled=true;submit.disabled=true;edit.hidden=true;}
-    function clear(){lock();info.hidden=true;document.querySelector('#packing-address').textContent='';document.querySelector('#packing-items').textContent='';document.querySelector('#packing-shipments').textContent='';form.reset();staged=undefined;review.textContent='';feedback.textContent='';}
+    function clear(){document.querySelector('#collection-booking').hidden=true;document.querySelector('#collection-booking-details').textContent='';document.querySelector('#collection-review-history').replaceChildren();document.querySelector('#collection-review-fields').disabled=true;lock();info.hidden=true;document.querySelector('#packing-address').textContent='';document.querySelector('#packing-items').textContent='';document.querySelector('#packing-shipments').textContent='';form.reset();staged=undefined;review.textContent='';feedback.textContent='';}
     packing.addEventListener('operations-order-loading',()=>{sequence++;order='';data=undefined;clear();message.textContent='Select or reload an order.';});
     packing.addEventListener('operations-order-loaded',event=>{order=event.detail.id;void loadPacking();});
     async function loadPacking(){
@@ -58,6 +79,13 @@
         const address=value.address;document.querySelector('#packing-address').textContent=[address.recipientName,address.line1,address.line2,address.locality,address.region,address.postalCode,address.countryCode].filter(Boolean).join('\n');
         for(const item of value.items){const li=document.createElement('li');li.textContent=item.name+' · '+item.sku+' · quantity '+item.quantity;document.querySelector('#packing-items').append(li);}
         for(const shipment of value.shipments){const li=document.createElement('li');li.textContent=[shipment.status,shipment.carrier,shipment.service,shipment.reference,shipment.trackingUrl,shipment.dispatchedAt].filter(Boolean).join(' · ');document.querySelector('#packing-shipments').append(li);}
+        if(value.collection){
+          const c=value.collection;
+          document.querySelector('#collection-booking').hidden=false;
+          document.querySelector('#collection-booking-details').textContent=['Recipient: '+address.recipientName,'Email: '+c.email,'Mobile: '+c.phone,'Requested: '+[c.requested.name,c.requested.address,c.requested.postalCode].join(', '),'Booking point: '+[c.current.name,c.current.address,c.current.postalCode].join(', '),'Review: '+c.status+' / revision '+c.version,'Parcel: '+c.parcelSize,'Contents: '+c.contents,'Declared value: '+c.currency+' '+(c.declaredValueMinor/100).toFixed(2)+' (retail-price approval required)'].join('\n');
+          for(const entry of c.history ?? []){const li=document.createElement('li');li.textContent=[entry.version,entry.status,entry.point.name,entry.point.address,entry.point.postalCode,entry.customerAuthorisationReference,entry.reason,entry.operatorId,entry.createdAt].filter(value=>value!==null&&value!==undefined).join(' · ');document.querySelector('#collection-review-history').append(li);}
+          document.querySelector('#collection-review-fields').disabled=!value.collectionReviewEnabled || !['processing','manual_review'].includes(value.fulfilmentStatus);
+        }
         info.hidden=false;ready=value.eligible&&value.dispatchEnabled;
         const previous=pending.get(id);
         if(previous&&ready){staged=previous;review.textContent='Previous dispatch outcome was uncertain. Retry the same recorded details: '+previous.body.carrier+' / '+previous.body.service+' / '+previous.body.trackingReference;submit.textContent='Retry same dispatch';}
@@ -66,6 +94,22 @@
         message.textContent=ready?'Restricted packing information loaded. Requires fulfilment:dispatch to submit.':value.fulfilmentStatus==='dispatched'?'Dispatch recorded. Review the order timeline.':'Dispatch unavailable: fulfilment must be accepted and eligible, manual fulfilment must be explicitly enabled, and fulfilment:dispatch is required.';
       }catch(error){if(version===sequence){clear();message.textContent=error instanceof Error?error.message:'Packing could not be loaded.';}}
     }
+    const collectionForm=document.querySelector('#collection-review-form');
+    const collectionAction=document.querySelector('#collection-review-action');
+    collectionAction.addEventListener('change',()=>{
+      const alternative=collectionAction.value==='approve-alternative';
+      const group=document.querySelector('#collection-alternative');group.hidden=!alternative;
+      for(const input of group.querySelectorAll('input')){input.required=alternative;input.disabled=!alternative;}
+    });
+    collectionForm.addEventListener('submit',async event=>{
+      event.preventDefault();if(busy || !order || !data?.collection || !collectionForm.reportValidity())return;
+      const values=new FormData(collectionForm),id=order,action=String(values.get('action'));
+      const body={action,reason:String(values.get('reason')),expectedVersion:data.collection.version,matchedInSend:values.get('matchedInSend')==='on',...(action==='approve-alternative'?{point:{name:values.get('name'),address:values.get('address'),postalCode:values.get('postalCode')},customerAuthorisationReference:values.get('customerAuthorisationReference')}: {})};
+      busy=true;lock();document.querySelector('#collection-review-fields').disabled=true;const feedback=document.querySelector('#collection-review-message');feedback.textContent='Recording review…';
+      try{const response=await fetch(api+'/operations/orders/'+encodeURIComponent(id)+'/collection-review',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw new Error(result.message ?? 'Review failed.');feedback.textContent='Review recorded. Reload before booking.';}
+      catch(error){feedback.textContent=error instanceof Error?error.message:'Outcome uncertain; reload before retrying.';}
+      finally{busy=false;if(order===id)await loadPacking();}
+    });
     refresh.addEventListener('click',()=>{if(!busy)void loadPacking();});
     edit.addEventListener('click',()=>{if(busy||pending.has(order))return;staged=undefined;review.textContent='';fields.disabled=false;edit.hidden=true;submit.textContent='Review dispatch details';});
     form.addEventListener('submit',async event=>{
@@ -93,19 +137,20 @@
   #packing{margin-block:var(--cyph-space-12);overflow-wrap:anywhere}
   #packing h3,#packing h4{font-family:var(--cyph-font-display);font-weight:var(--cyph-font-weight-regular);line-height:var(--cyph-leading-heading)}
   #packing label{font-size:var(--cyph-space-3);letter-spacing:.12em;text-transform:uppercase;color:var(--cyph-accent-highlight)}
-  #packing input,#packing button{min-width:0;min-block-size:var(--cyph-space-12);font:inherit;font-size:var(--cyph-space-4);padding:var(--cyph-space-3);border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:var(--cyph-surface-raised);color:var(--cyph-text-primary)}
+  #packing input,#packing select,#packing button{min-width:0;min-block-size:var(--cyph-space-12);font:inherit;font-size:var(--cyph-space-4);padding:var(--cyph-space-3);border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:var(--cyph-surface-raised);color:var(--cyph-text-primary)}
   #packing button{cursor:pointer;background:var(--cyph-accent-primary);color:var(--cyph-text-on-light);max-width:100%}
   #packing button:disabled{cursor:not-allowed;opacity:.6}
-  #packing input:focus-visible,#packing button:focus-visible{outline:2px solid var(--cyph-focus-ring);outline-offset:3px}
+  #packing input:focus-visible,#packing select:focus-visible,#packing button:focus-visible{outline:2px solid var(--cyph-focus-ring);outline-offset:3px}
   #manual-dispatch{display:grid;gap:var(--cyph-space-3);max-width:42rem;margin-block-start:var(--cyph-space-8);padding-block-start:var(--cyph-space-6);border-top:var(--cyph-line-structural) solid var(--cyph-border-structural)}
   #manual-dispatch[aria-busy="true"]{opacity:.7}
   #packing [hidden]{display:none}
+  #collection-booking-details{white-space:pre-line}
   #packing-address{white-space:pre-line;font-style:normal;margin-block:var(--cyph-space-4);overflow-wrap:anywhere}
   #packing ul{padding-inline-start:var(--cyph-space-6);overflow-wrap:anywhere}
-  #dispatch-fields{min-width:0;border:0;padding:0;display:grid;gap:var(--cyph-space-3)}
+  #collection-review-fields,#collection-alternative,#dispatch-fields{min-width:0;border:0;padding:0;display:grid;gap:var(--cyph-space-3)}
   #dispatch-fields legend{margin-block-end:var(--cyph-space-4)}
-  #dispatch-fields input{width:100%;box-sizing:border-box}
+  #collection-review-fields input,#collection-review-fields select,#dispatch-fields input{width:100%;box-sizing:border-box}
   .dispatch-handover{display:flex;align-items:flex-start;gap:var(--cyph-space-3);line-height:var(--cyph-leading-body)}
-  #dispatch-fields input[type="checkbox"]{width:1.25rem;min-height:1.25rem;flex:none;margin:0}
+  #collection-review-fields input[type="checkbox"],#dispatch-fields input[type="checkbox"]{width:1.25rem;min-height:1.25rem;flex:none;margin:0}
   #dispatch-review,#dispatch-message{overflow-wrap:anywhere}
 </style>

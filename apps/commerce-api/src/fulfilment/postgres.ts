@@ -1,6 +1,6 @@
 import pg from "pg";
 import {
-  orderFulfilmentStatusFor,
+  orderFulfilmentStatusFor, inpostCollectionMethod, normaliseCollectionPoint,
   transitionFulfilment,
   type CreateFulfilmentRequest,
   type FulfilmentProviderEvent,
@@ -9,6 +9,8 @@ import {
 import { FulfilmentError, type FulfilmentRepository } from "./service.js";
 
 import { fulfilmentAddress, ManualDispatchError, type PackingInformation, type ManualDispatchCommand, type ManualDispatchResult } from "./manual-dispatch.js";
+
+import {readCollectionReview,type CollectionReviewCommand} from "./collection-review.js";
 
 export class PostgresFulfilmentRepository implements FulfilmentRepository {
   constructor(private readonly pool: pg.Pool) {}
@@ -122,22 +124,56 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
 
 
   async packingInformation(orderId: string, operatorId: string): Promise<PackingInformation | undefined> {
-    const result = await this.pool.query(`SELECT o.id,o.order_number,o.status,o.fulfilment_status,o.delivery_address_snapshot,
+    const result = await this.pool.query(`SELECT o.id,o.order_number,o.status,o.fulfilment_status,o.delivery_address_snapshot,o.shipping_method_snapshot,o.subtotal_minor,o.tax_minor,o.currency,c.email_display,
       EXISTS(SELECT 1 FROM payments p WHERE p.order_id=o.id AND p.status='captured' AND p.amount_minor=o.total_minor AND p.currency=o.currency) AS captured,
       EXISTS(SELECT 1 FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.order_id=o.id AND r.status IN ('created','pending','completed','resolution_required')) AS refund_blocked,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('name',name_snapshot,'sku',sku_snapshot,'quantity',quantity) ORDER BY created_at,id) FROM order_items WHERE order_id=o.id),'[]'::jsonb) AS items,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id',id,'provider',provider,'status',status,'carrier',tracking_carrier,'service',tracking_service,'reference',tracking_reference,'trackingUrl',tracking_url,'dispatchedAt',dispatched_at) ORDER BY created_at,id) FROM fulfilments WHERE order_id=o.id),'[]'::jsonb) AS shipments
-      FROM orders o WHERE o.id=$1`, [orderId]);
+      FROM orders o JOIN customers c ON c.id=o.customer_id WHERE o.id=$1`, [orderId]);
     if (!result.rowCount) return undefined;
     const row = result.rows[0];
     if (row.status !== "paid" || !row.captured) throw new ManualDispatchError("conflict", "Packing requires a paid order with a captured payment.");
     await this.pool.query(`INSERT INTO audit_events(entity_type,entity_id,action,actor_type,actor_id,correlation_id,change_summary)
       VALUES('order',$1,'fulfilment.packing_viewed','operator',$2,gen_random_uuid(),'{}'::jsonb)`, [orderId,operatorId]);
     const shipments: PackingInformation["shipments"] = row.shipments;
+    const isCollection=row.shipping_method_snapshot?.key===inpostCollectionMethod;
+    const review=isCollection ? await readCollectionReview(this.pool,orderId) : undefined;
+    const history=isCollection ? (await this.pool.query("SELECT version,status,collection_point,customer_authorisation_reference,reason,operator_id,created_at FROM inpost_collection_reviews WHERE order_id=$1 ORDER BY version",[orderId])).rows.map(entry=>({version:Number(entry.version),status:String(entry.status),point:entry.collection_point,customerAuthorisationReference:entry.customer_authorisation_reference,reason:String(entry.reason),operatorId:String(entry.operator_id),createdAt:new Date(entry.created_at).toISOString()})) : [];
+    const requested=isCollection ? normaliseCollectionPoint(row.delivery_address_snapshot.collectionPoint) : undefined;
     return { orderId: row.id, orderNumber: row.order_number, orderStatus: row.status, fulfilmentStatus: row.fulfilment_status,
-      captured: row.captured, eligible: !row.refund_blocked && row.fulfilment_status === "processing" && shipments.length === 1 &&
+      ...(requested ? {collection:{requested,current:review?.point ?? requested,version:review?.version ?? 0,status:review?.status ?? "pending",email:row.email_display,phone:String(row.delivery_address_snapshot.phone ?? ""),parcelSize:"Medium" as const,contents:"IPL hair-removal device",declaredValueMinor:Number(row.subtotal_minor)+Number(row.tax_minor),currency:row.currency,history}} : {}),
+      captured: row.captured, eligible: (!isCollection || review?.status==="matched") && !row.refund_blocked && row.fulfilment_status === "processing" && shipments.length === 1 &&
         shipments[0]!.status === "accepted" && ["manual-live","manual-test"].includes(shipments[0]!.provider),
       address: fulfilmentAddress(row.delivery_address_snapshot), items: row.items, shipments };
+  }
+
+  async reviewCollection(command:CollectionReviewCommand) {
+    return this.transaction(async client=>{
+      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))",[command.idempotencyKey]);
+      const otherCommand=await client.query("SELECT idempotency_key FROM operator_commands WHERE idempotency_key=$1",[command.idempotencyKey]);
+      if(otherCommand.rowCount) throw new ManualDispatchError("conflict","Review key belongs to another operator command.");
+      const replay=await client.query("SELECT order_id,request_fingerprint,version,status,collection_point FROM inpost_collection_reviews WHERE idempotency_key=$1",[command.idempotencyKey]);
+      if(replay.rowCount){const row=replay.rows[0];if(row.order_id!==command.orderId || row.request_fingerprint!==command.fingerprint) throw new ManualDispatchError("conflict","Review key belongs to another command.");return {version:Number(row.version),status:row.status as "matched"|"unavailable",point:row.collection_point};}
+      const result=await client.query("SELECT status,fulfilment_status,shipping_method_snapshot,delivery_address_snapshot,total_minor,currency FROM orders WHERE id=$1 FOR UPDATE",[command.orderId]);
+      const order=result.rows[0];
+      if(!order || order.status!=="paid" || !["processing","manual_review"].includes(order.fulfilment_status) || order.shipping_method_snapshot?.key!==inpostCollectionMethod) throw new ManualDispatchError("conflict","Only an undispatched paid InPost order can be reviewed.");
+      const payments=await client.query("SELECT id FROM payments WHERE order_id=$1 AND status='captured' AND amount_minor=$2 AND currency=$3",[command.orderId,order.total_minor,order.currency]);
+      if(payments.rowCount!==1) throw new ManualDispatchError("conflict","A captured payment is required.");
+      const shipments=await client.query("SELECT id FROM fulfilments WHERE order_id=$1 AND status='accepted' AND provider IN ('manual-test','manual-live')",[command.orderId]);
+      if(shipments.rowCount!==1) throw new ManualDispatchError("conflict","An accepted manual fulfilment is required.");
+      const refunds=await client.query("SELECT r.id FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.order_id=$1 AND r.status IN ('created','pending','completed','resolution_required')",[command.orderId]);
+      if(refunds.rowCount) throw new ManualDispatchError("conflict","Refund issues must be resolved independently.");
+      const previous=await readCollectionReview(client,command.orderId);
+      if(order.fulfilment_status==="manual_review" && previous?.status!=="unavailable") throw new ManualDispatchError("conflict","Other manual-review issues must be resolved independently.");
+      if((previous?.version ?? 0)!==command.expectedVersion) throw new ManualDispatchError("conflict","Collection review changed; reload before continuing.");
+      const point=command.point ?? previous?.point ?? normaliseCollectionPoint(order.delivery_address_snapshot.collectionPoint);
+      const status=command.action==="unavailable" ? "unavailable" as const : "matched" as const;
+      const version=command.expectedVersion+1;
+      await client.query("INSERT INTO inpost_collection_reviews(order_id,version,status,collection_point,customer_authorisation_reference,reason,operator_id,idempotency_key,request_fingerprint) VALUES($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9)",[command.orderId,version,status,JSON.stringify(point),command.customerAuthorisationReference ?? null,command.reason,command.operatorId,command.idempotencyKey,command.fingerprint]);
+      await client.query("UPDATE orders SET fulfilment_status=$2 WHERE id=$1",[command.orderId,status==="unavailable" ? "manual_review" : "processing"]);
+      await client.query("INSERT INTO audit_events(entity_type,entity_id,action,actor_type,actor_id,correlation_id,change_summary) VALUES('order',$1,'fulfilment.collection_review','operator',$2,$3,$4::jsonb)",[command.orderId,command.operatorId,command.correlationId,JSON.stringify({version,status,action:command.action,customerAuthorised:!!command.customerAuthorisationReference})]);
+      return {version,status,point};
+    });
   }
 
   async dispatchManual(command: ManualDispatchCommand, provider: string): Promise<ManualDispatchResult> {
@@ -146,6 +182,8 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
         // Same key is serialised across all operator commands; different keys
         // are additionally serialised by payment, order and fulfilment locks.
         await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1,0))", [command.idempotencyKey]);
+        const otherReview=await client.query("SELECT idempotency_key FROM inpost_collection_reviews WHERE idempotency_key=$1",[command.idempotencyKey]);
+        if(otherReview.rowCount) throw new ManualDispatchError("conflict","Dispatch key belongs to a collection review.");
         const replay = await client.query("SELECT request_fingerprint,status,result FROM operator_commands WHERE idempotency_key=$1", [command.idempotencyKey]);
         if (replay.rowCount) {
           if (replay.rows[0].request_fingerprint !== command.fingerprint || replay.rows[0].status !== "completed") throw new ManualDispatchError("conflict", "Idempotency key belongs to a different or unfinished command.");
@@ -154,9 +192,13 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
         // Match payment/refund lock order. NOWAIT on the order avoids waiting
         // on a workflow which holds the order while it requests a payment lock.
         const payments = await client.query("SELECT id,status,amount_minor,currency FROM payments WHERE order_id=$1 ORDER BY id FOR UPDATE", [command.orderId]);
-        const orders = await client.query("SELECT id,status,fulfilment_status,total_minor,currency FROM orders WHERE id=$1 FOR UPDATE NOWAIT", [command.orderId]);
+        const orders = await client.query("SELECT id,status,fulfilment_status,total_minor,currency,shipping_method_snapshot FROM orders WHERE id=$1 FOR UPDATE NOWAIT", [command.orderId]);
         if (!orders.rowCount) throw new ManualDispatchError("not_found", "Order not found.");
         const order = orders.rows[0];
+        if(order.shipping_method_snapshot?.key===inpostCollectionMethod){
+          const review=await readCollectionReview(client,command.orderId);
+          if(review?.status!=="matched" || command.carrier.toLowerCase()!=="inpost") throw new ManualDispatchError("conflict","InPost collection requires a matched authorised point and actual InPost shipment details.");
+        }
         const captured = payments.rows.filter(payment => payment.status === "captured");
         if (order.status !== "paid" || captured.length !== 1 || Number(captured[0].amount_minor) !== Number(order.total_minor) || captured[0].currency !== order.currency ||
             payments.rows.some(payment => ["partially_refunded","refunded","resolution_required","dispute_opened","dispute_resolved"].includes(payment.status))) throw new ManualDispatchError("conflict", "Dispatch requires an eligible paid order and verified captured payment.");
