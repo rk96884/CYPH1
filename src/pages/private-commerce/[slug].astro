@@ -203,6 +203,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
   .private-warning{padding:var(--cyph-space-4);border-left:2px solid var(--cyph-color-warning);background:rgb(242 198 109/.08)}
   fieldset{display:grid;gap:var(--cyph-space-4);margin:0 0 var(--cyph-space-6);border:1px solid var(--cyph-border-structural);padding:var(--cyph-space-6)}
   legend{padding-inline:var(--cyph-space-2);font-family:var(--cyph-font-display);font-size:.85rem;text-transform:uppercase}
+  [data-collection-fields]:not([hidden]){display:grid;gap:var(--cyph-space-4)}
   .field-label{display:inline;line-height:1.5}
   .required-note{font-size:.8rem;color:var(--cyph-text-secondary)}
   .required-mark,.required-note>span{color:var(--cyph-color-error,#e66a7b);font-weight:700}
