@@ -53,6 +53,14 @@ Project-owner-supplied product facts: retail box 32 × 24 × 12 cm; known sample
 
 **Economics evidence versus approval:** The £74.99 intended retail price, approximately £23 landed device cost and proposed £3.99 UK customer delivery charge have already been modelled/discussed. Do not restart economics analysis by default; reconcile existing work and record final cost/fee/margin sign-off for PX-01 after approved carrier and policy inputs. PX-01 and SH-01 remain PENDING DECISION; SH-02 and GO-01 remain BLOCKED.
 
+### K-803 supplier warranty and replacement reserve — 9 October 2026
+
+**Supplier evidence received; customer policy and operational rehearsal remain pending (WR-01 / RT-01 / OPS-01).** Lyanna confirmed a **one-year warranty covering non-human-caused damage** and stated that quality-issue replacement units can be supplied **with CYPH/1's next order**. This is the supplier's replenishment arrangement, not a customer-facing waiting period or an assurance of immediate supplier dispatch. No additional supplier remedy, separate replacement shipment or shipping-cost commitment is inferred.
+
+**Project-owner stock decision:** Reserve **one K-803 device** from the anticipated initial batch of approximately 20 for eligible customer replacement needs. Subject to receipt and acceptance of all units, this provisionally leaves 19 available for sale and one reserved. Verify received quantity, physical testing, serial/batch traceability, sellable condition and stock controls before approving inventory or activating checkout. Do not sell the reserve unit unless a revised contingency decision is recorded.
+
+CYPH/1 remains the customer-facing seller responsible for applicable statutory remedies and timely handling of faults, regardless of when the supplier replenishes stock. The existing unpublished `src/drafts/returns.astro` 12-month warranty section may be updated to reflect the confirmed duration/coverage, but its detailed exclusions and remedies must not be presented as supplier-confirmed beyond Lyanna's statement. Customer-facing warranty, returns and support wording still requires consumer-rights review and accountable sign-off. **WR-01 remains PENDING DECISION; RT-01 remains DRAFT APPROVED; GO-01 remains BLOCKED.**
+
 ### International tracked postage and packing — 8 October 2026
 
 **Status: implementation prepared for controlled Mollie test checkout only;
