@@ -88,3 +88,10 @@
 .product-safety-list li+li{margin-top:var(--cyph-space-3)}
 @media(min-width:40rem){.treatment-groups,.compatibility-columns{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .product-editorial a{color:var(--cyph-color-deep-plum)}
+
+/* Six essentials: two balanced rows of three on desktop. */
+.product-essentials{grid-template-columns:minmax(0,1fr);gap:var(--cyph-space-8) var(--cyph-space-8)}
+.product-essentials article{min-width:0}
+.product-essentials .essential-icon{display:block;width:2rem;height:2rem;margin-bottom:var(--cyph-space-4);color:var(--cyph-accent-highlight)}
+@media(min-width:40rem){.product-essentials{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:60rem){.product-essentials{grid-template-columns:repeat(3,minmax(0,1fr))}}
