@@ -47,9 +47,9 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         <legend>Delivery method</legend>
         <label><span class="field-label">Delivery option <span class="required-mark" aria-hidden="true">*</span><span class="sr-only"> (required)</span></span> <select name="deliveryMethod"><option value="tracked-postage-packing">Home delivery — £3.99 (UK)</option><option value="inpost-locker-shop">InPost locker/shop collection — £2.59 (UK)</option></select></label>
         <div data-collection-fields hidden>
-          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Copy the point name and full address into one field, plus its postcode. The location ID is optional. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
-          <label><span class="field-label">Collection point name and address <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionNameAddress" maxlength="500" autocomplete="off"/></label>
-          <label><span class="field-label">Collection point postcode <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionPostcode" maxlength="10" autocomplete="off"/></label>
+          <p><a href="https://inpost.co.uk/lockers" target="_blank" rel="noopener noreferrer">Find an InPost locker or shop (opens in a new tab)</a>. Copy the point name and full address into one field, including its UK postcode. The location ID is optional. Your request will be checked before booking; no alternative will be substituted without your agreement.</p>
+          <label><span class="field-label">Collection point name and full address <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="collectionNameAddress" maxlength="500" autocomplete="off" aria-describedby="collection-address-error"/></label>
+          <p id="collection-address-error" role="alert" hidden></p>
           <label><span class="field-label">InPost location ID (optional)</span> <input name="collectionLocationId" maxlength="40" autocomplete="off" placeholder="e.g. UK00373494"/></label>
           <label><span class="field-label">Recipient UK mobile number <span class="required-mark" data-required-for="collection" hidden aria-hidden="true">*</span><span class="sr-only" data-required-text-for="collection" hidden> (required)</span></span> <input name="phone" type="tel" maxlength="30" autocomplete="off"/></label>
           <p>InPost uses your email and mobile number for collection notifications. Wait for InPost to confirm your parcel is ready to collect.</p>
@@ -69,7 +69,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
     </form>
   </main>
   <script>
-    import { collectionPointFromCombinedDetails, normaliseUkMobile } from "../../../packages/commerce-core/src/collection";
+    import { collectionPointFromAddress, normaliseUkMobile } from "../../../packages/commerce-core/src/collection";
     // Compile out private checkout behaviour when its existing presentation gate is disabled.
     if (import.meta.env.PUBLIC_COMMERCE_UI_ENABLED === "true") {
     const form = document.querySelector("[data-private-checkout]");
@@ -89,6 +89,14 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
       let quote: Quote | undefined;
       let revision = 0;
       let submitting = false;
+      const collectionAddress=form.querySelector<HTMLInputElement>("[name='collectionNameAddress']")!;
+      const collectionError=form.querySelector<HTMLElement>("#collection-address-error")!;
+      const validateCollectionAddress=()=>{
+        collectionAddress.setCustomValidity("");collectionError.hidden=true;collectionAddress.removeAttribute("aria-invalid");
+        if(method.value!=="inpost-locker-shop" || collectionAddress.disabled)return;
+        try{collectionPointFromAddress(collectionAddress.value);}catch(error){const message=error instanceof Error?error.message:"Include a valid UK postcode in the full address.";collectionAddress.setCustomValidity(message);collectionError.textContent=message;collectionError.hidden=false;collectionAddress.setAttribute("aria-invalid","true");}
+      };
+      collectionAddress.addEventListener("input",validateCollectionAddress);
       const refreshQuote = async () => {
         const current = ++revision;
         quote = undefined;
@@ -144,6 +152,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         if (submitting || !quote) return;
+        validateCollectionAddress();
         if (!form.reportValidity()) {
           const invalid = [...form.elements].find((element) => element instanceof HTMLInputElement || element instanceof HTMLSelectElement ? !element.checkValidity() : false);
           if (invalid instanceof HTMLElement) invalid.focus();
@@ -173,7 +182,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
               deliveryAddress: {
                 givenName: data.get("givenName"), familyName: data.get("familyName"), line1: data.get("line1"), line2: data.get("line2"), locality: data.get("locality"), region: data.get("region"),
                 postalCode: data.get("postalCode"), countryCode: data.get("countryCode"),
-                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:normaliseUkMobile(String(data.get("phone") ?? "")),collectionPoint:collectionPointFromCombinedDetails(String(data.get("collectionNameAddress") ?? ""),String(data.get("collectionPostcode") ?? ""),String(data.get("collectionLocationId") ?? ""))} : {}),
+                ...(data.get("deliveryMethod") === "inpost-locker-shop" ? {phone:normaliseUkMobile(String(data.get("phone") ?? "")),collectionPoint:collectionPointFromAddress(String(data.get("collectionNameAddress") ?? ""),String(data.get("collectionLocationId") ?? ""))} : {}),
               },
             }),
           });

@@ -504,7 +504,7 @@ test("InPost collection fails closed for incomplete details, foreign/over-limit/
   assert.equal(repo.orders.length,0);assert.equal(capture.length,0);
 });
 
-import { collectionPointFromCombinedDetails } from "../../../../packages/commerce-core/src/collection.js";
+import { collectionPointFromCombinedDetails, collectionPointFromAddress } from "../../../../packages/commerce-core/src/collection.js";
 test("simplified InPost submission with and without ID persists and protects the 359p test payment",async()=>{
  for(const locationId of [undefined,"UK00373494"]){
   const repo=new class extends CollectionCheckoutRepository {override async getProduct(){return {...await super.getProduct(),priceMinor:100,unitTaxMinor:0};}}();
@@ -524,8 +524,8 @@ test("InPost quantities 1–3 bind charge, parcel evidence, payment total and re
   const repo=new CollectionCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
   const quote=await service.quote({productSlug:"integration-test-fixture",quantity,countryCode:"GB",deliveryMethod:"inpost-locker-shop"});
   const delivery=quantity===3?399:259;assert.equal(quote.deliveryMinor,delivery);assert.equal(quote.totalMinor,12000*quantity+delivery);revisions.push(quote.shippingQuoteRevision);
-  const input=collectionRequest({quantity,shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
-  await service.initiate(input);await service.initiate(input);assert.equal(payments.length,1);assert.equal(payments[0]!.amount.value,quote.totalMinor);assert.equal(repo.orders[0]!.quantity,quantity);assert.equal(repo.orders[0]!.shippingPricingSnapshot.inpostParcel?.parcelSize,quantity===3?"Large":"Medium");
+  const input=collectionRequest({quantity,deliveryAddress:{...collectionRequest().deliveryAddress,collectionPoint:collectionPointFromAddress("Synthetic Locker, 1 Test Road, London SW1A 1AA","UK00373494")},shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+  await service.initiate(input);await service.initiate(input);assert.equal(payments.length,1);assert.equal(payments[0]!.amount.value,quote.totalMinor);assert.equal(repo.orders[0]!.quantity,quantity);assert.equal(repo.orders[0]!.deliveryAddress.collectionPoint!.postalCode,"SW1A 1AA");assert.equal(repo.orders[0]!.deliveryAddress.collectionPoint!.locationId,"UK00373494");assert.equal(repo.orders[0]!.shippingPricingSnapshot.inpostParcel?.parcelSize,quantity===3?"Large":"Medium");
   assert.equal(repo.orders[0]!.subtotalMinor+repo.orders[0]!.taxMinor,12000*quantity);
   await assert.rejects(()=>service.initiate({...input,quantity:quantity===3?2:quantity+1,idempotencyKey:"changed"}),/quote changed/);
   await assert.rejects(()=>service.initiate({...input,expectedTotalMinor:1,idempotencyKey:"wrong-total"}),/total has changed/);
@@ -558,4 +558,11 @@ test("guarded InPost setup appends Large revision and refuses conflicts without 
   if(conflict){await assert.rejects(run,/rate revisions conflict/);assert.equal(calls.at(-1)!.sql,"ROLLBACK");}else{await run();assert.equal(calls.at(-1)!.sql,"COMMIT");}
   assert.ok(calls.some(c=>c.sql.includes("399,'GBP','test',now(),2")&&c.sql.includes("DO NOTHING")));
  }
+});
+
+test("InPost-only guarded setup appends Large without touching other configuration",async()=>{
+ const calls:string[]=[],client={release(){},async query(sql:string){calls.push(sql);if(sql.includes("SELECT country_code FROM shipping_zone_countries"))return {rowCount:0,rows:[]};if(sql.includes("SELECT m.id method_id"))return {rowCount:1,rows:[{method_id:"method",zone_id:"zone"}]};if(sql.startsWith("SELECT version,rate_minor"))return {rowCount:2,rows:[{version:1,rate_minor:259,currency:"GBP",status:"test"},{version:2,rate_minor:399,currency:"GBP",status:"test"}]};return {rowCount:0,rows:[]};}};
+ await configureInternationalShipping({connect:async()=>client} as unknown as pg.Pool,["GB"],true,true);
+ assert.equal(calls.filter(sql=>sql.startsWith("INSERT")||sql.startsWith("UPDATE")).length,1);assert.ok(calls.find(sql=>sql.includes("399,'GBP','test',now(),2")));assert.equal(calls.at(-1),"COMMIT");
+ await assert.rejects(()=>configureInternationalShipping({connect:async()=>client} as unknown as pg.Pool,["GB"],false,true),/explicit GB/);assert.equal(calls.at(-1),"ROLLBACK");
 });

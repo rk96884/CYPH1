@@ -1,6 +1,12 @@
 import pg from "pg";
 import { countryCodes, normaliseCountryCode, shippingZoneForCountry, trackedPostageMethod, trackedPostageMinor, inpostCollectionMethod, inpostCollectionMinor } from "../../../../packages/commerce-core/src/index.js";
 
+const appendInpostLargeTestRate = async (client: pg.PoolClient, zoneId: string, methodId: string) => {
+  await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',399,'GBP','test',now(),2) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO NOTHING",[zoneId,methodId]);
+  const rates=await client.query("SELECT version,rate_minor,currency,status FROM shipping_rates WHERE zone_id=$1 AND shipping_method_id=$2 AND country_code='GB' AND version IN (1,2)",[zoneId,methodId]);
+  if(rates.rowCount!==2 || rates.rows.some(r=>Number(r.rate_minor)!==(Number(r.version)===1?259:399) || r.currency!=="GBP" || r.status!=="test")) throw new Error("Existing InPost rate revisions conflict with the approved test rules.");
+};
+
 // Deliberately separate from startup/migrations. Never configures a production database.
 export const shippingSetupCountries = (environment: Readonly<Record<string, string | undefined>>): readonly string[] => {
   if (environment.NODE_ENV === "production" || environment.PAYMENT_PROVIDER !== "mollie-test"
@@ -13,7 +19,7 @@ export const shippingSetupCountries = (environment: Readonly<Record<string, stri
   return Object.freeze((environment.SHIPPING_TEST_COUNTRIES ?? "").split(",").map(value => value.trim()).filter(Boolean).map(normaliseCountryCode));
 };
 
-export const configureInternationalShipping = async (pool: pg.Pool, testCountries: readonly string[], includeInpost = false): Promise<void> => {
+export const configureInternationalShipping = async (pool: pg.Pool, testCountries: readonly string[], includeInpost = false, inpostRatesOnly = false): Promise<void> => {
   const approved = new Set(testCountries.map(normaliseCountryCode));
   const client = await pool.connect();
   try {
@@ -26,6 +32,13 @@ export const configureInternationalShipping = async (pool: pg.Pool, testCountrie
       UNION ALL SELECT 'zone' FROM shipping_zones WHERE status='active'
       UNION ALL SELECT 'method' FROM shipping_methods WHERE status='active'`);
     if (protectedRows.rowCount) throw new Error("Shipping setup refuses existing active or restricted shipping configuration.");
+    if (inpostRatesOnly) {
+      if (!includeInpost || !approved.has("GB")) throw new Error("InPost-only setup requires explicit GB/InPost approval.");
+      const existing=await client.query("SELECT m.id method_id,c.zone_id FROM shipping_methods m CROSS JOIN shipping_zone_countries c JOIN shipping_zones z ON z.id=c.zone_id WHERE m.method_key=$1 AND m.status='test' AND c.country_code='GB' AND c.destination_status='test' AND z.status='test'",[inpostCollectionMethod]);
+      if(existing.rowCount!==1) throw new Error("Existing GB test-only InPost configuration is required.");
+      await appendInpostLargeTestRate(client,existing.rows[0].zone_id,existing.rows[0].method_id);
+      await client.query("COMMIT");return;
+    }
     for (const zone of ["uk", "europe", "rest-of-world"]) {
       await client.query(`INSERT INTO shipping_zones(zone_key,name,status) VALUES($1,$1,'test') ON CONFLICT(zone_key) DO NOTHING`, [zone]);
     }
@@ -51,10 +64,7 @@ export const configureInternationalShipping = async (pool: pg.Pool, testCountrie
       if(destination.rowCount!==1) throw new Error("GB test destination is required.");
       await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',$3,'GBP','test',now(),1) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO UPDATE SET status='test',updated_at=now()",[destination.rows[0].zone_id,method.rows[0].id,inpostCollectionMinor]);
 
-      // Separate test record preserves the existing Medium record and historical snapshots.
-      await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',399,'GBP','test',now(),2) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO NOTHING",[destination.rows[0].zone_id,method.rows[0].id]);
-      const rates=await client.query("SELECT version,rate_minor,currency,status FROM shipping_rates WHERE zone_id=$1 AND shipping_method_id=$2 AND country_code='GB' AND version IN (1,2)",[destination.rows[0].zone_id,method.rows[0].id]);
-      if(rates.rowCount!==2 || rates.rows.some(r=>Number(r.rate_minor)!==(Number(r.version)===1?259:399) || r.currency!=="GBP" || r.status!=="test")) throw new Error("Existing InPost rate revisions conflict with the approved test rules.");
+      await appendInpostLargeTestRate(client,destination.rows[0].zone_id,method.rows[0].id);
     }
     await client.query("COMMIT");
   } catch (error) { await client.query("ROLLBACK"); throw error; }

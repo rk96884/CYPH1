@@ -65,6 +65,8 @@ for (const [name, file] of pages) {
 
 const checkoutSource = await readFile(resolve("src/pages/private-commerce/[slug].astro"), "utf8");
 assert(/name="quantity"[^>]*min="1"[^>]*max="3"[^>]*step="1"[^>]*required/.test(checkoutSource), "Private quantity", "allows only whole quantities 1–3");
+assert(!checkoutSource.includes('name="collectionPostcode"'), "Collection address", "has no redundant separate postcode input");
+assert(checkoutSource.includes('aria-describedby="collection-address-error"') && checkoutSource.includes('id="collection-address-error" role="alert"'), "Collection address", "associates an announced inline postcode error");
 const operationsSource = await readFile(resolve("src/pages/private-operations/[slug].astro"), "utf8");
 assert(checkoutSource.includes("@media(max-width:420px)"), "Private checkout CSS", "has a narrow mobile layout");
 assert(operationsSource.includes("@media(max-width:520px)"), "Private operations CSS", "has a narrow mobile layout");
