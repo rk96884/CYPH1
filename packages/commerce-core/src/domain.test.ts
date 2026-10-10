@@ -142,3 +142,10 @@ test("simplified collection details retain a 500-character address and independe
  assert.equal(normaliseUkMobile("07700 900123"),"+447700900123");assert.equal(normaliseUkMobile("+44 7700 900123"),"+447700900123");assert.throws(()=>normaliseUkMobile("02012345678"));
  const legacy={name:"Legacy",address:"Test address | InPost location ID: UK00373494",postalCode:"SW1A 1AA"};assert.deepEqual(normaliseCollectionPoint(legacy),legacy);
 });
+
+
+test("InPost parcel policy enforces integer quantities and approved charges",async()=>{
+ const {inpostParcelForQuantity}=await import("./collection.js");
+ for(const quantity of [1,2,3]){const p=inpostParcelForQuantity(quantity);assert.equal(p.quantity,quantity);assert.equal(p.parcelSize,quantity===3?"Large":"Medium");assert.equal(p.deliveryMinor,quantity===3?399:259);}
+ for(const quantity of [0,-1,1.1,4,Infinity,NaN])assert.throws(()=>inpostParcelForQuantity(quantity));
+});

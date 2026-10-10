@@ -476,7 +476,7 @@ class CollectionCheckoutRepository extends MemoryCheckoutRepository {
   inpostPrice=259;
   override async getShipping(country="GB") {
     const shipping=await super.getShipping(country);
-    return {...shipping,rates:[...shipping.rates,{...shipping.rates[0]!,id:"inpost_test",methodKey:"inpost-locker-shop",methodName:"InPost locker/shop collection",price:money(this.inpostPrice,"GBP")}]};
+    return {...shipping,rates:[...shipping.rates,{...shipping.rates[0]!,id:"inpost_large_test",version:2,methodKey:"inpost-locker-shop",methodName:"InPost locker/shop collection",price:money(399,"GBP")},{...shipping.rates[0]!,id:"inpost_test",methodKey:"inpost-locker-shop",methodName:"InPost locker/shop collection",price:money(this.inpostPrice,"GBP")}]};
   }
 }
 test("InPost quote and payment use server price and persist recipient/point through replay",async()=>{
@@ -490,16 +490,16 @@ test("InPost quote and payment use server price and persist recipient/point thro
   assert.deepEqual(repo.orders[0]!.deliveryAddress.collectionPoint,collectionPoint);assert.equal(repo.orders[0]!.deliveryAddress.phone,"+447700900123");
   await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor,deliveryAddress:{...input.deliveryAddress,collectionPoint:{...collectionPoint,name:"Changed"}}})),/another request/);
 });
-test("InPost collection fails closed for incomplete details, foreign/multi-unit/live and manipulated charges",async()=>{
+test("InPost collection fails closed for incomplete details, foreign/over-limit/live and manipulated charges",async()=>{
   const repo=new CollectionCheckoutRepository(),capture:CreateCheckoutInput[]=[],service=serviceFor(repo,capture);
   for(const deliveryAddress of [{...request().deliveryAddress},{...request().deliveryAddress,phone:"02012345678",collectionPoint},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,postalCode:"90210"}},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,address:""}}]) await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress})),e=>e instanceof CheckoutError&&e.code==="invalid_request");
-  await assert.rejects(()=>service.initiate(collectionRequest({quantity:2})),/single-unit/);
-  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/single-unit/);
+  await assert.rejects(()=>service.initiate(collectionRequest({quantity:4})),/between 1 and 3/);
+  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/UK test checkout/);
   await assert.rejects(()=>service.initiate(collectionRequest({expectedTotalMinor:1})),/total has changed/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingRateId:"rate_test"})),/available shipping/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:"0".repeat(64)})),/quote changed/);
   await assert.rejects(()=>service.initiate(collectionRequest({paymentMethod:"klarna"})),/provider validation/);
-  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/single-unit/);
+  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/UK test checkout/);
   repo.inpostPrice=1;await assert.rejects(()=>service.initiate(collectionRequest()),/not approved/);
   assert.equal(repo.orders.length,0);assert.equal(capture.length,0);
 });
@@ -514,5 +514,48 @@ test("simplified InPost submission with and without ID persists and protects the
   const input=collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,collectionPoint:point},shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:359});
   const result=await service.initiate(input);assert.equal((await service.initiate(input)).orderId,result.orderId);assert.equal(payments.length,1);assert.equal(payments[0]!.amount.value,359);assert.deepEqual(repo.orders[0]!.deliveryAddress.collectionPoint,point);
   await assert.rejects(()=>service.initiate({...input,deliveryAddress:{...input.deliveryAddress,collectionPoint:{...point,locationId:"CHANGED"}}}),/another request/);
+ }
+});
+
+
+test("InPost quantities 1–3 bind charge, parcel evidence, payment total and retries",async()=>{
+ const revisions=[];
+ for(const quantity of [1,2,3]){
+  const repo=new CollectionCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+  const quote=await service.quote({productSlug:"integration-test-fixture",quantity,countryCode:"GB",deliveryMethod:"inpost-locker-shop"});
+  const delivery=quantity===3?399:259;assert.equal(quote.deliveryMinor,delivery);assert.equal(quote.totalMinor,12000*quantity+delivery);revisions.push(quote.shippingQuoteRevision);
+  const input=collectionRequest({quantity,shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+  await service.initiate(input);await service.initiate(input);assert.equal(payments.length,1);assert.equal(payments[0]!.amount.value,quote.totalMinor);assert.equal(repo.orders[0]!.quantity,quantity);assert.equal(repo.orders[0]!.shippingPricingSnapshot.inpostParcel?.parcelSize,quantity===3?"Large":"Medium");
+  assert.equal(repo.orders[0]!.subtotalMinor+repo.orders[0]!.taxMinor,12000*quantity);
+  await assert.rejects(()=>service.initiate({...input,quantity:quantity===3?2:quantity+1,idempotencyKey:"changed"}),/quote changed/);
+  await assert.rejects(()=>service.initiate({...input,expectedTotalMinor:1,idempotencyKey:"wrong-total"}),/total has changed/);
+ }
+ assert.equal(new Set(revisions).size,3);
+});
+test("every method rejects invalid or over-limit quantity before order/payment creation",async()=>{
+ for(const deliveryMethod of ["inpost-locker-shop","tracked-postage-packing"]){
+  const repo=new CollectionCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+  for(const quantity of [0,-1,1.5,4,10,Infinity,NaN]){
+   await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity,countryCode:"GB",deliveryMethod}),/whole number between 1 and 3/);
+   await assert.rejects(()=>service.initiate(collectionRequest({quantity,deliveryMethod})),/whole number between 1 and 3/);
+  }
+  assert.equal(repo.orders.length,0);assert.equal(payments.length,0);
+ }
+});
+test("InPost Large requires its own stored approved test charge; home price and packaging gate remain intact",async()=>{
+ const repo=new CollectionCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+ assert.equal((await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"})).deliveryMinor,399);
+ await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}),/packaging requires approval/);
+ const large=await service.quote({productSlug:"integration-test-fixture",quantity:3,countryCode:"GB",deliveryMethod:"inpost-locker-shop"});
+ await assert.rejects(()=>service.initiate(collectionRequest({quantity:3,shippingRateId:"inpost_test",shippingQuoteRevision:large.shippingQuoteRevision,expectedTotalMinor:large.totalMinor})),/available shipping/);
+});
+
+
+test("guarded InPost setup appends Large revision and refuses conflicts without overwriting prices",async()=>{
+ for(const conflict of [false,true]){
+  const calls:{sql:string;values?:unknown[]}[]=[],client={release(){},async query(sql:string,values?:unknown[]){calls.push({sql,...(values?{values}:{})});if(sql.includes("SELECT country_code FROM shipping_zone_countries"))return {rowCount:0,rows:[]};if(sql.startsWith("SELECT version,rate_minor"))return {rowCount:2,rows:[{version:1,rate_minor:259,currency:"GBP",status:"test"},{version:2,rate_minor:conflict?1:399,currency:"GBP",status:"test"}]};return {rowCount:1,rows:[{id:"method",zone_id:"zone"}]};}};
+  const run=()=>configureInternationalShipping({connect:async()=>client} as unknown as pg.Pool,["GB"],true);
+  if(conflict){await assert.rejects(run,/rate revisions conflict/);assert.equal(calls.at(-1)!.sql,"ROLLBACK");}else{await run();assert.equal(calls.at(-1)!.sql,"COMMIT");}
+  assert.ok(calls.some(c=>c.sql.includes("399,'GBP','test',now(),2")&&c.sql.includes("DO NOTHING")));
  }
 });

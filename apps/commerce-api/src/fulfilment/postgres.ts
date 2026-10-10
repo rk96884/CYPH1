@@ -1,6 +1,6 @@
 import pg from "pg";
 import {
-  orderFulfilmentStatusFor, inpostCollectionMethod, normaliseCollectionPoint,
+  orderFulfilmentStatusFor, inpostCollectionMethod, inpostParcelForQuantity, normaliseCollectionPoint,
   transitionFulfilment,
   type CreateFulfilmentRequest,
   type FulfilmentProviderEvent,
@@ -124,7 +124,7 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
 
 
   async packingInformation(orderId: string, operatorId: string): Promise<PackingInformation | undefined> {
-    const result = await this.pool.query(`SELECT o.id,o.order_number,o.status,o.fulfilment_status,o.delivery_address_snapshot,o.shipping_method_snapshot,o.subtotal_minor,o.tax_minor,o.currency,c.email_display,
+    const result = await this.pool.query(`SELECT o.id,o.order_number,o.status,o.fulfilment_status,o.delivery_address_snapshot,o.shipping_method_snapshot,o.shipping_rate_snapshot,o.subtotal_minor,o.tax_minor,o.currency,c.email_display,
       EXISTS(SELECT 1 FROM payments p WHERE p.order_id=o.id AND p.status='captured' AND p.amount_minor=o.total_minor AND p.currency=o.currency) AS captured,
       EXISTS(SELECT 1 FROM refunds r JOIN payments p ON p.id=r.payment_id WHERE p.order_id=o.id AND r.status IN ('created','pending','completed','resolution_required')) AS refund_blocked,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('name',name_snapshot,'sku',sku_snapshot,'quantity',quantity) ORDER BY created_at,id) FROM order_items WHERE order_id=o.id),'[]'::jsonb) AS items,
@@ -141,7 +141,7 @@ export class PostgresFulfilmentRepository implements FulfilmentRepository {
     const history=isCollection ? (await this.pool.query("SELECT version,status,collection_point,customer_authorisation_reference,reason,operator_id,created_at FROM inpost_collection_reviews WHERE order_id=$1 ORDER BY version",[orderId])).rows.map(entry=>({version:Number(entry.version),status:String(entry.status),point:entry.collection_point,customerAuthorisationReference:entry.customer_authorisation_reference,reason:String(entry.reason),operatorId:String(entry.operator_id),createdAt:new Date(entry.created_at).toISOString()})) : [];
     const requested=isCollection ? normaliseCollectionPoint(row.delivery_address_snapshot.collectionPoint) : undefined;
     return { orderId: row.id, orderNumber: row.order_number, orderStatus: row.status, fulfilmentStatus: row.fulfilment_status,
-      ...(requested ? {collection:{requested,current:review?.point ?? requested,version:review?.version ?? 0,status:review?.status ?? "pending",email:row.email_display,phone:String(row.delivery_address_snapshot.phone ?? ""),parcelSize:"Medium" as const,contents:"IPL hair-removal device",declaredValueMinor:Number(row.subtotal_minor)+Number(row.tax_minor),currency:row.currency,history}} : {}),
+      ...(requested ? {collection:{requested,current:review?.point ?? requested,version:review?.version ?? 0,status:review?.status ?? "pending",email:row.email_display,phone:String(row.delivery_address_snapshot.phone ?? ""),parcelSize:row.shipping_rate_snapshot?.inpostParcel?.parcelSize ?? inpostParcelForQuantity(row.items.reduce((sum:number,item:{quantity:number})=>sum+Number(item.quantity),0)).parcelSize,contents:"IPL hair-removal device",declaredValueMinor:Number(row.subtotal_minor)+Number(row.tax_minor),currency:row.currency,history}} : {}),
       captured: row.captured, eligible: (!isCollection || review?.status==="matched") && !row.refund_blocked && row.fulfilment_status === "processing" && shipments.length === 1 &&
         shipments[0]!.status === "accepted" && ["manual-live","manual-test"].includes(shipments[0]!.provider),
       address: fulfilmentAddress(row.delivery_address_snapshot), items: row.items, shipments };

@@ -1,4 +1,5 @@
 import pg from "pg";
+import { inpostParcelForQuantity } from "../../../../packages/commerce-core/src/index.js";
 import { providerTimestamp } from "../payments/capture-deadline.js";
 import { money, quoteShipping, validatePackaging, type PackagingProfile, type ShippingRate } from "../../../../packages/commerce-core/src/index.js";
 import {
@@ -309,6 +310,12 @@ export class PostgresCheckoutRepository implements CheckoutRepository {
       effectiveFrom: new Date(row.effective_from), ...(row.effective_to ? { effectiveTo: new Date(row.effective_to) } : {}),
     };
     const snapshot = order.shippingPricingSnapshot;
+    if (!Number.isSafeInteger(order.quantity) || order.quantity < 1 || order.quantity > 3) throw new CheckoutError("invalid_request", "Quantity must be a whole number between 1 and 3.");
+    if (rate.methodKey === "inpost-locker-shop") {
+      const parcel = inpostParcelForQuantity(order.quantity);
+      if (order.shippingApproval !== "test" || order.deliveryAddress.countryCode !== "GB" || rate.price.value !== parcel.deliveryMinor
+        || canonicalShippingJson(snapshot.inpostParcel) !== canonicalShippingJson(parcel)) throw new CheckoutError("conflict", "InPost parcel pricing changed. Review a new quote.");
+    }
     let appliedCharge = rate.price.value;
     if (rate.carrierTariff) {
       const profiles = await this.packagingProfiles(client, order.product.id, true);
