@@ -88,3 +88,10 @@
 .product-safety-list li+li{margin-top:var(--cyph-space-3)}
 @media(min-width:40rem){.treatment-groups,.compatibility-columns{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .product-editorial a{color:var(--cyph-color-deep-plum)}
+
+/* Six aligned essentials: one horizontal row on wide screens, responsive wrapping below. */
+.product-essentials{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--cyph-space-8) var(--cyph-space-6)}
+.product-essentials article{min-width:0}
+@media(min-width:48rem){.product-essentials{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:80rem){.product-essentials{grid-template-columns:repeat(6,minmax(0,1fr));column-gap:var(--cyph-space-4)}}
+@media(max-width:29.99rem){.product-essentials{grid-template-columns:minmax(0,1fr)}}
