@@ -566,3 +566,97 @@ test("InPost-only guarded setup appends Large without touching other configurati
  assert.equal(calls.filter(sql=>sql.startsWith("INSERT")||sql.startsWith("UPDATE")).length,1);assert.ok(calls.find(sql=>sql.includes("399,'GBP','test',now(),2")));assert.equal(calls.at(-1),"COMMIT");
  await assert.rejects(()=>configureInternationalShipping({connect:async()=>client} as unknown as pg.Pool,["GB"],false,true),/explicit GB/);assert.equal(calls.at(-1),"ROLLBACK");
 });
+class UkHomeCheckoutRepository extends CollectionCheckoutRepository {
+  homeVersion=2; homePrice=799;
+  override async getProduct(){return {...await super.getProduct(),priceMinor:100,unitTaxMinor:0};}
+  override async getShipping(country="GB"){
+    const shipping=await super.getShipping(country);
+    return {...shipping,rates:[...shipping.rates,{...shipping.rates[0]!,id:"uk_home_multi",version:this.homeVersion,countryCode:"GB",price:money(this.homePrice,"GBP")}]};
+  }
+}
+
+test("UK home and InPost quantities bind approved shipping, synthetic totals and payment lines",async()=>{
+ for(const deliveryMethod of ["tracked-postage-packing","inpost-locker-shop"]){
+  const revisions:string[]=[];
+  for(const quantity of [1,2,3]){
+   const repo=new UkHomeCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+   const quote=await service.quote({productSlug:"integration-test-fixture",quantity,countryCode:"GB",deliveryMethod});
+   const delivery=deliveryMethod==="inpost-locker-shop"?(quantity===3?399:259):(quantity===1?399:799);
+   assert.equal(quote.deliveryMinor,delivery);assert.equal(quote.totalMinor,100*quantity+delivery);revisions.push(quote.shippingQuoteRevision);
+   const input=(deliveryMethod==="inpost-locker-shop"?collectionRequest:request)({quantity,deliveryMethod,shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+   await service.initiate(input);await service.initiate(input);
+   assert.equal(payments.length,1);assert.equal(payments[0]!.amount.value,100*quantity+delivery);assert.equal(payments[0]!.lines.reduce((sum,line)=>sum+line.totalAmount.value,0),quote.totalMinor);
+   assert.equal(repo.orders[0]!.quantity,quantity);assert.equal(repo.orders[0]!.deliveryMinor,delivery);assert.equal(repo.orders[0]!.shippingPricingSnapshot.quantity,quantity);
+   await assert.rejects(()=>service.initiate({...input,quantity:quantity===3?2:quantity+1,idempotencyKey:"stale-quantity"}),/quote changed|available shipping/);
+   await assert.rejects(()=>service.initiate({...input,expectedTotalMinor:1,idempotencyKey:"wrong-total"}),/total has changed/);
+  }
+  assert.equal(new Set(revisions).size,3);
+ }
+});
+
+test("UK home multi-unit rates require private test mode and their stored GB revision; other destinations remain guarded",async()=>{
+ const repo=new UkHomeCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+ for(const countryCode of ["DE","TR","AE","US"]){await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode}),/packaging requires approval/);}
+ repo.homeVersion=1;await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}),/packaging requires approval/);
+ repo.homeVersion=2;repo.homePrice=1;await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:3,countryCode:"GB"}),/packaging requires approval/);
+ repo.homePrice=799;
+ const publicRepo:CheckoutRepository=Object.create(repo); publicRepo.getProduct=async()=>({...await repo.getProduct(),status:"active" as const});
+ const nonPrivate=new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},publicRepo,provider(payments),urls,false);
+ await assert.rejects(()=>nonPrivate.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}),/packaging requires approval/);
+ assert.equal(payments.length,0);assert.equal(repo.orders.length,0);
+});
+
+test("UK home historical orders and idempotent snapshots survive rate changes; stale quotes cannot pay",async()=>{
+ const repo=new UkHomeCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
+ const single=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});
+ await service.initiate(request({shippingRateId:single.shippingRateId,shippingQuoteRevision:single.shippingQuoteRevision,expectedTotalMinor:single.totalMinor}));
+ const quote=await service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"});
+ const input=request({quantity:2,shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor,idempotencyKey:"multi-home"});
+ await service.initiate(input);const original=structuredClone(repo.orders);
+ repo.homeVersion=3;
+ await assert.rejects(()=>service.initiate({...input,idempotencyKey:"stale-rate"}),/packaging requires approval/);
+ const replay=await service.initiate(input);assert.equal(replay.replayed,true);assert.deepEqual(repo.orders,original);assert.equal(payments.length,2);assert.equal(original[0]!.deliveryMinor,399);assert.equal(original[1]!.deliveryMinor,799);
+});
+
+test("UK home-only setup is append-only, idempotent and refuses conflicting or broadened approval",async()=>{
+ const calls:string[]=[];let conflict=false;
+ const client={release(){},async query(sql:string){calls.push(sql);if(sql.includes("SELECT country_code FROM shipping_zone_countries"))return {rowCount:0,rows:[]};if(sql.includes("SELECT m.id method_id"))return {rowCount:1,rows:[{method_id:"home",zone_id:"uk"}]};if(sql.startsWith("SELECT version,rate_minor"))return {rowCount:2,rows:[{version:1,rate_minor:399,currency:"GBP",status:"test",effective_from:new Date(0)},{version:2,rate_minor:conflict?999:799,currency:"GBP",status:"test",effective_from:new Date(0)}]};return {rowCount:0,rows:[]};}};
+ const pool={connect:async()=>client} as unknown as pg.Pool;
+ for(let attempt=0;attempt<2;attempt++){calls.length=0;await configureInternationalShipping(pool,["GB"],false,false,true);assert.equal(calls.filter(sql=>sql.startsWith("INSERT")||sql.startsWith("UPDATE")).length,1);assert.ok(calls.find(sql=>sql.includes("799,'GBP','test',now(),2")&&sql.includes("DO NOTHING")));assert.equal(calls.at(-1),"COMMIT");}
+ conflict=true;await assert.rejects(()=>configureInternationalShipping(pool,["GB"],false,false,true),/conflict/);assert.equal(calls.at(-1),"ROLLBACK");
+ await assert.rejects(()=>configureInternationalShipping(pool,["GB","DE"],false,false,true),/GB-only/);assert.equal(calls.at(-1),"ROLLBACK");
+});
+
+import { readdir, readFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+test("PostgreSQL UK home revision append preserves historical orders and persists both methods' exact totals",{skip:!process.env.MANUAL_DISPATCH_TEST_DATABASE_URL},async()=>{
+ const databaseUrl=process.env.MANUAL_DISPATCH_TEST_DATABASE_URL!;const url=new URL(databaseUrl);
+ assert.ok(["localhost","127.0.0.1"].includes(url.hostname)&&url.pathname.endsWith("_dispatch_test")&&!url.search&&process.env.NODE_ENV!=="production");
+ const schema="home_"+randomUUID().replaceAll("-","");const admin=new pg.Pool({connectionString:databaseUrl});await admin.query("SELECT pg_advisory_lock(80317)");await admin.query(`CREATE SCHEMA "${schema}"`);
+ const pool=new pg.Pool({connectionString:databaseUrl,options:`-c search_path=${schema},public`});
+ try{
+  for(const file of (await readdir(resolve("db/migrations"))).filter(f=>f.endsWith(".sql")).sort())await pool.query(await readFile(resolve("db/migrations",file),"utf8"));
+  await configureInternationalShipping(pool,["GB"],true);
+  const product=(await pool.query("INSERT INTO products(sku,slug,name,description,status,price_minor,currency,tax_code,content_version,shipping_weight_grams) VALUES('SYNTHETIC','integration-test-fixture','Synthetic test item','Test only','private',100,'GBP','TEST','test',500) RETURNING id")).rows[0].id;
+  await pool.query("INSERT INTO inventory_levels(product_id,location_key,available_quantity,reserved_quantity,source,source_updated_at) VALUES($1,'test',100,0,'synthetic',now())",[product]);
+  const repo=new PostgresCheckoutRepository(pool),payments:CreateCheckoutInput[]=[];
+  const mock={...provider(payments),async createCheckout(input:CreateCheckoutInput){const result=await provider(payments).createCheckout(input);return {...result,providerPaymentId:"tr_"+randomUUID()};}};
+  const service=new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,mock,urls,true);
+  const single=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});
+  const historical=await service.initiate(request({shippingRateId:single.shippingRateId,shippingQuoteRevision:single.shippingQuoteRevision,expectedTotalMinor:single.totalMinor}));
+  const oldOrder=(await pool.query("SELECT * FROM orders WHERE id=$1",[historical.orderId])).rows[0];
+  const oldRates=(await pool.query("SELECT * FROM shipping_rates ORDER BY id")).rows;
+  await configureInternationalShipping(pool,["GB"],false,false,true);await configureInternationalShipping(pool,["GB"],false,false,true);
+  assert.deepEqual((await pool.query("SELECT * FROM orders WHERE id=$1",[historical.orderId])).rows[0],oldOrder);
+  assert.deepEqual((await pool.query("SELECT * FROM shipping_rates WHERE id=ANY($1::uuid[]) ORDER BY id",[oldRates.map(r=>r.id)])).rows,oldRates);
+  assert.equal(Number((await pool.query("SELECT count(*) FROM shipping_rates")).rows[0].count),oldRates.length+1);
+  for(const deliveryMethod of ["tracked-postage-packing","inpost-locker-shop"]){for(const quantity of [1,2,3]){
+   const quote=await service.quote({productSlug:"integration-test-fixture",quantity,countryCode:"GB",deliveryMethod});
+   const input=(deliveryMethod==="inpost-locker-shop"?collectionRequest:request)({quantity,deliveryMethod,idempotencyKey:randomUUID(),shippingRateId:quote.shippingRateId,shippingQuoteRevision:quote.shippingQuoteRevision,expectedTotalMinor:quote.totalMinor});
+   const result=await service.initiate(input);assert.equal((await service.initiate(input)).orderId,result.orderId);
+   const row=(await pool.query("SELECT o.delivery_minor,o.total_minor,o.shipping_rate_snapshot,p.amount_minor FROM orders o JOIN payments p ON p.order_id=o.id WHERE o.id=$1",[result.orderId])).rows[0];
+   const charge=deliveryMethod==="inpost-locker-shop"?(quantity===3?399:259):(quantity===1?399:799);
+   assert.equal(Number(row.delivery_minor),charge);assert.equal(Number(row.total_minor),100*quantity+charge);assert.equal(Number(row.amount_minor),100*quantity+charge);assert.equal(row.shipping_rate_snapshot.quantity,quantity);
+  }}
+ }finally{await pool.end();await admin.query(`DROP SCHEMA "${schema}" CASCADE`);await admin.query("SELECT pg_advisory_unlock(80317)");await admin.end();}
+});

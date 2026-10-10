@@ -451,3 +451,32 @@ The proposed private form now requires one collection-point name/full-address fi
 Regression tests cover common spaced/unspaced/lowercase postcodes, punctuation, missing/invalid/ambiguous postcodes, optional ID preservation, all three checkout quantities and scoped setup preservation/refusal. Live checkout/payment restrictions, prices, policies and launch gates remain unchanged. Review the form PR before API/UI deployment; manual Send matching/booking/tracking and measured Medium/Large dimensions/weight eligibility, IEC/EN 60335-2-113 and GO-01 approval remain outstanding.
 
 Local validation: 347 commerce tests passed including the disposable PostgreSQL suites; 28 product/dispatch UI/route-gate tests passed. Astro/commerce checks, runtime and production/private-fixture builds, dependency/security audits, private/public structural accessibility, link/performance audits and diff checks passed. Browser checks confirmed missing/ambiguous postcode errors, valid combined input and no overflow at 320/430/768/1366/1920px. The existing TypeScript async-conversion hint remains. These browser checks used a local non-payment fixture; only the quote checks above used hosted staging.
+
+### UK Royal Mail Tracked 48 quantity charges — 10 October 2026
+
+**Status: IMPLEMENTED FOR REVIEW / PRIVATE TEST ONLY — no staging configuration executed in this change; commercial packaging, compensation and GO-01 remain open.**
+
+Approved customer postage-and-packing charges: 1 device 399p (£3.99); 2–3 devices 799p (£7.99); maximum 3, positive whole quantities only. InPost remains 259p for 1–2 (Medium) and 399p for 3 (Large). With £1 synthetic units, home-delivery totals are £4.99 / £9.99 / £10.99; InPost totals remain £3.59 / £4.59 / £6.99. These customer charges are separate from the published carrier tariff tables and are not evidence of complete shipping costs or adequate compensation.
+
+The existing `tracked-postage-packing` method is reused. Private Mollie-test/manual-test checkout selects a stored GB/test revision 2 at 799p for quantities 2–3, while revision 1 at 399p remains the single-unit rate. Other destinations retain the flat-rate multi-unit packaging guard; configured carrier tariffs still take precedence and require their existing eligibility checks. Neither this pricing approval nor a test rate authorises live checkout or dispatch. Quantity, immutable rate content, destination and total are bound into the existing quote revision; checkout revalidates before creating an order/payment. Historical order values and snapshots are not recalculated.
+
+Required staging configuration (not executed): after review, verify the actual development database identity and recovery arrangements and confirm existing GB test destination/zone/method and version 1 at 399p. Build the runtime, then invoke the existing `apps/commerce-api/scripts/configure-international-shipping.mjs` with the approved development connection supplied privately and the following process-only values:
+
+```text
+NODE_ENV=development
+DATABASE_SSL=true
+PAYMENT_PROVIDER=mollie-test
+COMMERCE_ENABLED=false
+SHIPPING_SETUP_CONFIRM=international-test-only
+SHIPPING_TEST_COUNTRIES=GB
+SHIPPING_TEST_SCOPE=uk-home-rates-only
+SHIPPING_TEST_INPOST_COLLECTION=false
+```
+
+From the repository root: `npm run build:runtime --workspace @cyph1/commerce-api`, then `node --env-file=<ignored-development-environment-file> apps/commerce-api/scripts/configure-international-shipping.mjs` with the process-only guards above. Do not print credentials, change deployed gates/environment or run the general `all` setup scope. The connection must target the verified `cyph1_commerce_development` database, never production.
+
+The scope keeps the existing named non-production database/Mollie-test/commerce-disabled guards, transaction and advisory/table locks. It refuses active/restricted configuration, requires GB-only approval and an existing test method/zone/destination, appends version 2 with `ON CONFLICT DO NOTHING`, and validates both revisions' price, currency, test status, effective dates and absence of unexpected bands/free-shipping/carrier data. Conflicts roll back rather than overwrite. Repeating the workflow changes no existing rates, destinations, methods, orders or payment records. No migration is required. Verify exactly one additional rate (or none on repeat), unchanged existing records, and hosted quotes before any separate reviewed deployment/rehearsal. Until the rate and code are both present, staging multi-unit home checkout fails closed.
+
+Physical multi-unit packaging dimensions/weights and sufficient compensation for the combined retail value remain unverified. Do not mark them approved, activate live dispatch, approve carrier tariffs or close safety/launch gates. IEC/EN 60335-2-113 and broader GO-01 requirements remain outstanding.
+
+Validation: 353 commerce tests passed (29 core + 324 API, including disposable local PostgreSQL suites; no skips); 61 product/operations UI/route-gate tests and 8 dependency-policy tests passed. Astro/commerce TypeScript checks, runtime build, normal/private-fixture builds, dependency/security, public/private structural accessibility, link/performance and diff checks passed. The existing async-conversion TypeScript hint remains. Browser fixture checks confirmed home £4.99/£9.99/£10.99 and InPost quantity-3 £6.99, with no overflow at 320/430/768/1366/1920px. No hosted Mollie payment, staging rate write, deployment or launch-gate change was performed.

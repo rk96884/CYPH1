@@ -18,3 +18,9 @@ export const shippingZoneForCountry = (value: string): ShippingZone => {
 export const trackedPostageMinor = Object.freeze({ uk: 399, europe: 1499, "rest-of-world": 2599 });
 export const trackedPostageMethod = "tracked-postage-packing";
 export const importChargesNotice = "International import duties, taxes and customs clearance charges are not included in your order total and must be paid separately by the recipient where applicable.";
+
+/** Approved UK customer charges; checkout eligibility is controlled separately. */
+export const ukTrackedPostageForQuantity = (quantity: number): number => {
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 3) throw new CommerceDomainError("invalid_quantity", "Quantity must be a whole number between 1 and 3.");
+  return quantity === 1 ? 399 : 799;
+};
