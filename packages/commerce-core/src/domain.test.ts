@@ -158,3 +158,9 @@ test("combined collection address extracts one valid UK postcode without losing 
  for(const text of ["Shop, London","Shop, ZZ99 9ZZ","Shop, SW1A 1AA or M1 1AE","Shop, ASW1A1AAZ"])assert.throws(()=>postcodeFromCollectionAddress(text));
  assert.equal(postcodeFromCollectionAddress("Shop SW1A1AA (SW1A 1AA)"),"SW1A 1AA");
 });
+
+test("approved UK home charges enforce the same three-device maximum",async()=>{
+ const {ukTrackedPostageForQuantity}=await import("./countries.js");
+ for(const [quantity,price] of [[1,399],[2,799],[3,799]])assert.equal(ukTrackedPostageForQuantity(quantity!),price);
+ for(const quantity of [0,-1,1.5,4,10,NaN,Infinity])assert.throws(()=>ukTrackedPostageForQuantity(quantity));
+});

@@ -57,7 +57,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
       </fieldset>
       <section aria-labelledby="quote-title" aria-live="polite">
         <h2 id="quote-title">Order total</h2>
-        <p>Tracked postage and packing: UK home delivery £3.99 / InPost collection £2.59 for 1–2 devices (Medium), £3.99 for 3 devices (Large) · Europe (including Turkey) £14.99 · Rest of world £25.99. Subject to destination approval.</p>
+        <p>Tracked postage and packing: UK Royal Mail Tracked 48 home delivery £3.99 for 1 device, £7.99 for 2–3 devices / InPost collection £2.59 for 1–2 devices (Medium), £3.99 for 3 devices (Large) · Europe (including Turkey) £14.99 · Rest of world £25.99. Subject to destination approval.</p>
         <dl data-quote-summary></dl>
       </section>
       <div data-import-charges hidden>
@@ -109,7 +109,7 @@ const countries = countryCodes.map(code => ({ code, name: names.of(code) ?? code
         for (const node of form.querySelectorAll<HTMLElement>("[data-required-for='postcode'],[data-required-text-for='postcode']")) node.hidden = !postal.required;
         for (const node of form.querySelectorAll<HTMLElement>("[data-required-for='imports'],[data-required-text-for='imports']")) node.hidden = imports.hidden;
         const uk = country.value === "GB";
-        method.options[0]!.textContent = uk ? "Home delivery — £3.99" : "International tracked postage and packing";
+        method.options[0]!.textContent = uk ? Number(quantity.value) > 1 ? "Royal Mail Tracked 48 home delivery — £7.99" : "Royal Mail Tracked 48 home delivery — £3.99" : "International tracked postage and packing";
         method.options[1]!.disabled = !uk;
         if (!uk) method.value = "tracked-postage-packing";
         method.options[1]!.textContent = Number(quantity.value) === 3 ? "InPost locker/shop collection — £3.99 (Large, UK)" : "InPost locker/shop collection — £2.59 (Medium, UK)";

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import {
   calculateBasket, inpostCollectionMethod, inpostParcelForQuantity, maximumCheckoutQuantity, normaliseCollectionPoint, normaliseUkMobile, type CollectionPoint,
-  normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor, trackedPostageMethod, importChargesNotice,
+  normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor, ukTrackedPostageForQuantity, trackedPostageMethod, importChargesNotice,
   CommerceDomainError,
   money,
   PaymentProviderError,
@@ -130,9 +130,13 @@ export class CheckoutService {
       const carrierRates = shipping.rates.filter(rate => !collection && rate.carrierTariff && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
       const packagingProfiles = carrierRates.length ? await this.repository.getPackagingProfiles?.(product.id) ?? [] : [];
       // Approved carrier configuration takes precedence, even when it yields no eligible service.
-      // Home flat rates remain single-unit only; InPost has separate private-test parcel rules.
-      if (!collection && !carrierRates.length && input.quantity > 1) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
-      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : shipping.rates.filter(rate => rate.methodKey === deliveryMethod && rate.price.currency === "GBP" && rate.price.value === (collection ? inpostParcelForQuantity(input.quantity).deliveryMinor : trackedPostageMinor[zone]) && rate.freeShippingThreshold === undefined),
+      // UK flat-rate multi-unit pricing is private test only, not packaging/compensation approval.
+      const ukHomeMulti = !collection && country === "GB" && this.testShippingAllowed && input.quantity > 1;
+      const flatCharge = collection ? inpostParcelForQuantity(input.quantity).deliveryMinor : country === "GB" ? ukTrackedPostageForQuantity(input.quantity) : trackedPostageMinor[zone];
+      const flatRates = shipping.rates.filter(rate => rate.methodKey === deliveryMethod && !rate.carrierTariff && rate.price.currency === "GBP" && rate.price.value === flatCharge && rate.freeShippingThreshold === undefined
+        && (!ukHomeMulti || (rate.countryCode === "GB" && rate.version === 2 && rate.status === "test")));
+      if (!collection && !carrierRates.length && input.quantity > 1 && !(ukHomeMulti && flatRates.length)) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
+      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : flatRates,
         basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed,
         shipment: {productId:product.id,quantity:input.quantity,unitWeightGrams:product.shippingWeightGrams,
           merchandiseValueMinor:provisional.subtotal.value+provisional.tax.value,packagingProfiles} });
