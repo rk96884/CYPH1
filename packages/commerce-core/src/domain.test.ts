@@ -149,3 +149,12 @@ test("InPost parcel policy enforces integer quantities and approved charges",asy
  for(const quantity of [1,2,3]){const p=inpostParcelForQuantity(quantity);assert.equal(p.quantity,quantity);assert.equal(p.parcelSize,quantity===3?"Large":"Medium");assert.equal(p.deliveryMinor,quantity===3?399:259);}
  for(const quantity of [0,-1,1.1,4,Infinity,NaN])assert.throws(()=>inpostParcelForQuantity(quantity));
 });
+
+test("combined collection address extracts one valid UK postcode without losing optional ID",async()=>{
+ const {collectionPointFromAddress,postcodeFromCollectionAddress}=await import("./collection.js");
+ for(const [text,code] of [["Synthetic Shop, 1 Test Road, London sw1a1aa","SW1A 1AA"],["Locker, Manchester M1 1AE","M1 1AE"],["Shop, Birmingham B33 8TH, UK","B33 8TH"],["Shop (EC1A 1BB)","EC1A 1BB"],["Shop, W1A 0AX","W1A 0AX"],["Shop, GIR 0AA","GIR 0AA"]]){
+  const point=collectionPointFromAddress(text!,"UK00373494");assert.equal(point.postalCode,code);assert.equal(point.address,text);assert.equal(point.locationId,"UK00373494");assert.equal(collectionPointFromAddress(text!).locationId,undefined);
+ }
+ for(const text of ["Shop, London","Shop, ZZ99 9ZZ","Shop, SW1A 1AA or M1 1AE","Shop, ASW1A1AAZ"])assert.throws(()=>postcodeFromCollectionAddress(text));
+ assert.equal(postcodeFromCollectionAddress("Shop SW1A1AA (SW1A 1AA)"),"SW1A 1AA");
+});

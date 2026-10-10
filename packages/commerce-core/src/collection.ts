@@ -33,3 +33,12 @@ export const collectionPointFromCombinedDetails = (details: string, postalCode: 
   const address = text(details,500);
   return normaliseCollectionPoint({name:address.slice(0,150),address,postalCode,...(locationId !== undefined ? {locationId} : {})});
 };
+
+/** Syntactic postcode validation, not a carrier match or address verification. */
+export const postcodeFromCollectionAddress = (address: string): string => {
+  const matches=address.toUpperCase().match(/\b(?:GIR\s*0AA|(?:[A-PR-UWYZ][0-9]{1,2}|[A-PR-UWYZ][A-HK-Y][0-9]{1,2}|[A-PR-UWYZ][0-9][A-HJKPSTUW]|[A-PR-UWYZ][A-HK-Y][0-9][ABEHMNPRVWXY])\s*[0-9][ABD-HJLNP-UW-Z]{2})\b/g) ?? [];
+  const postcodes=[...new Set(matches.map(code=>code.replace(/\s+/g,"")))];
+  if(postcodes.length!==1) throw new CommerceDomainError("invalid_collection_point",postcodes.length ? "Include only the requested collection point's UK postcode in the full address." : "Include a valid UK postcode in the collection point name and full address, for example SW1A 1AA.");
+  const code=postcodes[0]!;return code.slice(0,-3)+" "+code.slice(-3);
+};
+export const collectionPointFromAddress = (details: string, locationId?: string): CollectionPoint => collectionPointFromCombinedDetails(details,postcodeFromCollectionAddress(details),locationId);
