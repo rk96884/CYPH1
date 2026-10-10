@@ -8,7 +8,7 @@ export type PackingInformation = Readonly<{
   orderId: string; orderNumber: string; orderStatus: string; fulfilmentStatus: string;
   captured: boolean; eligible: boolean;
   address: FulfilmentAddress;
-  collection?: Readonly<{requested:CollectionPoint; current:CollectionPoint; version:number; status:"pending"|"matched"|"unavailable"; email:string; phone:string; parcelSize:"Medium"; contents:string; declaredValueMinor:number; currency:string; history:readonly Readonly<{version:number;status:string;point:CollectionPoint;customerAuthorisationReference:string|null;reason:string;operatorId:string;createdAt:string}>[]}>;
+  collection?: Readonly<{requested:CollectionPoint; current:CollectionPoint; version:number; status:"pending"|"matched"|"unavailable"; email:string; phone:string; parcelSize:"Medium"|"Large"; contents:string; declaredValueMinor:number; currency:string; history:readonly Readonly<{version:number;status:string;point:CollectionPoint;customerAuthorisationReference:string|null;reason:string;operatorId:string;createdAt:string}>[]}>;
   items: readonly Readonly<{ name: string; sku: string; quantity: number }>[];
   shipments: readonly Readonly<{ id: string; provider: string; status: string; carrier: string | null; service: string | null; reference: string | null; trackingUrl: string | null; dispatchedAt: string | null }>[];
 }>;

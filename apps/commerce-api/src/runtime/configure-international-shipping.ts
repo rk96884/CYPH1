@@ -46,10 +46,15 @@ export const configureInternationalShipping = async (pool: pg.Pool, testCountrie
     }
     if (includeInpost) {
       if (!approved.has("GB")) throw new Error("InPost test configuration requires GB test approval.");
-      const method = await client.query("INSERT INTO shipping_methods(method_key,name,description,status) VALUES($1,'InPost locker/shop collection','UK single-unit Medium parcel; manually matched and booked. Launch approval pending.','test') ON CONFLICT(method_key) DO UPDATE SET status='test',updated_at=now() RETURNING id",[inpostCollectionMethod]);
+      const method = await client.query("INSERT INTO shipping_methods(method_key,name,description,status) VALUES($1,'InPost locker/shop collection','UK Medium (1–2 devices) / Large (3 devices); manually matched and booked. Launch approval pending.','test') ON CONFLICT(method_key) DO UPDATE SET status='test',updated_at=now() RETURNING id",[inpostCollectionMethod]);
       const destination=await client.query("SELECT zone_id FROM shipping_zone_countries WHERE country_code='GB' AND destination_status='test'");
       if(destination.rowCount!==1) throw new Error("GB test destination is required.");
       await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',$3,'GBP','test',now(),1) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO UPDATE SET status='test',updated_at=now()",[destination.rows[0].zone_id,method.rows[0].id,inpostCollectionMinor]);
+
+      // Separate test record preserves the existing Medium record and historical snapshots.
+      await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',399,'GBP','test',now(),2) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO NOTHING",[destination.rows[0].zone_id,method.rows[0].id]);
+      const rates=await client.query("SELECT version,rate_minor,currency,status FROM shipping_rates WHERE zone_id=$1 AND shipping_method_id=$2 AND country_code='GB' AND version IN (1,2)",[destination.rows[0].zone_id,method.rows[0].id]);
+      if(rates.rowCount!==2 || rates.rows.some(r=>Number(r.rate_minor)!==(Number(r.version)===1?259:399) || r.currency!=="GBP" || r.status!=="test")) throw new Error("Existing InPost rate revisions conflict with the approved test rules.");
     }
     await client.query("COMMIT");
   } catch (error) { await client.query("ROLLBACK"); throw error; }

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import {
-  calculateBasket, inpostCollectionMethod, inpostCollectionMinor, normaliseCollectionPoint, normaliseUkMobile, type CollectionPoint,
+  calculateBasket, inpostCollectionMethod, inpostParcelForQuantity, maximumCheckoutQuantity, normaliseCollectionPoint, normaliseUkMobile, type CollectionPoint,
   normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor, trackedPostageMethod, importChargesNotice,
   CommerceDomainError,
   money,
@@ -54,6 +54,7 @@ export type ShippingPricingSnapshot = Readonly<{
   minimumWeightGrams: number | null; maximumWeightGrams: number | null;
   minimumSubtotalMinor: number | null; maximumSubtotalMinor: number | null;
   carrierCalculation?: CarrierCalculation;
+  inpostParcel?: ReturnType<typeof inpostParcelForQuantity>;
   packagingProfileVersion: number | null; rateCountryCode: string | null;
   effectiveFrom: string; effectiveTo: string | null; freeShippingThresholdMinor: null;
 }>;
@@ -109,14 +110,14 @@ export class CheckoutService {
 
   private async price(input: Readonly<{ productSlug: string; quantity: number; countryCode: string; deliveryMethod?: string }>) {
     if (!this.config.commerceEnabled || this.config.paymentProvider !== this.paymentProvider.key) throw new CheckoutError("disabled", "Commerce is not enabled.");
-    if (!Number.isSafeInteger(input.quantity) || input.quantity < 1 || input.quantity > 10) throw new CheckoutError("invalid_request", "Quantity must be between 1 and 10.");
+    if (!Number.isSafeInteger(input.quantity) || input.quantity < 1 || input.quantity > maximumCheckoutQuantity) throw new CheckoutError("invalid_request", "Quantity must be a whole number between 1 and 3.");
     let country: string;
     try { country = normaliseCountryCode(input.countryCode); }
     catch { throw new CheckoutError("invalid_request", "Select a valid ISO country code."); }
     const deliveryMethod = input.deliveryMethod ?? trackedPostageMethod;
     const collection = deliveryMethod === inpostCollectionMethod;
     if (![trackedPostageMethod, inpostCollectionMethod].includes(deliveryMethod)) throw new CheckoutError("invalid_request", "Select an available delivery method.");
-    if (collection && (!this.testShippingAllowed || country !== "GB" || input.quantity !== 1)) throw new CheckoutError("unavailable", "InPost collection requires UK single-unit test checkout; launch approval remains pending.");
+    if (collection && (!this.testShippingAllowed || country !== "GB")) throw new CheckoutError("unavailable", "InPost collection requires UK test checkout (maximum 3 devices); launch approval remains pending.");
     const product = await this.repository.getProduct(requireText(input.productSlug, "Product"));
     if (!product || (product.status !== "active" && !(this.testShippingAllowed && product.status === "private"))) throw new CheckoutError("unavailable", "This product is not available for checkout.");
     if (product.availableQuantity < input.quantity || product.priceMinor <= 0) throw new CheckoutError("unavailable", "The requested quantity is not available.");
@@ -129,9 +130,9 @@ export class CheckoutService {
       const carrierRates = shipping.rates.filter(rate => !collection && rate.carrierTariff && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
       const packagingProfiles = carrierRates.length ? await this.repository.getPackagingProfiles?.(product.id) ?? [] : [];
       // Approved carrier configuration takes precedence, even when it yields no eligible service.
-      // Legacy flat rates remain a single-unit staging fallback, never a multi-unit packaging approval.
-      if (!carrierRates.length && input.quantity > 1) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
-      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : shipping.rates.filter(rate => rate.methodKey === deliveryMethod && rate.price.currency === "GBP" && rate.price.value === (collection ? inpostCollectionMinor : trackedPostageMinor[zone]) && rate.freeShippingThreshold === undefined),
+      // Home flat rates remain single-unit only; InPost has separate private-test parcel rules.
+      if (!collection && !carrierRates.length && input.quantity > 1) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
+      const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : shipping.rates.filter(rate => rate.methodKey === deliveryMethod && rate.price.currency === "GBP" && rate.price.value === (collection ? inpostParcelForQuantity(input.quantity).deliveryMinor : trackedPostageMinor[zone]) && rate.freeShippingThreshold === undefined),
         basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed,
         shipment: {productId:product.id,quantity:input.quantity,unitWeightGrams:product.shippingWeightGrams,
           merchandiseValueMinor:provisional.subtotal.value+provisional.tax.value,packagingProfiles} });
@@ -141,10 +142,12 @@ export class CheckoutService {
       const rateRevision = shippingRateRevision(rate);
       const quoteRevision = createHash("sha256").update(canonicalShippingJson({ rateRevision, countryCode: country,
         productId: product.id, quantity: input.quantity, unitPriceMinor: product.priceMinor, unitTaxMinor: product.unitTaxMinor,
+        ...(collection ? {inpostParcel:inpostParcelForQuantity(input.quantity)} : {}),
         ...(quote.carrierCalculation ? { carrierCalculation: quote.carrierCalculation } : {}),
         totalWeightGrams: basket.totalWeightGrams, totalMinor: basket.total.value, currency: basket.total.currency })).digest("hex");
       const snapshot: ShippingPricingSnapshot = Object.freeze({ schemaVersion: 2, rateRevision, quoteRevision,
-        selectedAt: new Date().toISOString(), quantity: input.quantity, totalWeightGrams: quote.carrierCalculation?.actualWeightGrams ?? basket.totalWeightGrams,
+        selectedAt: new Date().toISOString(), quantity: input.quantity,
+        ...(collection ? {inpostParcel:inpostParcelForQuantity(input.quantity)} : {}), totalWeightGrams: quote.carrierCalculation?.actualWeightGrams ?? basket.totalWeightGrams,
         ...(quote.carrierCalculation ? { carrierCalculation: quote.carrierCalculation } : {}),
         billableWeightGrams: quote.carrierCalculation?.billableWeightGrams ?? null, minimumWeightGrams: rate.minimumWeightGrams ?? null,
         maximumWeightGrams: rate.maximumWeightGrams ?? null, minimumSubtotalMinor: rate.minimumSubtotal ?? null,

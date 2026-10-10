@@ -1,3 +1,4 @@
+import { inpostParcelForQuantity } from "../../../../packages/commerce-core/src/index.js";
 import { shippingRateRevision } from "../checkout/service.js";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -81,13 +82,15 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
     const collectionMethod=(await pool.query("INSERT INTO shipping_methods(method_key,name,description,status) VALUES('inpost-locker-shop','InPost locker/shop collection','Test only','test') RETURNING id")).rows[0].id;
     const collectionRate=(await pool.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from) VALUES($1,$2,'GB',259,'GBP','test',now()) RETURNING id",[zone,collectionMethod])).rows[0].id;
     const requestedPoint={name:"Synthetic requested point",address:"1 Test Street, London",postalCode:"SW1A 1AA",locationId:"UK00373494"};
-    const fixture=async(collection=false)=>{
-      const selectedRate=(await checkout.getShipping("GB"))!.rates.find(r=>r.id===(collection?collectionRate:rate))!;
-      const shippingPricingSnapshot={schemaVersion:2 as const,rateRevision:shippingRateRevision(selectedRate),quoteRevision:"f".repeat(64),selectedAt:new Date().toISOString(),quantity:1,totalWeightGrams:500,billableWeightGrams:null,minimumWeightGrams:null,maximumWeightGrams:null,minimumSubtotalMinor:null,maximumSubtotalMinor:null,packagingProfileVersion:null,rateCountryCode:selectedRate.countryCode ?? null,effectiveFrom:selectedRate.effectiveFrom.toISOString(),effectiveTo:selectedRate.effectiveTo?.toISOString() ?? null,freeShippingThresholdMinor:null};
+    const largeRate=(await pool.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',399,'GBP','test',now(),2) RETURNING id",[zone,collectionMethod])).rows[0].id;
+    const fixture=async(collection=false,quantity=1)=>{
+      const chosenCollectionRate=quantity===3?largeRate:collectionRate; const delivery=collection?inpostParcelForQuantity(quantity).deliveryMinor:0;
+      const selectedRate=(await checkout.getShipping("GB"))!.rates.find(r=>r.id===(collection?chosenCollectionRate:rate))!;
+      const shippingPricingSnapshot={schemaVersion:2 as const,rateRevision:shippingRateRevision(selectedRate),quoteRevision:"f".repeat(64),selectedAt:new Date().toISOString(),quantity,totalWeightGrams:500*quantity,...(collection?{inpostParcel:inpostParcelForQuantity(quantity)}:{}),billableWeightGrams:null,minimumWeightGrams:null,maximumWeightGrams:null,minimumSubtotalMinor:null,maximumSubtotalMinor:null,packagingProfileVersion:null,rateCountryCode:selectedRate.countryCode ?? null,effectiveFrom:selectedRate.effectiveFrom.toISOString(),effectiveTo:selectedRate.effectiveTo?.toISOString() ?? null,freeShippingThresholdMinor:null};
       const id=randomUUID(),number="SYNTHETIC-"+id;
-      await checkout.createOrder({id,orderNumber:number,status:"draft",product:{id:product,sku:"SYNTHETIC",slug:"synthetic",name:"Synthetic test item",status:"private",priceMinor:100,unitTaxMinor:0,currency:"GBP",shippingWeightGrams:500,availableQuantity:1000},quantity:1,subtotalMinor:100,taxMinor:0,deliveryMinor:collection?259:0,totalMinor:collection?359:100,currency:"GBP",shippingPricingSnapshot,shippingApproval:"test",shippingRateId:collection?collectionRate:rate,email:id+"@example.test",deliveryAddress:{givenName:"Synthetic",familyName:"Customer",line1:"1 Test Street",locality:"London",postalCode:"SW1A 1AA",countryCode:"GB",...(collection?{phone:"+447700900123",collectionPoint:requestedPoint}:{})}},randomUUID(),"f".repeat(64));
+      await checkout.createOrder({id,orderNumber:number,status:"draft",product:{id:product,sku:"SYNTHETIC",slug:"synthetic",name:"Synthetic test item",status:"private",priceMinor:100,unitTaxMinor:0,currency:"GBP",shippingWeightGrams:500,availableQuantity:1000},quantity,subtotalMinor:100*quantity,taxMinor:0,deliveryMinor:delivery,totalMinor:100*quantity+delivery,currency:"GBP",shippingPricingSnapshot,shippingApproval:"test",shippingRateId:collection?chosenCollectionRate:rate,email:id+"@example.test",deliveryAddress:{givenName:"Synthetic",familyName:"Customer",line1:"1 Test Street",locality:"London",postalCode:"SW1A 1AA",countryCode:"GB",...(collection?{phone:"+447700900123",collectionPoint:requestedPoint}:{})}},randomUUID(),"f".repeat(64));
       await pool.query("UPDATE orders SET status='paid' WHERE id=$1",[id]);
-      const payment=(await pool.query("INSERT INTO payments(order_id,provider,provider_payment_id,status,amount_minor,currency,idempotency_key) VALUES($1,'manual-test',$2,'captured',$4,'GBP',$3) RETURNING id",[id,randomUUID(),randomUUID(),collection?359:100])).rows[0].id;
+      const payment=(await pool.query("INSERT INTO payments(order_id,provider,provider_payment_id,status,amount_minor,currency,idempotency_key) VALUES($1,'manual-test',$2,'captured',$4,'GBP',$3) RETURNING id",[id,randomUUID(),randomUUID(),100*quantity+delivery])).rows[0].id;
       await service.requestForPaidOrder(id,"synthetic-paid:"+id);
       const f=(await pool.query("SELECT id,request_snapshot FROM fulfilments WHERE order_id=$1",[id])).rows[0];
       return {id,payment,fulfilmentId:f.id,request:f.request_snapshot,body:{...body,fulfilmentId:f.id}};
@@ -97,6 +100,9 @@ test("real PostgreSQL manual dispatch, security, rollback and concurrency", {ski
       (SELECT count(*)::int FROM fulfilment_events e JOIN fulfilments f ON f.id=e.fulfilment_id WHERE f.order_id=$1 AND target_status='dispatched') events,
       (SELECT count(*)::int FROM outbox_events WHERE event_type='fulfilment.dispatched' AND payload->>'orderId'=$1::text) outbox,
       (SELECT count(*)::int FROM audit_events a JOIN fulfilments f ON f.id=a.entity_id WHERE f.order_id=$1 AND action='fulfilment.dispatched') audits`,[id])).rows[0];
+    await t.test("InPost quantities preserve parcel size, declared value and shipment lines",async()=>{
+      for(const quantity of [1,2,3]){const f=await fixture(true,quantity);const packing=await service.packingInformation(f.id,"operator");assert.equal(packing!.collection!.parcelSize,quantity===3?"Large":"Medium");assert.equal(packing!.collection!.declaredValueMinor,100*quantity);assert.equal(packing!.items[0]!.quantity,quantity);assert.equal(f.request.lines[0].quantity,quantity);const snapshot=(await pool.query("SELECT shipping_rate_snapshot FROM orders WHERE id=$1",[f.id])).rows[0].shipping_rate_snapshot;assert.equal(snapshot.inpostParcel.quantity,quantity);assert.equal(snapshot.inpostParcel.deliveryMinor,quantity===3?399:259);}
+    });
     await t.test("InPost original snapshot, unavailable hold, authorised alternative and duplicate dispatch",async()=>{
       const f=await fixture(true);
       const packing=await service.packingInformation(f.id,"operator");assert.equal(packing!.collection!.status,"pending");assert.equal(packing!.collection!.requested.locationId,"UK00373494");assert.equal(packing!.eligible,false);assert.equal(packing!.collection!.phone,"+447700900123");assert.equal(packing!.collection!.declaredValueMinor,100);

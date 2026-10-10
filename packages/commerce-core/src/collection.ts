@@ -1,6 +1,12 @@
 import { CommerceDomainError } from "./errors.js";
 export const inpostCollectionMethod = "inpost-locker-shop";
 export const inpostCollectionMinor = 259;
+export const maximumCheckoutQuantity = 3;
+/** Pricing approval is distinct from physical parcel eligibility and live launch approval. */
+export const inpostParcelForQuantity = (quantity: number) => {
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > maximumCheckoutQuantity) throw new CommerceDomainError("invalid_quantity", "Quantity must be a whole number between 1 and 3.");
+  return Object.freeze({policyVersion: 1 as const, quantity, parcelSize: quantity === 3 ? "Large" as const : "Medium" as const, deliveryMinor: quantity === 3 ? 399 : inpostCollectionMinor});
+};
 export type CollectionPoint = Readonly<{ name: string; address: string; postalCode: string; locationId?: string }>;
 const text = (value: unknown, maximum: number): string => {
   if (typeof value !== "string" || !value.trim() || value.length > maximum || /[\u0000-\u001f\u007f]/.test(value)) throw new CommerceDomainError("invalid_collection_point", "Complete the collection point details.");
