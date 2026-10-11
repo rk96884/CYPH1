@@ -480,3 +480,35 @@ The scope keeps the existing named non-production database/Mollie-test/commerce-
 Physical multi-unit packaging dimensions/weights and sufficient compensation for the combined retail value remain unverified. Do not mark them approved, activate live dispatch, approve carrier tariffs or close safety/launch gates. IEC/EN 60335-2-113 and broader GO-01 requirements remain outstanding.
 
 Validation: 353 commerce tests passed (29 core + 324 API, including disposable local PostgreSQL suites; no skips); 61 product/operations UI/route-gate tests and 8 dependency-policy tests passed. Astro/commerce TypeScript checks, runtime build, normal/private-fixture builds, dependency/security, public/private structural accessibility, link/performance and diff checks passed. The existing async-conversion TypeScript hint remains. Browser fixture checks confirmed home £4.99/£9.99/£10.99 and InPost quantity-3 £6.99, with no overflow at 320/430/768/1366/1920px. No hosted Mollie payment, staging rate write, deployment or launch-gate change was performed.
+
+
+### UK multi-quantity shipping — hosted staging verification (10 October 2026)
+
+**Result: UK checkout, test payment and order/packing persistence verified for three-device orders on both delivery methods. This is NOT approval for live checkout or physical dispatch.**
+
+Approved customer delivery charges (maximum three devices per order):
+
+| Quantity | Royal Mail Tracked 48 UK home | InPost UK locker/shop |
+| --- | --- | --- |
+| 1 | £3.99 | £2.59 (Medium) |
+| 2 | £7.99 | £2.59 (Medium) |
+| 3 | £7.99 | £3.99 (Large) |
+| 4+ | Rejected | Rejected |
+
+**Staging configuration:** The missing GB/test Royal Mail 799p version-2 rate was added using only the guarded `uk-home-rates-only` workflow against verified `cyph1_commerce_development`, after checking backup/recovery arrangements. Version 1 at 399p was preserved. Codex reported no changes to pre-existing records across 27 tables. Staging commerce API already ran PR #108 merge commit `8b5d779`; no redeployment was needed. No migration was required.
+
+**Hosted quotation evidence:** With synthetic £1 devices, Royal Mail totals were £4.99 / £9.99 / £10.99 for quantities 1 / 2 / 3; InPost totals were £3.59 / £4.59 / £6.99. Both methods rejected quantity 4 with HTTP 400. All six valid quotes had distinct quantity-bound revisions. These are test fixtures, not live merchandise.
+
+**Mollie test and operations evidence (user-verified):**
+
+| Order | Method | Qty | Product | Delivery | Paid total | Evidence |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| `CYPH-T-931AB6F17B1F` | Royal Mail UK home | 3 | £3.00 | £7.99 | £10.99 | Mollie test dashboard: paid; successful webhook; operations API: paid, unfulfilled, totalMinor 1099, deliveryMinor 799; packing: captured true, quantity 3, shipments [], eligible false, dispatchEnabled false |
+| `CYPH-T-170C26F0D310` | InPost UK collection | 3 | £3.00 | £3.99 | £6.99 | Mollie test dashboard: paid; operations API: paid, unfulfilled, totalMinor 699, deliveryMinor 399 |
+| `CYPH-T-9518FDD4DA31` | InPost UK collection | 1 | £1.00 | £2.59 | £3.59 | Mollie test dashboard and operations API: paid, unfulfilled, totalMinor 359, deliveryMinor 259; packing previously confirmed Medium and collection details persisted |
+
+Royal Mail order UUID: `931ab6f1-7b1f-47ca-8088-49bfddac2ae6`. Its packing endpoint returned synthetic delivery address, three `INTEGRATION-TEST-NOT-FOR-SALE` units, `captured: true`, `eligible: false`, `fulfilmentStatus: unfulfilled`, `shipments: []`, `dispatchEnabled: false`, and `collectionReviewEnabled: false`. No carrier label was purchased or shipment created.
+
+**Scope of completion:** Hosted UK quantity-aware quotation, Mollie test payment for quantity three on each method, operations order persistence, and Royal Mail three-unit packing/capture/dispatch-lock verification. This does not prove all quantity combinations were paid end-to-end, or that manual collection review, booking, tracking or physical dispatch has been rehearsed.
+
+**Still blocked:** Measured packed dimensions/weights for 2–3 devices, Royal Mail compensation covering combined retail value, InPost parcel eligibility and carrier matching, manual booking/tracking and fulfilment controls, IEC/EN 60335-2-113 product safety testing and GO-01 launch authorisation. Production commerce and live payments remain disabled; do not enable dispatch or reinterpret this test evidence as launch approval.
