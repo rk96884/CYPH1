@@ -67,11 +67,11 @@ test("all eight information sections and seven ordered Astro gallery assets rend
   assert.equal(images.length, 7);
   assert.doesNotMatch(gallery, /gallery-placeholder|Image coming soon/);
   const expected = [
-    ["hero-v1", 379, 453, "CYPH/1 IPL Hair Removal Device with accessories"],
-    ["whats-included", 378, 454, "CYPH/1 IPL device with included accessories"],
-    ["cooling", 377, 455, "CYPH/1 IPL device cooling treatment window"],
-    ["treatment-areas", 1137, 1383, "At-home IPL treatment areas"],
-    ["technology", 528, 445, "IPL and hair-growth-cycle illustration"],
+    ["hero-v1", 1148, 1371, "CYPH/1 IPL Hair Removal Device with accessories"],
+    ["whats-included", 1144, 1375, "CYPH/1 IPL device with included accessories"],
+    ["cooling", 1254, 1254, "CYPH/1 IPL device cooling treatment window"],
+    ["treatment-areas", 1145, 1374, "At-home IPL treatment areas"],
+    ["technology", 1366, 1151, "IPL and hair-growth-cycle illustration"],
     ["at-home", 497, 445, "At-home IPL hair removal"],
     ["design", 490, 445, "CYPH/1 IPL device rose-gold detail"],
   ];
