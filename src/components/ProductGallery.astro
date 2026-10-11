@@ -46,14 +46,8 @@ const gallery = await Promise.all(productGallery.map(async (item, index) => {
       image.srcset = link.dataset.galleryPreviewSrcset ?? "";
       image.src = link.href;
       image.alt = "";
-      const background = new window.Image();
-      background.sizes = image.sizes;
-      background.srcset = image.srcset;
-      background.src = link.href;
-      background.alt = "";
-      background.className = "gallery-preview-background";
       image.className = "gallery-preview-foreground";
-      artwork.replaceChildren(background, image);
+      artwork.replaceChildren(image);
       caption.textContent = link.dataset.galleryLabel ?? "";
       panel.hidden = false;
     };
