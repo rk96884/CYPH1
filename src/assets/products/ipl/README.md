@@ -110,3 +110,17 @@ Native PNG sources and full-size WebP links are preserved. Thumbnail outputs are
 The desktop preview uses responsive candidates for its actual width, created in the DOM only on hover/keyboard focus at desktop sizes. Hidden mobile previews do not request images. Full-resolution links remain available for deliberate viewing; generating a WebP at build time does not download it to the customer.
 
 The performance audit retains the 200 KiB compressed threshold per production document, estimating cold-cache loads at 320/430/768/1366/1920px and DPR 1/2. Ordinary links and explicitly lazy images are not guaranteed initial downloads. Deferred candidate payloads and site-wide referenced-resource totals are reported separately; native lazy-load proximity can still cause a browser to fetch images near the viewport.
+
+### Current optimised WebP replacements — 11 October 2026
+
+The project owner supplied the following replacement assets. These are the current gallery sources; the PNG crop dimensions above describe the earlier source history. The original replacement bytes are retained without further editing. At-home and design continue to use their existing PNG sources. Gallery order, alt text, layout, responsive sizes and Astro image processing remain unchanged.
+
+| Current source | Native dimensions |
+| --- | --- |
+| cyph1-ipl-hero-v1.webp | 1148 × 1371 |
+| cyph1-ipl-whats-included.webp | 1144 × 1375 |
+| cyph1-ipl-cooling.webp | 1254 × 1254 |
+| cyph1-ipl-treatment-areas.webp | 1145 × 1374 |
+| cyph1-ipl-technology.webp | 1366 × 1151 |
+
+Existing development/pre-launch approval limits remain: final production-device accuracy and embedded claims/compliance review are required before GO-01. The replacement imagery is not additional product specification evidence.
