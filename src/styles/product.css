@@ -43,16 +43,14 @@
 
 .gallery-preview{display:none}
 @media(min-width:60rem){
-  .gallery-preview:not([hidden]){position:absolute;left:calc(100% + var(--cyph-layout-cluster));bottom:0;width:calc(100% / 1.15);display:flex;flex-direction:column;border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:var(--cyph-surface-base)}
-  .gallery-preview-artwork{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-  .gallery-preview-artwork img{display:block;width:100%;height:100%;object-fit:contain}
+  .gallery-preview:not([hidden]){position:absolute;left:calc(100% + var(--cyph-layout-cluster));width:calc(100% / 1.15);display:flex;flex-direction:column;border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:var(--cyph-surface-base)}
+  .gallery-preview-artwork{display:block;min-width:0}
+  .gallery-preview-artwork img{display:block;width:100%;height:auto;object-fit:contain}
   .gallery-preview-caption{margin:0;padding:var(--cyph-space-3);font-size:var(--cyph-space-3)}
 }
 
-/* The same cached image fills empty bands; the foreground stays uncropped. */
-.gallery-preview-artwork{position:relative;overflow:hidden;isolation:isolate;--gallery-backdrop-blur:var(--cyph-space-4)}
-.gallery-preview-artwork .gallery-preview-background{position:absolute;inset:calc(-1 * var(--gallery-backdrop-blur));width:calc(100% + 2 * var(--gallery-backdrop-blur));height:calc(100% + 2 * var(--gallery-backdrop-blur));object-fit:cover;filter:blur(var(--gallery-backdrop-blur));pointer-events:none}
-.gallery-preview-foreground{position:relative;z-index:1}
+/* The preview follows the artwork's natural aspect ratio without a blurred duplicate. */
+.gallery-preview-artwork{position:relative;overflow:hidden}
 /* Share the preview's compact caption height across all gallery frames. */
 .gallery-shell{--gallery-caption-height:calc(var(--cyph-space-6) + var(--cyph-space-3) * var(--cyph-leading-body));--gallery-hover-scale:1.025}
 .gallery-frame figcaption,.gallery-preview-caption{margin:0;min-block-size:var(--gallery-caption-height);padding:var(--cyph-space-3);font-size:var(--cyph-space-3);line-height:var(--cyph-leading-body)}
