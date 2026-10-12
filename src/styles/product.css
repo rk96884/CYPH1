@@ -93,3 +93,13 @@
 .product-essentials .essential-icon{display:block;width:2rem;height:2rem;margin-bottom:var(--cyph-space-4);color:var(--cyph-accent-highlight)}
 @media(min-width:40rem){.product-essentials{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(min-width:60rem){.product-essentials{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Phase 1: concise benefits and launch-list reassurance. */
+.product-hero-highlights{list-style:none;padding:0;margin:var(--cyph-space-6) 0;display:grid;gap:var(--cyph-space-3)}
+.product-hero-highlights li{padding-left:1.5rem;position:relative}
+.product-hero-highlights li::before{content:'✓';position:absolute;left:0;color:var(--cyph-accent-highlight);font-weight:700}
+.product-benefits{display:grid;gap:var(--cyph-space-6);margin-top:var(--cyph-space-8)}
+.product-benefits article{border-top:var(--cyph-line-structural) solid var(--cyph-border-structural);padding-top:var(--cyph-space-4)}
+.product-benefits h3{margin-top:0}
+.product-feature-subheading{margin-top:var(--cyph-space-12)}
+@media(min-width:60rem){.product-benefits{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--cyph-space-8)}}
