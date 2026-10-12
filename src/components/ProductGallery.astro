@@ -21,7 +21,7 @@ const first = gallery.find(item => item.asset && item.display && item.full);
   {first ? (
     <>
       <figure class="gallery-main">
-        <a class="gallery-main-link" data-gallery-full href={first.full!.src} target="_blank" rel="noopener noreferrer" aria-label={`Open full-size image: ${first.label} (new tab)`}>
+        <a class="gallery-main-link" data-gallery-full href={first.full!.src} aria-label={`Enlarge image: ${first.label}`}>
           <img data-gallery-main src={first.display!.src} srcset={first.srcset} sizes={heroSizes} alt={first.alt} width={first.asset!.width} height={first.asset!.height} loading="eager" fetchpriority="high" decoding="async" />
         </a>
         <figcaption data-gallery-caption aria-live="polite" aria-atomic="true">{first.label}</figcaption>
@@ -47,9 +47,16 @@ const first = gallery.find(item => item.asset && item.display && item.full);
           </button>
         ) : null)}
       </div>
-      <p class="gallery-hint">Select a thumbnail to change the image. Select the large image to open it at full size.</p>
+      <p class="gallery-hint">Select a thumbnail to change the image. Select the large image to enlarge it without leaving the page.</p>
     </>
   ) : <div class="gallery-placeholder"><p>Product images coming soon</p></div>}
+  <dialog class="gallery-lightbox" data-gallery-lightbox aria-label="Enlarged product image">
+    <div class="gallery-lightbox-inner">
+      <button type="button" class="gallery-lightbox-close" data-gallery-lightbox-close aria-label="Close enlarged image">×</button>
+      <img data-gallery-lightbox-image src={first?.full?.src ?? ""} alt={first?.alt ?? "Product image"} width={first?.asset?.width ?? 1} height={first?.asset?.height ?? 1} loading="lazy" />
+      <p data-gallery-lightbox-caption>{first?.label ?? ""}</p>
+    </div>
+  </dialog>
 </div>
 <script>
   document.querySelectorAll<HTMLElement>("[data-product-gallery]").forEach(shell => {
@@ -57,6 +64,10 @@ const first = gallery.find(item => item.asset && item.display && item.full);
     const full = shell.querySelector<HTMLAnchorElement>("[data-gallery-full]");
     const caption = shell.querySelector<HTMLElement>("[data-gallery-caption]");
     const choices = [...shell.querySelectorAll<HTMLButtonElement>("[data-gallery-choice]")];
+    const dialog = shell.querySelector<HTMLDialogElement>("[data-gallery-lightbox]");
+    const lightboxImage = dialog?.querySelector<HTMLImageElement>("[data-gallery-lightbox-image]");
+    const lightboxCaption = dialog?.querySelector<HTMLElement>("[data-gallery-lightbox-caption]");
+    const closeButton = dialog?.querySelector<HTMLButtonElement>("[data-gallery-lightbox-close]");
     if (!main || !full || !caption || !choices.length) return;
     const select = (choice: HTMLButtonElement) => {
       if (choice.getAttribute("aria-pressed") === "true") return;
@@ -69,10 +80,25 @@ const first = gallery.find(item => item.asset && item.display && item.full);
       main.height = Number(choice.dataset.galleryHeight) || main.height;
       full.href = choice.dataset.galleryFullSrc ?? main.src;
       const label = choice.dataset.galleryLabel ?? "Product image";
-      full.setAttribute("aria-label", `Open full-size image: ${label} (new tab)`);
+      full.setAttribute("aria-label", `Enlarge image: ${label}`);
       caption.textContent = label;
       choices.forEach(button => button.setAttribute("aria-pressed", String(button === choice)));
     };
+    full.addEventListener("click", event => {
+      if (!dialog || !lightboxImage || !lightboxCaption || typeof dialog.showModal !== "function") return;
+      event.preventDefault();
+      lightboxImage.src = full.href;
+      lightboxImage.alt = main.alt;
+      lightboxImage.width = main.width;
+      lightboxImage.height = main.height;
+      lightboxCaption.textContent = caption.textContent;
+      dialog.showModal();
+      closeButton?.focus();
+    });
+    closeButton?.addEventListener("click", () => dialog?.close());
+    dialog?.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
     choices.forEach((choice, index) => {
       choice.addEventListener("click", () => select(choice));
       choice.addEventListener("keydown", event => {

@@ -72,3 +72,12 @@
 .product-benefits h3{margin-top:0}
 .product-feature-subheading{margin-top:var(--cyph-space-12)}
 @media(min-width:60rem){.product-benefits{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--cyph-space-8)}}
+
+/* Phase 2 lightbox: native dialog handles focus containment and Escape. */
+.gallery-lightbox{position:fixed;inset:0;box-sizing:border-box;width:min(96vw,90rem);max-width:96vw;max-height:94vh;margin:auto;padding:var(--cyph-space-4);border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:var(--cyph-surface-base);color:var(--cyph-text-primary);overflow:auto}
+.gallery-lightbox::backdrop{background:rgba(0,0,0,.84)}
+.gallery-lightbox-inner{display:flex;flex-direction:column;align-items:center;gap:var(--cyph-space-3);position:relative}
+.gallery-lightbox img{display:block;max-width:100%;max-height:calc(94vh - 7rem);width:auto;height:auto;object-fit:contain}
+.gallery-lightbox p{margin:0;text-align:center;font-size:var(--cyph-space-3)}
+.gallery-lightbox-close{align-self:flex-end;min-width:2.75rem;min-height:2.75rem;border:var(--cyph-line-structural) solid currentColor;background:transparent;color:inherit;font-size:2rem;line-height:1;cursor:pointer}
+.gallery-lightbox-close:focus-visible{outline:3px solid var(--cyph-accent-highlight);outline-offset:2px}
