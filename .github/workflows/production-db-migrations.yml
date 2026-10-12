@@ -1,0 +1,72 @@
+name: Production database schema migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Plan is read-only. Apply executes pending migrations."
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+      confirmation:
+        description: "For apply, enter APPLY-PRODUCTION-MIGRATIONS"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-db-migrations
+  cancel-in-progress: false
+
+jobs:
+  production-schema:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production-db
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      DATABASE_SSL: ${{ vars.PRODUCTION_DATABASE_SSL || 'true' }}
+    steps:
+      - name: Checkout approved main branch
+        uses: actions/checkout@v7
+
+      - name: Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate production migration prerequisites
+        env:
+          ACTION: ${{ inputs.action }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          test -n "$DATABASE_URL" || { echo "::error::Configure PRODUCTION_DATABASE_URL in the production-db environment"; exit 1; }
+          if [[ "$ACTION" == "apply" && "$CONFIRMATION" != "APPLY-PRODUCTION-MIGRATIONS" ]]; then
+            echo "::error::Explicit apply confirmation is required"
+            exit 1
+          fi
+
+      - name: Report pending migrations and detect drift
+        run: node apps/commerce-api/scripts/plan-migrations.mjs
+
+      - name: Apply pending migrations
+        if: inputs.action == 'apply'
+        run: npm run db:migrate
+
+      - name: Verify production schema
+        if: inputs.action == 'apply'
+        run: npm run db:verify
+
+      - name: Confirm no pending migrations remain
+        if: inputs.action == 'apply'
+        run: node apps/commerce-api/scripts/plan-migrations.mjs
