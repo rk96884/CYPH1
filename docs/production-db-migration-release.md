@@ -23,3 +23,18 @@ This workflow **does not copy staging data** or reset production. It runs the ex
 8. Check production API health/readiness and application behaviour. If anything fails, investigate and follow the documented recovery procedure. Do **not** assume rolling back the code automatically reverses a database migration.
 
 **Safety notes:** The workflow never runs on pull requests and refuses non-`main` dispatches. `plan` is read-only except normal connection/session operations; it does not create a migration table. `apply` changes production schema and may also change data if a migration SQL file includes DML. Production data remains environment-specific, and no seed command is run. The runner wraps each migration in its own transaction; the entire pending batch is **not** one atomic transaction.
+
+## Release record — 12 October 2026
+
+**Status: completed (schema migration and API health verification).**
+
+- Target: Render PostgreSQL database `cyph1-commerce-production`. Production and staging data remained separate; no staging data was copied.
+- GitHub Actions: **Production database schema migrations #4**, dispatched from `main` with action `apply`; workflow reported **Success**.
+- Starting state: 10 applied migrations, 10 pending (`0011_operator_capture.sql` through `0020_inpost_collection_review.sql`).
+- Final migration plan: **20 applied, 0 pending**. The workflow's schema verification passed.
+- Read-only preflight: 0 duplicate payment-capture target groups; 0 in-flight communications; 0 capture-command backfill candidates; 0 shipping rates and 0 existing orders at the time of the check.
+- Recovery preparation: Render showed a **3-day point-in-time recovery window**. A production logical export was marked completed on **12 October 2026 at 15:42 UK local time**, and the operator confirmed downloading and securely saving the `.dir.tar.gz` archive outside Render. **A full restoration was not tested.**
+- Post-migration live API checks: `https://commerce.cyph1.co.uk/health` returned **OK** and `https://commerce.cyph1.co.uk/ready` returned **Ready**, as confirmed by the operator.
+- Scope and limits: this verifies migration-version alignment and basic API/database readiness, **not** parity of staging/production data or settings. No end-to-end production checkout/payment transaction was performed. Product, pricing, shipping, and compliance launch gates remain separate.
+
+Evidence: [GitHub Actions run #4](https://github.com/rk96884/CYPH1/actions/workflows/production-db-migrations.yml) (open the successful run titled **Production database schema migrations #4**); Render export completion and API responses were confirmed during the release review. Do not place backup files or database credentials in this repository.
