@@ -16,100 +16,90 @@ const gallery = await Promise.all(productGallery.map(async item => {
   return { ...item, asset, full, display, srcset: variants.map((v,i) => `${v.src} ${widths[i]}w`).join(", ") };
 }));
 const first = gallery.find(item => item.asset && item.display && item.full);
+const secondary = gallery.filter(item => item.key !== first?.key && item.asset && item.display && item.full);
 ---
 <div class="gallery-shell" data-product-gallery aria-label="CYPH/1 product images">
   {first ? (
     <>
       <figure class="gallery-main">
-        <a class="gallery-main-link" data-gallery-full href={first.full!.src} aria-label={`Enlarge image: ${first.label}`}>
-          <img data-gallery-main src={first.display!.src} srcset={first.srcset} sizes={heroSizes} alt={first.alt} width={first.asset!.width} height={first.asset!.height} loading="eager" fetchpriority="high" decoding="async" />
+        <a class="gallery-main-link" data-gallery-full href={first.full!.src} aria-label={`Open image gallery: ${first.label}`}>
+          <img src={first.display!.src} srcset={first.srcset} sizes={heroSizes} alt={first.alt} width={first.asset!.width} height={first.asset!.height} loading="eager" fetchpriority="high" decoding="async" />
         </a>
         <figcaption data-gallery-caption aria-live="polite" aria-atomic="true">{first.label}</figcaption>
       </figure>
       <div class="gallery-selector" role="group" aria-label="Choose a product image">
-        {gallery.map((item, index) => item.asset && item.display && item.full ? (
+        {secondary.map((item, index) => item.asset && item.display && item.full ? (
           <button
             class="gallery-choice"
             type="button"
             data-gallery-choice
-            data-gallery-src={item.display.src}
-            data-gallery-srcset={item.srcset}
+            data-gallery-index={index + 1}
             data-gallery-full-src={item.full.src}
             data-gallery-alt={item.alt}
             data-gallery-label={item.label}
-            data-gallery-width={item.asset.width}
-            data-gallery-height={item.asset.height}
-            aria-label={`Show image ${index + 1}: ${item.label}`}
-            aria-pressed={item.key === first.key ? "true" : "false"}
+            aria-label={`Open image gallery at ${item.label}`}
           >
             <Image src={item.asset} alt={item.alt} width={Math.min(320, item.asset.width)} widths={[...new Set([120, 240, Math.min(320, item.asset.width)].filter(width => width <= item.asset!.width))]} sizes={thumbnailSizes} loading="lazy" />
             <span class="gallery-choice-label">{item.label}</span>
           </button>
         ) : null)}
       </div>
-      <p class="gallery-hint">Select a thumbnail to change the image. Select the large image to enlarge it without leaving the page.</p>
+      <p class="gallery-hint">Select any thumbnail to open the gallery. Use the arrows to browse all images.</p>
     </>
   ) : <div class="gallery-placeholder"><p>Product images coming soon</p></div>}
-  <dialog class="gallery-lightbox" data-gallery-lightbox aria-label="Enlarged product image">
+  <dialog class="gallery-lightbox" data-gallery-lightbox aria-label="Product image gallery">
     <div class="gallery-lightbox-inner">
-      <button type="button" class="gallery-lightbox-close" data-gallery-lightbox-close aria-label="Close enlarged image">×</button>
+      <button type="button" class="gallery-lightbox-close" data-gallery-lightbox-close aria-label="Close image gallery">×</button>
+      <div class="gallery-lightbox-stage"><button type="button" class="gallery-lightbox-arrow" data-gallery-prev aria-label="Previous image">‹</button>
       <img data-gallery-lightbox-image src={first?.full?.src ?? ""} alt={first?.alt ?? "Product image"} width={first?.asset?.width ?? 1} height={first?.asset?.height ?? 1} loading="lazy" />
+      <button type="button" class="gallery-lightbox-arrow" data-gallery-next aria-label="Next image">›</button></div>
       <p data-gallery-lightbox-caption>{first?.label ?? ""}</p>
     </div>
   </dialog>
 </div>
 <script>
   document.querySelectorAll<HTMLElement>("[data-product-gallery]").forEach(shell => {
-    const main = shell.querySelector<HTMLImageElement>("[data-gallery-main]");
     const full = shell.querySelector<HTMLAnchorElement>("[data-gallery-full]");
-    const caption = shell.querySelector<HTMLElement>("[data-gallery-caption]");
     const choices = [...shell.querySelectorAll<HTMLButtonElement>("[data-gallery-choice]")];
     const dialog = shell.querySelector<HTMLDialogElement>("[data-gallery-lightbox]");
-    const lightboxImage = dialog?.querySelector<HTMLImageElement>("[data-gallery-lightbox-image]");
-    const lightboxCaption = dialog?.querySelector<HTMLElement>("[data-gallery-lightbox-caption]");
-    const closeButton = dialog?.querySelector<HTMLButtonElement>("[data-gallery-lightbox-close]");
-    if (!main || !full || !caption || !choices.length) return;
-    const select = (choice: HTMLButtonElement) => {
-      if (choice.getAttribute("aria-pressed") === "true") return;
-      // Clear the old responsive candidates before assigning the new image.
-      main.removeAttribute("srcset");
-      main.src = choice.dataset.gallerySrc ?? "";
-      main.srcset = choice.dataset.gallerySrcset ?? "";
-      main.alt = choice.dataset.galleryAlt ?? "";
-      main.width = Number(choice.dataset.galleryWidth) || main.width;
-      main.height = Number(choice.dataset.galleryHeight) || main.height;
-      full.href = choice.dataset.galleryFullSrc ?? main.src;
-      const label = choice.dataset.galleryLabel ?? "Product image";
-      full.setAttribute("aria-label", `Enlarge image: ${label}`);
-      caption.textContent = label;
-      choices.forEach(button => button.setAttribute("aria-pressed", String(button === choice)));
+    const image = dialog?.querySelector<HTMLImageElement>("[data-gallery-lightbox-image]");
+    const caption = dialog?.querySelector<HTMLElement>("[data-gallery-lightbox-caption]");
+    const close = dialog?.querySelector<HTMLButtonElement>("[data-gallery-lightbox-close]");
+    const prev = dialog?.querySelector<HTMLButtonElement>("[data-gallery-prev]");
+    const next = dialog?.querySelector<HTMLButtonElement>("[data-gallery-next]");
+    if (!full || !dialog || !image || !caption || !close || !prev || !next) return;
+    const slides = [
+      { src: full.href, alt: full.querySelector("img")?.alt ?? "CYPH/1 IPL device", label: "Primary Product Hero" },
+      ...choices.map(choice => ({
+        src: choice.dataset.galleryFullSrc ?? "",
+        alt: choice.dataset.galleryAlt ?? "CYPH/1 product image",
+        label: choice.dataset.galleryLabel ?? "Product image",
+      })),
+    ];
+    let current = 0;
+    const show = (index: number) => {
+      current = (index + slides.length) % slides.length;
+      const slide = slides[current];
+      if (!slide) return;
+      image.src = slide.src;
+      image.alt = slide.alt;
+      caption.textContent = `${slide.label} · ${current + 1} of ${slides.length}`;
     };
-    full.addEventListener("click", event => {
-      if (!dialog || !lightboxImage || !lightboxCaption || typeof dialog.showModal !== "function") return;
-      event.preventDefault();
-      lightboxImage.src = full.href;
-      lightboxImage.alt = main.alt;
-      lightboxImage.width = main.width;
-      lightboxImage.height = main.height;
-      lightboxCaption.textContent = caption.textContent;
+    const open = (index: number) => {
+      if (typeof dialog.showModal !== "function") return;
+      show(index);
       dialog.showModal();
-      closeButton?.focus();
-    });
-    closeButton?.addEventListener("click", () => dialog?.close());
-    dialog?.addEventListener("click", event => {
-      if (event.target === dialog) dialog.close();
-    });
-    choices.forEach((choice, index) => {
-      choice.addEventListener("click", () => select(choice));
-      choice.addEventListener("keydown", event => {
-        if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
-        event.preventDefault();
-        const next = event.key === "Home" ? 0 : event.key === "End" ? choices.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + choices.length) % choices.length;
-        const nextChoice = choices[next];
-        if (!nextChoice) return;
-        nextChoice.focus();
-        select(nextChoice);
-      });
+      close.focus();
+    };
+    full.addEventListener("click", event => { event.preventDefault(); open(0); });
+    choices.forEach((choice, index) => choice.addEventListener("click", () => open(index + 1)));
+    prev.addEventListener("click", () => show(current - 1));
+    next.addEventListener("click", () => show(current + 1));
+    close.addEventListener("click", () => dialog.close());
+    dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
+    dialog.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft") { event.preventDefault(); show(current - 1); }
+      if (event.key === "ArrowRight") { event.preventDefault(); show(current + 1); }
     });
   });
 </script>
