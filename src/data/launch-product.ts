@@ -11,6 +11,5 @@ export const productGallery = [
   { key: "cooling", label: "Ice Cooling Comfort", filename: "cyph1-ipl-cooling.webp", alt: "CYPH/1 IPL device cooling treatment window" },
   { key: "areas", label: "Treatment Areas", filename: "cyph1-ipl-treatment-areas.webp", alt: "At-home IPL treatment areas" },
   { key: "technology", label: "IPL Technology", filename: "cyph1-ipl-technology.webp", alt: "IPL and hair-growth-cycle illustration" },
-  { key: "lifestyle", label: "At-Home Convenience", filename: "cyph1-ipl-at-home.png", alt: "At-home IPL hair removal" },
   { key: "detail", label: "Premium Design", filename: "cyph1-ipl-design.png", alt: "CYPH/1 IPL device rose-gold detail" },
 ] as const;
