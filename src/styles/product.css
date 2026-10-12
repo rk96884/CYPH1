@@ -88,5 +88,14 @@
 .gallery-lightbox-arrow{display:grid;place-items:center;width:clamp(2rem,5vw,3rem);height:clamp(2.5rem,5vw,3.5rem);border:var(--cyph-line-structural) solid var(--cyph-border-structural);background:transparent;color:inherit;font:inherit;font-size:2rem;cursor:pointer}
 .gallery-lightbox-arrow:focus-visible{outline:3px solid var(--cyph-accent-highlight);outline-offset:2px}
 
-@media(hover:hover) and (prefers-reduced-motion:no-preference){.gallery-choice:hover{border-color:var(--cyph-accent-highlight);transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.2)}.gallery-choice:hover img{transform:scale(1.045)}}
-@media(prefers-reduced-motion:reduce){.gallery-choice,.gallery-choice img{transition:none}}
+/* Hover feedback works regardless of OS motion preferences; only movement is optional. */
+.gallery-choice:hover,.gallery-choice:focus-visible{border-color:var(--cyph-accent-highlight);box-shadow:0 6px 18px rgba(0,0,0,.2)}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  .gallery-choice:hover{transform:translateY(-3px)}
+  .gallery-choice:hover img{transform:scale(1.08)}
+}
+@media(prefers-reduced-motion:reduce){
+  .gallery-choice,.gallery-choice img{transition:none}
+  .gallery-choice:hover{transform:none}
+  .gallery-choice:hover img{transform:none}
+}
