@@ -96,8 +96,8 @@
 
 /* Phase 1: concise benefits and launch-list reassurance. */
 .product-hero-highlights{list-style:none;padding:0;margin:var(--cyph-space-6) 0;display:grid;gap:var(--cyph-space-3)}
-.product-hero-highlights li{padding-left:1.5rem;position:relative}
-.product-hero-highlights li::before{content:'✓';position:absolute;left:0;color:var(--cyph-accent-highlight);font-weight:700}
+.product-hero-highlights li{display:flex;align-items:flex-start;gap:var(--cyph-space-3)}
+.product-hero-highlights svg{display:block;flex:none;width:1.25rem;height:1.25rem;color:var(--cyph-accent-highlight)}
 .product-benefits{display:grid;gap:var(--cyph-space-6);margin-top:var(--cyph-space-8)}
 .product-benefits article{border-top:var(--cyph-line-structural) solid var(--cyph-border-structural);padding-top:var(--cyph-space-4)}
 .product-benefits h3{margin-top:0}
