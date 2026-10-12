@@ -59,6 +59,9 @@ jobs:
       - name: Report pending migrations and detect drift
         run: node apps/commerce-api/scripts/plan-migrations.mjs
 
+      - name: Read-only production preflight
+        run: node apps/commerce-api/scripts/preflight-production-migrations.mjs
+
       - name: Apply pending migrations
         if: inputs.action == 'apply'
         run: npm run db:migrate
