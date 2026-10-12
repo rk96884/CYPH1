@@ -42,7 +42,7 @@ const first = gallery.find(item => item.asset && item.display && item.full);
             aria-label={`Show image ${index + 1}: ${item.label}`}
             aria-pressed={item.key === first.key ? "true" : "false"}
           >
-            <Image src={item.asset} alt="" width={Math.min(320, item.asset.width)} widths={[...new Set([120, 240, Math.min(320, item.asset.width)].filter(width => width <= item.asset!.width))]} sizes={thumbnailSizes} loading="lazy" />
+            <Image src={item.asset} alt={item.alt} width={Math.min(320, item.asset.width)} widths={[...new Set([120, 240, Math.min(320, item.asset.width)].filter(width => width <= item.asset!.width))]} sizes={thumbnailSizes} loading="lazy" />
             <span class="gallery-choice-label">{item.label}</span>
           </button>
         ) : null)}
