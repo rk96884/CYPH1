@@ -47,7 +47,7 @@ const commerceApiUrl = "https://commerce.cyph1.co.uk";
     const validOrder = order && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order);
     if (output instanceof HTMLElement) output.textContent = validOrder ? order : "Unavailable";
 
-    const displayState = (state) => {
+    const displayState = (state: "paid" | "unavailable" | "pending-timeout") => {
       if (!(message instanceof HTMLElement) || !(heading instanceof HTMLElement) || !(eyebrow instanceof HTMLElement) || !(paymentStatus instanceof HTMLElement)) return;
       if (state === "paid") {
         root?.classList.add("is-confirmed");
