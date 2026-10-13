@@ -147,3 +147,19 @@ owner/deputy; processor/retention/privacy approval and deployment QA.
 Existing production manual paid-order cancellation confirmation remains a
 separate workstream. The cancellation consumer supports authoritative events;
 it does not manufacture them or turn a refund into cancellation.
+
+## Customer confirmation presentation review — 13 October 2026
+
+The existing branded HTML/plain-text order-confirmation template remains authoritative and is still driven only by `payment.paid` from the verified backend. The customer order-status page at `/private-commerce/order-status/?order=<uuid>` has a refreshed pending/paid/timeout presentation. It continues to use only the coarse `/orders/:id/status` response; it does **not** load customer name, address, basket or tracking details into an unauthenticated page.
+
+For offline email review (without sending, real payments or provider credentials), from the repository root:
+
+```sh
+npm ci
+npm run build:runtime --workspace @cyph1/commerce-api
+node apps/commerce-api/scripts/preview-transactional-emails.mjs
+```
+
+Open HTML files in `tmp/transactional-email-previews/`. The fixtures show actual **planned customer price logic**, but entirely synthetic orders: three devices + UK home £7.99, two devices + InPost Medium £2.59, and example dispatch with an explicitly invalid preview-only tracking URL. Do not use their example recipient, collection shop, order numbers, or tracking details for live fulfilment. Output is local and does not call Brevo. The default preview, cancellation and refund samples remain available.
+
+This presentation change is not approval of transactional sending or production dispatch. `COMMUNICATIONS_ENABLED`, `COMMUNICATIONS_LIVE_SEND_ENABLED`, commerce, payment and fulfilment launch gates remain separately controlled. Verify responsive/accessibility appearance and final policy copy before launch. Order email contains actual persisted order snapshots only when the approved worker is explicitly enabled; the status page deliberately shows no detailed order breakdown without a new authenticated customer-detail boundary.

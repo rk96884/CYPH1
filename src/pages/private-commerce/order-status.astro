@@ -4,22 +4,71 @@ import BrandMark from "../../components/BrandMark.astro";
 
 const commerceApiUrl = "https://commerce.cyph1.co.uk";
 ---
-<BaseLayout title="Payment status — CYPH/1" description="Check the status of your CYPH/1 order." robots="noindex, nofollow, noarchive">
-  <header class="private-header container"><BrandMark/><span>Secure checkout</span></header>
-  <main id="main" class="checkout-status container" data-order-status data-api-url={commerceApiUrl}>
-    <p class="eyebrow">Order status</p>
-    <h1>Checking your payment</h1>
-    <p data-status-message>Your browser return is not proof of payment. We’ll confirm the order once Mollie’s verified payment notification has been processed.</p>
-    <p class="order-reference" data-order-reference></p>
-    <a class="text-link" href="/">Return to CYPH/1</a>
+<BaseLayout title="Order confirmation — CYPH/1" description="Check the secure payment status of your CYPH/1 order." robots="noindex, nofollow, noarchive">
+  <header class="private-header container"><BrandMark/><span>Secure order status</span></header>
+  <main id="main" class="confirmation-shell container" data-order-status data-api-url={commerceApiUrl}>
+    <div class="confirmation-card">
+      <div class="state-mark" data-state-mark aria-hidden="true"><span class="state-pulse"></span></div>
+      <p class="eyebrow" data-status-eyebrow>PAYMENT VERIFICATION</p>
+      <h1 data-status-heading>Checking your payment</h1>
+      <p class="status-description" data-status-message role="status" aria-live="polite" aria-atomic="true">Your return from the payment provider is not proof of payment. We’ll confirm your order once the verified payment notification has been processed.</p>
+      <section class="confirmation-details" aria-label="Your order information">
+        <div class="detail-row">
+          <span>Order reference</span>
+          <strong class="order-reference" data-order-reference>Checking…</strong>
+        </div>
+        <div class="detail-row">
+          <span>Payment status</span>
+          <strong data-payment-status>Awaiting confirmation</strong>
+        </div>
+      </section>
+      <section class="next-steps" aria-labelledby="next-steps-heading" data-next-steps hidden>
+        <h2 id="next-steps-heading">What happens next?</h2>
+        <ol>
+          <li><strong>Confirmation</strong><span>We’ll send an order confirmation email once your payment is verified and email delivery is available.</span></li>
+          <li><strong>Preparation</strong><span>Your order will be prepared for its selected delivery method.</span></li>
+          <li><strong>Dispatch</strong><span>We’ll send your tracking details once your parcel has been handed to the carrier.</span></li>
+        </ol>
+      </section>
+      <p class="help-copy">Need help? <a href="mailto:customer-support@cyph1.co.uk">Contact CYPH/1 support</a>.</p>
+      <a class="return-link" href="/">Return to CYPH/1 <span aria-hidden="true">↗</span></a>
+    </div>
   </main>
   <script>
     const root = document.querySelector("[data-order-status]");
     const message = document.querySelector("[data-status-message]");
     const output = document.querySelector("[data-order-reference]");
+    const heading = document.querySelector("[data-status-heading]");
+    const eyebrow = document.querySelector("[data-status-eyebrow]");
+    const paymentStatus = document.querySelector("[data-payment-status]");
+    const nextSteps = document.querySelector("[data-next-steps]");
+    const stateMark = document.querySelector("[data-state-mark]");
     const order = new URLSearchParams(window.location.search).get("order");
     const validOrder = order && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(order);
-    if (output instanceof HTMLElement && validOrder) output.textContent = `Order reference: ${order}`;
+    if (output instanceof HTMLElement) output.textContent = validOrder ? order : "Unavailable";
+
+    const displayState = (state: "paid" | "unavailable" | "pending-timeout") => {
+      if (!(message instanceof HTMLElement) || !(heading instanceof HTMLElement) || !(eyebrow instanceof HTMLElement) || !(paymentStatus instanceof HTMLElement)) return;
+      if (state === "paid") {
+        root?.classList.add("is-confirmed");
+        heading.textContent = "Thank you for your order.";
+        eyebrow.textContent = "PAYMENT CONFIRMED";
+        message.textContent = "Your payment is confirmed and we’ve received your order. We’ll update you when your order is dispatched.";
+        paymentStatus.textContent = "Paid";
+        if (nextSteps instanceof HTMLElement) nextSteps.hidden = false;
+        if (stateMark instanceof HTMLElement) stateMark.setAttribute("aria-label", "Payment confirmed");
+      } else if (state === "unavailable") {
+        heading.textContent = "We couldn't verify this order";
+        eyebrow.textContent = "ORDER STATUS UNAVAILABLE";
+        message.textContent = "We couldn’t identify this order from the return link. Please contact CYPH/1 support if you need help.";
+        paymentStatus.textContent = "Unavailable";
+      } else if (state === "pending-timeout") {
+        heading.textContent = "Still checking your payment";
+        eyebrow.textContent = "AWAITING CONFIRMATION";
+        message.textContent = "Payment has not yet been confirmed. Please check your email or contact support if you need assistance. Do not place another order just because this page is taking longer.";
+        paymentStatus.textContent = "Not yet confirmed";
+      }
+    };
 
     if (root instanceof HTMLElement && message instanceof HTMLElement && validOrder) {
       const apiUrl = root.dataset.apiUrl;
@@ -37,7 +86,7 @@ const commerceApiUrl = "https://commerce.cyph1.co.uk";
           if (response.ok) {
             const result = await response.json();
             if (result?.state === "paid") {
-              message.textContent = "Payment confirmed. Your order has been received and is now being prepared.";
+              displayState("paid");
               return;
             }
             if (result?.state === "cancelled") {
@@ -49,17 +98,40 @@ const commerceApiUrl = "https://commerce.cyph1.co.uk";
           // Keep the current status and retry within the bounded polling window.
         }
         if (attempts < maximumAttempts) window.setTimeout(poll, 2000);
-        else message.textContent = "We’re still waiting for payment confirmation. Your order has not been marked as paid unless our verified payment notification confirms it.";
+        else displayState("pending-timeout");
       };
       window.setTimeout(poll, 1000);
-    } else if (message instanceof HTMLElement) {
-      message.textContent = "We couldn’t identify this order from the return link. Please contact CYPH/1 support if you need help.";
+    } else {
+      displayState("unavailable");
     }
   </script>
 </BaseLayout>
 <style>
-  .private-header{display:flex;align-items:center;justify-content:space-between;padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
+  .private-header{display:flex;align-items:center;justify-content:space-between;gap:var(--cyph-space-4);padding-block:var(--cyph-space-6);border-bottom:1px solid var(--cyph-border-structural)}
   .private-header span{font-size:.7rem;letter-spacing:var(--cyph-tracking-label);text-transform:uppercase;color:var(--cyph-text-secondary)}
-  .checkout-status{min-height:70svh;padding-block:var(--cyph-layout-section)}h1{max-width:12ch;font-size:clamp(2.4rem,7vw,6rem);line-height:1.08}.checkout-status>p{max-width:42rem;color:var(--cyph-text-secondary)}.order-reference{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:.75rem}
-  @media(max-width:420px){.private-header{align-items:flex-start;gap:var(--cyph-space-4)}.checkout-status{padding-block:var(--cyph-space-8)}}
+  .confirmation-shell{min-height:72svh;padding-block:clamp(3rem,7vw,6rem);display:flex;justify-content:center;align-items:flex-start}
+  .confirmation-card{width:min(100%,46rem);padding:clamp(1.4rem,5vw,3rem);border:1px solid var(--cyph-border-structural);border-radius:1rem;background:var(--cyph-surface-secondary,transparent)}
+  .state-mark{display:grid;place-items:center;width:3.25rem;height:3.25rem;border:1px solid currentColor;border-radius:50%;margin-bottom:2rem;color:var(--cyph-text-secondary)}
+  .state-pulse{display:block;width:.9rem;height:.9rem;border-radius:50%;background:currentColor;opacity:.65}
+  .is-confirmed .state-mark{color:#9fdbb1}
+  .is-confirmed .state-pulse{width:1.1rem;height:.6rem;border-radius:0;background:transparent;border-left:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(-45deg) translate(1px,-2px);opacity:1}
+  .eyebrow{font-size:.72rem;letter-spacing:.16em}
+  h1{max-width:19ch;font-size:clamp(2.15rem,5.5vw,3.75rem);line-height:1.1;letter-spacing:-.035em;margin:1rem 0}
+  .status-description{max-width:36rem;color:var(--cyph-text-secondary);line-height:1.7}
+  .confirmation-details{margin-top:2.25rem;padding:1.2rem 0;border-top:1px solid var(--cyph-border-structural);border-bottom:1px solid var(--cyph-border-structural)}
+  .detail-row{display:flex;justify-content:space-between;gap:1rem;align-items:start;padding:.55rem 0;font-size:.9rem}
+  .detail-row>span{color:var(--cyph-text-secondary)}
+  .detail-row strong{text-align:right;font-weight:600}
+  .order-reference{overflow-wrap:anywhere;font-family:ui-monospace,monospace;font-size:.76rem}
+  .next-steps{margin-top:2rem}
+  .next-steps[hidden]{display:none}
+  .next-steps h2{font-size:1.15rem;margin:0 0 1.2rem}
+  .next-steps ol{list-style:none;margin:0;padding:0;display:grid;gap:1rem}
+  .next-steps li{display:grid;grid-template-columns:1fr 3fr;gap:1.2rem;font-size:.88rem}
+  .next-steps li span{color:var(--cyph-text-secondary);line-height:1.6}
+  .help-copy{margin-top:2rem;font-size:.86rem;color:var(--cyph-text-secondary)}
+  .help-copy a,.return-link{color:inherit;text-underline-offset:.2em}
+  .return-link{display:inline-flex;gap:1rem;margin-top:.9rem;padding:.9rem 0;font-weight:600}
+  @media(max-width:480px){.private-header{align-items:flex-start}.confirmation-shell{padding-inline:.75rem}.confirmation-card{padding:1.4rem}.detail-row{display:block}.detail-row strong{display:block;text-align:left;margin-top:.3rem}.next-steps li{grid-template-columns:1fr;gap:.15rem}}
+  @media(prefers-reduced-motion:reduce){.state-mark *{animation:none!important}}
 </style>
