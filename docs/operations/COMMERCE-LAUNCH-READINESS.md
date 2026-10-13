@@ -1,6 +1,6 @@
 # CYPH/1 commerce launch control register
 
-**Updated:** 9 October 2026
+**Updated:** 13 October 2026
 **Status:** Authoritative K-803 Christmas 2026 launch control register
 **Production commerce:** NOT APPROVED; this plan does not enable checkout or live providers
 **Internal launch-ready target:** 16 November 2026
@@ -512,3 +512,16 @@ Royal Mail order UUID: `931ab6f1-7b1f-47ca-8088-49bfddac2ae6`. Its packing endpo
 **Scope of completion:** Hosted UK quantity-aware quotation, Mollie test payment for quantity three on each method, operations order persistence, and Royal Mail three-unit packing/capture/dispatch-lock verification. This does not prove all quantity combinations were paid end-to-end, or that manual collection review, booking, tracking or physical dispatch has been rehearsed.
 
 **Still blocked:** Measured packed dimensions/weights for 2–3 devices, Royal Mail compensation covering combined retail value, InPost parcel eligibility and carrier matching, manual booking/tracking and fulfilment controls, IEC/EN 60335-2-113 product safety testing and GO-01 launch authorisation. Production commerce and live payments remain disabled; do not enable dispatch or reinterpret this test evidence as launch approval.
+
+## Production environment and disabled UK shipping preparation — 13 October 2026
+
+**Status: INFRASTRUCTURE / DISABLED SHIPPING RECORDS VERIFIED; LAUNCH NOT APPROVED.** The owner confirmed:
+
+- Production customer runtime deployment recovered from a TypeScript build failure after changing the Render build command to `npm ci --include=dev && npm run build:runtime --workspace @cyph1/commerce-api`, retaining `NODE_ENV=production`. Customer `/health` and `/ready` returned the expected healthy responses. The operations `/ready` endpoint was likewise confirmed healthy after database credential rotation. This confirms runtime/database connectivity, **not** payment or checkout readiness.
+- Production PostgreSQL migrations were reported applied. A read-only shipping inspection initially returned empty zones/methods/rates/profiles; no assumption was made that migrations had also seeded shipping.
+- PR #125 added a read-only shipping inspection utility and was merged with green checks. PR #126 added the explicitly guarded, disabled-only UK shipping setup tool and was merged with green checks. Neither tool runs automatically on deployment/startup.
+- With the owner-reported **12 October** production backup available (restore not verified during this session), the guarded setup was executed on **13 October**, followed by read-only inspection at `2026-10-13T19:09:58.700Z`. The confirmed production rows are: `uk` zone **disabled**, `GB` destination **disabled**, home-delivery and manual-InPost methods **disabled**, and exactly four GBP rates **disabled**. Home delivery: 399p for quantity 1 (v1), 799p for quantities 2–3 (v2); InPost: 259p Medium for quantities 1–2 (v1), 399p Large for quantity 3 (v2). **No packaging profiles and no international destination rows** were present. See [production setup evidence](PRODUCTION-UK-SHIPPING-SETUP.md).
+- All methods retain the previously agreed **three-device maximum**. The quantity-sensitive checkout and hosted staging quotations/Mollie test evidence recorded above remain valid; this production data insertion is **not** a new live checkout test.
+- The selected launch workflow is **manual InPost Send point matching and booking**, with no InPost API requirement. Packaging/parcel fit for quantities 2–3, compensation/eligibility, physical booking/tracking/dispatch rehearsals, K-803 compliance and overall GO-01 approval **remain outstanding**. No live checkout, webhook, Mollie payment, international shipping or fulfilment activation was authorised.
+
+The owner rotated an exposed PostgreSQL credential before the final production inspection; do not copy production secrets into this register. Production shipping records should remain disabled pending a separate audited activation decision.
