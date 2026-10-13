@@ -12,10 +12,11 @@ const common = {
 const preview = async (filename, details) => {
   const message = renderTransactionalMessage({ ...common, ...details }, { preview: true });
   // Resolve shared artwork locally without depending on a deployment.
-  const html = message.html.replaceAll('src="https://cyph1.co.uk/brand/email/', 'src="../../../../public/brand/email/');
+  const html = message.html.replaceAll('src="https://cyph1.co.uk/brand/email/', 'src="../../public/brand/email/');
   await writeFile(resolve(output, filename + ".html"), html, "utf8");
   await writeFile(resolve(output, filename + ".txt"), message.text, "utf8");
 };
+// Preview values only. Live emails use persisted order snapshots, never these examples.
 const device = (quantity) => ({
   name: "CYPH/1 IPL Hair Removal Device",
   quantity,
