@@ -1,0 +1,33 @@
+---
+import BrandMark from "./BrandMark.astro";
+import { withBase } from "../utils/base-path";
+
+const year = new Date().getFullYear();
+---
+<footer class="checkout-footer" aria-label="Checkout support and legal information">
+  <div class="container checkout-footer-inner">
+    <div class="checkout-footer-brand">
+      <BrandMark />
+      <span>Secure order experience</span>
+    </div>
+    <nav aria-label="Checkout support and policies">
+      <a href="mailto:customer-support@cyph1.co.uk">Contact support</a>
+      <a href={withBase("returns/")}>Returns, refunds &amp; warranty</a>
+      <a href={withBase("privacy/")}>Privacy</a>
+      <a href={withBase("terms/")}>Website terms</a>
+      <a href={withBase("accessibility/")}>Accessibility</a>
+    </nav>
+    <p>© {year} CYPH1 LTD. All rights reserved.</p>
+  </div>
+</footer>
+<style>
+  .checkout-footer{border-top:1px solid var(--cyph-border-structural);padding-block:2rem 2.5rem}
+  .checkout-footer-inner{display:grid;gap:1.25rem}
+  .checkout-footer-brand{display:flex;align-items:center;gap:1.5rem;justify-content:space-between}
+  .checkout-footer-brand span{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--cyph-text-secondary)}
+  .checkout-footer nav{display:flex;flex-wrap:wrap;column-gap:1.5rem;row-gap:.8rem}
+  .checkout-footer nav a{font-size:.82rem;color:var(--cyph-text-secondary);text-underline-offset:.2em}
+  .checkout-footer nav a:hover,.checkout-footer nav a:focus-visible{color:var(--cyph-text-primary)}
+  .checkout-footer p{margin:0;font-size:.75rem;color:var(--cyph-text-secondary)}
+  @media(max-width:580px){.checkout-footer-brand{align-items:flex-start;flex-direction:column;gap:.65rem}.checkout-footer{padding-block:1.7rem}}
+</style>
