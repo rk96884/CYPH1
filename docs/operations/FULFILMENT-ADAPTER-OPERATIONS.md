@@ -129,3 +129,7 @@ Run real database regressions only against a disposable local database named
 *_dispatch_test with MANUAL_DISPATCH_TEST_DATABASE_URL set, then run
 npm run test:commerce. The tests create/drop an isolated generated schema;
 without that variable the database integration case is skipped.
+
+## Production rehearsal planning — 13 October 2026
+
+The owner has confirmed the production disabled fulfilment baseline, protected operations UI access, and `fulfilment:read` without `fulfilment:dispatch` in `OPERATIONS_ACCESS_GRANTS`. The private staging [integration-test fixture](https://cyph1-commerce-ui-staging.pages.dev/private-commerce/integration-test-fixture/) remains staging-only and must not be used to seed or manufacture production paid orders. Follow [PRODUCTION-FULFILMENT-REHEARSAL-PLAN.md](PRODUCTION-FULFILMENT-REHEARSAL-PLAN.md) for the read-only phase, separate live action approvals, operator grants, physical handover and proof-of-disabled rollback.
