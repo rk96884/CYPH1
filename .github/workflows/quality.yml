@@ -54,6 +54,12 @@ jobs:
       - name: Test staging-only Hyperdrive probe with mocks
         run: node --test prototypes/cloudflare-commerce-cron/staging-probe.test.mjs
 
+      - name: Test read-only Hyperdrive connectivity probe without network access
+        run: node --test prototypes/cloudflare-commerce-cron/hyperdrive-readonly.test.mjs
+
+      - name: Compile read-only Hyperdrive probe without deployment
+        run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.hyperdrive-readonly.toml --outdir /tmp/cyph1-hyperdrive-readonly-output
+
       - name: Compile Cloudflare PostgreSQL compatibility probe without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.pg-compat.toml --outdir /tmp/cyph1-pg-compat-output
 
