@@ -1,23 +1,24 @@
-# PR #144 — Staging Hyperdrive probe preparation (REVIEW ONLY)
+# PR #145 — Verified development-database Hyperdrive setup (REVIEW ONLY)
 
-**No infrastructure or database operations authorised or performed by this PR.** No Worker or Hyperdrive deployment, migration, SQL execution, environment changes or real network access.
+**Important terminology:** Render has an existing `cyph1_commerce_development` database (PostgreSQL 17, Frankfurt). There is **no separate staging-named Postgres instance** in the connected Render workspace. This is the non-production testing candidate; **`cyph1_commerce_production` must never be used**.
 
-## Intent
-Use the existing staging PostgreSQL, but keep all probe writes in an isolated `cyph1_hyperdrive_probe` schema. No existing orders, payments, communication, fulfilment, customer or inventory rows may be changed. The existing harness queries `cyph1_hyperdrive_probe_jobs` without a schema. The dedicated probe role's reviewed `search_path` targets the isolated `cyph1_hyperdrive_probe` schema containing that table; this must be validated under the actual restricted role before any live test.
+Read-only Render inspection on 14 October 2026 established that `cyph1_hyperdrive_probe` schema and restricted role do not exist. The development database's external IP allowlist currently includes `0.0.0.0/0`. That means source-IP access is broad; password and TLS controls remain necessary. Do not make production-network changes.
 
-## Prepared artifacts
-- `prototypes/cloudflare-commerce-cron/sql/staging-probe-setup.sql`: **not executed**; operator-review DDL and restricted privileges.
-- `prototypes/cloudflare-commerce-cron/sql/staging-probe-cleanup.sql`: **not executed**, staging-only.
-- `prototypes/cloudflare-commerce-cron/src/staging-probe-runner.mjs`: bounded, injected-client runner without network or environment handling.
-- `staging-probe.test.mjs`: mock-only safety tests added to CI.
+## Changes prepared, not applied
 
-## Mandatory checks before any staging action
-1. **Verify actual staging DB name**; SQL currently uses the **illustrative** `cyph1_commerce_staging`, which must be corrected to the actual database name by an operator. Never guess connection details or run against `cyph1_commerce_production`. Do not paste credentials into GitHub or chat.
-2. Confirm existing staging database backups and the least-privilege role has **no broader rights** via PUBLIC, inherited roles, default database privileges, or existing grants; restrict `CONNECT` and table grants to only the isolated probe context where feasible.
-3. Review Postgres ownership, non-public networking, certificate validation, the potential Render external DB access path, Hyperdrive TLS and account free-tier quotas/costs. **Do not open network access to production to support this test.**
-4. Prepare a dedicated role secret with the operator's secure store. No credentials in code, SQL files, PR comments or screenshots.
-5. Verify the effective probe-role `search_path` resolves only the intended isolated test table; recheck the DDL and cleanup for the actual staging cluster before execution. Ensure the live Worker is **not** attached to actual payment, messaging or commerce events.
-6. Ask for **separate explicit authorisation** before running even staging DDL, creating a Hyperdrive configuration or deploying a Worker. Show expected resource changes and cost controls.
-7. Once approved, conduct two-client concurrent claims, rollback on error, CPU and query budget measurements and cancellation/recovery verification. Require `COMMERCE_CRON_ENABLED=false` for all deployed commerce code until a distinct launch sign-off.
+- `prototypes/cloudflare-commerce-cron/sql/staging-probe-setup.sql` targets **exactly** `cyph1_commerce_development`, checks `current_database()` and restricted role attributes **before writes**, creates an isolated schema and a `cyph1_hyperdrive_probe_jobs` table, and grants only intended table SELECT and status UPDATE. It does **not** create roles or set passwords.
+- `staging-probe-cleanup.sql` fails closed outside development and uses `DROP SCHEMA ... RESTRICT`, not CASCADE.
+- The existing proof-of-concept transaction harness references the unqualified table; the restricted role's reviewed search_path points at its intended private schema. Verify effective resolution under the restricted role during an independently approved live probe.
+- Unit tests test SQL guardrails; no SQL is executed by CI.
 
-A green PR proves mock control flow only; it does **not** prove actual Hyperdrive connectivity, SQL semantics or free-tier viability.
+## Must happen before any database changes
+
+1. Confirm backups, actual DB identity and operator access again. The dedicated role must be created **out of band** with a strong secret in the approved secret manager (do not paste in chat, git, logs or screenshots), LOGIN but neither SUPERUSER nor CREATEDB nor CREATEROLE, no inherited commerce roles. Verify it does not inherit access to existing commerce tables through PUBLIC or other privileges.
+2. Independently verify role privileges, schema defaults and actual effective CONNECT/USAGE. PostgreSQL PUBLIC grants on the database and the `public` schema are not changed automatically because blanket revocation could disrupt existing commerce staging.
+3. Assess the Render development database's broad external allowlist (`0.0.0.0/0`), TLS certificate validation, Cloudflare Hyperdrive's connection requirements and no-additional-cost assertion. **Do not loosen or adjust either database's network allowlist merely to pass the test.** Escalate if secure connectivity cannot be established.
+4. Request separate explicit approval for role provisioning, setup SQL, Hyperdrive configuration, and test Worker deployment after presenting exact resources, network changes and cost implications.
+5. Keep `COMMERCE_CRON_ENABLED=false` and checkout/payment/email/fulfilment flags disabled. The future probe must use synthetic jobs only and cannot send emails or mutate actual commerce tables.
+
+## Future live test (not in this PR)
+
+Test concurrent `FOR UPDATE SKIP LOCKED` claims, rollback, timeouts, connections and TLS, CPU and Hyperdrive usage, missed Cron ticks, double delivery prevention, and an explicit cleanup path. Until measured, compatibility and £0 additional ongoing cost remain unproven.
