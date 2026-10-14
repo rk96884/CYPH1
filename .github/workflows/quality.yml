@@ -45,6 +45,12 @@ jobs:
       - name: Test disabled Cloudflare scheduled worker prototype
         run: node --test prototypes/cloudflare-commerce-cron/worker.test.mjs
 
+      - name: Test Cloudflare PostgreSQL driver compatibility without database access
+        run: node --test prototypes/cloudflare-commerce-cron/pg-compat.test.mjs
+
+      - name: Compile Cloudflare PostgreSQL compatibility probe without deployment
+        run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.pg-compat.toml --outdir /tmp/cyph1-pg-compat-output
+
       - name: Test Operations capture controls
         run: npm run test:operations-capture-ui
 
