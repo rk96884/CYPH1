@@ -42,6 +42,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Test disabled Cloudflare scheduled worker prototype
+        run: node --test prototypes/cloudflare-commerce-cron/worker.test.mjs
+
       - name: Test Operations capture controls
         run: npm run test:operations-capture-ui
 
