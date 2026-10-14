@@ -8,10 +8,10 @@ import pg from "pg";
 
 const candidates = Object.freeze({
   europe: ["DE","FR","IE","ES","TR"],
-  asia: ["SG","MY","TH","JP","IN","HK"],
+  apac: ["SG","MY","TH","JP","IN","HK","AU","NZ"],
   "middle-east": ["AE","SA","QA","KW","BH","OM"],
   latam: ["BR","MX","CL","CO","AR"],
-  "rest-of-world": ["CA","AU","NZ","ZA"],
+  "rest-of-world": ["CA","ZA"],
 });
 const zoneForGroup = key => key === "europe" ? "europe" : "rest-of-world";
 const rateForGroup = key => key === "europe" ? 1499 : 2599;
