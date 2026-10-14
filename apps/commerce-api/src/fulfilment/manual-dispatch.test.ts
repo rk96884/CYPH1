@@ -60,6 +60,47 @@ test("packing and dispatch routes require separate verified permissions before t
   assert.equal((await protectedHandler(dispatch())).status,401);
 });
 
+
+test("packing, dispatch and collection review deny missing permissions before any fulfilment access", async () => {
+  let fulfilmentCalls = 0;
+  const guardedFulfilment = new Proxy({} as FulfilmentService, {
+    get() {
+      fulfilmentCalls += 1;
+      throw new Error("Forbidden route must not access fulfilment");
+    },
+  });
+  const makeRequest = (action: "packing" | "dispatch" | "collection-review") =>
+    new Request(`https://ops.example/operations/orders/${orderId}/${action}`, {
+      method: action === "packing" ? "GET" : "POST",
+      ...(action === "packing" ? {} : {
+        headers: { "content-type": "application/json", "idempotency-key": "permission-test" },
+        body: JSON.stringify(action === "dispatch" ? body : { approved: true }),
+      }),
+    });
+  for (const [action, permissions] of [
+    ["packing", []],
+    ["packing", ["orders:read"]],
+    ["packing", ["fulfilment:dispatch"]],
+    ["dispatch", []],
+    ["dispatch", ["orders:read"]],
+    ["dispatch", ["fulfilment:read"]],
+    ["collection-review", []],
+    ["collection-review", ["orders:read"]],
+    ["collection-review", ["fulfilment:read"]],
+  ] as const) {
+    const response = await handleOperationsRequest(makeRequest(action), ops, { id: "operator", permissions }, undefined, guardedFulfilment);
+    assert.equal(response.status, 403, `${action} permissions: ${permissions.join(",")}`);
+    assert.deepEqual(await response.json(), { message: "Permission denied." });
+    assert.equal(response.headers.get("Cache-Control"), "no-store");
+  }
+  for (const action of ["packing", "dispatch", "collection-review"] as const) {
+    const response = await handleOperationsRequest(makeRequest(action), ops, undefined, undefined, guardedFulfilment);
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { message: "Authentication required." });
+  }
+  assert.equal(fulfilmentCalls, 0, "Denied requests must never touch the fulfilment service");
+});
+
 const databaseUrl=process.env.MANUAL_DISPATCH_TEST_DATABASE_URL;
 test("real PostgreSQL manual dispatch, security, rollback and concurrency", {skip:!databaseUrl}, async t => {
   const url=new URL(databaseUrl!);
