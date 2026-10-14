@@ -36,7 +36,22 @@ test("limits batch size and contains no live bindings", async () => {
   const sql = await readFile(new URL("./sql/staging-probe-setup.sql", import.meta.url), "utf8");
   assert.match(sql, /CREATE SCHEMA IF NOT EXISTS cyph1_hyperdrive_probe/);
   assert.match(sql, /GRANT SELECT, UPDATE \(status\)/);
-  assert.doesNotMatch(sql, /GRANT ALL|SUPERUSER|CREATEDB|CREATE ROLE|CREATE USER|TRUNCATE|DROP TABLE/i);
+  // Inspect executable SQL statements, not permission-check identifiers such as rolcreatedb.
+  const executable = sql.split("\n").filter(line => !line.trimStart().startsWith("--")).join("\n");
+  assert.doesNotMatch(executable, /\bGRANT\s+ALL\b|\bCREATE\s+(?:ROLE|USER)\b|\bTRUNCATE\b|\bDROP\s+TABLE\b|\bALTER\s+ROLE\s+\S+\s+(?:WITH\s+)?(?:SUPERUSER|CREATEDB|CREATEROLE)\b/i);
   const runner = await readFile(new URL("./src/staging-probe-runner.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(runner, /process\.env|DATABASE_URL|BREVO_API_KEY|new pg\.|scheduled\(/);
+});
+
+test("development-only SQL setup and cleanup refuse production database", async () => {
+  const setup = await readFile(new URL("./sql/staging-probe-setup.sql", import.meta.url), "utf8");
+  const cleanup = await readFile(new URL("./sql/staging-probe-cleanup.sql", import.meta.url), "utf8");
+  for (const sql of [setup, cleanup]) {
+    assert.match(sql, /current_database\(\) <> 'cyph1_commerce_development'/);
+    assert.match(sql, /RAISE EXCEPTION 'REFUSED:/);
+    assert.doesNotMatch(sql, /DROP SCHEMA[^;]*CASCADE|0\.0\.0\.0\/0/);
+  }
+  assert.match(setup, /cyph1_hyperdrive_probe\.cyph1_hyperdrive_probe_jobs/);
+  assert.match(setup, /NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole/);
+  assert.match(cleanup, /DROP SCHEMA IF EXISTS cyph1_hyperdrive_probe RESTRICT/);
 });

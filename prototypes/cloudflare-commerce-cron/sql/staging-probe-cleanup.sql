@@ -1,6 +1,14 @@
--- REVIEW-ONLY. Requires separate approved staging-only execution.
--- Ensure no active Hyperdrive connections; revoke role credentials and bindings first.
+-- REVIEW ONLY: destructive cleanup; requires separate staging/development approval.
+-- First disconnect/disable test Hyperdrive binding and verify no dependencies.
 BEGIN;
-DROP SCHEMA IF EXISTS cyph1_hyperdrive_probe CASCADE;
--- Role intentionally not dropped automatically: operator checks dependencies.
+DO $guard$
+BEGIN
+  IF current_database() <> 'cyph1_commerce_development' THEN
+    RAISE EXCEPTION 'REFUSED: Hyperdrive probe cleanup targets development DB only';
+  END IF;
+END
+$guard$;
+-- Do not CASCADE: fail if unexpected dependent objects exist.
+DROP SCHEMA IF EXISTS cyph1_hyperdrive_probe RESTRICT;
 COMMIT;
+-- Restricted role and credentials require independent operator review/revocation.
