@@ -1,0 +1,11 @@
+# LOCAL BUILD-ONLY probe: never deploy this config.
+name = "cyph1-pg-compat-build-only"
+main = "src/pg-compat-probe.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+[vars]
+COMMERCE_CRON_ENABLED = "false"
+
+# Deliberately no triggers or Hyperdrive bindings.
