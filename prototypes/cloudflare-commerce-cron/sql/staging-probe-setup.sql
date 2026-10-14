@@ -5,7 +5,7 @@
 BEGIN;
 CREATE SCHEMA IF NOT EXISTS cyph1_hyperdrive_probe;
 REVOKE ALL ON SCHEMA cyph1_hyperdrive_probe FROM PUBLIC;
-CREATE TABLE IF NOT EXISTS cyph1_hyperdrive_probe.jobs (
+CREATE TABLE IF NOT EXISTS cyph1_hyperdrive_probe.cyph1_hyperdrive_probe_jobs (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','claimed'))
 );
