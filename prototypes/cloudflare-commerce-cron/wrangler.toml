@@ -1,0 +1,12 @@
+# Prototype only. NEVER deploy without separate approval and review.
+# No database bindings, secrets, email providers or payment integrations.
+name = "cyph1-commerce-cron-prototype"
+main = "src/worker.mjs"
+compatibility_date = "2026-10-14"
+workers_dev = false
+
+[vars]
+COMMERCE_CRON_ENABLED = "false"
+
+[triggers]
+crons = ["*/5 * * * *"]
