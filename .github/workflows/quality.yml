@@ -57,6 +57,12 @@ jobs:
       - name: Test read-only Hyperdrive connectivity probe without network access
         run: node --test prototypes/cloudflare-commerce-cron/hyperdrive-readonly.test.mjs
 
+      - name: Test explicit Hyperdrive manual invocation safeguards
+        run: node --test prototypes/cloudflare-commerce-cron/hyperdrive-manual-test.test.mjs
+
+      - name: Bundle manual Hyperdrive test Worker without deployment
+        run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.hyperdrive-manual-test.toml --outdir /tmp/cyph1-hyperdrive-manual-test
+
       - name: Compile read-only Hyperdrive probe without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.hyperdrive-readonly.toml --outdir /tmp/cyph1-hyperdrive-readonly-output
 
