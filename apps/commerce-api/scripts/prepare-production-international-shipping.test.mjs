@@ -20,10 +20,13 @@ test("international production plan is read-only, uses six commercial groups and
   assert.ok(plan.destinations.length>=20);
   assert.ok(plan.destinations.every(d=>d.status==="disabled" && d.countryCode!=="US"));
   assert.ok(plan.destinations.some(d=>d.group==="latam" && d.minor===2599));
-  assert.ok(plan.destinations.some(d=>d.group==="asia" && d.minor===2599));
+  assert.ok(plan.destinations.some(d=>d.group==="apac" && d.minor===2599));
   assert.ok(plan.destinations.some(d=>d.group==="europe" && d.minor===1499));
   assert.ok(plan.destinations.some(d=>d.group==="middle-east" && d.minor===2599));
   assert.ok(plan.destinations.some(d=>d.group==="rest-of-world" && d.minor===2599));
+  assert.ok(plan.destinations.some(d=>d.countryCode==="AU" && d.group==="apac"));
+  assert.ok(plan.destinations.some(d=>d.countryCode==="NZ" && d.group==="apac"));
+  assert.ok(!plan.destinations.some(d=>["AU","NZ"].includes(d.countryCode) && d.group==="rest-of-world"));
 });
 test("production international apply refuses missing gates without database access",()=>{
   const result=invoke(["--apply"],{DATABASE_URL:"postgres://user:secret@localhost/cyph1_commerce_production"});
