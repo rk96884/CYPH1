@@ -170,7 +170,7 @@ test("definitive non-retryable provider failures abandon the draft order", async
   assert.deepEqual(repository.resolutionRequired, []);
 });
 
-for (const [countryCode, deliveryMinor] of [["GB", 399], ["DE", 1499], ["FR", 1499], ["TR", 1499], ["AE", 2599], ["SA", 2599], ["US", 2599], ["CA", 2599], ["AU", 2599]] as const) {
+for (const [countryCode, deliveryMinor] of [["GB", 399], ["DE", 1499], ["FR", 1499], ["TR", 1499], ["AE", 2599], ["SA", 2599], ["CA", 2599], ["AU", 2599]] as const) {
   test(`international test checkout calculates ${countryCode} totals server-side`, async () => {
     const repository = new MemoryCheckoutRepository();
     const captured: CreateCheckoutInput[] = [];
@@ -240,7 +240,8 @@ import pg from "pg";
 test("shipping setup never permits production/live and defaults every destination to unapproved", async () => {
   const env = { NODE_ENV: "test", PAYMENT_PROVIDER: "mollie-test", COMMERCE_ENABLED: "false", SHIPPING_SETUP_CONFIRM: "international-test-only", DATABASE_URL: "postgres://local/commerce_test" };
   assert.deepEqual(shippingSetupCountries(env), []);
-  assert.deepEqual(shippingSetupCountries({ ...env, SHIPPING_TEST_COUNTRIES: "GB,DE,FR,TR,AE,SA,US,CA,AU" }), ["GB","DE","FR","TR","AE","SA","US","CA","AU"]);
+  assert.deepEqual(shippingSetupCountries({ ...env, SHIPPING_TEST_COUNTRIES: "GB,DE,FR,TR,AE,SA,CA,AU" }), ["GB","DE","FR","TR","AE","SA","CA","AU"]);
+  assert.throws(() => shippingSetupCountries({ ...env, SHIPPING_TEST_COUNTRIES: "GB,US" }), /USA is excluded/);
   for (const override of [{ NODE_ENV: "production" }, { PAYMENT_PROVIDER: "mollie-live" }, { COMMERCE_ENABLED: "true" }, { SHIPPING_SETUP_CONFIRM: "" }, { DATABASE_URL: "postgres://local/commerce" }, { SHIPPING_TEST_COUNTRIES: "UK" }]) assert.throws(() => shippingSetupCountries({ ...env, ...override }));
   const statements: { sql: string; values: unknown[] | undefined }[] = [];
   const client = { query: async (sql: string, values?: unknown[]) => { statements.push({ sql, values }); return { rowCount: sql.startsWith("SELECT country_code") ? 0 : 1, rows: [{ id: "method", zone_id: "zone" }] }; }, release() {} };
@@ -596,7 +597,8 @@ test("UK home and InPost quantities bind approved shipping, synthetic totals and
 
 test("UK home multi-unit rates require private test mode and their stored GB revision; other destinations remain guarded",async()=>{
  const repo=new UkHomeCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
- for(const countryCode of ["DE","TR","AE","US"]){await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode}),/packaging requires approval/);}
+ for(const countryCode of ["DE","TR","AE"]){await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode}),/packaging requires approval/);}
+ await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"US"}),/Shipping is not available for this destination/);
  repo.homeVersion=1;await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}),/packaging requires approval/);
  repo.homeVersion=2;repo.homePrice=1;await assert.rejects(()=>service.quote({productSlug:"integration-test-fixture",quantity:3,countryCode:"GB"}),/packaging requires approval/);
  repo.homePrice=799;
