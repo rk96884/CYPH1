@@ -36,7 +36,9 @@ test("limits batch size and contains no live bindings", async () => {
   const sql = await readFile(new URL("./sql/staging-probe-setup.sql", import.meta.url), "utf8");
   assert.match(sql, /CREATE SCHEMA IF NOT EXISTS cyph1_hyperdrive_probe/);
   assert.match(sql, /GRANT SELECT, UPDATE \(status\)/);
-  assert.doesNotMatch(sql, /GRANT ALL|SUPERUSER|CREATEDB|CREATE ROLE|CREATE USER|TRUNCATE|DROP TABLE/i);
+  // Inspect executable SQL statements, not permission-check identifiers such as rolcreatedb.
+  const executable = sql.split("\n").filter(line => !line.trimStart().startsWith("--")).join("\n");
+  assert.doesNotMatch(executable, /\bGRANT\s+ALL\b|\bCREATE\s+(?:ROLE|USER)\b|\bTRUNCATE\b|\bDROP\s+TABLE\b|\bALTER\s+ROLE\s+\S+\s+(?:WITH\s+)?(?:SUPERUSER|CREATEDB|CREATEROLE)\b/i);
   const runner = await readFile(new URL("./src/staging-probe-runner.mjs", import.meta.url), "utf8");
   assert.doesNotMatch(runner, /process\.env|DATABASE_URL|BREVO_API_KEY|new pg\.|scheduled\(/);
 });
