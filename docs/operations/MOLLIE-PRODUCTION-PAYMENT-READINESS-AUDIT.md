@@ -16,9 +16,13 @@ This is a narrow review of PAY-01 in [COMMERCE-LAUNCH-READINESS.md](COMMERCE-LAU
 | Production baseline | Owner verified on 14 October that `COMMERCE_ENABLED=false`, `CHECKOUT_HTTP_ENABLED=false`, `PAYMENT_WEBHOOKS_ENABLED=false`, `PAYMENT_PROVIDER=disabled`, `FULFILMENT_MODE=disabled`, `FULFILMENT_PROVIDER=disabled` on the relevant production service. | OWNER-REPORTED; DO NOT CHANGE |
 | Production shipping | Owner's 14 October read-only inspection: GB + 31 destinations, all disabled; 35 disabled rates; USA excluded. | DB SNAPSHOT; NOT LAUNCH-ELIGIBLE |
 
+## Account-level confirmation — 14 October 2026
+
+The project owner confirms that the **CYPH1 LTD Mollie live merchant profile is approved**, the **desired live payment methods are approved/available**, and the **settlement bank account has been approved**. Record these as **OWNER-CONFIRMED** in the launch evidence, not independently inspected by this code audit. No bank identifiers, account numbers or API credentials are recorded. This closes the three account-status confirmation items; it does **not** mean that production payment routing, webhook handling or a live transaction has been activated or validated.
+
 ## Distinct remaining PAY-01 evidence before GO
 
-1. **Merchant account:** verify current Mollie production account/business verification, payment methods approved for CYPH1 LTD and the selling model, authorised administrators/MFA, settlement bank account ownership and payout/capture rules. This needs a secure, account-side read-only check; do not send keys, bank details or identity records to chats or tickets.
+1. **Merchant account:** merchant profile, payment method and settlement bank approvals are **owner-confirmed** as above. Restrict the remaining account checks to administrator/MFA access review and documented payout/capture rules; do not request the same approval confirmation again.
 2. **Live credential and webhook provenance:** confirm that live credentials can be provisioned through restricted Render secret settings, sender/webhook endpoint authenticity and isolation from staging. Do **not** enter or activate credentials during this audit; do not expose a live webhook route or run a test transaction yet.
 3. **Production runtime separation:** assess both customer and operations services, current flag values, worker/job routing, access grants and origin/DNS protections. No movement from `disabled` is implied by a merged PR.
 4. **Financial policy:** reconcile planned £74.99 unit retail price, shipping charges, tax/VAT treatment, fees, capture/refund timings, refund permissions, chargebacks, bank payout schedule and ledger/reconciliation owner. Existing pricing discussion is sufficient baseline; only final sign-off is open.
@@ -27,10 +31,8 @@ This is a narrow review of PAY-01 in [COMMERCE-LAUNCH-READINESS.md](COMMERCE-LAU
 
 ## Read-only next action
 
-Have the owner confirm **without sharing credentials** whether the Mollie dashboard shows that the **live merchant profile is approved and able to accept payments**, and whether the desired payment methods are active. Record date, account-side status and reviewer in the restricted launch evidence record; report *pending* if the status cannot be confirmed.
-
-Do not use the presence of a live API key, test-mode success or the installed Mollie integration as proof of merchant eligibility.
+Record the 14 October account-status owner confirmation in the restricted launch control register. Next inspect **only** the remaining production controls and account access (administrators/MFA, settlement/payout rules, live credential separation, webhook provenance and finance sign-off) without activating payment routes, creating orders or sharing sensitive values.
 
 ## Conclusion
 
-PAY-01 remains **BLOCKED / NOT APPROVED**. Technical engineering has substantial staging evidence. Remaining work is account-level approval, production credentials/controls assessment, financial and policy signoff and a future expressly authorised bounded live validation. This audit is **documentation only** and intentionally changes no code, DB, rate status, shipping destination, secret, runtime gate, payment, fulfilment or communication.
+PAY-01 remains **BLOCKED / NOT APPROVED**. Technical engineering has substantial staging evidence. Account approval has been **owner-confirmed**. Remaining work is administrator/account control review, production credentials/controls assessment, financial and policy signoff and a future expressly authorised bounded live validation. This audit is **documentation only** and intentionally changes no code, DB, rate status, shipping destination, secret, runtime gate, payment, fulfilment or communication.
