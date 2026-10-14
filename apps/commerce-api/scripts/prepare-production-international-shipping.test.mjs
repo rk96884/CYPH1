@@ -17,13 +17,14 @@ test("international production plan is read-only, uses six commercial groups and
   assert.equal(plan.usa,"excluded");
   assert.equal(plan.existingUk,"unchanged");
   assert.equal(plan.newZones.length,2);
-  assert.ok(plan.destinations.length>=20);
+  assert.equal(plan.destinations.length,31);
   assert.ok(plan.destinations.every(d=>d.status==="disabled" && d.countryCode!=="US"));
   assert.ok(plan.destinations.some(d=>d.group==="latam" && d.minor===2599));
   assert.ok(plan.destinations.some(d=>d.group==="apac" && d.minor===2599));
   assert.ok(plan.destinations.some(d=>d.group==="europe" && d.minor===1499));
   assert.ok(plan.destinations.some(d=>d.group==="middle-east" && d.minor===2599));
   assert.ok(plan.destinations.some(d=>d.group==="rest-of-world" && d.minor===2599));
+  for (const code of ["PK","KZ","UZ","KG","TJ"]) assert.ok(plan.destinations.some(d=>d.countryCode===code && d.group==="apac" && d.minor===2599 && d.status==="disabled"));
   assert.ok(plan.destinations.some(d=>d.countryCode==="AU" && d.group==="apac"));
   assert.ok(plan.destinations.some(d=>d.countryCode==="NZ" && d.group==="apac"));
   assert.ok(!plan.destinations.some(d=>["AU","NZ"].includes(d.countryCode) && d.group==="rest-of-world"));
