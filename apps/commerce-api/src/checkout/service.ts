@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createHash } from "node:crypto";
 import {
   calculateBasket, inpostCollectionMethod, inpostParcelForQuantity, maximumCheckoutQuantity, normaliseCollectionPoint, normaliseUkMobile, type CollectionPoint,
-  normaliseCountryCode, shippingZoneForCountry, trackedPostageMinor, ukTrackedPostageForQuantity, trackedPostageMethod, importChargesNotice,
+  normaliseCountryCode, isExcludedLaunchCountry, shippingZoneForCountry, trackedPostageMinor, ukTrackedPostageForQuantity, trackedPostageMethod, importChargesNotice,
   CommerceDomainError,
   money,
   PaymentProviderError,
@@ -114,6 +114,7 @@ export class CheckoutService {
     let country: string;
     try { country = normaliseCountryCode(input.countryCode); }
     catch { throw new CheckoutError("invalid_request", "Select a valid ISO country code."); }
+    if (isExcludedLaunchCountry(country)) throw new CheckoutError("unavailable", "Shipping is not available for this destination.");
     const deliveryMethod = input.deliveryMethod ?? trackedPostageMethod;
     const collection = deliveryMethod === inpostCollectionMethod;
     if (![trackedPostageMethod, inpostCollectionMethod].includes(deliveryMethod)) throw new CheckoutError("invalid_request", "Select an available delivery method.");

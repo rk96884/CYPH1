@@ -1,5 +1,5 @@
 import pg from "pg";
-import { countryCodes, normaliseCountryCode, shippingZoneForCountry, trackedPostageMethod, trackedPostageMinor, inpostCollectionMethod, inpostCollectionMinor } from "../../../../packages/commerce-core/src/index.js";
+import { countryCodes, normaliseCountryCode, isExcludedLaunchCountry, shippingZoneForCountry, trackedPostageMethod, trackedPostageMinor, inpostCollectionMethod, inpostCollectionMinor } from "../../../../packages/commerce-core/src/index.js";
 
 const appendInpostLargeTestRate = async (client: pg.PoolClient, zoneId: string, methodId: string) => {
   await client.query("INSERT INTO shipping_rates(zone_id,shipping_method_id,country_code,rate_minor,currency,status,effective_from,version) VALUES($1,$2,'GB',399,'GBP','test',now(),2) ON CONFLICT(zone_id,shipping_method_id,country_code,version) DO NOTHING",[zoneId,methodId]);
@@ -16,11 +16,14 @@ export const shippingSetupCountries = (environment: Readonly<Record<string, stri
   let database: URL;
   try { database = new URL(environment.DATABASE_URL ?? ""); } catch { throw new Error("Shipping setup requires a valid database URL."); }
   if (!["postgres:", "postgresql:"].includes(database.protocol) || !/(?:^|[_-])(?:development|staging|test)(?:$|[_-])/i.test(decodeURIComponent(database.pathname.slice(1)))) throw new Error("Shipping setup requires a named development/staging/test database.");
-  return Object.freeze((environment.SHIPPING_TEST_COUNTRIES ?? "").split(",").map(value => value.trim()).filter(Boolean).map(normaliseCountryCode));
+  const countries = (environment.SHIPPING_TEST_COUNTRIES ?? "").split(",").map(value => value.trim()).filter(Boolean).map(normaliseCountryCode);
+  if (countries.some(isExcludedLaunchCountry)) throw new Error("USA is excluded from CYPH/1 shipping launch configuration.");
+  return Object.freeze(countries);
 };
 
 export const configureInternationalShipping = async (pool: pg.Pool, testCountries: readonly string[], includeInpost = false, inpostRatesOnly = false, ukHomeRatesOnly = false): Promise<void> => {
   const approved = new Set(testCountries.map(normaliseCountryCode));
+  if (approved.has("US")) throw new Error("USA is excluded from CYPH/1 shipping launch configuration.");
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
