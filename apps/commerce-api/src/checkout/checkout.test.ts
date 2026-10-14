@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { money, PaymentProviderError, type CreateCheckoutInput, type PaymentProvider, type ShippingRate, shippingZoneForCountry, trackedPostageMinor } from "../../../../packages/commerce-core/src/index.js";
+import { money, PaymentProviderError, type CreateCheckoutInput, type PaymentProvider, type ShippingRate, shippingZoneForCountry, shippingRegionForCountry, isExcludedLaunchCountry, trackedPostageMinor } from "../../../../packages/commerce-core/src/index.js";
 import { CheckoutError, CheckoutService, type CheckoutOrder, type CheckoutRepository, type CheckoutResult } from "./service.js";
 
 class MemoryCheckoutRepository implements CheckoutRepository {
@@ -659,4 +659,20 @@ test("PostgreSQL UK home revision append preserves historical orders and persist
    assert.equal(Number(row.delivery_minor),charge);assert.equal(Number(row.total_minor),100*quantity+charge);assert.equal(Number(row.amount_minor),100*quantity+charge);assert.equal(row.shipping_rate_snapshot.quantity,quantity);
   }}
  }finally{await pool.end();await admin.query(`DROP SCHEMA "${schema}" CASCADE`);await admin.query("SELECT pg_advisory_unlock(80317)");await admin.end();}
+});
+test("six shipping regions are classification only and USA is explicitly excluded", () => {
+  for (const [country, region] of [["GB","UK"],["DE","Europe"],["TR","Europe"],["SG","Asia"],["AE","Middle East"],["BR","LATAM"],["CA","Rest of World"],["AU","Rest of World"],["US","Rest of World"]] as const) assert.equal(shippingRegionForCountry(country),region);
+  assert.equal(isExcludedLaunchCountry("US"),true);
+  assert.equal(isExcludedLaunchCountry("CA"),false);
+  assert.equal(trackedPostageMinor[shippingZoneForCountry("DE")],1499);
+  assert.equal(trackedPostageMinor[shippingZoneForCountry("SG")],2599);
+});
+
+test("USA cannot receive a shipping quote even when a test destination rate exists", async () => {
+  const repository = new MemoryCheckoutRepository();
+  const payments: CreateCheckoutInput[] = [];
+  const address = { ...request().deliveryAddress, countryCode:"US" };
+  await assert.rejects(() => serviceFor(repository,payments).initiate(request({ deliveryAddress:address, importChargesAccepted:true })), (error:unknown) => error instanceof CheckoutError && error.code === "unavailable");
+  assert.equal(repository.orders.length,0);
+  assert.equal(payments.length,0);
 });
