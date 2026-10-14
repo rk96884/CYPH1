@@ -118,7 +118,7 @@ export class CheckoutService {
     const deliveryMethod = input.deliveryMethod ?? trackedPostageMethod;
     const collection = deliveryMethod === inpostCollectionMethod;
     if (![trackedPostageMethod, inpostCollectionMethod].includes(deliveryMethod)) throw new CheckoutError("invalid_request", "Select an available delivery method.");
-    if (collection && (!this.testShippingAllowed || country !== "GB")) throw new CheckoutError("unavailable", "InPost collection requires UK test checkout (maximum 3 devices); launch approval remains pending.");
+    if (collection && country !== "GB") throw new CheckoutError("unavailable", "InPost collection is available only for UK destinations.");
     const product = await this.repository.getProduct(requireText(input.productSlug, "Product"));
     if (!product || (product.status !== "active" && !(this.testShippingAllowed && product.status === "private"))) throw new CheckoutError("unavailable", "This product is not available for checkout.");
     if (product.availableQuantity < input.quantity || product.priceMinor <= 0) throw new CheckoutError("unavailable", "The requested quantity is not available.");
@@ -131,12 +131,15 @@ export class CheckoutService {
       const carrierRates = shipping.rates.filter(rate => !collection && rate.carrierTariff && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
       const packagingProfiles = carrierRates.length ? await this.repository.getPackagingProfiles?.(product.id) ?? [] : [];
       // Approved carrier configuration takes precedence, even when it yields no eligible service.
-      // UK flat-rate multi-unit pricing is private test only, not packaging/compensation approval.
-      const ukHomeMulti = !collection && country === "GB" && this.testShippingAllowed && input.quantity > 1;
-      const flatCharge = collection ? inpostParcelForQuantity(input.quantity).deliveryMinor : country === "GB" ? ukTrackedPostageForQuantity(input.quantity) : trackedPostageMinor[zone];
+      // Flat-rate UK revisions have explicit quantity mappings; the database must separately
+      // approve each destination, method and rate. Disabled/test records never grant live eligibility.
+      const ukFlat = country === "GB";
+      const ukRevision = collection ? (input.quantity === 3 ? 2 : 1) : (input.quantity > 1 ? 2 : 1);
+      const flatCharge = collection ? inpostParcelForQuantity(input.quantity).deliveryMinor : ukFlat ? ukTrackedPostageForQuantity(input.quantity) : trackedPostageMinor[zone];
       const flatRates = shipping.rates.filter(rate => rate.methodKey === deliveryMethod && !rate.carrierTariff && rate.price.currency === "GBP" && rate.price.value === flatCharge && rate.freeShippingThreshold === undefined
-        && (!ukHomeMulti || (rate.countryCode === "GB" && rate.version === 2 && rate.status === "test")));
-      if (!collection && !carrierRates.length && input.quantity > 1 && !(ukHomeMulti && flatRates.length)) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
+        && (!ukFlat || (rate.countryCode === "GB" && rate.version === ukRevision))
+        && (rate.status === "active" || (this.testShippingAllowed && rate.status === "test")));
+      if (!collection && !carrierRates.length && input.quantity > 1 && !(ukFlat && flatRates.length)) throw new CheckoutError("unavailable", "Multi-unit packaging requires approval.");
       const quotes = quoteShipping({ ...shipping, rates: carrierRates.length ? carrierRates : flatRates,
         basketSubtotal: provisional.subtotal, totalWeightGrams: provisional.totalWeightGrams, allowTestRates: this.testShippingAllowed,
         shipment: {productId:product.id,quantity:input.quantity,unitWeightGrams:product.shippingWeightGrams,

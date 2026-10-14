@@ -495,12 +495,12 @@ test("InPost collection fails closed for incomplete details, foreign/over-limit/
   const repo=new CollectionCheckoutRepository(),capture:CreateCheckoutInput[]=[],service=serviceFor(repo,capture);
   for(const deliveryAddress of [{...request().deliveryAddress},{...request().deliveryAddress,phone:"02012345678",collectionPoint},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,postalCode:"90210"}},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,address:""}}]) await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress})),e=>e instanceof CheckoutError&&e.code==="invalid_request");
   await assert.rejects(()=>service.initiate(collectionRequest({quantity:4})),/between 1 and 3/);
-  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/UK test checkout/);
+  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/only for UK destinations/);
   await assert.rejects(()=>service.initiate(collectionRequest({expectedTotalMinor:1})),/total has changed/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingRateId:"rate_test"})),/available shipping/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:"0".repeat(64)})),/quote changed/);
   await assert.rejects(()=>service.initiate(collectionRequest({paymentMethod:"klarna"})),/provider validation/);
-  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/UK test checkout/);
+  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/product is not available/);
   repo.inpostPrice=1;await assert.rejects(()=>service.initiate(collectionRequest()),/not approved/);
   assert.equal(repo.orders.length,0);assert.equal(capture.length,0);
 });
@@ -606,6 +606,63 @@ test("UK home multi-unit rates require private test mode and their stored GB rev
  const nonPrivate=new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},publicRepo,provider(payments),urls,false);
  await assert.rejects(()=>nonPrivate.quote({productSlug:"integration-test-fixture",quantity:2,countryCode:"GB"}),/packaging requires approval/);
  assert.equal(payments.length,0);assert.equal(repo.orders.length,0);
+});
+
+test("production-ready UK flat rates remain fail-closed until independently activated", async () => {
+  // Synthetic active fixtures model a future, separately approved database state.
+  // No production settings or rows are modified by these tests.
+  class ApprovalRepository implements CheckoutRepository {
+    private readonly fixture = new UkHomeCheckoutRepository();
+    approved = false;
+    async getProduct(slug: string) {
+      const product = await this.fixture.getProduct();
+      return { ...product, status: "active" as const };
+    }
+    async getShipping(country = "GB") {
+      const shipping = await this.fixture.getShipping(country);
+      return { ...shipping,
+        destination: { ...shipping.destination, status: this.approved ? "active" as const : "disabled" as const },
+        rates: shipping.rates.map(rate => ({ ...rate, status: this.approved ? "active" as const : "disabled" as const })),
+      };
+    }
+    findCheckout(key: string, fingerprint: string) { return this.fixture.findCheckout(key, fingerprint); }
+    createOrder(order: CheckoutOrder, key: string, fingerprint: string) { return this.fixture.createOrder(order, key, fingerprint); }
+    attachPayment(input: Parameters<CheckoutRepository["attachPayment"]>[0]) { return this.fixture.attachPayment(input); }
+    abandonOrder(id: string) { return this.fixture.abandonOrder(id); }
+    markResolutionRequired(id: string) { return this.fixture.markResolutionRequired(id); }
+  }
+  for (const deliveryMethod of ["tracked-postage-packing", "inpost-locker-shop"]) {
+    for (const quantity of [1, 2, 3]) {
+      const repo = new ApprovalRepository(), calls: CreateCheckoutInput[] = [];
+      const service = new CheckoutService(
+        { commerceEnabled: true, paymentProvider: "mollie-live", fulfilmentMode: "live", fulfilmentProvider: "manual-live" },
+        repo, { ...provider(calls), key: "mollie-live" }, urls,
+      );
+      const input = { productSlug: "integration-test-fixture", quantity, countryCode: "GB", deliveryMethod };
+      await assert.rejects(() => service.quote(input), /not approved|Multi-unit packaging requires approval/);
+      assert.equal(calls.length, 0);
+      repo.approved = true;
+      const quote = await service.quote(input);
+      const expected = deliveryMethod === "inpost-locker-shop" ? (quantity === 3 ? 399 : 259) : (quantity === 1 ? 399 : 799);
+      assert.equal(quote.deliveryMinor, expected);
+      assert.equal(quote.shippingRateId, deliveryMethod === "inpost-locker-shop"
+        ? (quantity === 3 ? "inpost_large_test" : "inpost_test")
+        : (quantity === 1 ? "rate_test" : "uk_home_multi"));
+      assert.equal(calls.length, 0); // Quotes never initiate payment.
+    }
+  }
+});
+
+test("production-ready shipping still excludes USA and blocks unapproved international multi-unit", async () => {
+  const repo = new UkHomeCheckoutRepository(), calls: CreateCheckoutInput[] = [];
+  const service = new CheckoutService(
+    { commerceEnabled: true, paymentProvider: "mollie-live", fulfilmentMode: "live", fulfilmentProvider: "manual-live" },
+    repo, { ...provider(calls), key: "mollie-live" }, urls,
+  );
+  await assert.rejects(() => service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode: "US" }), /not available/);
+  await assert.rejects(() => service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode: "DE" }), /not available|not approved/);
+  assert.equal(repo.orders.length, 0);
+  assert.equal(calls.length, 0);
 });
 
 test("UK home historical orders and idempotent snapshots survive rate changes; stale quotes cannot pay",async()=>{
