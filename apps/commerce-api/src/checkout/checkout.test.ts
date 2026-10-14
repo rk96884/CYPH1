@@ -608,6 +608,54 @@ test("UK home multi-unit rates require private test mode and their stored GB rev
  assert.equal(payments.length,0);assert.equal(repo.orders.length,0);
 });
 
+test("production-ready UK flat rates remain fail-closed until independently activated", async () => {
+  // Synthetic active fixtures model a future, separately approved database state.
+  // No production settings or rows are modified by these tests.
+  class ApprovalRepository extends UkHomeCheckoutRepository {
+    approved = false;
+    override async getProduct() { return { ...await super.getProduct(), status: "active" as const }; }
+    override async getShipping(country = "GB") {
+      const shipping = await super.getShipping(country);
+      return { ...shipping,
+        destination: { ...shipping.destination, status: this.approved ? "active" as const : "disabled" as const },
+        rates: shipping.rates.map(rate => ({ ...rate, status: this.approved ? "active" as const : "disabled" as const })),
+      };
+    }
+  }
+  for (const deliveryMethod of ["tracked-postage-packing", "inpost-locker-shop"]) {
+    for (const quantity of [1, 2, 3]) {
+      const repo = new ApprovalRepository(), calls: CreateCheckoutInput[] = [];
+      const service = new CheckoutService(
+        { commerceEnabled: true, paymentProvider: "mollie-live", fulfilmentMode: "live", fulfilmentProvider: "manual-live" },
+        repo, { ...provider(calls), key: "mollie-live" }, urls,
+      );
+      const input = { productSlug: "integration-test-fixture", quantity, countryCode: "GB", deliveryMethod };
+      await assert.rejects(() => service.quote(input), /not approved/);
+      assert.equal(calls.length, 0);
+      repo.approved = true;
+      const quote = await service.quote(input);
+      const expected = deliveryMethod === "inpost-locker-shop" ? (quantity === 3 ? 399 : 259) : (quantity === 1 ? 399 : 799);
+      assert.equal(quote.deliveryMinor, expected);
+      assert.equal(quote.shippingRateId, deliveryMethod === "inpost-locker-shop"
+        ? (quantity === 3 ? "inpost_large_test" : "inpost_test")
+        : (quantity === 1 ? "rate_test" : "uk_home_multi"));
+      assert.equal(calls.length, 0); // Quotes never initiate payment.
+    }
+  }
+});
+
+test("production-ready shipping still excludes USA and blocks unapproved international multi-unit", async () => {
+  const repo = new UkHomeCheckoutRepository(), calls: CreateCheckoutInput[] = [];
+  const service = new CheckoutService(
+    { commerceEnabled: true, paymentProvider: "mollie-live", fulfilmentMode: "live", fulfilmentProvider: "manual-live" },
+    repo, { ...provider(calls), key: "mollie-live" }, urls,
+  );
+  await assert.rejects(() => service.quote({ productSlug: "integration-test-fixture", quantity: 1, countryCode: "US" }), /not available/);
+  await assert.rejects(() => service.quote({ productSlug: "integration-test-fixture", quantity: 2, countryCode: "DE" }), /not available|not approved/);
+  assert.equal(repo.orders.length, 0);
+  assert.equal(calls.length, 0);
+});
+
 test("UK home historical orders and idempotent snapshots survive rate changes; stale quotes cannot pay",async()=>{
  const repo=new UkHomeCheckoutRepository(),payments:CreateCheckoutInput[]=[],service=serviceFor(repo,payments);
  const single=await service.quote({productSlug:"integration-test-fixture",quantity:1,countryCode:"GB"});
