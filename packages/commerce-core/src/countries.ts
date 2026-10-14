@@ -24,3 +24,24 @@ export const ukTrackedPostageForQuantity = (quantity: number): number => {
   if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 3) throw new CommerceDomainError("invalid_quantity", "Quantity must be a whole number between 1 and 3.");
   return quantity === 1 ? 399 : 799;
 };
+
+/**
+ * Customer-facing reporting/administration regions. These are deliberately
+ * separate from the three existing pricing zones and never grant eligibility.
+ * Destinations are only offered when explicitly enabled in shipping tables.
+ */
+export type ShippingRegion = "UK" | "Europe" | "Asia" | "Middle East" | "LATAM" | "Rest of World";
+const middleEast = new Set("AE BH IL IQ JO KW LB OM PS QA SA YE".split(" "));
+const latam = new Set("AR BO BR BZ CL CO CR CU DO EC GF GT GY HN HT MX NI PA PE PY SR SV UY VE".split(" "));
+const asia = new Set("AF AM AZ BD BN BT CN GE HK ID IN JP KG KH KP KR KZ LA LK MM MN MO MY NP PH PK SG TH TJ TL TM TW UZ VN".split(" "));
+export const shippingRegionForCountry = (value: string): ShippingRegion => {
+  const code = normaliseCountryCode(value);
+  if (code === "GB") return "UK";
+  if (europe.has(code)) return "Europe";
+  if (middleEast.has(code)) return "Middle East";
+  if (latam.has(code)) return "LATAM";
+  if (asia.has(code)) return "Asia";
+  return "Rest of World";
+};
+/** Commercially excluded launch destination regardless of pricing zone. */
+export const isExcludedLaunchCountry = (value: string): boolean => normaliseCountryCode(value) === "US";
