@@ -495,7 +495,7 @@ test("InPost collection fails closed for incomplete details, foreign/over-limit/
   const repo=new CollectionCheckoutRepository(),capture:CreateCheckoutInput[]=[],service=serviceFor(repo,capture);
   for(const deliveryAddress of [{...request().deliveryAddress},{...request().deliveryAddress,phone:"02012345678",collectionPoint},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,postalCode:"90210"}},{...request().deliveryAddress,phone:"07700900123",collectionPoint:{...collectionPoint,address:""}}]) await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress})),e=>e instanceof CheckoutError&&e.code==="invalid_request");
   await assert.rejects(()=>service.initiate(collectionRequest({quantity:4})),/between 1 and 3/);
-  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/UK test checkout/);
+  await assert.rejects(()=>service.initiate(collectionRequest({deliveryAddress:{...collectionRequest().deliveryAddress,countryCode:"DE"}})),/only for UK destinations/);
   await assert.rejects(()=>service.initiate(collectionRequest({expectedTotalMinor:1})),/total has changed/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingRateId:"rate_test"})),/available shipping/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:"0".repeat(64)})),/quote changed/);
