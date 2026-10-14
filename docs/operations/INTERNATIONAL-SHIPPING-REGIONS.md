@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | UK | Home £3.99 (1), £7.99 (2–3); manual InPost £2.59 (1–2), £3.99 (3) | Individually approved UK methods |
 | Europe (including Turkey) | £14.99 per order | Country allowlist and carrier/customs clearance |
-| Asia | £25.99 per order | Country allowlist and carrier/customs clearance |
+| APAC (including Australia and New Zealand) | £25.99 per order | Country allowlist and carrier/customs clearance |
 | Middle East | £25.99 per order | Country allowlist and carrier/customs clearance |
 | LATAM | £25.99 per order | Country allowlist and carrier/customs clearance |
 | Rest of World | £25.99 per order | Country allowlist, excludes USA |
