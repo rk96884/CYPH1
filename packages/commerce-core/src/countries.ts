@@ -30,7 +30,7 @@ export const ukTrackedPostageForQuantity = (quantity: number): number => {
  * separate from the three existing pricing zones and never grant eligibility.
  * Destinations are only offered when explicitly enabled in shipping tables.
  */
-export type ShippingRegion = "UK" | "Europe" | "Asia" | "Middle East" | "LATAM" | "Rest of World";
+export type ShippingRegion = "UK" | "Europe" | "APAC" | "Middle East" | "LATAM" | "Rest of World";
 const middleEast = new Set("AE BH IL IQ JO KW LB OM PS QA SA YE".split(" "));
 const latam = new Set("AR BO BR BZ CL CO CR CU DO EC GF GT GY HN HT MX NI PA PE PY SR SV UY VE".split(" "));
 const asia = new Set("AF AM AZ BD BN BT CN GE HK ID IN JP KG KH KP KR KZ LA LK MM MN MO MY NP PH PK SG TH TJ TL TM TW UZ VN".split(" "));
@@ -40,7 +40,7 @@ export const shippingRegionForCountry = (value: string): ShippingRegion => {
   if (europe.has(code)) return "Europe";
   if (middleEast.has(code)) return "Middle East";
   if (latam.has(code)) return "LATAM";
-  if (asia.has(code)) return "Asia";
+  if (asia.has(code) || code === "AU" || code === "NZ") return "APAC";
   return "Rest of World";
 };
 /** Commercially excluded launch destination regardless of pricing zone. */

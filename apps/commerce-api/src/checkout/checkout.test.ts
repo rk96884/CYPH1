@@ -663,7 +663,7 @@ test("PostgreSQL UK home revision append preserves historical orders and persist
  }finally{await pool.end();await admin.query(`DROP SCHEMA "${schema}" CASCADE`);await admin.query("SELECT pg_advisory_unlock(80317)");await admin.end();}
 });
 test("six shipping regions are classification only and USA is explicitly excluded", () => {
-  for (const [country, region] of [["GB","UK"],["DE","Europe"],["TR","Europe"],["SG","Asia"],["AE","Middle East"],["BR","LATAM"],["CA","Rest of World"],["AU","Rest of World"],["US","Rest of World"]] as const) assert.equal(shippingRegionForCountry(country),region);
+  for (const [country, region] of [["GB","UK"],["DE","Europe"],["TR","Europe"],["SG","APAC"],["AE","Middle East"],["BR","LATAM"],["CA","Rest of World"],["AU","APAC"],["NZ","APAC"],["US","Rest of World"]] as const) assert.equal(shippingRegionForCountry(country),region);
   assert.equal(isExcludedLaunchCountry("US"),true);
   assert.equal(isExcludedLaunchCountry("CA"),false);
   assert.equal(trackedPostageMinor[shippingZoneForCountry("DE")],1499);
