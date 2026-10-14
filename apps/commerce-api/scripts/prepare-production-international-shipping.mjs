@@ -8,7 +8,7 @@ import pg from "pg";
 
 const candidates = Object.freeze({
   europe: ["DE","FR","IE","ES","TR"],
-  apac: ["SG","MY","TH","JP","IN","HK","AU","NZ"],
+  apac: ["SG","MY","TH","JP","IN","HK","AU","NZ","PK","KZ","UZ","KG","TJ"],
   "middle-east": ["AE","SA","QA","KW","BH","OM"],
   latam: ["BR","MX","CL","CO","AR"],
   "rest-of-world": ["CA","ZA"],
