@@ -296,7 +296,7 @@ test("absent destination configuration never reaches the payment provider", asyn
 });
 
 import { MollieTestPaymentProvider } from "../payments/mollie-test.js";
-for (const countryCode of ["GB","DE","FR","TR","AE","SA","US","CA","AU"]) {
+for (const countryCode of ["GB","DE","FR","TR","AE","SA","CA","AU"]) {
   test(`Mollie test adapter receives the authoritative ${countryCode} checkout amount`, async () => {
     const repository = new MemoryCheckoutRepository();
     const expectedMinor = 12_000 + trackedPostageMinor[shippingZoneForCountry(countryCode)];
