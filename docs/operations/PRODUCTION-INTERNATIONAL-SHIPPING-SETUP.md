@@ -2,17 +2,17 @@
 
 **Preparation only. Not launch approval and not a request to run against production.**
 
-This separate setup tool extends the verified disabled UK configuration without altering any UK records. The six commercial groups are UK, Europe (including Turkey), Asia, Middle East, LATAM and Rest of World. Database pricing continues to use the existing `europe` / `rest-of-world` tariff zones, with **£14.99** in Europe and **£25.99** in the other international groups. USA is excluded.
+This separate setup tool extends the verified disabled UK configuration without altering any UK records. The six commercial groups are UK, Europe (including Turkey), APAC, Middle East, LATAM and Rest of World. Database pricing continues to use the existing `europe` / `rest-of-world` tariff zones, with **£14.99** in Europe and **£25.99** in the other international groups. USA is excluded.
 
 The script has an explicit **candidate list**, not an approval to serve every country within a region:
 
 | Group | Disabled-only candidate ISO codes |
 | --- | --- |
 | Europe | DE FR IE ES TR |
-| Asia | SG MY TH JP IN HK |
+| APAC | SG MY TH JP IN HK AU NZ |
 | Middle East | AE SA QA KW BH OM |
 | LATAM | BR MX CL CO AR |
-| Rest of World | CA AU NZ ZA |
+| Rest of World | CA ZA |
 
 All candidate countries, country-specific tracked-postage rate revisions, and newly required pricing zones are created with status **disabled**. InPost remains UK only. There is **no international activation**, no payments, no database migration and no price or revision change to the existing UK entries.
 
