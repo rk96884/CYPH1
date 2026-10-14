@@ -1,0 +1,15 @@
+# Do not deploy before separate approval. This is a build-only example.
+# No Cron trigger and no public test endpoint.
+name = "cyph1-hyperdrive-readonly-test"
+main = "src/hyperdrive-readonly-worker.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+[vars]
+HYPERDRIVE_PROBE_ENABLED = "false"
+
+# Following a reviewed deployment approval only, add a binding:
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "<Cloudflare Hyperdrive configuration ID - do not put credentials here>"
