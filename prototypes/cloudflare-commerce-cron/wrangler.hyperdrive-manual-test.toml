@@ -1,0 +1,18 @@
+# STAGING-ONLY PREPARATION. No production connections. No automatic deployment.
+# Before explicitly approved local invocation, configure the existing
+# Cloudflare development-only Hyperdrive configuration by ID.
+name = "cyph1-hyperdrive-manual-test"
+main = "src/hyperdrive-manual-test-worker.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+[vars]
+HYPERDRIVE_PROBE_ENABLED = "false"
+
+# No [[hyperdrive]] is active yet: add a binding after separate approval:
+# [[hyperdrive]]
+# binding = "HYPERDRIVE"
+# id = "EXISTING_DEVELOPMENT_HYPERDRIVE_CONFIG_ID"
+#
+# Intentionally no [triggers] section: no recurring scheduled invocations.
