@@ -611,16 +611,25 @@ test("UK home multi-unit rates require private test mode and their stored GB rev
 test("production-ready UK flat rates remain fail-closed until independently activated", async () => {
   // Synthetic active fixtures model a future, separately approved database state.
   // No production settings or rows are modified by these tests.
-  class ApprovalRepository extends UkHomeCheckoutRepository {
+  class ApprovalRepository implements CheckoutRepository {
+    private readonly fixture = new UkHomeCheckoutRepository();
     approved = false;
-    override async getProduct() { return { ...await super.getProduct(), status: "active" as const }; }
-    override async getShipping(country = "GB") {
-      const shipping = await super.getShipping(country);
+    async getProduct(slug: string) {
+      const product = await this.fixture.getProduct();
+      return { ...product, status: "active" as const };
+    }
+    async getShipping(country = "GB") {
+      const shipping = await this.fixture.getShipping(country);
       return { ...shipping,
         destination: { ...shipping.destination, status: this.approved ? "active" as const : "disabled" as const },
         rates: shipping.rates.map(rate => ({ ...rate, status: this.approved ? "active" as const : "disabled" as const })),
       };
     }
+    findCheckout(key: string, fingerprint: string) { return this.fixture.findCheckout(key, fingerprint); }
+    createOrder(order: CheckoutOrder, key: string, fingerprint: string) { return this.fixture.createOrder(order, key, fingerprint); }
+    attachPayment(input: Parameters<CheckoutRepository["attachPayment"]>[0]) { return this.fixture.attachPayment(input); }
+    abandonOrder(id: string) { return this.fixture.abandonOrder(id); }
+    markResolutionRequired(id: string) { return this.fixture.markResolutionRequired(id); }
   }
   for (const deliveryMethod of ["tracked-postage-packing", "inpost-locker-shop"]) {
     for (const quantity of [1, 2, 3]) {
