@@ -9,12 +9,12 @@ The script has an explicit **candidate list**, not an approval to serve every co
 | Group | Disabled-only candidate ISO codes |
 | --- | --- |
 | Europe | DE FR IE ES TR |
-| APAC | SG MY TH JP IN HK AU NZ |
+| APAC | SG MY TH JP IN HK AU NZ PK KZ UZ KG TJ |
 | Middle East | AE SA QA KW BH OM |
 | LATAM | BR MX CL CO AR |
 | Rest of World | CA ZA |
 
-All candidate countries, country-specific tracked-postage rate revisions, and newly required pricing zones are created with status **disabled**. InPost remains UK only. There is **no international activation**, no payments, no database migration and no price or revision change to the existing UK entries.
+Pakistan, Kazakhstan, Uzbekistan, Kyrgyzstan and Tajikistan are preparation candidates only; their carrier acceptance, customs classification and local product requirements have not been signed off. All candidate countries, country-specific tracked-postage rate revisions, and newly required pricing zones are created with status **disabled**. InPost remains UK only. There is **no international activation**, no payments, no database migration and no price or revision change to the existing UK entries.
 
 ## Review first
 
