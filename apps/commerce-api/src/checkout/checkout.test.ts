@@ -500,7 +500,7 @@ test("InPost collection fails closed for incomplete details, foreign/over-limit/
   await assert.rejects(()=>service.initiate(collectionRequest({shippingRateId:"rate_test"})),/available shipping/);
   await assert.rejects(()=>service.initiate(collectionRequest({shippingQuoteRevision:"0".repeat(64)})),/quote changed/);
   await assert.rejects(()=>service.initiate(collectionRequest({paymentMethod:"klarna"})),/provider validation/);
-  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/UK test checkout/);
+  await assert.rejects(()=>new CheckoutService({commerceEnabled:true,paymentProvider:"mollie-test",fulfilmentMode:"test",fulfilmentProvider:"manual-test"},repo,provider(capture),urls,false).initiate(collectionRequest()),/not approved/);
   repo.inpostPrice=1;await assert.rejects(()=>service.initiate(collectionRequest()),/not approved/);
   assert.equal(repo.orders.length,0);assert.equal(capture.length,0);
 });
