@@ -31,9 +31,15 @@ test("errors are sanitized and do not expose secrets",async()=>{
   assert.equal(JSON.stringify(result).includes("API-KEY-SECRET"),false);
   assert.deepEqual(result.results.map(r=>r.outcome),["failed","processed"]);
 });
-test("Worker config contains no active cron or DB connection",async()=>{
+test("Worker config binds production Hyperdrive but remains disabled with no Cron",async()=>{
   const conf=await readFile(new URL("./wrangler.bounded-commerce.toml",import.meta.url),"utf8");
   const active=conf.split("\n").filter(x=>!x.trimStart().startsWith("#")).join("\n");
-  assert.doesNotMatch(active,/\[triggers\]|\[\[hyperdrive\]\]|DATABASE_URL|BREVO_API_KEY/);
+  assert.doesNotMatch(active,/\[triggers\]|DATABASE_URL|BREVO_API_KEY/);
+  assert.match(active,/\[\[hyperdrive\]\]/);
+  assert.match(active,/binding = "HYPERDRIVE"/);
+  assert.match(active,/id = "6853d927cd45484390f49a73ff260022"/);
+  for(const flag of ["COMMERCE_BOUNDED_WORKER_ENABLED","COMMERCE_BOUNDED_OWNER_AUTHORIZED","COMMERCE_LAUNCH_SAFETY_APPROVED","COMMERCE_BOUNDED_COMMUNICATIONS_ENABLED","COMMERCE_BOUNDED_FULFILMENT_ENABLED"]){
+    assert.match(active,new RegExp(flag+' = "false"'));
+  }
   assert.match(active,/COMMERCE_BOUNDED_WORKER_ENABLED = "false"/);
 });
