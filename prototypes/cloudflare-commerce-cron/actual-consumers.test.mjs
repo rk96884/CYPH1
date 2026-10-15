@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 test("real communication consumer produces synthetic message using fake repository/provider", async () => {
-  const { TransactionalCommunicationConsumer } = await import("../../../build/commerce-api/apps/commerce-api/src/communications/service.js");
+  const { TransactionalCommunicationConsumer } = await import("../../build/commerce-api/apps/commerce-api/src/communications/service.js");
   const calls=[];
   const repository={
     async claimNext() { calls.push("claim"); return { deliveryId:"synthetic", claimToken:"synthetic-token",template:"order-confirmation",deduplicationKey:"test:synthetic",recipient:"synthetic@example.invalid",orderNumber:"TEST-001",currency:"GBP",totalMinor:7499,items:[{name:"Synthetic test item",quantity:1,lineTotalMinor:7499}] }; },
@@ -23,7 +23,7 @@ test("real communication consumer produces synthetic message using fake reposito
 });
 
 test("real fulfilment service is strictly disabled with fake repository/provider", async () => {
-  const { FulfilmentService }=await import("../../../build/commerce-api/apps/commerce-api/src/fulfilment/service.js");
+  const { FulfilmentService }=await import("../../build/commerce-api/apps/commerce-api/src/fulfilment/service.js");
   let called=false;
   const service=new FulfilmentService(false,{key:"synthetic",async create(){called=true;}},{async reservePaidOrder(){called=true;}});
   await assert.rejects(service.requestForPaidOrder("00000000-0000-4000-8000-000000000000","synthetic"),/disabled/);
