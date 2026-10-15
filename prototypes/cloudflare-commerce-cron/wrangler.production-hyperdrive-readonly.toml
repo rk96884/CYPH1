@@ -1,0 +1,12 @@
+# One-time remote dev verification ONLY. Not a commerce Worker.
+name = "cyph1-production-hyperdrive-readonly"
+main = "src/production-hyperdrive-readonly.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+[vars]
+PRODUCTION_HYPERDRIVE_READONLY_PROBE = "false"
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "6853d927cd45484390f49a73ff260022"
+# No Cron triggers or public HTTP endpoint.
