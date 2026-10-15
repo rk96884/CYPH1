@@ -1,0 +1,7 @@
+# Local bundling only. No deploy. No live commerce execution.
+name = "cyph1-real-consumers-build-only"
+main = "src/actual-consumers-build-probe.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+# No Hyperdrive, secrets, Cron or HTTP endpoints.
