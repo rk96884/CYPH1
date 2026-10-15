@@ -78,6 +78,12 @@ jobs:
       - name: Bundle synthetic CPU probe for Cloudflare without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.synthetic-cpu.toml --outdir /tmp/cyph1-synthetic-cpu-build
 
+      - name: Test disabled bounded commerce execution safeguards
+        run: node --test prototypes/cloudflare-commerce-cron/bounded-commerce.test.mjs
+
+      - name: Bundle disabled bounded commerce Worker without deployment
+        run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.bounded-commerce.toml --outdir /tmp/cyph1-bounded-commerce-build
+
       - name: Bundle manual Hyperdrive test Worker without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.hyperdrive-manual-test.toml --outdir /tmp/cyph1-hyperdrive-manual-test
 
