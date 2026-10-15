@@ -25,5 +25,8 @@ test("no public route, active Cron or secret config", async () => {
   const config = await readFile(new URL("./wrangler.hyperdrive-manual-test.toml", import.meta.url), "utf8");
   const active = config.split("\n").filter(l => !l.trimStart().startsWith("#")).join("\n");
   assert.match(active, /HYPERDRIVE_PROBE_ENABLED = "false"/);
-  assert.doesNotMatch(active, /\[triggers\]|\[\[hyperdrive\]\]|DATABASE_URL|BREVO_API_KEY/);
+  assert.doesNotMatch(active, /\[triggers\]|DATABASE_URL|BREVO_API_KEY|localConnectionString/);
+  assert.match(active, /\[\[hyperdrive\]\]/);
+  assert.match(active, /binding = "HYPERDRIVE"/);
+  assert.match(active, /id = "05becdcb7b9041b297568df15553518f"/);
 });

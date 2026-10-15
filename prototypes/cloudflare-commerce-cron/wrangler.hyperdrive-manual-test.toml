@@ -10,9 +10,10 @@ workers_dev = false
 [vars]
 HYPERDRIVE_PROBE_ENABLED = "false"
 
-# No [[hyperdrive]] is active yet: add a binding after separate approval:
-# [[hyperdrive]]
-# binding = "HYPERDRIVE"
-# id = "EXISTING_DEVELOPMENT_HYPERDRIVE_CONFIG_ID"
-#
+# Development-only binding; deployment and invocation require separate approval.
+# This ID is a resource identifier, not an origin credential.
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "05becdcb7b9041b297568df15553518f"
+
 # Intentionally no [triggers] section: no recurring scheduled invocations.
