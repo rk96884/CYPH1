@@ -8,7 +8,14 @@ import {randomUUID} from "node:crypto";
  */
 export async function runIsolatedOutboxConcurrency(connectionString, poolFactory=opts=>new pg.Pool(opts)) {
   if (!connectionString) throw new Error("Development connection string required");
-  const pool=poolFactory({connectionString,max:3,connectionTimeoutMillis:3000,query_timeout:7000,statement_timeout:7000});
+  const pool=poolFactory({
+    connectionString,
+    max:3,
+    connectionTimeoutMillis:10000,
+    query_timeout:15000,
+    statement_timeout:15000,
+    ssl:{rejectUnauthorized:true}
+  });
   const schema="cyph1_outbox_test_"+randomUUID().replaceAll("-","").slice(0,20);
   const table='"'+schema+'".events';
   let created=false;
