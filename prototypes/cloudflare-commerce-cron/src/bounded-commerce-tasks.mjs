@@ -35,12 +35,15 @@ export async function runIntegratedBoundedOnce(env, makePool = cfg => new pg.Poo
   if (!commerce.commerceEnabled) return {status:"disabled",results:[]};
   if (wantsEmail && (communications.provider !== "brevo" || !communications.enabled || !communications.brevo)) return {status:"disabled",results:[]};
   if (wantsFulfilment && (commerce.fulfilmentMode !== "live" || commerce.fulfilmentProvider !== "manual-live")) return {status:"disabled",results:[]};
-  // Hyperdrive manages upstream TLS; no URL is written to logs.
-  const pool = makePool({connectionString:env.HYPERDRIVE.connectionString,max:2,connectionTimeoutMillis:3000,query_timeout:10000,statement_timeout:10000,idleTimeoutMillis:1000});
+  // Hyperdrive origin TLS must be verified independently in Cloudflare configuration.
+  // Do not log connection strings or transport errors (may contain credentials).
+  if (env.COMMERCE_HYPERDRIVE_TLS_REVIEWED !== "true") return {status:"disabled",results:[]};
+  const pool = makePool({connectionString:env.HYPERDRIVE.connectionString,max:2,connectionTimeoutMillis:3000,query_timeout:10000,statement_timeout:10000,lock_timeout:2000,idleTimeoutMillis:1000,allowExitOnIdle:true});
   try {
     // Identity must be checked before ANY consumer claims or sends.
-    const identity = await pool.query("SELECT current_database() AS database_name");
+    const identity = await pool.query("SELECT current_database() AS database_name, current_user AS role_name");
     if (identity.rows[0]?.database_name !== "cyph1_commerce_production") return {status:"database_mismatch",results:[]};
+    if (!env.COMMERCE_DB_ROLE || identity.rows[0]?.role_name !== env.COMMERCE_DB_ROLE) return {status:"role_mismatch",results:[]};
     const tasks={};
     if (wantsEmail) {
       const provider = new BrevoCommunicationProvider(communications.brevo);
