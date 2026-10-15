@@ -1,4 +1,5 @@
 import { runReadOnlyProbe } from "./hyperdrive-readonly-worker.mjs";
+import { runTransactionProbe } from "./hyperdrive-transaction-probe.mjs";
 
 /**
  * Explicit scheduled-event invocation only. No cron is registered in the config.
@@ -15,9 +16,12 @@ export async function manualTestScheduled(event, env, ctx, probe = runReadOnlyPr
 export default {
   async scheduled(event, env, ctx) {
     // Avoid recording any connection-string or database credentials in logs.
-    const result = await manualTestScheduled(event, env, ctx);
+    const isTransaction = event?.cron === "__manual_hyperdrive_transaction_test__";
+    const result = isTransaction
+      ? (env?.HYPERDRIVE_TRANSACTION_PROBE_ENABLED === "true" ? await runTransactionProbe(env) : { status: "disabled" })
+      : await manualTestScheduled(event, env, ctx);
     // Only non-secret, synthetic-table result metadata; errors stay sanitized.
-    console.log(JSON.stringify({ event: "hyperdrive_manual_probe", status: result.status, ...(result.status === "verified" ? { jobCount: result.jobCount } : {}) }));
+    console.log(JSON.stringify({ event: isTransaction ? "hyperdrive_transaction_probe" : "hyperdrive_manual_probe", status: result.status, ...(result.status === "verified" && !isTransaction ? { jobCount: result.jobCount } : {}), ...(result.status === "verified" && isTransaction ? { locked: result.locked, rolledBack: result.rolledBack, durationMs: result.durationMs } : {}) }));
   },
   async fetch() { return new Response("Not found", { status: 404 }); },
 };
