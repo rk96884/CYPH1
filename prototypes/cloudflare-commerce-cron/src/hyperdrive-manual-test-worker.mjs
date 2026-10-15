@@ -15,7 +15,9 @@ export async function manualTestScheduled(event, env, ctx, probe = runReadOnlyPr
 export default {
   async scheduled(event, env, ctx) {
     // Avoid recording any connection-string or database credentials in logs.
-    await manualTestScheduled(event, env, ctx);
+    const result = await manualTestScheduled(event, env, ctx);
+    // Only non-secret, synthetic-table result metadata; errors stay sanitized.
+    console.log(JSON.stringify({ event: "hyperdrive_manual_probe", status: result.status, ...(result.status === "verified" ? { jobCount: result.jobCount } : {}) }));
   },
   async fetch() { return new Response("Not found", { status: 404 }); },
 };
