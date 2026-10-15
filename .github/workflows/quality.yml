@@ -84,6 +84,9 @@ jobs:
       - name: Test real bounded commerce integration safety gates
         run: node --test prototypes/cloudflare-commerce-cron/bounded-commerce-integration.test.mjs
 
+      - name: Test bounded commerce database safety and cleanup
+        run: node --test prototypes/cloudflare-commerce-cron/bounded-commerce-safeguards.test.mjs
+
       - name: Bundle disabled bounded commerce Worker without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.bounded-commerce.toml --outdir /tmp/cyph1-bounded-commerce-build
 
