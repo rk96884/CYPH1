@@ -72,6 +72,12 @@ jobs:
       - name: Compile real commerce consumers for Cloudflare without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.actual-consumers-build.toml --outdir /tmp/cyph1-real-consumers-build
 
+      - name: Test synthetic Cloudflare email processing CPU probe without real sends
+        run: node --test prototypes/cloudflare-commerce-cron/synthetic-cpu.test.mjs
+
+      - name: Bundle synthetic CPU probe for Cloudflare without deployment
+        run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.synthetic-cpu.toml --outdir /tmp/cyph1-synthetic-cpu-build
+
       - name: Bundle manual Hyperdrive test Worker without deployment
         run: npm exec --yes --package=wrangler@4.45.0 -- wrangler deploy --dry-run --config prototypes/cloudflare-commerce-cron/wrangler.hyperdrive-manual-test.toml --outdir /tmp/cyph1-hyperdrive-manual-test
 

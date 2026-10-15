@@ -1,0 +1,9 @@
+# Temporary remote development only. No deploy, Hyperdrive, secrets or Cron.
+name = "cyph1-synthetic-commerce-cpu"
+main = "src/synthetic-consumer-cpu-worker.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+[vars]
+SYNTHETIC_CPU_TEST_ENABLED = "false"
