@@ -1,5 +1,5 @@
-# No Cron, no secrets. Production Hyperdrive binding is present but unused.
-# Disabled-only bounded worker shell; no live tasks connected.
+# No Cron, no secrets. Production Hyperdrive is configured but launch-gated.
+# Disabled-only bounded Worker. Real tasks wired but uncallable without approvals.
 # Do not deploy to production without independent safety/launch authorization.
 name = "cyph1-bounded-commerce-disabled"
 main = "src/bounded-commerce-worker.mjs"
@@ -9,11 +9,13 @@ workers_dev = false
 [vars]
 COMMERCE_BOUNDED_WORKER_ENABLED = "false"
 COMMERCE_BOUNDED_OWNER_AUTHORIZED = "false"
+COMMERCE_BOUNDED_INTEGRATION_ENABLED = "false"
 COMMERCE_LAUNCH_SAFETY_APPROVED = "false"
+COMMERCE_HYPERDRIVE_TLS_REVIEWED = "false"
 COMMERCE_BOUNDED_COMMUNICATIONS_ENABLED = "false"
 COMMERCE_BOUNDED_FULFILMENT_ENABLED = "false"
 
-# Binding prepared only; the scheduled handler does not create any DB pool.
+# Binding is never opened while approval flags remain false.
 [[hyperdrive]]
 binding = "HYPERDRIVE"
 id = "6853d927cd45484390f49a73ff260022"
