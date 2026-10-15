@@ -1,0 +1,13 @@
+# No cron, no Hyperdrive, no secrets. Disabled-only bounded worker shell.
+# Do not deploy to production without independent safety/launch authorization.
+name = "cyph1-bounded-commerce-disabled"
+main = "src/bounded-commerce-worker.mjs"
+compatibility_date = "2026-10-14"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+[vars]
+COMMERCE_BOUNDED_WORKER_ENABLED = "false"
+COMMERCE_BOUNDED_OWNER_AUTHORIZED = "false"
+COMMERCE_LAUNCH_SAFETY_APPROVED = "false"
+COMMERCE_BOUNDED_COMMUNICATIONS_ENABLED = "false"
+COMMERCE_BOUNDED_FULFILMENT_ENABLED = "false"
