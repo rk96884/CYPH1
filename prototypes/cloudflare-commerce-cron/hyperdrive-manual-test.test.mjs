@@ -30,3 +30,15 @@ test("no public route, active Cron or secret config", async () => {
   assert.match(active, /binding = "HYPERDRIVE"/);
   assert.match(active, /id = "05becdcb7b9041b297568df15553518f"/);
 });
+
+test("scheduled entrypoint logs only sanitized result without secret connection string", async () => {
+  const originalLog = console.log;
+  const logs = [];
+  console.log = message => logs.push(String(message));
+  try {
+    await worker.scheduled({ cron: "__manual_hyperdrive_test__" }, { HYPERDRIVE_PROBE_ENABLED: "false" }, {});
+    assert.deepEqual(JSON.parse(logs[0]), {event: "hyperdrive_manual_probe", status:"disabled"});
+  } finally {
+    console.log = originalLog;
+  }
+});
