@@ -81,6 +81,9 @@ jobs:
       - name: Test disabled bounded commerce execution safeguards
         run: node --test prototypes/cloudflare-commerce-cron/bounded-commerce.test.mjs
 
+      - name: Test production bounded entrypoint and no-activation safeguards
+        run: node --test prototypes/cloudflare-commerce-cron/bounded-commerce-entrypoint.test.mjs
+
       - name: Test real bounded commerce integration safety gates
         run: node --test prototypes/cloudflare-commerce-cron/bounded-commerce-integration.test.mjs
 
