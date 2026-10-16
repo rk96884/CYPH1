@@ -119,8 +119,10 @@ export const renderTransactionalMessage = (context: CommunicationContext, option
 <body style="margin:0;padding:0;background:#0b0711;color:#f7f3fb;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0b0711"><tr><td align="center" style="padding:32px 16px">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;background:#15101d;border:1px solid #382a45;border-radius:16px;overflow:hidden">
-<tr><td style="padding:36px 32px 24px 21px">
-<a href="${website}"><img src="${logo}" width="240" alt="CYPH/1 — CYCLE. PHASE. ONE." style="display:block;width:240px;max-width:100%;height:auto;border:0;color:#f7f3fb"></a>
+<tr><td style="padding:32px 32px 24px">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;border-collapse:separate;background-color:#000000;border-radius:18px;overflow:hidden"><tr><td align="center" bgcolor="#000000" style="background-color:#000000;border-radius:18px;padding:24px 18px">
+<a href="${website}" style="display:inline-block;text-decoration:none"><img src="${logo}" width="240" alt="CYPH/1 — CYCLE. PHASE. ONE." style="display:block;width:240px;max-width:100%;height:auto;border:0;color:#ffffff"></a>
+</td></tr></table>
 </td></tr>
 <tr><td style="padding:0 32px 36px">
 <div style="font-size:11px;font-weight:700;letter-spacing:.16em;color:#b78af2;margin-bottom:14px">${copy.eyebrow}</div>
