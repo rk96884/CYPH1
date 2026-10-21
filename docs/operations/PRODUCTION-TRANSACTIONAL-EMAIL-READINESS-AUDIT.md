@@ -4,6 +4,12 @@
 
 This reconciles the existing Brevo worker and adapter implementation with the launch-control register. This review neither connects to Brevo/Render production accounts nor sends messages, enables workers, modifies environment variables, or assumes production mail has been tested.
 
+## Development status clarification — 21 October 2026
+
+**Transactional email feature development: COMPLETE / AUTOMATED-TEST VERIFIED.** Four HTML/text templates, Brevo adapter, communications ledger, retry/idempotency safeguards and consumer code already exist. The owner reports the work as completed; do not re-open implementation without a specific defect.
+
+**Operational evidence is separate:** The 14 October audit did not confirm a deployed commerce worker or genuine Brevo transactional delivery. Later Cloudflare bounded-worker code (through merged PR #162) supersedes the assumption that a Render worker is the only route, but PR #162 explicitly records no deployment, Cron or sending. Confirm the actual production worker, gates and provider delivery in final QA, rather than calling the feature missing.
+
 ## Existing verified engineering evidence
 
 - Four visually draft-approved HTML/text templates from merged PR #90: order confirmation following `payment.paid`, dispatch following `fulfilment.dispatched`, cancellation following authoritative cancellation, and refund following `refund.completed`.
