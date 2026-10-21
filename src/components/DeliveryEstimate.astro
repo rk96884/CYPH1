@@ -2,7 +2,7 @@
 /** Presentation only. Do not enable until shipping services and fulfilment capacity are approved. */
 ---
 <section class="delivery-estimate" aria-labelledby="delivery-estimate-title" data-delivery-estimate>
-  <h2 id="delivery-estimate-title">Delivery & collection</h2>
+  <h2 id="delivery-estimate-title">Delivery options</h2>
   <fieldset>
     <legend>Preview a delivery method</legend>
     <label><input type="radio" name="delivery-preview-method" value="inpost" checked /> InPost locker or shop</label>
@@ -28,6 +28,18 @@
     const windowLabel = el.querySelector<HTMLElement>("[data-estimate-window]");
     const countdownLabel = el.querySelector<HTMLElement>("[data-estimate-countdown]");
     const detailLabel = el.querySelector<HTMLElement>("[data-estimate-detail]");
+    // Optional, non-authoritative preference for a future checkout to preselect.
+    // Checkout must revalidate against its enabled methods, rates and destination.
+    const preferenceKey = "cyph1:preferred-delivery-method:v1";
+    type Method = "inpost" | "royal-mail";
+    const isMethod = (value: string | null): value is Method => value === "inpost" || value === "royal-mail";
+    try {
+      const saved = window.localStorage.getItem(preferenceKey);
+      if (isMethod(saved)) {
+        const radio = el.querySelector<HTMLInputElement>(`input[name="delivery-preview-method"][value="${saved}"]`);
+        if (radio) radio.checked = true;
+      }
+    } catch { /* Storage may be unavailable; selection still works in this page. */ }
     // Dispatch time is a configurable assumption, NOT a courier collection guarantee.
     const cutoffHour = 14;
     const update = () => {
@@ -39,7 +51,12 @@
         ? "Choose a preferred collection point during checkout when available. Weekend drop-off does not guarantee weekend carrier collection. Estimates only; InPost confirms when a parcel is ready."
         : "Estimated tracked home delivery. Actual dispatch and delivery depend on operating capacity and carrier acceptance.";
     };
-    el.addEventListener("change", update);
+    el.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.name !== "delivery-preview-method" || !isMethod(target.value)) return;
+      try { window.localStorage.setItem(preferenceKey, target.value); } catch { /* Optional convenience only. */ }
+      update();
+    });
     update();
     // Avoid static countdown becoming stale in long-running open tabs.
     window.setInterval(update, 60_000);
