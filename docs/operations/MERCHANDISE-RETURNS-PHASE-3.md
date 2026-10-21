@@ -5,6 +5,12 @@ disabled. No live communications provider is enabled. Phase 1/2 evidence is
 unchanged. Deployment and the manual rehearsal below are not performed by this
 implementation.
 
+## Development status clarification — 21 October 2026
+
+**Returns/refund feature development: COMPLETE / AUTOMATED-TEST VERIFIED for Phase 3 scope.** Tests cover approved-return refund execution, amount control, concurrency/idempotency, payment reservation and notification deduplication. Phase 2 decision staging verification passed 3 October; earlier Mollie test-mode partial/full refunds and reconciliation passed separately. Owner reports work completed; no duplicate feature build is needed.
+
+**Scope qualification:** This Phase 3 record expressly states the hosted return-linked staging refund rehearsal had not been executed when written. Treat it as final-QA evidence to confirm, not an absent implementation. Receipt/inspection/closure UI and customer self-service were outside Phase 3 scope and are not implicitly verified; they need not be built unless manual launch requirements change. Production use requires release approval.
+
 ## Scope and invariants
 
 `POST /operations/orders/:orderId/returns/:returnId/refund` requires **both**
