@@ -16,6 +16,12 @@ This is a narrow review of PAY-01 in [COMMERCE-LAUNCH-READINESS.md](COMMERCE-LAU
 | Production baseline | Owner verified on 14 October that `COMMERCE_ENABLED=false`, `CHECKOUT_HTTP_ENABLED=false`, `PAYMENT_WEBHOOKS_ENABLED=false`, `PAYMENT_PROVIDER=disabled`, `FULFILMENT_MODE=disabled`, `FULFILMENT_PROVIDER=disabled` on the relevant production service. | OWNER-REPORTED; DO NOT CHANGE |
 | Production shipping | Owner's 14 October read-only inspection: GB + 31 destinations, all disabled; 35 disabled rates; USA excluded. | DB SNAPSHOT; NOT LAUNCH-ELIGIBLE |
 
+## Verified status reconciliation — 21 October 2026
+
+**Verified within recorded scope:** Mollie merchant onboarding/approval is **OWNER-CONFIRMED COMPLETE**, and Mollie test-mode payment, webhook, refund and reconciliation integration is **TEST-VERIFIED COMPLETE**. Do not classify these as outstanding development or ask for repeat test transactions without a specific regression or new requirement.
+
+**Not the same as production launch authorisation:** final live runtime/credential/webhook access review, payout/financial-policy sign-off and a separately approved real-payment acceptance/reconciliation check remain open. The PAY-01 launch gate remains blocked until those controls and dependencies are signed off. No live configuration was changed by this documentation update.
+
 ## Account-level confirmation — 14 October 2026
 
 The project owner confirms that the **CYPH1 LTD Mollie live merchant profile is approved**, the **desired live payment methods are approved/available**, and the **settlement bank account has been approved**. Record these as **OWNER-CONFIRMED** in the launch evidence, not independently inspected by this code audit. No bank identifiers, account numbers or API credentials are recorded. This closes the three account-status confirmation items; it does **not** mean that production payment routing, webhook handling or a live transaction has been activated or validated.
