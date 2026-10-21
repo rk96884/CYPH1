@@ -10,6 +10,12 @@ This reconciles the existing Brevo worker and adapter implementation with the la
 
 **Operational evidence is separate:** The 14 October audit did not confirm a deployed commerce worker or genuine Brevo transactional delivery. Later Cloudflare bounded-worker code (through merged PR #162) supersedes the assumption that a Render worker is the only route, but PR #162 explicitly records no deployment, Cron or sending. Confirm the actual production worker, gates and provider delivery in final QA, rather than calling the feature missing.
 
+## Owner-reported production confirmation test — 21 October 2026 clarification
+
+The project owner confirms that a **one-off production email confirmation test was run using PowerShell commands**, independently of any live customer checkout or Mollie transaction. Record this as **OWNER-CONFIRMED MANUAL PRODUCTION TEST COMPLETED**, rather than saying no production email confirmation test has ever been performed.
+
+**Evidence boundary:** The precise command, invoked endpoint, recipient inbox/acceptance result, service logs and whether the test used the production Brevo consumer versus a separate send path have not been independently reviewed in this documentation update. Accordingly, the test supports the manual production confirmation path as reported, but **does not verify an automatically triggered payment.paid -> communications worker -> Brevo -> inbox sequence**. Confirm those details during final QA; do not reimplement the already-built templates or email adapter.
+
 ## Existing verified engineering evidence
 
 - Four visually draft-approved HTML/text templates from merged PR #90: order confirmation following `payment.paid`, dispatch following `fulfilment.dispatched`, cancellation following authoritative cancellation, and refund following `refund.completed`.
