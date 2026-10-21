@@ -44,6 +44,17 @@ The project owner must assign an accountable owner/deputy to each gate, record d
 3. Retain the signed 25 August 2026 UK/EU DoCs, supplier explanation, both laboratories' reports, and complete email evidence in the controlled technical-file archive; assess applicable GB regulatory requirements and CYPH/1 importer/own-brand responsibilities with a competent reviewer.
 4. Complete dated CO-01 sign-off and update the gate table only when evidence review, product markings/instructions, applicable declarations and remaining launch conditions are accepted. **GO-01 remains BLOCKED.**
 
+## Mollie verification clarification — 21 October 2026 (PAY-01)
+
+**MOLLIE MERCHANT APPROVAL AND TEST INTEGRATION: VERIFIED / COMPLETE FOR THEIR RECORDED SCOPE.** Do not describe Mollie account onboarding or the existing test-mode payment integration as unfinished development, and do not repeat completed staging payment/refund tests by default.
+
+- **Owner-confirmed live merchant approvals (14 October):** CYPH1 LTD Mollie merchant profile, selected live payment methods and settlement bank account approved. This is the project owner's confirmation, not an independent re-inspection of the Mollie dashboard.
+- **Completed hosted integration evidence:** Mollie test-mode checkout/payment capture and authoritative paid webhooks for three-unit Royal Mail home (£10.99 synthetic order) and InPost collection (£6.99 synthetic order) on 10 October; earlier partial/full refund, duplicate webhook, timeout/idempotency and reconciliation exercises. The test transactions used synthetic £1 product prices and are not production customer payments.
+- **Engineering conclusion:** Mollie integration code and staged lifecycle are verified; no additional Mollie payment feature is currently identified as needing development for the planned UK launch.
+- **Distinct launch gate:** PAY-01 and GO-01 are **not yet signed off for real customer payments**. Production runtime remains disabled by design. Remaining tasks are read-only administrator/MFA, live-credential/webhook routing and separation checks, financial-policy sign-off, and a separately authorised bounded real-payment end-to-end validation after product, shipping and operations approvals. Do not infer these live checks passed from the test-mode evidence.
+
+See [PAY-01 audit](MOLLIE-PRODUCTION-PAYMENT-READINESS-AUDIT.md).
+
 ## Critical launch gates
 
 All target dates below are in 2026. Repository areas are unlocked for implementation/review, not automatic public activation. Preparatory work may run in parallel; final approval follows the listed dependencies.
