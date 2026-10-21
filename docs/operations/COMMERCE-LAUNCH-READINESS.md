@@ -18,6 +18,32 @@ This is the single launch control register. The retained evidence/checklists bel
 
 The project owner must assign an accountable owner/deputy to each gate, record dated evidence and approval here, and review blockers against the target windows. Do not claim physical testing or supplier review is IN PROGRESS without evidence. GO-01 remains blocked until all applicable gates and the retained business/security/operations checks close.
 
+## K-803 compliance evidence update — 21 October 2026 (CO-01)
+
+**Status: EVIDENCE RECEIVED / PARTIALLY INDEPENDENTLY VERIFIED — CO-01 REMAINS BLOCKED pending full technical-file review and accountable approval.** This evidence update does not authorise sales, CE/UKCA claims, or checkout activation. It does not supersede the critical-gate table above.
+
+### Guangzhou ITL laboratory verification (received 21 October)
+
+- Victor Meng (Guangzhou ITL Co., Ltd., salesm@i-testlab.com) replied in the existing email thread **“Verification of IEC Test Reports – IONKA K-803-Cooling”**, following submission of the complete IEC report for verification.
+- Victor expressly confirmed that **Guangzhou ITL issued the report** and that **the reported test results are valid for the K-803-Cooling model**; he also identified **Bob Dai as reviewer**. The report identifies Bob Dai as approving reviewer.
+- Evidence: preserve the complete 20–21 October 2026 email chain, original submitted report and Victor's response in the restricted product compliance evidence archive. The email response does **not explicitly certify that every page is unchanged**; record only the confirmations actually made.
+- **Status: laboratory-origin and K-803-Cooling applicability confirmed by a responding laboratory representative;** retain sender/channel validation and underlying report in the dossier. This is **not** TÜV SÜD verification.
+
+### TÜV SÜD evidence and IONKA engineering explanation (received 20–21 October)
+
+- TÜV SÜD LVD report **68.110.25.0125.01**, issued **20 June 2025**, lists **FZ-100, FZ-100B, K-803 and K-902**. It reports testing to **EN IEC 60335-2-113:2023 + A11:2023**, relevant EN 60335-1 amendments and EN 62233:2008, including UK national differences. The report records an **IEC 62471:2006 “Exempt level”** assessment for the submitted sample.
+- TÜV SÜD LVD attestation **N8A 132274 0001 Rev. 00** (3 July 2025); EMC report **6871025011501** and EMC attestation **E8A 132274 0002 Rev. 00** (4 July 2025) likewise list K-803. Attestations are voluntary evidence and **do not replace a signed regulatory Declaration of Conformity**.
+- FZ-100 was the representative model tested. In an email received **21 October 2026**, Lyanna reported that IONKA's engineering team confirms **the relevant electrical, optical and safety design of K-803 is the same as FZ-100**. This is a **supplier statement**, not independent laboratory confirmation of production-batch equivalence.
+- Lyanna also explained that the **25 August 2026 signed UK/EU Declarations of Conformity** were issued under a different certification/testing body, while the TÜV SÜD reports were conducted separately, so EN IEC 60335-2-113 and the TÜV reports were not cross-referenced. Record this as **supplier explanation**, not independent regulatory acceptance.
+- **Status: TÜV reports received, model included and supplier equivalence statement received; direct TÜV SÜD authenticity verification still pending.**
+
+### Remaining CO-01 actions
+
+1. Verify TÜV SÜD report and attestation authenticity independently, using official laboratory channels.
+2. Reconcile **24 V DC / 2.0 A** in the earlier Guangzhou ITL report versus **24 V DC / 1.5 A** in the TÜV SÜD report, and match the **actual production K-803, supplied UK adapter, optical/safety configuration, labels and instructions** to the supported test configuration.
+3. Retain the signed 25 August 2026 UK/EU DoCs, supplier explanation, both laboratories' reports, and complete email evidence in the controlled technical-file archive; assess applicable GB regulatory requirements and CYPH/1 importer/own-brand responsibilities with a competent reviewer.
+4. Complete dated CO-01 sign-off and update the gate table only when evidence review, product markings/instructions, applicable declarations and remaining launch conditions are accepted. **GO-01 remains BLOCKED.**
+
 ## Critical launch gates
 
 All target dates below are in 2026. Repository areas are unlocked for implementation/review, not automatic public activation. Preparatory work may run in parallel; final approval follows the listed dependencies.
