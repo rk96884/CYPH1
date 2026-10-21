@@ -55,6 +55,14 @@ The project owner must assign an accountable owner/deputy to each gate, record d
 
 See [PAY-01 audit](MOLLIE-PRODUCTION-PAYMENT-READINESS-AUDIT.md).
 
+## Email and returns/refunds development reconciliation — 21 October 2026
+
+**Development classification (not release approval):** Transactional email templates, Brevo adapter and communications consumer, and merchandise returns/refunds Phases 1–3 are **IMPLEMENTED AND AUTOMATED-TEST VERIFIED**. Do not commission duplicate implementation. Earlier Mollie test-mode refunds and reconciliation were also verified. The owner reports these areas as completed.
+
+**Distinct operational evidence:** The reviewed records do not establish actual commerce Brevo delivery via a deployed production worker or a hosted Mollie test-mode return-linked Phase 3 refund rehearsal. The Phase 3 record expressly says its staging rehearsal was not executed. The 14 October Render worker plan is partly superseded by the merged bounded Cloudflare worker work through PR #162; that PR expressly states no deployment, Cron or email sending and notes outstanding CPU/end-to-end retry validation. Confirm current operational state during final QA.
+
+**Practical worklist:** Accepted physical inventory and safety reserve; final end-to-end QA/release, including verification of any missing provider/worker/return-refund evidence and separate compliance, shipping and GO gates. No new email or returns/refunds feature development is currently identified for the manual launch scope.
+
 ## Critical launch gates
 
 All target dates below are in 2026. Repository areas are unlocked for implementation/review, not automatic public activation. Preparatory work may run in parallel; final approval follows the listed dependencies.
