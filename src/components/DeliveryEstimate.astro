@@ -1,0 +1,47 @@
+---
+/** Presentation only. Do not enable until shipping services and fulfilment capacity are approved. */
+---
+<section class="delivery-estimate" aria-labelledby="delivery-estimate-title" data-delivery-estimate>
+  <h2 id="delivery-estimate-title">Delivery & collection</h2>
+  <fieldset>
+    <legend>Preview a delivery method</legend>
+    <label><input type="radio" name="delivery-preview-method" value="inpost" checked /> InPost locker or shop</label>
+    <label><input type="radio" name="delivery-preview-method" value="royal-mail" /> Royal Mail tracked delivery</label>
+  </fieldset>
+  <p class="delivery-estimate__date" data-estimate-window aria-live="polite">Loading estimate…</p>
+  <p data-estimate-countdown></p>
+  <p data-estimate-detail>These are estimates, not guaranteed delivery dates. Final shipping choices and charges are confirmed at checkout.</p>
+</section>
+<style>
+  .delivery-estimate{margin-block:1.5rem;padding:1.25rem;border:1px solid currentColor;border-radius:12px}
+  .delivery-estimate h2{font-size:1.1rem;margin:0 0 .8rem}
+  .delivery-estimate fieldset{border:0;padding:0;margin:0;display:grid;gap:.6rem}
+  .delivery-estimate legend{font-weight:600;margin-bottom:.6rem}
+  .delivery-estimate label{display:flex;align-items:center;gap:.6rem;cursor:pointer}
+  .delivery-estimate__date{font-weight:700;margin-top:1rem}
+  .delivery-estimate p{margin-bottom:.5rem}
+</style>
+<script>
+  import { calculateDeliveryPreview, formatCountdown } from "../utils/delivery-estimate";
+  const el = document.querySelector<HTMLElement>("[data-delivery-estimate]");
+  if (el) {
+    const windowLabel = el.querySelector<HTMLElement>("[data-estimate-window]");
+    const countdownLabel = el.querySelector<HTMLElement>("[data-estimate-countdown]");
+    const detailLabel = el.querySelector<HTMLElement>("[data-estimate-detail]");
+    // Dispatch time is a configurable assumption, NOT a courier collection guarantee.
+    const cutoffHour = 14;
+    const update = () => {
+      const method = el.querySelector<HTMLInputElement>('input[name="delivery-preview-method"]:checked')?.value === "royal-mail" ? "royal-mail" : "inpost";
+      const preview = calculateDeliveryPreview(new Date(), method, cutoffHour);
+      if (windowLabel) windowLabel.textContent = `${method === "inpost" ? "Estimated ready for collection" : "Estimated home delivery"}: ${preview.window}`;
+      if (countdownLabel) countdownLabel.textContent = `${formatCountdown(preview.minutesUntilCutoff)} until next planned dispatch cut-off`;
+      if (detailLabel) detailLabel.textContent = method === "inpost"
+        ? "Choose a preferred collection point during checkout when available. Weekend drop-off does not guarantee weekend carrier collection. Estimates only; InPost confirms when a parcel is ready."
+        : "Estimated tracked home delivery. Actual dispatch and delivery depend on operating capacity and carrier acceptance.";
+    };
+    el.addEventListener("change", update);
+    update();
+    // Avoid static countdown becoming stale in long-running open tabs.
+    window.setInterval(update, 60_000);
+  }
+</script>
