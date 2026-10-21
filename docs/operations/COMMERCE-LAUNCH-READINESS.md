@@ -84,6 +84,22 @@ All target dates below are in 2026. Repository areas are unlocked for implementa
 | QA-01 — final launch QA | BLOCKED | WEB-01, OPS-01 and all final production configuration/policies | Final build/type/security/link/accessibility/mobile checks, approved price/policy consistency, route/secret boundaries, deployment/recovery and blocker triage | 2–9 Nov; blocker fixes/rechecks 9–15 Nov | Frozen release candidate and readiness recommendation | Prepare QA matrix now; start independent checks while OPS runs, close only on final evidence |
 | GO-01 — production go-live approval | BLOCKED | All gates above; retained governance/security/operations sign-offs | Dated accountable GO/NO-GO, named release/support owners, rollback/monitoring and controlled activation plan; genuine orders only after approval | 16 Nov internal target; 25 Nov absolute deadline | Authorised public commerce activation | Review progress at each window; reserve approval/release slot and escalate unresolved blockers |
 
+## QA-01 / SH-01 — delivery-options countdown launch test (added 21 October 2026)
+
+**Status: NOT TESTED / NOT LAUNCH-APPROVED.** The product-page delivery estimator and optional browser-saved preference were merged in [PR #168](https://github.com/rk96884/CYPH1/pull/168). The feature remains disabled by default via `PUBLIC_DELIVERY_ESTIMATE_ENABLED=false` and also requires `PUBLIC_COMMERCE_UI_ENABLED=true`. Development/preview approval is not evidence of production shipping readiness. No InPost API/widget is required.
+
+- [ ] With the feature flags off, confirm no delivery estimates or countdown appear on the public pre-launch product page; checkout and shipping methods remain disabled.
+- [ ] In an approved private preview, enable both presentation flags and verify the heading reads **Delivery options**, with InPost locker/shop and Royal Mail tracked selections accessible by keyboard, screen reader and mobile.
+- [ ] Switching InPost/Royal Mail changes **ready-for-collection** versus **home-delivery** wording and the corresponding indicative arrival window, without claiming guaranteed delivery.
+- [ ] Verify the dispatch countdown updates over time, at the configured cut-off (currently illustrative 14:00 Europe/London), across midnight, GMT/BST changes and weekday/weekend boundaries.
+- [ ] Validate the estimates against signed-off SH-01 dispatch frequency, actual weekend locker drop-off versus carrier collection, bank holidays, carrier service windows, stock and operational capacity. Do not publish unapproved promises.
+- [ ] Select each delivery option, refresh and reopen the page in the same browser to confirm the preference persists; verify functionality when browser storage is unavailable.
+- [ ] **Checkout integration outstanding:** once checkout shipping selection is implemented, verify the saved preference is merely preselected when eligible; checkout must revalidate the enabled shipping method, service, destination, current rate, and customer choice, and must not treat localStorage as an authoritative order field.
+- [ ] For InPost manual Send, verify the eventual checkout captures a usable preferred locker/shop and that staff can manually book to the intended point; no embedded API/widget or automatic booking should be implied.
+- [ ] Re-run relevant Astro build/type, accessibility and responsive checks, plus checkout/fulfilment regression tests; attach dated screenshots, test results, owner and release decision to QA-01 before approval.
+
+**Gate ownership:** SH-01 approves delivery wording and service estimates; QA-01 verifies presentation and preference handling; OPS-01 verifies fulfilment and tracking; GO-01 controls production activation.
+
 ## Provisional launch decisions and supplier evidence — 7 October 2026
 
 ### UK delivery proposition — SH-01 / PX-01
