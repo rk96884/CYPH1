@@ -1,0 +1,53 @@
+---
+import { withBase } from "../utils/base-path";
+interface Props {
+  video: "hm-01-device-reveal" | "pd-01-treatment-window";
+  poster: string;
+  title: string;
+  detail: string;
+  eager?: boolean;
+}
+const { video, poster, title, detail, eager = false } = Astro.props;
+const src = withBase(`brand/motion/${video}.mp4`);
+---
+<figure class="cyph-motion">
+  <video
+    class="cyph-motion__video"
+    src={src}
+    poster={withBase(poster)}
+    playsinline
+    muted
+    loop
+    autoplay
+    preload={eager ? "metadata" : "none"}
+    aria-label={title}
+    data-cyph-motion
+  ></video>
+  <figcaption class="cyph-motion__caption">
+    <strong>{title}</strong>
+    <span>{detail}</span>
+  </figcaption>
+</figure>
+<style>
+  .cyph-motion{margin:0;min-width:0;overflow:hidden;border:1px solid var(--cyph-border-structural);background:var(--cyph-surface-base)}
+  .cyph-motion__video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#241427}
+  .cyph-motion__caption{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.4rem 1rem;padding:.75rem 1rem;font-size:.9rem}
+  .cyph-motion__caption strong{font-weight:600}
+  .cyph-motion__caption span{color:var(--cyph-text-secondary)}
+  @media(prefers-reduced-motion:reduce){.cyph-motion__video{animation:none}}
+</style>
+<script>
+  // Pause below-the-fold videos and respect reduced motion / data-saving preferences.
+  const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
+  const saveData=(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+  const videos=[...document.querySelectorAll<HTMLVideoElement>("[data-cyph-motion]")];
+  const sync=(v:HTMLVideoElement,visible:boolean)=>{
+    if(reduceMotion.matches || saveData || !visible){v.pause();return;}
+    void v.play().catch(()=>{/* browser autoplay restriction; poster remains visible */});
+  };
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>sync(entry.target as HTMLVideoElement,entry.isIntersecting));
+  },{threshold:.2});
+  videos.forEach(v=>observer.observe(v));
+  reduceMotion.addEventListener("change",()=>videos.forEach(v=>sync(v, false)));
+</script>
