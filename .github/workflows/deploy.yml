@@ -20,6 +20,7 @@ jobs:
     env:
       PUBLIC_SIGNUP_API_URL: ${{ vars.PUBLIC_SIGNUP_API_URL }}
       PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+      PUBLIC_PRODUCT_MOTION_ENABLED: ${{ vars.PUBLIC_PRODUCT_MOTION_ENABLED }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
