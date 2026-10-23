@@ -99,3 +99,8 @@
   .gallery-choice:hover{transform:none}
   .gallery-choice:hover img{transform:none}
 }
+
+/* Product motion: copy + film split (enabled only when assets have passed QA). */
+.product-motion-feature{display:grid;gap:var(--cyph-space-8);align-items:center}
+.product-motion-feature>*{min-width:0}
+@media(min-width:60rem){.product-motion-feature{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}}

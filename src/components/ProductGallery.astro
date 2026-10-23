@@ -10,7 +10,8 @@ const gallery = await Promise.all(productGallery.map(async item => {
   if (!asset) return { ...item, asset: undefined, full: undefined, display: undefined, srcset: "" };
   const full = await getImage({ src: asset, width: asset.width, format: "webp" });
   const widths = [...new Set([320, 480, 640, 960, 1280, asset.width].filter(width => width <= asset.width))].sort((a,b) => a-b);
-  const variants = await Promise.all(widths.map(width => getImage({ src: asset, width, format: "webp" })));
+  // Keep responsive gallery variants compact; full-resolution lightbox uses the original-quality asset.
+  const variants = await Promise.all(widths.map(width => getImage({ src: asset, width, format: "webp", quality: 58 })));
   const display = variants.find((_, i) => (widths[i] ?? 0) >= 640) ?? variants.at(-1);
   if (!display) return { ...item, asset: undefined, full: undefined, display: undefined, srcset: "" };
   return { ...item, asset, full, display, srcset: variants.map((v,i) => `${v.src} ${widths[i]}w`).join(", ") };
