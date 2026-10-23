@@ -2,7 +2,7 @@
 import { withBase } from "../utils/base-path";
 interface Props {
   video: "hm-01-device-reveal" | "pd-01-treatment-window";
-  poster: string;
+  poster?: string;
   title: string;
   detail: string;
   eager?: boolean;
@@ -14,12 +14,12 @@ const src = withBase(`brand/motion/${video}.mp4`);
   <video
     class="cyph-motion__video"
     src={src}
-    poster={withBase(poster)}
+    poster={poster ? withBase(poster) : undefined}
     playsinline
     muted
     loop
     autoplay
-    preload={eager ? "metadata" : "none"}
+    preload="none"
     aria-label={title}
     data-cyph-motion
   ></video>
