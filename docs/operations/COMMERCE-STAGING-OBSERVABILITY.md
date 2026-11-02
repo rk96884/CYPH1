@@ -65,18 +65,21 @@ Example synthetic entry:
 ### Synthetic checks
 
 - Render performs the continuous liveness check against `/health`.
-- `.github/workflows/commerce-staging-monitor.yml` independently checks both
-  direct Render origins' generic `/health` and `/ready` responses hourly and can
-  also be run manually. It does not access checkout, webhook or `/operations/*`
-  routes and does not bypass Cloudflare Access.
+- `.github/workflows/commerce-staging-monitor.yml` is **manual-only** (GitHub
+  **Actions → Commerce staging monitor → Run workflow**). It checks both direct
+  Render origins' generic `/health` and `/ready` responses on demand, without
+  accessing checkout, webhook or `/operations/*` routes or bypassing Cloudflare
+  Access. Its hourly schedule was retired in November 2026 because staging is
+  used for deliberate testing rather than continuous availability monitoring.
 - Store the customer origin only as the GitHub Actions repository secret
   `COMMERCE_CUSTOMER_STAGING_ORIGIN` and the operations origin only as
   `COMMERCE_OPERATIONS_STAGING_ORIGIN`. Each value must be an HTTPS Render
   origin with no path or query. Do not use either custom hostname and do not
   store a Cloudflare Access assertion.
-- Ensure the accountable operator has GitHub Actions failure notifications
-  enabled. A failed scheduled run is the staging alert; review the failed step
-  before changing infrastructure.
+- Review failures when an operator manually starts the staging workflow; no
+  GitHub Actions scheduled staging alert is expected. Keep Render's available
+  service/deploy notifications enabled, and do not treat this manual check as
+  production uptime monitoring.
 - After a deploy or database change, an approved operator checks `/ready` and
   one read-only `/operations/orders` request through Cloudflare Access.
 - The direct Render-origin `/operations/orders` request must continue to return
@@ -119,8 +122,8 @@ Accountability and alert routing are defined in
 
 ## Controlled staging incident drill
 
-Run this exercise manually after the monitor secret and first successful
-scheduled check are verified. Use synthetic data only.
+Run this exercise manually after the monitor secrets and an initial successful
+manual check are verified. Use synthetic data only.
 
 1. Record the drill start time and notify the accountable staging operator.
 2. Temporarily suspend the Render staging service. Do not alter Cloudflare
@@ -203,7 +206,7 @@ The **Commerce staging monitor** manual dispatch exposes independent
 one deliberately fails only that job before any request to its origin, allowing
 the target label and GitHub Actions notification route to be verified without
 suspending Render or changing a secret. Leave both inputs disabled for routine
-manual checks; scheduled runs cannot enable them.
+manual checks. The workflow has no scheduled runs.
 
 ### Dual-runtime setup and verification
 
