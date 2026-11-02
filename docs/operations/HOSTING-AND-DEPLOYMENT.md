@@ -75,6 +75,43 @@ After a production deployment:
 4. Confirm the apex `https://cyph1.co.uk/` redirects once to the canonical `www` URL.
 5. Confirm page canonical metadata and the sitemap use `https://www.cyph1.co.uk/`.
 
+## Production database backups — pre-launch policy (November 2026)
+
+The production commerce database currently has no recorded customers, orders or
+payments. Its configuration and schema still require protection. The encrypted
+backup and freshness-check workflows are retained, but their daily schedules
+are **paused during pre-launch**:
+
+| Workflow | Manual execution | Schedule during pre-launch | Schedule to restore before live checkout |
+| --- | --- | --- | --- |
+| `.github/workflows/production-encrypted-r2-backup.yml` | Actions → Production encrypted R2 backup → Run workflow | None | `17 2 * * *` (02:17 UTC daily) |
+| `.github/workflows/production-backup-freshness-monitor.yml` | Actions → Production backup freshness monitor → Run workflow | None | `47 3 * * *` (03:47 UTC daily) |
+
+Both workflows use the protected GitHub Actions credentials and the private
+Cloudflare R2 bucket. Do not remove the encryption key/identity, R2 credentials,
+stored encrypted backups, or the manual triggers. The freshness monitor checks
+whether the latest encrypted object is non-empty and no older than **36 hours**;
+it is meant to accompany daily backups, so it is expected to fail after a long
+manual-only interval. Run it after a successful manual backup, not as a routine
+pre-launch check.
+
+**Before live checkout or any real customer/order/payment data is recorded:**
+
+1. Run an encrypted production backup manually and confirm upload to R2.
+2. Perform a documented restore test into an isolated non-production database,
+   checking schema and representative data without replacing the live database.
+3. Restore the two daily `schedule` triggers shown above, in a reviewed PR.
+4. Verify that the daily backup job and subsequent freshness monitor both pass,
+   and confirm that GitHub failure notifications reach an accountable operator.
+5. Record the backup/restore evidence and obtain launch approval. Do not
+   enable checkout until this recovery gate is closed.
+
+While the schedules are paused, make an on-demand backup before significant
+production schema or configuration changes, and after any changes that would
+otherwise be difficult to reconstruct. If real data enters the production
+database unexpectedly, re-enable automated protection immediately rather than
+waiting for the planned shopping-cart launch.
+
 ## Rollback
 
 Use a source-controlled rollback so the repository and live site remain consistent:
