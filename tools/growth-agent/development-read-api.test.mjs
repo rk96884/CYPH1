@@ -2,7 +2,14 @@ import test from "node:test";
 import { scryptSync } from "node:crypto";
 import assert from "node:assert/strict";
 import { validateDevelopmentApiEnvironment, validateReadOnlyDatabase,
-  readDevelopmentProspects, createDevelopmentGrowthHandler } from "./development-read-api.mjs";
+  readDevelopmentProspects, createDevelopmentGrowthHandler, databaseStartupFailureCode } from "./development-read-api.mjs";
+
+test("startup diagnostics classify failures without leaking raw error details",()=>{
+  assert.equal(databaseStartupFailureCode({code:"28P01",message:"sensitive database error"}),"DB_AUTHENTICATION_FAILED");
+  assert.equal(databaseStartupFailureCode({code:"SELF_SIGNED_CERT_IN_CHAIN"}),"DB_TLS_CERTIFICATE_INVALID");
+  assert.equal(databaseStartupFailureCode({message:"Development read-only account validation failed"}),"DB_ROLE_BOUNDARY_INVALID");
+  assert.equal(databaseStartupFailureCode({code:"sensitive",message:"postgresql://private"}),"DB_CONNECTION_OR_VALIDATION_FAILED");
+});
 
 const env={
   GROWTH_DATA_ENV:"development",

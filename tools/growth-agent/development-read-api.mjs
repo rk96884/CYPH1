@@ -13,6 +13,24 @@ const HEADERS = Object.freeze({
 });
 const fail = (status, message) => ({ status, body: { message } });
 
+// Never log raw connection errors: some include connection strings or secrets.
+export function databaseStartupFailureCode(error) {
+  if (error?.message === "Development read-only account validation failed") return "DB_ROLE_BOUNDARY_INVALID";
+  const codes = {
+    "28P01": "DB_AUTHENTICATION_FAILED", "28000": "DB_AUTHENTICATION_FAILED",
+    "42501": "DB_PERMISSION_DENIED", "3D000": "DB_DATABASE_NOT_FOUND",
+    "42P01": "DB_REQUIRED_TABLE_MISSING", "3F000": "DB_REQUIRED_SCHEMA_MISSING",
+    "ENOTFOUND": "DB_HOST_UNRESOLVED", "ECONNREFUSED": "DB_CONNECTION_REFUSED",
+    "ETIMEDOUT": "DB_CONNECTION_TIMEOUT", "ECONNRESET": "DB_CONNECTION_RESET",
+    "DEPTH_ZERO_SELF_SIGNED_CERT": "DB_TLS_CERTIFICATE_INVALID",
+    "SELF_SIGNED_CERT_IN_CHAIN": "DB_TLS_CERTIFICATE_INVALID",
+    "UNABLE_TO_VERIFY_LEAF_SIGNATURE": "DB_TLS_CERTIFICATE_INVALID",
+    "ERR_TLS_CERT_ALTNAME_INVALID": "DB_TLS_HOSTNAME_INVALID",
+    "CERT_HAS_EXPIRED": "DB_TLS_CERTIFICATE_EXPIRED",
+  };
+  return Object.hasOwn(codes, error?.code) ? codes[error.code] : "DB_CONNECTION_OR_VALIDATION_FAILED";
+}
+
 export function validateDevelopmentApiEnvironment(env) {
   if (env.GROWTH_DATA_ENV !== "development") throw Error("Development-only mode required");
   if (!env.GROWTH_DEV_READ_DATABASE_URL) throw Error("Separate development read-only database URL is required");
@@ -91,9 +109,11 @@ export async function run(env=process.env) {
     options:"-c default_transaction_read_only=on"});
   try {
     await validateReadOnlyDatabase(pool.query.bind(pool));
-  } catch {
+  } catch (error) {
     await pool.end();
-    throw Error("Restricted development database validation failed");
+    const failure = Error("Restricted development database validation failed");
+    failure.safeStartupCode = databaseStartupFailureCode(error);
+    throw failure;
   }
   const handler=createDevelopmentGrowthHandler({
     uiOrigin:config.uiOrigin,
@@ -124,5 +144,8 @@ export async function run(env=process.env) {
 }
 
 if (process.argv[1] && new URL(import.meta.url).pathname===process.argv[1]) {
-  run().catch(()=>{console.error("Development Growth API startup failed; check restricted role, development authentication and origin configuration.");process.exitCode=1;});
+  run().catch(error=>{
+    console.error("Development Growth API startup failed:", error.safeStartupCode || "CONFIGURATION_INVALID");
+    process.exitCode=1;
+  });
 }
