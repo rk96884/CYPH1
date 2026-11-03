@@ -219,7 +219,7 @@ const { apiUrl, environment } = Astro.props;
         // The linked Source column already displays the social handle.
         // Keep the stored identity untouched; only shorten the visible name.
         const prospectLabel = isDevelopment
-          ? record.name.replace(/\\s+[—–-]\\s+@[A-Za-z0-9._]+$/, '')
+          ? record.name.replace(/\s+[—–-]\s+@[A-Za-z0-9._]+$/, '')
           : record.name;
         const name = el('td', prospectLabel, 'prospect-name');
         if (isDevelopment) {
