@@ -20,7 +20,7 @@ if (!process.env.DATABASE_URL) {
     const missing = expected.filter(x => !found.has(x));
     if (missing.length) throw new Error("Missing growth tables: " + missing.join(", "));
     const grants = await client.query(
-      "SELECT has_schema_privilege('public', 'growth', 'USAGE') AS has_usage"
+      `SELECT EXISTS (SELECT 1 FROM pg_namespace n, LATERAL aclexplode(COALESCE(n.nspacl, acldefault('n', n.nspowner))) acl WHERE n.nspname = 'growth' AND acl.grantee = 0 AND acl.privilege_type = 'USAGE') AS has_usage`
     );
     if (grants.rows[0]?.has_usage) throw new Error("growth schema is unexpectedly available to PUBLIC");
     const migration = await client.query(
