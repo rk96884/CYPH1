@@ -49,9 +49,17 @@ export async function discover({ channel, apiKey, fetcher = fetch }) {
       engine: "google", google_domain: "google.co.uk", gl: "uk", hl: "en",
       q: query, num: "10", api_key: apiKey
     }).toString();
-    const response = await fetcher(url, { method: "GET", signal: AbortSignal.timeout(12000) });
+    let response;
+    try {
+      response = await fetcher(url, { method: "GET", signal: AbortSignal.timeout(12000) });
+    } catch {
+      // A transport error may include its request URL, including the API key.
+      throw new Error("Search provider request failed");
+    }
     if (!response.ok) throw new Error(`Search provider failed with HTTP ${response.status}`);
-    const data = await response.json();
+    let data;
+    try { data = await response.json(); }
+    catch { throw new Error("Search provider returned invalid JSON"); }
     if (data?.error) throw new Error("Search provider returned an error");
     for (const record of normaliseSearchResults(data, channel)) {
       records.set(record.sourceUrl, record);
