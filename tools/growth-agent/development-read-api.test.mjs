@@ -1,4 +1,5 @@
 import test from "node:test";
+import { scryptSync } from "node:crypto";
 import assert from "node:assert/strict";
 import { validateDevelopmentApiEnvironment, validateReadOnlyDatabase,
   readDevelopmentProspects, createDevelopmentGrowthHandler } from "./development-read-api.mjs";
@@ -7,20 +8,19 @@ const env={
   GROWTH_DATA_ENV:"development",
   GROWTH_DEV_READ_DATABASE_URL:"postgresql://growth_read_dev:placeholder123@db.example.org/cyph1_commerce_development",
   GROWTH_DEV_UI_ORIGIN:"http://localhost:4321",
-  CLOUDFLARE_ACCESS_TEAM_DOMAIN:"https://example.cloudflareaccess.com/",
-  CLOUDFLARE_ACCESS_AUDIENCE:"test-access-audience",
-  OPERATIONS_ACCESS_GRANTS:JSON.stringify({"operator@example.org":["growth:read"]})
+  GROWTH_DEV_ADMIN_EMAIL:"rishikhosla@hotmail.com",
+  GROWTH_DEV_PASSWORD_HASH:"scrypt:"+"07".repeat(16)+":"+scryptSync("a".repeat(64),Buffer.alloc(16,7),64).toString("hex")
 };
 
 test("development-only config rejects wrong database, writer role and production origins",()=>{
   const good=validateDevelopmentApiEnvironment(env);
   assert.equal(good.uiOrigin,"http://localhost:4321");
-  assert.ok(good.grants.has("operator@example.org"));
+  assert.equal(good.auth.email,"rishikhosla@hotmail.com");
   assert.throws(()=>validateDevelopmentApiEnvironment({...env,GROWTH_DATA_ENV:"production"}),/Development-only/);
   assert.throws(()=>validateDevelopmentApiEnvironment({...env,GROWTH_DEV_READ_DATABASE_URL:env.GROWTH_DEV_READ_DATABASE_URL.replace("growth_read_dev","growth_import_dev")}),/growth_read_dev/);
   assert.throws(()=>validateDevelopmentApiEnvironment({...env,GROWTH_DEV_READ_DATABASE_URL:env.GROWTH_DEV_READ_DATABASE_URL.replace("development","production")}),/development/);
   assert.throws(()=>validateDevelopmentApiEnvironment({...env,GROWTH_DEV_UI_ORIGIN:"https://www.cyph1.co.uk"}),/Production website/);
-  assert.throws(()=>validateDevelopmentApiEnvironment({...env,OPERATIONS_ACCESS_GRANTS:JSON.stringify({"operator@example.org":["orders:read"]})}),/only growth:read/);
+
 });
 
 test("database identity must be the dedicated reader with no write grants",async()=>{
@@ -38,10 +38,10 @@ test("untrusted requests cannot fetch or mutate research",async()=>{
     authenticate:async token=>token==="signed-test-token",
     readProspects:async()=>{calls++;return [{id:"test-id",name:"research-only"}]}
   });
-  assert.equal((await handler({method:"GET",path:"/operations/growth/prospects"})).status,403);
+  assert.equal((await handler({method:"GET",path:"/operations/growth/prospects"})).status,401);
   assert.equal((await handler({method:"POST",path:"/operations/growth/prospects",token:"signed-test-token"})).status,405);
   assert.equal((await handler({method:"GET",path:"/orders",token:"signed-test-token"})).status,404);
-  assert.equal((await handler({method:"GET",path:"/operations/growth/prospects",token:"bad"})).status,403);
+  assert.equal((await handler({method:"GET",path:"/operations/growth/prospects",token:"bad"})).status,401);
   assert.equal((await handler({method:"OPTIONS",path:"/operations/growth/prospects",origin:"https://untrusted.example.org"})).status,403);
   assert.equal(calls,0);
   const ok=await handler({method:"GET",path:"/operations/growth/prospects",token:"signed-test-token"});

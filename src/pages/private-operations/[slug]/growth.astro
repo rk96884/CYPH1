@@ -3,8 +3,8 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import BrandMark from "../../../components/BrandMark.astro";
 import { privateOperationsPresentation } from "../../../config/private-operations";
 
-// The page is a static presentation only. Real data is only obtained from the
-// Cloudflare Access-authenticated operations API, with growth:read permission.
+// Static presentation only. Production uses the Access-authenticated operations
+// API; the separate development API requires its own administrator credential.
 export function getStaticPaths() {
   const config = privateOperationsPresentation();
   return config ? [{ params: { slug: config.slug }, props: { apiUrl: config.apiUrl, environment: config.environment } }] : [];
@@ -34,6 +34,14 @@ const { apiUrl, environment } = Astro.props;
           <button id="refresh" type="button" class="growth-button">Refresh data <span aria-hidden="true">↗</span></button>
         </div>
       </header>
+      {environment === "development" && <form id="development-login" class="controls" aria-label="Development API sign in">
+        <label for="development-password">DEVELOPMENT ADMINISTRATOR PASSWORD
+          <input id="development-password" type="password" autocomplete="off" required minlength="64" maxlength="64" aria-describedby="development-login-help"/>
+        </label>
+        <button type="submit" class="growth-button">Unlock development data</button>
+        <button type="button" id="development-lock" class="growth-button">Lock and clear data</button>
+        <p id="development-login-help">For rishikhosla@hotmail.com. Kept in memory until you lock or reload this page.</p>
+      </form>}
       <section class="overview" aria-labelledby="overview-title">
         <div class="section-heading"><h2 id="overview-title">Pipeline overview</h2><span>LIVE DATABASE · CURRENT VIEW</span></div>
         <div class="metric-grid">
@@ -118,6 +126,10 @@ const { apiUrl, environment } = Astro.props;
     const statusInput = document.querySelector('#status-filter');
     const searchInput = document.querySelector('#search');
     const detail = document.querySelector('#detail');
+    const isDevelopment = root?.getAttribute('data-environment') === 'development';
+    const login = document.querySelector('#development-login');
+    const passwordInput = document.querySelector('#development-password');
+    let developmentPassword = '';
     let records = [], requestSequence = 0, hasLoaded = false, failed = false;
     const say = (value, state = '') => { message.textContent = value; message.dataset.state = state; };
     const setMetric = (id, value) => { document.querySelector(id).textContent = String(value); };
@@ -187,14 +199,18 @@ const { apiUrl, environment } = Astro.props;
     }
     async function load() {
       const seq = ++requestSequence;
+      if (isDevelopment && !developmentPassword) { say('Enter your development administrator password to load data.'); return; }
       refreshButton.disabled = true;
       failed = false;
       say('Loading protected prospect data…');
       try {
-        const response = await fetch(api + '/operations/growth/prospects', { credentials: 'include', headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        const response = await fetch(api + '/operations/growth/prospects', { credentials: 'include', headers: { 'Accept': 'application/json', ...(isDevelopment ? {Authorization: 'Basic ' + btoa('rishikhosla@hotmail.com:' + developmentPassword)} : {}) }, cache: 'no-store' });
         if (seq !== requestSequence) return;
         if (!response.ok) {
-          if (response.status === 401 || response.status === 403) throw new Error('Access denied. Your operator account requires the growth:read permission.');
+          if (response.status === 401 || response.status === 403) {
+            if (isDevelopment) developmentPassword = '';
+            throw new Error(isDevelopment ? 'Access denied. Check your development password, or wait a minute before retrying.' : 'Access denied. Your operator account requires the growth:read permission.');
+          }
           throw new Error('Growth records could not be loaded. Check the protected operations service.');
         }
         const payload = await response.json();
@@ -228,6 +244,25 @@ const { apiUrl, environment } = Astro.props;
     for (const input of [channelInput, statusInput, searchInput]) {
       input.addEventListener(input === searchInput ? 'input' : 'change', render);
     }
+    login?.addEventListener('submit', event => {
+      event.preventDefault();
+      developmentPassword = passwordInput.value;
+      passwordInput.value = '';
+      void load();
+    });
+    document.querySelector('#development-lock')?.addEventListener('click', () => {
+      ++requestSequence;
+      developmentPassword = '';
+      passwordInput.value = '';
+      records = []; hasLoaded = false; failed = false;
+      rowsElement.replaceChildren(); detail.hidden = true; empty.hidden = true;
+      for (const id of ['#metric-total','#metric-creators','#metric-partners','#metric-review']) setMetric(id, '—');
+      for (const id of ['#detail-name','#detail-meta','#detail-score','#detail-evidence','#detail-date']) document.querySelector(id).textContent = '';
+      document.querySelector('#detail-link').removeAttribute('href');
+      refreshButton.disabled = false;
+      say('Development data locked.');
+      passwordInput.focus();
+    });
     refreshButton.addEventListener('click', load);
     void load();
   </script>

@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import process from "node:process";
 import pg from "pg";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { loadDevelopmentAuth, createDevelopmentAuthenticator } from "./development-auth.mjs";
 
 const HEADERS = Object.freeze({
   "Cache-Control": "no-store",
@@ -30,25 +30,8 @@ export function validateDevelopmentApiEnvironment(env) {
   if (["www.cyph1.co.uk", "cyph1.co.uk"].includes(origin.hostname)) {
     throw Error("Production website origin refused");
   }
-  const team = new URL(env.CLOUDFLARE_ACCESS_TEAM_DOMAIN || "");
-  if (team.protocol !== "https:" || !team.hostname.endsWith(".cloudflareaccess.com") ||
-      team.pathname !== "/" || team.search || team.hash) {
-    throw Error("Invalid Cloudflare Access team origin");
-  }
-  if (!env.CLOUDFLARE_ACCESS_AUDIENCE) throw Error("Access audience required");
-  let grants;
-  try { grants = JSON.parse(env.OPERATIONS_ACCESS_GRANTS || "{}"); }
-  catch { throw Error("Invalid Access grants"); }
-  if (!grants || typeof grants !== "object" || Array.isArray(grants)) throw Error("Invalid Access grants");
-  for (const [email, permissions] of Object.entries(grants)) {
-    if (!email.includes("@") || !Array.isArray(permissions) ||
-        permissions.some(value => value !== "growth:read")) {
-      throw Error("Development endpoint grants must contain only growth:read");
-    }
-  }
-  return { database:env.GROWTH_DEV_READ_DATABASE_URL, uiOrigin:origin.origin,
-    team:team.origin, audience:env.CLOUDFLARE_ACCESS_AUDIENCE,
-    grants:new Set(Object.entries(grants).filter(([,p])=>p.includes("growth:read")).map(([email])=>email.toLowerCase())) };
+  const auth = loadDevelopmentAuth(env);
+  return { database:env.GROWTH_DEV_READ_DATABASE_URL, uiOrigin:origin.origin, auth };
 }
 
 export async function validateReadOnlyDatabase(query) {
@@ -94,16 +77,16 @@ export function createDevelopmentGrowthHandler({ uiOrigin, authenticate, readPro
     }
     if (path !== "/operations/growth/prospects") return fail(404,"Not found");
     if (method !== "GET") return fail(405,"Method not allowed");
-    if (!token) return fail(403,"Access denied");
+    if (!token) return fail(401,"Access denied");
     const permitted = await authenticate(token);
-    if (!permitted) return fail(403,"Access denied");
+    if (!permitted) return fail(401,"Access denied");
     return {status:200, body:{prospects:await readProspects(),readOnly:true,environment:"development"}};
   };
 }
 
 export async function run(env=process.env) {
   const config=validateDevelopmentApiEnvironment(env);
-  const jwks=createRemoteJWKSet(new URL(config.team+"/cdn-cgi/access/certs"));
+
   const pool=new pg.Pool({connectionString:config.database,ssl:{rejectUnauthorized:true},max:3,
     options:"-c default_transaction_read_only=on"});
   try {
@@ -114,13 +97,7 @@ export async function run(env=process.env) {
   }
   const handler=createDevelopmentGrowthHandler({
     uiOrigin:config.uiOrigin,
-    authenticate:async token=>{
-      try {
-        const {payload}=await jwtVerify(token,jwks,{algorithms:["RS256"],issuer:config.team,
-          audience:config.audience,requiredClaims:["exp","iat","email"],clockTolerance:5});
-        return typeof payload.email==="string" && config.grants.has(payload.email.toLowerCase());
-      } catch {return false;}
-    },
+    authenticate:createDevelopmentAuthenticator(config.auth),
     readProspects:()=>readDevelopmentProspects(pool.query.bind(pool))
   });
   const port=Number(env.PORT||"3000");
@@ -131,12 +108,12 @@ export async function run(env=process.env) {
       "Access-Control-Allow-Origin":config.uiOrigin,
       "Access-Control-Allow-Credentials":"true",
       "Access-Control-Allow-Methods":"GET, OPTIONS",
-      "Access-Control-Allow-Headers":"Accept",
+      "Access-Control-Allow-Headers":"Accept, Authorization",
       "Vary":"Origin"}:{};
     let result;
     try {
       result=await handler({method:req.method,path:new URL(req.url||"/","https://local.invalid").pathname,
-        origin,token:req.headers["cf-access-jwt-assertion"]});
+        origin,token:req.headers.authorization});
     } catch {result=fail(503,"Development research unavailable");}
     res.writeHead(result.status,{...HEADERS,...cors});
     res.end(result.body===null?"":JSON.stringify(result.body));
@@ -147,5 +124,5 @@ export async function run(env=process.env) {
 }
 
 if (process.argv[1] && new URL(import.meta.url).pathname===process.argv[1]) {
-  run().catch(()=>{console.error("Development Growth API startup failed; check restricted role, Access and origin configuration.");process.exitCode=1;});
+  run().catch(()=>{console.error("Development Growth API startup failed; check restricted role, development authentication and origin configuration.");process.exitCode=1;});
 }

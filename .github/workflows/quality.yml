@@ -46,7 +46,7 @@ jobs:
         run: node --test tools/growth-agent/import-first-five-development.test.mjs
 
       - name: Test isolated development Growth API authentication and boundaries
-        run: node --test tools/growth-agent/development-read-api.test.mjs
+        run: node --test tools/growth-agent/development-auth.test.mjs tools/growth-agent/development-read-api.test.mjs
 
       - name: Test dedicated read-only dashboard role provisioning
         run: node --test tools/growth-agent/provision-development-reader.test.mjs

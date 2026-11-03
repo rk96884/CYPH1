@@ -18,9 +18,8 @@ Configure the service with private environment variables, not `PUBLIC_*`:
 - `GROWTH_DATA_ENV=development`
 - `GROWTH_DEV_READ_DATABASE_URL`: securely assembled PostgreSQL TLS URI for the **growth_read_dev** user, exact database `cyph1_commerce_development`. Keep this value secret; do not reuse the owner or importer's URL. Set the password with correct URI percent-encoding.
 - `GROWTH_DEV_UI_ORIGIN`: exact separate preview UI origin, for example `https://your-preview.example.net` or `http://localhost:4321`. Never the public CYPH/1 website.
-- `CLOUDFLARE_ACCESS_TEAM_DOMAIN`: existing trusted Cloudflare Access HTTPS team URL ending in `.cloudflareaccess.com`.
-- `CLOUDFLARE_ACCESS_AUDIENCE`: **API application** audience (must correspond to the Access policy protecting this dedicated API host).
-- `OPERATIONS_ACCESS_GRANTS`: JSON mapping the permitted operator identity to **only** `["growth:read"]`; use your real pre-approved operator email, do not commit it.
+- `GROWTH_DEV_ADMIN_EMAIL=rishikhosla@hotmail.com`: existing authorised administrator.
+- `GROWTH_DEV_PASSWORD_HASH`: `scrypt:<32 lowercase hex salt characters>:<128 lowercase hex digest characters>`. Use a freshly generated random 32-byte password represented by 64 lowercase hex characters, a fresh random 16-byte salt and Node's default scrypt parameters with a 64-byte output. Keep the password private and separate from database credentials. Do not put real passwords or hashes in Git, logs, URLs or public build variables.
 - `PORT`: provided by hosting platform.
 
 Start the API from repository root after `npm ci`:
@@ -28,9 +27,9 @@ Start the API from repository root after `npm ci`:
 node tools/growth-agent/development-read-api.mjs
 ```
 
-Put the API behind Cloudflare Access so that successful authorization forwards the signed `cf-access-jwt-assertion` header to Node; the code independently verifies the JWT's signature, issuer, audience, expiry and `growth:read` allowlist. Protect both the application and API origins. This endpoint **never** sends contact messages or writes to the database. The API returns HTTP 403 without an approved JWT and exposes no commerce routes.
+The owner-approved development alternative uses HTTP Basic authentication directly on the Render HTTPS hostname. Every data request must carry the administrator email and dedicated password in the Authorization header. The API stores only a salted password hash and compares fixed-length digests using timing-safe comparisons. No Cloudflare application, custom domain, team-domain variable, AUD or Access grant variable is required for this development service. Production authentication remains unchanged.
 
-**Do not deploy publicly until** API Access protection, forwarding and the read-only role are verified. A mere Cloudflare Access cookie on another hostname is not sufficient to authorize this API, and CORS alone is not an access-control mechanism.
+**Do not deploy until** the dedicated credential and read-only role are configured. CORS is not authentication. The credential proves password possession, not mailbox ownership or SSO identity. Anyone obtaining it can act as the administrator. Rotate by replacing the salted hash and deploying the development service. Authentication attempts are bounded to 20/minute per process; attackers can exhaust this shared development allowance and temporarily deny legitimate access. Do not treat it as a production rate limiter.
 
 ## 3. Preview dashboard site configuration
 On a **separate preview website/Pages project**, set:
@@ -39,25 +38,27 @@ On a **separate preview website/Pages project**, set:
 - `PUBLIC_COMMERCE_OPERATIONS_API_URL`: HTTPS origin of your dedicated development API, not `commerce.cyph1.co.uk`
 - `PUBLIC_COMMERCE_OPERATIONS_DATA_ENV=development`
 
-The existing Growth page `/private-operations/<slug>/growth/` will then display `DEVELOPMENT DATA` and query the protected development endpoint. It uses `credentials: include`, handles Access denials, and only displays validated source-backed entries.
+The Growth page `/private-operations/<slug>/growth/` displays `DEVELOPMENT DATA` and asks for the administrator password. It keeps it in memory only, sends it in an Authorization header to the configured API, and clears it and displayed data when locked or reloaded. Never save it in browser storage or embed it in the static build. The API permits Authorization preflight requests only from the exact configured development UI origin; preflight responses contain no prospect data.
 
 Production builds that do not set `PUBLIC_COMMERCE_OPERATIONS_DATA_ENV=development` continue to use their existing API configuration and behaviour. **Do not set the development mode variables on the public production Pages project**. Existing production deployments are not modified by this PR.
 
 ## 4. Security acceptance checks
-1. Without an Access JWT: `GET /operations/growth/prospects` returns **403**.
-2. With a valid Access JWT lacking `growth:read`: **403**.
-3. With valid approved identity, proper Access API audience and origin: **200** and `readOnly: true`, `environment: "development"`, and 5 source-backed prospects.
+1. Without credentials: `GET /operations/growth/prospects` returns **401**.
+2. Wrong username, wrong password or forged Cloudflare header: **401** and no data reads.
+3. Correct administrator credentials: **200**, `readOnly: true`, `environment: "development"`, and actual source-backed prospects. Never invent a record count.
 4. Non-GET returns **405**. Any other route returns **404**. CORS is restricted to `GROWTH_DEV_UI_ORIGIN`.
 5. Reader account identity must be exactly `growth_read_dev`. Service startup fails with owner/importer credentials or wrong database, unexpected write grants or commerce access.
 6. UI banner says **DEVELOPMENT DATA**; no demo/sample prospects, production data or mutation controls.
 7. Production API and www site remain unchanged. No external outreach.
 
 ## Current state
-This PR provides code, tests and the manually approved reader-role workflow. **No new database role or hosted API service is created or deployed on merge.** Deploy the endpoint only after an approved service/workspace selection and verification of Cloudflare Access configuration.
+Deploy the development API only from the isolated `codex/growth-development-password-auth` branch to Render service `cyph1-growth-api-development`. Do not merge or deploy this branch to production as part of development setup. Build the development UI with the public configuration above and upload to a separate Pages preview branch; do not change the Pages production branch or shared preview environment settings. The default Render origin remains enabled and enforces the same application authentication; it is not protected by Cloudflare Access at the edge.
+
+Rollback by restoring the development service's previous branch/configuration and leaving it unavailable rather than disabling authentication. No database writes or migrations are involved.
 
 ## Tests
 ```bash
-node --test tools/growth-agent/development-read-api.test.mjs
+node --test tools/growth-agent/development-auth.test.mjs tools/growth-agent/development-read-api.test.mjs
 node --test tools/growth-agent/provision-development-reader.test.mjs
 node scripts/test-growth-dashboard.mjs
 ```
