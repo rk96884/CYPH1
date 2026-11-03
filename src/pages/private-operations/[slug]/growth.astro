@@ -1,0 +1,234 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import BrandMark from "../../../components/BrandMark.astro";
+import { privateOperationsPresentation } from "../../../config/private-operations";
+
+// The page is a static presentation only. Real data is only obtained from the
+// Cloudflare Access-authenticated operations API, with growth:read permission.
+export function getStaticPaths() {
+  const config = privateOperationsPresentation();
+  return config ? [{ params: { slug: config.slug }, props: { apiUrl: config.apiUrl } }] : [];
+}
+const { apiUrl } = Astro.props;
+---
+<BaseLayout
+  title="Growth Intelligence | CYPH/1 Private Operations"
+  description="Restricted CYPH/1 growth research console."
+  robots="noindex, nofollow, noarchive"
+>
+  <main id="main" class="growth-shell" data-api={apiUrl}>
+    <div class="growth-topline">
+      <BrandMark/>
+      <div class="topline-right"><span class="topline-dot" aria-hidden="true"></span> PRIVATE OPERATIONS <span class="topline-divider" aria-hidden="true">/</span> GROWTH INTELLIGENCE</div>
+    </div>
+    <div class="growth-content">
+      <header class="growth-header">
+        <div class="header-copy">
+          <p class="eyebrow">CYPH/1 / ACQUISITION INTELLIGENCE</p>
+          <h1>GROWTH<br/><span>CONTROL.</span></h1>
+          <p>Research-led acquisition. One source of truth for UK creator and commercial partner opportunities.</p>
+        </div>
+        <div class="header-side">
+          <div class="mode-label"><span aria-hidden="true">●</span> RESEARCH MODE</div>
+          <p>READ-ONLY CONSOLE</p>
+          <button id="refresh" type="button" class="growth-button">Refresh data <span aria-hidden="true">↗</span></button>
+        </div>
+      </header>
+      <section class="overview" aria-labelledby="overview-title">
+        <div class="section-heading"><h2 id="overview-title">Pipeline overview</h2><span>LIVE DATABASE · CURRENT VIEW</span></div>
+        <div class="metric-grid">
+          <article class="metric"><span class="metric-label">PROSPECTS IN VIEW</span><strong id="metric-total">—</strong><small>Verified source records</small></article>
+          <article class="metric"><span class="metric-label">CREATORS</span><strong id="metric-creators">—</strong><small>Beauty &amp; lifestyle</small></article>
+          <article class="metric"><span class="metric-label">COMMERCIAL PARTNERS</span><strong id="metric-partners">—</strong><small>Potential retail &amp; referral</small></article>
+          <article class="metric"><span class="metric-label">AWAITING REVIEW</span><strong id="metric-review">—</strong><small>Research-only / needs review</small></article>
+        </div>
+      </section>
+      <section class="pipeline" aria-labelledby="pipeline-title">
+        <div class="section-heading"><h2 id="pipeline-title">Prospect intelligence</h2><span>UP TO 100 RECORDS · NO OUTREACH</span></div>
+        <div class="controls">
+          <label for="channel">CHANNEL <select id="channel"><option value="">All channels</option><option value="creator">Creators</option><option value="partner">Commercial partners</option></select></label>
+          <label for="status-filter">REVIEW STATUS <select id="status-filter"><option value="">All statuses</option><option value="research_only">Research only</option><option value="needs_review">Needs review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="archived">Archived</option></select></label>
+          <label for="search">SEARCH <input id="search" type="search" placeholder="Name or source…" autocomplete="off"/></label>
+        </div>
+        <div class="info-strip">
+          <span class="info-symbol" aria-hidden="true">◇</span>
+          <p>Prospect scores reflect documented evidence, not predicted sales. Contact and publishing remain disabled.</p>
+        </div>
+        <p id="status-message" role="status" aria-live="polite" aria-atomic="true">Connecting to the protected research API…</p>
+        <div class="table-scroll">
+          <table aria-label="Prospect research results" id="prospect-table">
+            <thead><tr><th scope="col">PROSPECT / SOURCE</th><th scope="col">CHANNEL</th><th scope="col">SCORE</th><th scope="col">CONFIDENCE</th><th scope="col">STATUS</th><th scope="col">REVIEW</th></tr></thead>
+            <tbody id="prospect-rows"></tbody>
+          </table>
+        </div>
+        <div id="empty" class="empty" hidden>
+          <div class="empty-orbit" aria-hidden="true"><span>01</span></div>
+          <h3>NO PROSPECTS IN VIEW.</h3>
+          <p id="empty-copy">No prospect research has been imported yet. The discovery adapter currently runs manually and does not populate this database.</p>
+          <p class="empty-footnote">NEXT PHASE / SECURE RESEARCH INGESTION</p>
+        </div>
+      </section>
+      <section id="detail" class="detail" hidden aria-labelledby="detail-title">
+        <div class="section-heading"><h2 id="detail-title" tabindex="-1">Prospect detail</h2><span>PUBLIC-SOURCE RESEARCH</span></div>
+        <div class="detail-layout">
+          <div><p class="detail-label">SELECTED PROSPECT</p><h3 id="detail-name"></h3><p id="detail-meta"></p></div>
+          <div><p class="detail-label">QUALIFICATION</p><p id="detail-score" class="detail-number"></p><p id="detail-evidence"></p></div>
+          <div><p class="detail-label">SOURCE</p><a id="detail-link" class="source-link" target="_blank" rel="noopener noreferrer">Open research source ↗</a><p id="detail-date"></p></div>
+        </div>
+      </section>
+      <footer class="growth-footer">
+        <span>CYPH/1 — CYCLE. PHASE. ONE.</span>
+        <span>RESEARCH ONLY <span aria-hidden="true">/</span> NO AUTOMATED CONTACT</span>
+      </footer>
+    </div>
+  </main>
+  <style>
+    .growth-shell{min-height:100vh;background:radial-gradient(ellipse at 90% 0%,rgb(50 27 64 / .24),transparent 46%),var(--cyph-surface-canvas);color:var(--cyph-text-primary)}
+    .growth-topline{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid rgb(119 106 128 / .34);padding:1.1rem clamp(1.25rem,4vw,3.75rem)}
+    .growth-topline :global(.brand-mark){width:8rem;transform:none}
+    .topline-right,.section-heading>span,.detail-label,.growth-footer,.metric-label,.mode-label{font-size:.64rem;font-weight:600;letter-spacing:.14em}
+    .topline-right{color:var(--cyph-text-secondary)}.topline-dot{display:inline-block;width:7px;height:7px;margin-right:.55rem;border-radius:50%;background:var(--cyph-accent-primary)}.topline-divider{margin:0 .65rem;color:var(--cyph-color-alloy)}
+    .growth-content{max-width:1450px;margin:auto;padding:clamp(2rem,5vw,5rem) clamp(1.25rem,4vw,3.75rem)}
+    .growth-header{display:flex;justify-content:space-between;align-items:end;gap:2rem;padding-bottom:3.5rem;border-bottom:1px solid rgb(119 106 128 / .4)}
+    .growth-header h1{font-size:clamp(2.6rem,6.5vw,6.1rem);line-height:1.15}.growth-header h1 span{color:var(--cyph-accent-primary)}
+    .header-copy>p:last-child{max-width:37rem;margin:1.5rem 0 0;color:var(--cyph-text-secondary);font-size:.95rem;line-height:1.7}
+    .header-side{text-align:right;flex:0 0 auto}.mode-label{display:inline-block;border:1px solid rgb(167 122 244 / .45);padding:.65rem .9rem;color:var(--cyph-accent-highlight);background:rgb(167 122 244 / .08)}.mode-label span{margin-right:.35rem}
+    .header-side p{font-size:.68rem;letter-spacing:.12em;color:var(--cyph-text-secondary);margin:1rem 0}.growth-button{min-height:2.75rem;border:1px solid var(--cyph-accent-primary);padding:.7rem 1rem;color:var(--cyph-color-carbon-ink);background:var(--cyph-accent-primary);font-size:.75rem;font-weight:700;cursor:pointer}.growth-button:hover{background:var(--cyph-accent-highlight)}.growth-button:disabled{opacity:.5;cursor:wait}
+    section.overview,section.pipeline{margin-top:3rem}.section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:1.4rem}.section-heading h2{font-family:var(--cyph-font-display);font-size:clamp(1rem,2vw,1.4rem);font-weight:400;text-transform:uppercase}.section-heading>span{color:var(--cyph-text-secondary)}
+    .metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:rgb(119 106 128 / .35);border:1px solid rgb(119 106 128 / .35)}
+    .metric{min-width:0;min-height:10.75rem;padding:1.55rem;background:var(--cyph-surface-base);display:flex;flex-direction:column}.metric-label{color:var(--cyph-accent-highlight)}.metric strong{font-family:var(--cyph-font-display);font-size:clamp(2.2rem,4vw,3.25rem);font-weight:400;line-height:1.3;margin:.9rem 0 .35rem}.metric small{margin-top:auto;color:var(--cyph-text-secondary);font-size:.72rem}
+    .controls{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:1rem;margin-bottom:1.4rem}.controls label{display:flex;flex-direction:column;gap:.55rem;color:var(--cyph-text-secondary);font-size:.63rem;font-weight:600;letter-spacing:.13em}.controls select,.controls input{width:100%;min-height:2.9rem;border:1px solid rgb(119 106 128 / .65);border-radius:0;padding:.7rem .85rem;color:var(--cyph-text-primary);background:var(--cyph-surface-base);font-size:.78rem;letter-spacing:normal}.controls option{background:var(--cyph-color-carbon-ink)}.controls input::placeholder{color:var(--cyph-color-mist)}
+    .info-strip{display:flex;gap:.85rem;align-items:center;border-left:2px solid var(--cyph-accent-primary);padding:.45rem .85rem;background:rgb(167 122 244 / .07)}.info-strip p{margin:0;color:var(--cyph-text-secondary);font-size:.78rem}.info-symbol{color:var(--cyph-accent-primary);font-size:1.15rem}
+    #status-message{min-height:1.4rem;color:var(--cyph-text-secondary);font-size:.77rem;margin:1rem 0}#status-message[data-state="error"]{color:var(--cyph-color-error)}
+    .table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.8rem;text-align:left}th{white-space:nowrap;border-bottom:1px solid var(--cyph-color-alloy);padding:.9rem .8rem;color:var(--cyph-text-secondary);font-size:.62rem;letter-spacing:.1em}td{padding:1.1rem .8rem;border-bottom:1px solid rgb(119 106 128 / .3);color:var(--cyph-text-secondary)}td:first-child{color:var(--cyph-text-primary);font-weight:600}td small{display:block;color:var(--cyph-text-secondary);font-weight:400;margin-top:.25rem}.score{color:var(--cyph-accent-highlight);font-weight:700}.status-pill{display:inline-block;padding:.35rem .55rem;border:1px solid rgb(119 106 128 / .7);font-size:.67rem;text-transform:capitalize}.detail-button{border:1px solid var(--cyph-accent-primary);background:transparent;color:var(--cyph-accent-highlight);padding:.5rem .75rem;cursor:pointer}.detail-button:hover{background:rgb(167 122 244 / .12)}
+    .empty{padding:4rem 1rem 4.5rem;text-align:center;border:1px solid rgb(119 106 128 / .38);background:radial-gradient(circle at 50% 35%,rgb(50 27 64 / .35),transparent 55%)}.empty-orbit{position:relative;display:grid;place-items:center;width:7.5rem;height:7.5rem;margin:auto auto 1.75rem;border:1px solid var(--cyph-color-alloy);border-radius:50%;transform:rotate(-25deg)}.empty-orbit::before{content:"";position:absolute;inset:1rem;border:1px solid var(--cyph-accent-primary);border-radius:50%}.empty-orbit span{transform:rotate(25deg);color:var(--cyph-accent-primary);font-family:var(--cyph-font-display);font-size:1.3rem}.empty h3{font-family:var(--cyph-font-display);font-size:clamp(1rem,3vw,1.5rem);font-weight:400}.empty p{max-width:31rem;margin:1rem auto;color:var(--cyph-text-secondary);font-size:.85rem}.empty .empty-footnote{margin-top:2rem;color:var(--cyph-accent-primary);font-size:.67rem;letter-spacing:.13em}
+    .detail{margin-top:3rem;padding:1.5rem;border:1px solid rgb(119 106 128 / .55);background:var(--cyph-surface-base)}.detail-layout{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:1.5rem}.detail-label{color:var(--cyph-accent-highlight)}.detail h3{margin:.6rem 0;font-size:1.2rem;font-weight:500}.detail-layout p:not(.detail-label){color:var(--cyph-text-secondary);font-size:.8rem;overflow-wrap:anywhere}.detail-number{font-family:var(--cyph-font-display);font-size:2rem!important;color:var(--cyph-text-primary)!important;margin:.5rem 0}.source-link{display:inline-block;color:var(--cyph-accent-primary);font-size:.83rem;overflow-wrap:anywhere}
+    .growth-footer{display:flex;justify-content:space-between;gap:1rem;margin-top:4rem;padding-top:1.3rem;border-top:1px solid rgb(119 106 128 / .4);color:var(--cyph-text-secondary)}.growth-footer span span{margin:0 .5rem;color:var(--cyph-accent-primary)}
+    @media(max-width:900px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-layout{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr 1fr}}
+    @media(max-width:640px){.growth-header{display:block;padding-bottom:2rem}.header-side{text-align:left;margin-top:1.5rem}.growth-topline{flex-wrap:wrap}.topline-right{font-size:.57rem}.section-heading{flex-direction:column;gap:.5rem}.controls,.detail-layout{grid-template-columns:1fr}.metric{min-height:9rem;padding:1.2rem}.growth-footer{flex-direction:column}.growth-content{padding-top:2.5rem}table{min-width:700px}}
+  </style>
+  <script is:inline type="module">
+    const root = document.querySelector('.growth-shell');
+    const api = root?.getAttribute('data-api') ?? '';
+    const rowsElement = document.querySelector('#prospect-rows');
+    const empty = document.querySelector('#empty');
+    const message = document.querySelector('#status-message');
+    const refreshButton = document.querySelector('#refresh');
+    const channelInput = document.querySelector('#channel');
+    const statusInput = document.querySelector('#status-filter');
+    const searchInput = document.querySelector('#search');
+    const detail = document.querySelector('#detail');
+    let records = [], requestSequence = 0, hasLoaded = false, failed = false;
+    const say = (value, state = '') => { message.textContent = value; message.dataset.state = state; };
+    const setMetric = (id, value) => { document.querySelector(id).textContent = String(value); };
+    const readable = value => String(value ?? '').replaceAll('_', ' ');
+    const date = value => {
+      const stamp = new Date(value);
+      return Number.isNaN(stamp.getTime()) ? 'Unknown' : stamp.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+    };
+    const el = (tag, text, className = '') => {
+      const node = document.createElement(tag);
+      node.textContent = String(text ?? '');
+      if (className) node.className = className;
+      return node;
+    };
+    const safeSource = value => {
+      try {
+        const url = new URL(value);
+        return url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+      } catch { return null; }
+    };
+    function showDetail(record) {
+      detail.hidden = false;
+      document.querySelector('#detail-name').textContent = record.name;
+      document.querySelector('#detail-meta').textContent = readable(record.channel) + ' · ' + readable(record.status);
+      document.querySelector('#detail-score').textContent = record.score + ' / 100';
+      document.querySelector('#detail-evidence').textContent = record.evidenceCount + ' documented evidence categories · ' + Math.round(record.confidence * 100) + '% confidence';
+      document.querySelector('#detail-date').textContent = 'Source checked ' + date(record.checkedAt);
+      const link = document.querySelector('#detail-link');
+      const href = safeSource(record.sourceUrl);
+      link.hidden = !href;
+      link.removeAttribute('href');
+      if (href) link.href = href;
+      document.querySelector('#detail-title').focus();
+    }
+    function render() {
+      const channel = channelInput.value, status = statusInput.value, query = searchInput.value.trim().toLowerCase();
+      const filtered = records.filter(record =>
+        (!channel || record.channel === channel) &&
+        (!status || record.status === status) &&
+        (!query || (record.name + ' ' + record.sourceUrl).toLowerCase().includes(query))
+      );
+      setMetric('#metric-total', filtered.length);
+      setMetric('#metric-creators', filtered.filter(r => r.channel === 'creator').length);
+      setMetric('#metric-partners', filtered.filter(r => r.channel === 'partner').length);
+      setMetric('#metric-review', filtered.filter(r => ['research_only', 'needs_review'].includes(r.status)).length);
+      rowsElement.replaceChildren();
+      detail.hidden = true;
+      for (const record of filtered) {
+        const tr = document.createElement('tr');
+        const name = el('td', record.name);
+        name.append(el('small', new URL(record.sourceUrl).hostname));
+        tr.append(name, el('td', record.channel === 'creator' ? 'Creator' : 'Commercial partner'));
+        const score = el('td', record.score + ' / 100', 'score'); tr.append(score);
+        tr.append(el('td', Math.round(record.confidence * 100) + '%'));
+        const state = document.createElement('td'); state.append(el('span', readable(record.status), 'status-pill')); tr.append(state);
+        const actionCell = document.createElement('td'), button = el('button', 'Inspect ↗', 'detail-button');
+        button.type = 'button'; button.setAttribute('aria-label', 'Inspect ' + record.name);
+        button.addEventListener('click', () => showDetail(record));
+        actionCell.append(button); tr.append(actionCell);
+        rowsElement.append(tr);
+      }
+      empty.hidden = !hasLoaded || failed || filtered.length > 0;
+      document.querySelector('#empty-copy').textContent = records.length ?
+        'No prospects match these filters. Try another channel or search term.' :
+        'No prospect research has been imported yet. The discovery adapter currently runs manually and does not populate this database.';
+      if (hasLoaded && !failed) say(filtered.length + ' prospect' + (filtered.length === 1 ? '' : 's') + ' in view.');
+    }
+    async function load() {
+      const seq = ++requestSequence;
+      refreshButton.disabled = true;
+      failed = false;
+      say('Loading protected prospect data…');
+      try {
+        const response = await fetch(api + '/operations/growth/prospects', { credentials: 'include', headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+        if (seq !== requestSequence) return;
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) throw new Error('Access denied. Your operator account requires the growth:read permission.');
+          throw new Error('Growth records could not be loaded. Check the protected operations service.');
+        }
+        const payload = await response.json();
+        if (!Array.isArray(payload?.prospects) || payload.readOnly !== true) throw new Error('Unexpected response from Growth API.');
+        const valid = payload.prospects.every(p =>
+          p && typeof p.id === 'string' && typeof p.name === 'string' &&
+          ['creator', 'partner'].includes(p.channel) &&
+          typeof p.sourceUrl === 'string' && safeSource(p.sourceUrl) &&
+          typeof p.score === 'number' && p.score >= 0 && p.score <= 100 &&
+          typeof p.confidence === 'number' && p.confidence >= 0 && p.confidence <= 1 &&
+          typeof p.evidenceCount === 'number' && typeof p.status === 'string'
+        );
+        if (!valid) throw new Error('Unrecognised prospect data; no records displayed.');
+        records = payload.prospects;
+        hasLoaded = true;
+        render();
+      } catch (error) {
+        if (seq !== requestSequence) return;
+        records = [];
+        hasLoaded = false;
+        failed = true;
+        rowsElement.replaceChildren();
+        detail.hidden = true;
+        empty.hidden = true;
+        for (const id of ['#metric-total','#metric-creators','#metric-partners','#metric-review']) setMetric(id, '—');
+        say(error instanceof Error ? error.message : 'Unable to load prospect data.', 'error');
+      } finally {
+        if (seq === requestSequence) refreshButton.disabled = false;
+      }
+    }
+    for (const input of [channelInput, statusInput, searchInput]) {
+      input.addEventListener(input === searchInput ? 'input' : 'change', render);
+    }
+    refreshButton.addEventListener('click', load);
+    void load();
+  </script>
+</BaseLayout>
