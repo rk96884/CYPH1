@@ -1,0 +1,295 @@
+{
+  "reviewedAt": "2026-11-03",
+  "scope": "Five previously shortlisted public creator leads; research only",
+  "status": "partial_validation_pending_original_post_and_insights",
+  "methodology": {
+    "originalInstagramAccess": "unavailable via public search; no original post could be independently opened",
+    "evidenceTiers": [
+      "third_party_sponsored_post_index",
+      "attributed_identity_or_management",
+      "third_party_audience_estimate",
+      "third_party_engagement_snapshot"
+    ],
+    "rules": [
+      "No creator is marked IPL-review-confirmed based only on a sponsored-post index",
+      "Do not infer UK follower geography from UK-based identity or a UK brand sponsorship",
+      "Do not treat a particular sponsored post's likes/comments/views as the creator's engagement rate",
+      "Keep platform-specific audience numbers separate; estimated measurements have snapshot dates",
+      "No score changes, import, outreach, or production writes"
+    ]
+  },
+  "creators": [
+    {
+      "handle": "bec.fen",
+      "name": "Rebecca Fenney",
+      "platform": "instagram",
+      "profileUrl": "https://www.instagram.com/bec.fen/",
+      "reviewStatus": "source_index_verified_original_not_accessed",
+      "categoryEvidence": {
+        "device": "Ulike Air 10",
+        "publishedPosts": [
+          "2026-08-15",
+          "2026-10-22"
+        ],
+        "summary": "Indexed sponsored captions claim personal use over separate posts; firsthand treatment footage not independently inspected",
+        "source": "https://www.modash.io/content-library/brands/ulike-examples",
+        "sponsored": true
+      },
+      "identityEvidence": {
+        "summary": "Independent UK press and a creator-oriented Modash page connect this profile to Rebecca Fenney, an aesthetics professional",
+        "sources": [
+          "https://www.hellorayo.co.uk/kiss/entertainment/television/mafs-uk-rebecca-bailey",
+          "https://www.modash.io/content-library/brands/club-l-london-examples/influencers"
+        ]
+      },
+      "audience": {
+        "ukShareEstimatedPct": 87.37,
+        "estimatedFemaleSharePct": 94.47,
+        "platform": "Instagram",
+        "source": "https://www.modash.io/content-library/brands/club-l-london-examples/influencers",
+        "asOf": "2026-06",
+        "notes": "Third-party inferred audience geography; not Instagram Insights"
+      },
+      "engagement": {
+        "estimatedRatePct": 0.6,
+        "source": "https://www.modash.io/content-library/brands/club-l-london-examples/influencers",
+        "asOf": "2026-06",
+        "notes": "Another Modash snapshot reports 0.53%; methodology/snapshot differ"
+      },
+      "postSnapshot": {
+        "date": "2026-10-22",
+        "likes": 298,
+        "comments": 46,
+        "views": 73900,
+        "source": "https://www.modash.io/content-library/brands/ulike-examples",
+        "notes": "Index snapshot only; these are not full-account engagement rates"
+      },
+      "remaining": [
+        "Confirm original Ulike reels and advertising disclosure",
+        "Establish eligibility and conflicts with current Ulike partnership",
+        "Collect newer UK audience data before weighted scoring"
+      ],
+      "decision": "priority_source_check"
+    },
+    {
+      "handle": "chloehaycock_",
+      "name": "Chloe Haycock",
+      "platform": "instagram",
+      "profileUrl": "https://www.instagram.com/chloehaycock_/",
+      "reviewStatus": "cross_platform_caption_corrob_original_not_accessed",
+      "categoryEvidence": {
+        "device": "Ulike Air 10",
+        "publishedPosts": [
+          "2026-09-23"
+        ],
+        "summary": "Modash indexed '14 days testing' post; a TikTok index mirrors account and similar caption; first-person testing still requires original post verification",
+        "source": "https://www.modash.io/content-library/brands/ulike-examples",
+        "secondarySource": "https://urlebird.com/ua/user/chloehaycock_/",
+        "sponsored": true
+      },
+      "identityEvidence": {
+        "summary": "Creator directories associate matching handle with UK parenting/lifestyle content",
+        "sources": [
+          "https://www.nutcake.com/creators/chloehaycock-haa3zhyzbttl",
+          "https://tokranks.com/fr/creator/chloehaycock_"
+        ]
+      },
+      "audience": {
+        "ukShareEstimatedPct": null,
+        "platform": "Instagram",
+        "source": null,
+        "notes": "UK residence/UK-content style not proof of followers' location"
+      },
+      "engagement": {
+        "estimatedRatePct": 1.9,
+        "platform": "Instagram",
+        "source": "https://www.nutcake.com/creators/chloehaycock-haa3zhyzbttl",
+        "asOf": "2026-04",
+        "notes": "Older third-party estimate; do not apply TikTok metrics to Instagram"
+      },
+      "platformSizeSnapshots": [
+        {
+          "platform": "Instagram",
+          "followersEstimated": 109000,
+          "asOf": "2026-04",
+          "source": "https://www.nutcake.com/creators/chloehaycock-haa3zhyzbttl"
+        },
+        {
+          "platform": "TikTok",
+          "followersEstimated": 506860,
+          "asOf": "2026-11",
+          "source": "https://urlebird.com/ua/user/chloehaycock_/",
+          "notes": "Unverified third-party estimate"
+        }
+      ],
+      "postSnapshot": {
+        "date": "2026-09-23",
+        "likes": 191,
+        "comments": 4,
+        "views": 45500,
+        "source": "https://www.modash.io/content-library/brands/ulike-examples"
+      },
+      "remaining": [
+        "Open original treatment post and determine actual treatment methodology",
+        "Verify Instagram and TikTok insights separately",
+        "Check if parenting-led content suits device buyers and potential Ulike exclusivity"
+      ],
+      "decision": "priority_source_check"
+    },
+    {
+      "handle": "gabystarbuckvocalist",
+      "name": "Gaby Starbuck",
+      "platform": "instagram",
+      "profileUrl": "https://www.instagram.com/gabystarbuckvocalist/",
+      "reviewStatus": "multiple_platform_index_only",
+      "categoryEvidence": {
+        "device": "Ulike Air 10",
+        "publishedPosts": [
+          "2026-10-19"
+        ],
+        "summary": "Modash indexes first-person 'trying' caption, and DiscoverSponsors lists a Gaby Starbuck YouTube video titled 'My At-Home Hair Removal Routine | Ulike Air 10'. Neither underlying original was directly accessible",
+        "source": "https://www.modash.io/content-library/brands/ulike-examples",
+        "secondarySource": "https://discoversponsors.com/brands/ulike-1026",
+        "sponsored": true
+      },
+      "identityEvidence": {
+        "summary": "Cross-platform handle attribution requires first-party verification",
+        "sources": [
+          "https://discoversponsors.com/brands/ulike-1026"
+        ]
+      },
+      "audience": {
+        "ukShareEstimatedPct": null,
+        "source": null,
+        "notes": "No dated, reliable Instagram audience-country split established"
+      },
+      "engagement": {
+        "estimatedRatePct": null,
+        "notes": "No defensible profile-level engagement rate found"
+      },
+      "postSnapshot": {
+        "date": "2026-10-19",
+        "likes": 72,
+        "comments": 3,
+        "views": 8000,
+        "source": "https://www.modash.io/content-library/brands/ulike-examples"
+      },
+      "remaining": [
+        "Locate the actual YouTube upload and original Instagram reel",
+        "Confirm channel ownership, product use and disclosures",
+        "Find dated platform-specific engagement and UK audience insights"
+      ],
+      "decision": "priority_source_check"
+    },
+    {
+      "handle": "orgill1234",
+      "name": "Laura Orgill",
+      "platform": "instagram",
+      "profileUrl": "https://www.instagram.com/orgill1234/",
+      "reviewStatus": "source_index_verified_original_not_accessed",
+      "categoryEvidence": {
+        "device": "Ulike, exact model unverified",
+        "publishedPosts": [
+          "2026-08-28"
+        ],
+        "summary": "Sponsored content index quotes personal surprise about observed result patches; exact device and usage duration not independently confirmed",
+        "source": "https://www.modash.io/content-library/brands/ulike-examples",
+        "sponsored": true
+      },
+      "identityEvidence": {
+        "summary": "Talent representation and UK press identify a Welsh creator with this Instagram handle",
+        "sources": [
+          "https://nomistalent.com/talent/laura-orgill/",
+          "https://www.inkl.com/news/tiktok-postie-defends-herself-over-clip-showing-her-waiting-two-seconds-for-people-to-answer-door-before-leaving"
+        ]
+      },
+      "audience": {
+        "ukShareEstimatedPct": 87.85,
+        "estimatedFemaleSharePct": 88.55,
+        "source": "https://www.modash.io/content-library/brands/jet2-com-and-jet2holidays-examples/influencers",
+        "asOf": "2026-10",
+        "notes": "Third-party Instagram estimate, not creator Insights"
+      },
+      "engagement": {
+        "estimatedRatePct": 0.43,
+        "source": "https://www.modash.io/content-library/brands/jet2-com-and-jet2holidays-examples/influencers",
+        "asOf": "2026-10"
+      },
+      "postSnapshot": {
+        "date": "2026-08-28",
+        "likes": 134,
+        "comments": 9,
+        "views": 35300,
+        "source": "https://www.modash.io/content-library/brands/ulike-examples"
+      },
+      "remaining": [
+        "Verify original IPL footage and exact product",
+        "Evaluate comedy/lifestyle versus IPL education fit",
+        "Confirm current data and contractual conflicts"
+      ],
+      "decision": "priority_source_check"
+    },
+    {
+      "handle": "beauty_glow_girl",
+      "name": "Debbie Attwood",
+      "platform": "instagram",
+      "profileUrl": "https://www.instagram.com/beauty_glow_girl/",
+      "reviewStatus": "sponsored_device_claim_not_test_proven",
+      "categoryEvidence": {
+        "device": "Ulike Air 10",
+        "publishedPosts": [
+          "2026-07-31"
+        ],
+        "summary": "Indexed sponsored post claims short pain-free treatment; does not confirm a controlled or multi-week firsthand IPL review",
+        "source": "https://www.modash.io/content-library/brands/ulike-examples",
+        "sponsored": true
+      },
+      "identityEvidence": {
+        "summary": "UK beauty and budget-luxe creator verified in independent creator listings",
+        "sources": [
+          "https://creatorfanbase.com/c/debbie-attwood",
+          "https://infloo.io/en/influencers/gb/city-of-london/beauty-health"
+        ]
+      },
+      "audience": {
+        "ukShareEstimatedPct": null,
+        "source": null,
+        "notes": "A directory's 'UK 100%' tag may denote creator location rather than actual audience; not used as audience proof"
+      },
+      "engagement": {
+        "estimatedRatePctRange": [
+          0.4,
+          0.6
+        ],
+        "sources": [
+          "https://infloo.io/en/influencers/gb/city-of-london/beauty-health",
+          "https://sup.co/brands/lidl/creators"
+        ],
+        "asOf": "2026-11",
+        "notes": "Independent third-party estimates differ; not comparable without method"
+      },
+      "platformSizeSnapshots": [
+        {
+          "platform": "Instagram",
+          "followersEstimated": 240447,
+          "asOf": "2026-10-05",
+          "source": "https://creatorfanbase.com/c/debbie-attwood"
+        }
+      ],
+      "postSnapshot": {
+        "date": "2026-07-31",
+        "likes": 592,
+        "comments": 22,
+        "views": 30300,
+        "source": "https://www.modash.io/content-library/brands/ulike-examples"
+      },
+      "remaining": [
+        "Verify original promo post and whether device was personally used over time",
+        "Confirm current audience-country breakdown",
+        "Assess economics of large account and competing partner rights"
+      ],
+      "decision": "category_fit_good_review_unverified"
+    }
+  ],
+  "gate": "No new entry should be classified ipl_review_confirmed until original firsthand post/video is checked; no database import in this review."
+}
