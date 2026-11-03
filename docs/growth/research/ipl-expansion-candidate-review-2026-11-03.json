@@ -1,0 +1,146 @@
+{
+  "reviewDate": "2026-11-03",
+  "policy": "Public-source research only. No automatic outreach, no unverified UK follower share, no score attribution or database import.",
+  "status": "review_queue_not_imported",
+  "researchMethod": "Publicly indexed creator-authored articles and indexed third-party sponsored Instagram posts; verify originals before classification as confirmed firsthand reviews.",
+  "socialCreators": [
+    {
+      "name": "Rebecca Fenney",
+      "handle": "bec.fen",
+      "platform": "Instagram",
+      "device": "Ulike Air 10",
+      "contentDate": "2026-10-22",
+      "classification": "creator_claims_personal_use_third_party_index",
+      "commercialContext": "sponsored Ulike UK campaign",
+      "sourceUrl": "https://www.modash.io/content-library/brands/ulike-examples",
+      "evidence": "Indexed Oct 22 Instagram post says she has been using the Ulike Air10 for home hair removal; second listed post Aug 15 also says she has used it.",
+      "needsVerification": [
+        "Open original Instagram post and confirm specific account identity",
+        "Confirm personal treatment detail and material connection disclosures",
+        "Verify UK audience demographics and engagement from dated data",
+        "Verify any exclusivity or existing brand relationship"
+      ]
+    },
+    {
+      "name": "Gaby Starbuck",
+      "handle": "gabystarbuckvocalist",
+      "platform": "Instagram",
+      "device": "Ulike Air 10",
+      "contentDate": "2026-10-19",
+      "classification": "creator_claims_personal_use_third_party_index",
+      "commercialContext": "sponsored Ulike UK campaign",
+      "sourceUrl": "https://www.modash.io/content-library/brands/ulike-examples",
+      "evidence": "Indexed Oct 19 Instagram post says she has been trying Ulike Air 10 as part of an at-home hair-removal routine.",
+      "needsVerification": [
+        "Open original Instagram post and verify claims and disclosure",
+        "Check fit for CYPH/1 beauty-tech audience",
+        "Confirm UK share of followers independently"
+      ]
+    },
+    {
+      "name": "Chloe Haycock",
+      "handle": "chloehaycock_",
+      "platform": "Instagram",
+      "device": "Ulike Air 10",
+      "contentDate": "2026-09-23",
+      "classification": "reported_14_day_firsthand_test_third_party_index",
+      "commercialContext": "sponsored Ulike UK campaign",
+      "sourceUrl": "https://www.modash.io/content-library/brands/ulike-examples",
+      "supportingSourceUrl": "https://urlebird.com/ua/user/chloehaycock_/",
+      "evidence": "Indexed Sep 23 post caption says 14 days testing Ulike Air 10; separate indexed TikTok mirror shows same self-reported test wording.",
+      "needsVerification": [
+        "Verify original first-person Instagram video",
+        "Do not assume Instagram and TikTok follower counts are equal",
+        "Assess suitability of parenting/lifestyle audience rather than just reach",
+        "Confirm UK follower distribution and possible brand exclusivity"
+      ]
+    },
+    {
+      "name": "Laura Orgill",
+      "handle": "orgill1234",
+      "platform": "Instagram",
+      "device": "Ulike (model to verify)",
+      "contentDate": "2026-08-28",
+      "classification": "creator_claims_results_third_party_index",
+      "commercialContext": "sponsored Ulike UK campaign",
+      "sourceUrl": "https://www.modash.io/content-library/brands/ulike-examples",
+      "evidence": "Indexed Aug 28 post reports surprise at perceived hair-reduction patches from Ulike; exact model and testing method not independently verified.",
+      "needsVerification": [
+        "Verify original content and exact device model",
+        "Identify personal use versus scripted sponsor copy",
+        "Verify account, geographic audience and engagement"
+      ]
+    },
+    {
+      "name": "Debbie Attwood",
+      "handle": "beauty_glow_girl",
+      "platform": "Instagram",
+      "device": "Ulike Air 10",
+      "contentDate": "2026-07-31",
+      "classification": "device_demonstration_or_promotion_third_party_index",
+      "commercialContext": "sponsored Ulike UK campaign",
+      "sourceUrl": "https://www.modash.io/content-library/brands/ulike-examples",
+      "evidence": "Indexed Jul 31 beauty post discusses Air 10 treatment time and comfort; detailed personal treatment history unverified.",
+      "needsVerification": [
+        "Verify original post and personal experience",
+        "Confirm actual UK-audience proportion, current reach and engagement",
+        "Check product-claim accuracy and sponsorship disclosures"
+      ]
+    }
+  ],
+  "editorialReviewers": [
+    {
+      "name": "Laura Gladman",
+      "type": "specialist beauty-device reviewer/editor",
+      "devices": [
+        "Braun Silk-expert Pro 5",
+        "Philips Lumea 9000"
+      ],
+      "classification": "firsthand_ipl_testing_reported_primary_source",
+      "sources": [
+        "https://www.wearebodybeautiful.com/braun-silk-expert-pro-5-ipl-review/",
+        "https://www.wearebodybeautiful.com/philips-lumea-9000-series-review/"
+      ],
+      "evidence": "Long-form firsthand testing with named body areas, device comparisons and affiliate disclosures; social account and collaboration availability unverified."
+    },
+    {
+      "name": "Lise Smith",
+      "type": "UK beauty journalist/editorial reviewer",
+      "devices": [
+        "Philips Lumea 9900",
+        "Braun Silk Expert Pro 5",
+        "Ulike Air 10"
+      ],
+      "classification": "firsthand_comparative_ipl_testing_primary_source",
+      "sources": [
+        "https://www.theguardian.com/thefilter/2025/aug/21/best-ipl-laser-hair-removal-device-uk"
+      ],
+      "evidence": "Guardian comparative review (updated July 2026) describes 13 devices tested with repeat sessions and control area; primarily an editorial opportunity, not a verified social creator."
+    },
+    {
+      "name": "Sally Underwood",
+      "type": "UK beauty journalist/editor",
+      "devices": [
+        "Ulike Air 10"
+      ],
+      "classification": "firsthand_ipl_testing_reported_primary_source",
+      "sources": [
+        "https://www.livethatglow.com/ulike-air-10-review/"
+      ],
+      "evidence": "Personally reported two weeks of Ulike Air 10 use with before/after photographs, published Jan 31 2026; Ulike approached her and article includes affiliate disclosure."
+    },
+    {
+      "name": "Natalie Dixon",
+      "type": "UK lifestyle journalist/editorial reviewer",
+      "devices": [
+        "Ulike Air 10"
+      ],
+      "classification": "firsthand_ipl_testing_reported_primary_source",
+      "sources": [
+        "https://www.nationalworld.com/recommended/review-ulike-air-10-hair-laser-removal-device-5048783"
+      ],
+      "evidence": "Personal Ulike Air 10 use described in March 29 2025 NationalWorld review, with affiliate disclosure; editorial, not automatically a verified Instagram micro-influencer."
+    }
+  ],
+  "decision": "Keep new people outside growth.prospects until identity, social source URL, dated evidence and restrictions reviewed under existing research import policy. No automatic dedup, outreach, rank or influence claims."
+}
