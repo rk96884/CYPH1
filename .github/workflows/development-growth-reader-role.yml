@@ -1,0 +1,48 @@
+name: Development Growth dashboard reader role
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Plan is read-only; apply creates development growth_read_dev role"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+      confirmation:
+        description: "For apply, enter CREATE-DEVELOPMENT-GROWTH-READER"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-growth-reader-role
+  cancel-in-progress: false
+
+jobs:
+  provision-development-reader:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: development-db
+    env:
+      ACTION: ${{ inputs.action }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      DATABASE_URL: ${{ secrets.DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: ${{ vars.DEVELOPMENT_DATABASE_SSL || 'true' }}
+      GROWTH_READ_ROLE_PASSWORD: ${{ secrets.GROWTH_READ_ROLE_PASSWORD }}
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@v7
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate and optionally provision restricted dashboard reader
+        run: node tools/growth-agent/provision-development-reader.mjs
