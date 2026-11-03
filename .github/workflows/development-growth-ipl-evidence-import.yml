@@ -1,0 +1,48 @@
+name: Development Growth IPL evidence import
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Plan validates reviewed evidence without DB; apply adds immutable research-only IPL records to development"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+      confirmation:
+        description: "For apply, enter IMPORT-IPL-EVIDENCE-RESEARCH-ONLY"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-growth-ipl-research
+  cancel-in-progress: false
+
+jobs:
+  development-ipl-research:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: development-db
+    env:
+      ACTION: ${{ inputs.action }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      DEVELOPMENT_DATABASE_URL: ${{ secrets.DEVELOPMENT_DATABASE_URL }}
+      GROWTH_IMPORT_ROLE_PASSWORD: ${{ secrets.GROWTH_IMPORT_ROLE_PASSWORD }}
+      DATABASE_SSL: ${{ vars.DEVELOPMENT_DATABASE_SSL || 'true' }}
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@v7
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate reviewed evidence and optionally import into development
+        run: node tools/growth-agent/import-reviewed-ipl-development.mjs
