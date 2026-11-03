@@ -63,6 +63,9 @@ jobs:
       - name: Test branded Growth dashboard safety and accessibility
         run: node --test scripts/test-growth-dashboard.mjs
 
+      - name: Test source-backed IPL research evidence policy
+        run: node --test tools/growth-agent/ipl-evidence.test.mjs
+
       - name: Test reviewed Growth Agent ingestion safeguards
         run: node --test tools/growth-agent/ingest.test.mjs
 
