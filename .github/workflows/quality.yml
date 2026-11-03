@@ -42,6 +42,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Test least-privilege Growth role provisioning
+        run: node --test apps/commerce-api/scripts/provision-development-growth-role.test.mjs
+
       - name: Verify historical development CRLF migration checksums
         run: node --test apps/commerce-api/scripts/migration-checksum.test.mjs
 
