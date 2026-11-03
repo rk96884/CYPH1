@@ -45,6 +45,9 @@ jobs:
       - name: Test branded Growth dashboard safety and accessibility
         run: node --test scripts/test-growth-dashboard.mjs
 
+      - name: Test reviewed Growth Agent ingestion safeguards
+        run: node --test tools/growth-agent/ingest.test.mjs
+
       - name: Test Growth Agent public-search discovery safeguards
         run: node --test tools/growth-agent/discover.test.mjs tools/growth-agent/qualification.test.mjs
 
