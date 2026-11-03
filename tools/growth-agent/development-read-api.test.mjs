@@ -96,3 +96,28 @@ test("self-signed TLS exception only applies to exact private Render development
   }
   assert.throws(()=>developmentDatabaseConnection("not-a-url"),/Invalid development database URL/);
 });
+
+test("development reader includes public-source IPL metadata without scores changing",async()=>{
+  let sql="";
+  const prospects=await readDevelopmentProspects(async query=>{
+    sql=query;
+    return {rows:[{
+      id:"pilot-id",channel:"creator",display_name:"Sascha",
+      source_url:"https://www.instagram.com/beautygeeksascha/",
+      source_checked_at:"2026-11-03T12:00:00Z",review_status:"research_only",
+      qualification_score:24,qualification_confidence:0.2,evidence_count:1,
+      ipl_classification:"ipl_review_confirmed",ipl_device:"Ulike Air 10",
+      ipl_technology:"IPL",ipl_source_url:"https://beautygeekuk.com/2025/08/beauty-favourites-july-2025.html",
+      ipl_published_at:"2025-08-07",ipl_checked_at:"2026-11-03",
+      ipl_firsthand:true,ipl_format:"first_person_initial_impressions",ipl_note:"Firsthand early-use review"
+    }]};
+  });
+  assert.match(sql,/LEFT JOIN growth\.ipl_experience/);
+  assert.match(sql,/ix\.policy_version=1/);
+  assert.equal(prospects[0].score,24);
+  assert.equal(prospects[0].status,"research_only");
+  assert.equal(prospects[0].iplExperience.classification,"ipl_review_confirmed");
+  assert.equal(prospects[0].iplExperience.firsthandTestConfirmed,true);
+  assert.equal(prospects[0].iplExperience.device,"Ulike Air 10");
+  assert.equal(prospects[0].iplExperience.publishedAt,"2025-08-07");
+});
