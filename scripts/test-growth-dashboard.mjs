@@ -68,3 +68,16 @@ test("development dashboard separates prospect from clickable social source with
   assert.match(source, /name\.append\(el\('small', new URL\(record\.sourceUrl\)\.hostname\)\)/);
   assert.doesNotMatch(source, /innerHTML\s*=/);
 });
+
+test("development prospect labels remove only the redundant trailing social handle", () => {
+  assert.match(source, /record\.name\.replace\(/);
+  assert.match(source, /const prospectLabel = isDevelopment/);
+  const label = name => name.replace(/\s+[—–-]\s+@[A-Za-z0-9._]+$/, '');
+  assert.equal(label('Nicola Londors — @nlondors'), 'Nicola Londors');
+  assert.equal(label('Janet — @skinandbase'), 'Janet');
+  assert.equal(label('Sascha Taylor-Curtis — @beautygeeksascha'), 'Sascha Taylor-Curtis');
+  assert.equal(label('Brand - Company'), 'Brand - Company');
+  assert.match(source, /info\.platform \+ ' · ' \+ info\.label/);
+  assert.match(source, /\.growth-shell :global\(\.platform-link\)/);
+  assert.doesNotMatch(source, /innerHTML\s*=/);
+});
