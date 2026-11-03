@@ -1,0 +1,67 @@
+{
+  "policyVersion": 1,
+  "reviewDate": "2026-11-03",
+  "purpose": "Public-source IPL experience research only; not outreach permission, clinical proof or a score override",
+  "prospects": [
+    {
+      "handle": "beautygeeksascha",
+      "classification": "ipl_review_confirmed",
+      "device": "Ulike Air 10",
+      "technology": "IPL",
+      "sourceUrl": "https://beautygeekuk.com/2025/08/beauty-favourites-july-2025.html",
+      "publishedAt": "2025-08-07",
+      "checkedAt": "2026-11-03",
+      "firsthandTestConfirmed": true,
+      "format": "first_person_initial_impressions",
+      "note": "Creator describes using Ulike Air 10 four times and gives her personal observations. A subsequent standalone full review was promised, not verified; personal outcome statements must not be treated as clinical efficacy evidence. Discloses mixed PR samples and affiliate links; specific device acquisition unclear."
+    },
+    {
+      "handle": "backtoyoubeauty",
+      "classification": "ipl_coverage_confirmed",
+      "device": "Sensica Sensilight Mini",
+      "technology": "light_based_ipl",
+      "sourceUrl": "https://www.backtoyoubeauty.co.uk/2020/04/10-beauty-treatments-you-can-do-during-lockdown.html",
+      "publishedAt": "2020-04-25",
+      "checkedAt": "2026-11-03",
+      "firsthandTestConfirmed": false,
+      "format": "article_recommendation",
+      "note": "Author recommends at-home IPL and says she loves her Sensica Sensilight Mini, but no treatment log or standalone hands-on review was established. Article notes PR products and affiliate links."
+    },
+    {
+      "handle": "nlondors",
+      "classification": "needs_verification",
+      "device": null,
+      "technology": null,
+      "sourceUrl": null,
+      "publishedAt": null,
+      "checkedAt": "2026-11-03",
+      "firsthandTestConfirmed": false,
+      "format": null,
+      "note": "Beauty/UGC creator; a creator-authored public IPL review has not been confirmed during this research. Do not treat absence from public search as proof none exists."
+    },
+    {
+      "handle": "skinandbase",
+      "classification": "needs_verification",
+      "device": null,
+      "technology": null,
+      "sourceUrl": null,
+      "publishedAt": null,
+      "checkedAt": "2026-11-03",
+      "firsthandTestConfirmed": false,
+      "format": null,
+      "note": "Skincare reviews established, but no attributable IPL-device review verified during this research. Audience and device experience remain unknown."
+    },
+    {
+      "handle": "lifeofhanna_",
+      "classification": "needs_verification",
+      "device": null,
+      "technology": null,
+      "sourceUrl": null,
+      "publishedAt": null,
+      "checkedAt": "2026-11-03",
+      "firsthandTestConfirmed": false,
+      "format": null,
+      "note": "Skincare/wellness content; no attributable IPL-device review verified during this research. Do not infer lack of category experience."
+    }
+  ]
+}
