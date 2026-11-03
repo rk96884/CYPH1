@@ -1,0 +1,74 @@
+{
+  "prospects": [
+    {
+      "name": "Janet — @skinandbase",
+      "channel": "creator",
+      "sourceUrl": "https://www.instagram.com/skinandbase/",
+      "sourceCheckedAt": "2026-11-03T16:00:00Z",
+      "evidence": {
+        "relevance": {
+          "rating": 4,
+          "sourceUrl": "https://thesocialshepherd.com/blog/top-skincare-influencers-uk",
+          "note": "UK skincare product reviews and documented beauty brand collaborations. IPL-specific experience and follower geography not yet verified."
+        }
+      }
+    },
+    {
+      "name": "Sharon Harvey — @backtoyoubeauty",
+      "channel": "creator",
+      "sourceUrl": "https://www.instagram.com/backtoyoubeauty/",
+      "sourceCheckedAt": "2026-11-03T16:00:00Z",
+      "evidence": {
+        "relevance": {
+          "rating": 4,
+          "sourceUrl": "https://influencers.feedspot.com/uk_over_40_skincare_instagram_influencers/",
+          "note": "Listed as London beauty editor, makeup artist and skincare creator. IPL-specific content, audience country breakdown and engagement not verified."
+        }
+      }
+    },
+    {
+      "name": "Sascha Taylor-Curtis — @beautygeeksascha",
+      "channel": "creator",
+      "sourceUrl": "https://www.instagram.com/beautygeeksascha/",
+      "sourceCheckedAt": "2026-11-03T16:00:00Z",
+      "evidence": {
+        "relevance": {
+          "rating": 4,
+          "sourceUrl": "https://influencers.feedspot.com/uk_over_40_skincare_instagram_influencers/",
+          "note": "Listed as UK beauty journalist and skincare blogger. Educational and review content adjacent to IPL; hair-removal experience unverified."
+        }
+      }
+    },
+    {
+      "name": "Nicola Londors — @nlondors",
+      "channel": "creator",
+      "sourceUrl": "https://www.instagram.com/nlondors/",
+      "sourceCheckedAt": "2026-11-03T16:00:00Z",
+      "evidence": {
+        "relevance": {
+          "rating": 4,
+          "sourceUrl": "https://influencers.feedspot.com/uk_over_40_skincare_instagram_influencers/",
+          "note": "London-based UK beauty and UGC creator; at-home beauty-tech demonstration potentially relevant, IPL experience unverified."
+        },
+        "feasibility": {
+          "rating": 3,
+          "sourceUrl": "https://influencers.feedspot.com/uk_over_40_skincare_instagram_influencers/",
+          "note": "Publicly identified as UGC creator with beauty-brand content; this supports potential content-format feasibility, not consent, availability or pricing."
+        }
+      }
+    },
+    {
+      "name": "Hanna — @lifeofhanna_",
+      "channel": "creator",
+      "sourceUrl": "https://www.instagram.com/lifeofhanna_/",
+      "sourceCheckedAt": "2026-11-03T16:00:00Z",
+      "evidence": {
+        "relevance": {
+          "rating": 4,
+          "sourceUrl": "https://sproutsocial.com/insights/beauty-influencers-uk/",
+          "note": "UK creator covering affordable skincare, modest beauty and wellness; IPL device relevance and audience characteristics not yet verified."
+        }
+      }
+    }
+  ]
+}
