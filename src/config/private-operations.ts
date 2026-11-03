@@ -1,9 +1,13 @@
 const enabled = (value: string | undefined): boolean => value === "true";
 
-export const privateOperationsPresentation = (): Readonly<{ slug: string; apiUrl: string }> | undefined => {
+export const privateOperationsPresentation = (): Readonly<{ slug: string; apiUrl: string; environment: "production" | "development" }> | undefined => {
   const explicitEnabled = enabled(import.meta.env.PUBLIC_COMMERCE_OPERATIONS_UI_ENABLED);
   const slug = import.meta.env.PUBLIC_COMMERCE_OPERATIONS_SLUG?.trim();
   const api = import.meta.env.PUBLIC_COMMERCE_OPERATIONS_API_URL?.trim();
+  const requestedEnvironment = import.meta.env.PUBLIC_COMMERCE_OPERATIONS_DATA_ENV?.trim();
+  if (requestedEnvironment && !["development", "production"].includes(requestedEnvironment)) {
+    throw new Error("Unsupported private operations data environment.");
+  }
 
   // A configured slug + API URL is sufficient to generate the private static
   // operations route. This avoids silently dropping the route when a hosting
@@ -29,5 +33,11 @@ export const privateOperationsPresentation = (): Readonly<{ slug: string; apiUrl
     throw new Error("Private operations API must use HTTPS outside local development.");
   }
 
-  return Object.freeze({ slug, apiUrl: url.href.replace(/\/$/, "") });
+  if (requestedEnvironment === "development") {
+    if (!explicitEnabled || ["www.cyph1.co.uk", "cyph1.co.uk", "commerce.cyph1.co.uk"].includes(url.hostname)) {
+      throw new Error("Development dashboard requires explicit enablement and a non-production API origin.");
+    }
+  }
+
+  return Object.freeze({ slug, apiUrl: url.href.replace(/\/$/, ""), environment: requestedEnvironment === "development" ? "development" : "production" });
 };

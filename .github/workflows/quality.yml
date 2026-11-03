@@ -45,6 +45,12 @@ jobs:
       - name: Validate first-five source-backed research-only import pilot
         run: node --test tools/growth-agent/import-first-five-development.test.mjs
 
+      - name: Test isolated development Growth API authentication and boundaries
+        run: node --test tools/growth-agent/development-read-api.test.mjs
+
+      - name: Test dedicated read-only dashboard role provisioning
+        run: node --test tools/growth-agent/provision-development-reader.test.mjs
+
       - name: Test restricted Growth importer connection safeguards
         run: node --test tools/growth-agent/check-development-import-connection.test.mjs
 
