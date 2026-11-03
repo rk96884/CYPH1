@@ -42,3 +42,12 @@ test("dashboard has accessible filters, status and review details", () => {
   assert.match(source, /<th scope="col">/);
   assert.match(source, /safeSource/);
 });
+
+test("IPL evidence is displayed only in the isolated development dashboard", () => {
+  assert.match(source, /environment === "development" && <th scope="col">IPL EXPERIENCE<\/th>/);
+  assert.match(source, /environment === "development" && <div class="ipl-detail"/);
+  assert.match(source, /if \(isDevelopment\) tr\.append\(el\('td', record\.iplExperience/);
+  assert.match(source, /iplExperience/);
+  assert.match(source, /detail-ipl-source/);
+  assert.doesNotMatch(source, /innerHTML\s*=/);
+});

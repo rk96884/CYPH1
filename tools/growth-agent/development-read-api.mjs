@@ -92,10 +92,16 @@ export async function readDevelopmentProspects(query) {
   const result = await query(`
     SELECT p.id, p.channel, p.display_name, p.source_url, p.source_checked_at,
       p.review_status, p.qualification_score, p.qualification_confidence,
-      COUNT(e.id)::integer AS evidence_count
+      COUNT(e.id)::integer AS evidence_count,
+      ix.classification AS ipl_classification, ix.device AS ipl_device,
+      ix.technology AS ipl_technology, ix.evidence_url AS ipl_source_url,
+      ix.published_at AS ipl_published_at, ix.checked_at AS ipl_checked_at,
+      ix.firsthand_test_confirmed AS ipl_firsthand,
+      ix.content_format AS ipl_format, ix.evidence_note AS ipl_note
     FROM growth.prospects p
     LEFT JOIN growth.prospect_evidence e ON e.prospect_id=p.id
-    GROUP BY p.id
+    LEFT JOIN growth.ipl_experience ix ON ix.prospect_id=p.id AND ix.policy_version=1
+    GROUP BY p.id, ix.id
     ORDER BY p.qualification_score DESC, p.source_checked_at DESC, p.id
     LIMIT 100
   `);
@@ -103,7 +109,15 @@ export async function readDevelopmentProspects(query) {
     id:String(row.id), channel:row.channel, name:String(row.display_name),
     sourceUrl:String(row.source_url), checkedAt:new Date(row.source_checked_at).toISOString(),
     status:row.review_status, score:Number(row.qualification_score),
-    confidence:Number(row.qualification_confidence), evidenceCount:Number(row.evidence_count)
+    confidence:Number(row.qualification_confidence), evidenceCount:Number(row.evidence_count),
+    iplExperience: row.ipl_classification ? {
+      classification:row.ipl_classification, device:row.ipl_device,
+      technology:row.ipl_technology, sourceUrl:row.ipl_source_url,
+      publishedAt:row.ipl_published_at ? new Date(row.ipl_published_at).toISOString().slice(0,10) : null,
+      checkedAt:new Date(row.ipl_checked_at).toISOString().slice(0,10),
+      firsthandTestConfirmed:row.ipl_firsthand === true,
+      format:row.ipl_format, note:row.ipl_note
+    } : null
   }));
 }
 

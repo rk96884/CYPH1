@@ -28,7 +28,22 @@ if (!process.env.DATABASE_URL) {
       ["9000_growth_agent_foundation.sql"]
     );
     if (migration.rowCount !== 1) throw new Error("Growth migration not tracked by existing runner");
-    console.log("Growth schema verified: six tables, migration tracked, PUBLIC schema access revoked.");
+    const iplMigration = await client.query(
+      "SELECT version FROM public.schema_migrations WHERE version = $1",
+      ["9001_growth_ipl_experience.sql"]
+    );
+    const iplTable = await client.query("SELECT to_regclass('growth.ipl_experience') AS name");
+    if ((iplMigration.rowCount === 1) !== Boolean(iplTable.rows[0]?.name)) {
+      throw new Error("IPL experience schema does not match migration history");
+    }
+    if (iplMigration.rowCount === 1) {
+      const iplColumns = await client.query("SELECT column_name FROM information_schema.columns WHERE table_schema='growth' AND table_name='ipl_experience'");
+      const names = new Set(iplColumns.rows.map(row => row.column_name));
+      for (const required of ["prospect_id","policy_version","classification","device","technology","evidence_url","published_at","checked_at","firsthand_test_confirmed","content_format","evidence_note"]) {
+        if (!names.has(required)) throw new Error("IPL evidence column absent");
+      }
+    }
+    console.log("Growth schema verified: base six tables" + (iplMigration.rowCount === 1 ? " plus IPL experience" : "") + ", migration history and PUBLIC access checked.");
   } catch (e) {
     console.error(e instanceof Error ? e.message : e);
     process.exitCode = 1;
