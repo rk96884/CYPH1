@@ -115,7 +115,7 @@ const { apiUrl, environment } = Astro.props;
     .info-strip{display:flex;gap:.85rem;align-items:center;border-left:2px solid var(--cyph-accent-primary);padding:.45rem .85rem;background:rgb(167 122 244 / .07)}.info-strip p{margin:0;color:var(--cyph-text-secondary);font-size:.78rem}.info-symbol{color:var(--cyph-accent-primary);font-size:1.15rem}
     #status-message{min-height:1.4rem;color:var(--cyph-text-secondary);font-size:.77rem;margin:1rem 0}#status-message[data-state="error"]{color:var(--cyph-color-error)}
     .table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.8rem;text-align:left}th{white-space:nowrap;border-bottom:1px solid var(--cyph-color-alloy);padding:.9rem .8rem;color:var(--cyph-text-secondary);font-size:.62rem;letter-spacing:.1em}td{padding:1.1rem .8rem;border-bottom:1px solid rgb(119 106 128 / .3);color:var(--cyph-text-secondary)}td:first-child{color:var(--cyph-text-primary);font-weight:600}td small{display:block;color:var(--cyph-text-secondary);font-weight:400;margin-top:.25rem}.score{color:var(--cyph-accent-highlight);font-weight:700}.status-pill{display:inline-block;padding:.35rem .55rem;border:1px solid rgb(119 106 128 / .7);font-size:.67rem;text-transform:capitalize}.detail-button{border:1px solid var(--cyph-accent-primary);background:transparent;color:var(--cyph-accent-highlight);padding:.5rem .75rem;cursor:pointer}.detail-button:hover{background:rgb(167 122 244 / .12)}
-    .platform-link{display:inline-flex;align-items:center;gap:.35rem;color:var(--cyph-accent-highlight);text-underline-offset:.2em;text-decoration:underline;overflow-wrap:anywhere}.platform-link:hover{color:var(--cyph-text-primary)}.platform-link:focus-visible{outline:2px solid var(--cyph-accent-highlight);outline-offset:3px}.source-platform{display:block;color:var(--cyph-text-secondary);font-size:.66rem;margin-bottom:.2rem}.prospect-name{min-width:12rem}.source-cell{min-width:10rem}
+    .growth-shell :global(.platform-link){display:inline-flex;align-items:center;gap:.35rem;color:var(--cyph-accent-highlight);text-underline-offset:.2em;text-decoration:underline;overflow-wrap:anywhere}.growth-shell :global(.platform-link:hover){color:var(--cyph-text-primary)}.growth-shell :global(.platform-link:focus-visible){outline:2px solid var(--cyph-accent-highlight);outline-offset:3px}.source-platform{display:block;color:var(--cyph-text-secondary);font-size:.66rem;margin-bottom:.2rem}.prospect-name{min-width:12rem}.source-cell{min-width:10rem}
     .empty{padding:4rem 1rem 4.5rem;text-align:center;border:1px solid rgb(119 106 128 / .38);background:radial-gradient(circle at 50% 35%,rgb(50 27 64 / .35),transparent 55%)}.empty-orbit{position:relative;display:grid;place-items:center;width:7.5rem;height:7.5rem;margin:auto auto 1.75rem;border:1px solid var(--cyph-color-alloy);border-radius:50%;transform:rotate(-25deg)}.empty-orbit::before{content:"";position:absolute;inset:1rem;border:1px solid var(--cyph-accent-primary);border-radius:50%}.empty-orbit span{transform:rotate(25deg);color:var(--cyph-accent-primary);font-family:var(--cyph-font-display);font-size:1.3rem}.empty h3{font-family:var(--cyph-font-display);font-size:clamp(1rem,3vw,1.5rem);font-weight:400}.empty p{max-width:31rem;margin:1rem auto;color:var(--cyph-text-secondary);font-size:.85rem}.empty .empty-footnote{margin-top:2rem;color:var(--cyph-accent-primary);font-size:.67rem;letter-spacing:.13em}
     .detail{margin-top:3rem;padding:1.5rem;border:1px solid rgb(119 106 128 / .55);background:var(--cyph-surface-base)}.detail-layout{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:1.5rem}.detail-label{color:var(--cyph-accent-highlight)}.detail h3{margin:.6rem 0;font-size:1.2rem;font-weight:500}.detail-layout p:not(.detail-label){color:var(--cyph-text-secondary);font-size:.8rem;overflow-wrap:anywhere}.detail-number{font-family:var(--cyph-font-display);font-size:2rem!important;color:var(--cyph-text-primary)!important;margin:.5rem 0}.source-link{display:inline-block;color:var(--cyph-accent-primary);font-size:.83rem;overflow-wrap:anywhere}
     .ipl-detail{margin-top:1.5rem;border-top:1px solid rgb(119 106 128 / .4);padding-top:1.3rem}.ipl-detail p:not(.detail-label){margin:.6rem 0;color:var(--cyph-text-secondary);font-size:.84rem;line-height:1.6;overflow-wrap:anywhere}
@@ -216,13 +216,17 @@ const { apiUrl, environment } = Astro.props;
       detail.hidden = true;
       for (const record of filtered) {
         const tr = document.createElement('tr');
-        const name = el('td', record.name, 'prospect-name');
+        // The linked Source column already displays the social handle.
+        // Keep the stored identity untouched; only shorten the visible name.
+        const prospectLabel = isDevelopment
+          ? record.name.replace(/\\s+[—–-]\\s+@[A-Za-z0-9._]+$/, '')
+          : record.name;
+        const name = el('td', prospectLabel, 'prospect-name');
         if (isDevelopment) {
           const source = el('td', '', 'source-cell');
           const info = platformInfo(record.sourceUrl);
           if (info) {
-            source.append(el('span', info.platform, 'source-platform'));
-            const link = el('a', info.label, 'platform-link');
+            const link = el('a', info.platform + ' · ' + info.label, 'platform-link');
             link.href = info.href;
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
