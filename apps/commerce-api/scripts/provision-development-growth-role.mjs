@@ -1,5 +1,7 @@
 import pg from "pg";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 export const GROWTH_ROLE = "growth_import_dev";
 export const DEVELOPMENT_DB = "cyph1_commerce_development";
@@ -49,6 +51,7 @@ export async function provisionGrowthRole(client, password) {
     await client.query("GRANT USAGE ON SEQUENCE growth.audit_log_id_seq TO growth_import_dev");
     // CONNECT may already be available to PUBLIC; this grant expresses required access.
     await client.query("GRANT CONNECT ON DATABASE cyph1_commerce_development TO growth_import_dev");
+    await verifyRoleGrants(client.query.bind(client));
     await client.query("COMMIT");
   } catch {
     await client.query("ROLLBACK").catch(() => {});
@@ -105,13 +108,12 @@ export async function main(environment = process.env) {
     }
     await verifyDevelopmentBaseline(client.query.bind(client));
     await provisionGrowthRole(client, environment.GROWTH_IMPORT_ROLE_PASSWORD);
-    await verifyRoleGrants(client.query.bind(client));
     console.log("Dedicated growth_import_dev role created with restricted Growth-table access; commerce and outreach grants denied.");
   } finally {
     await client.end().catch(() => {});
   }
 }
-if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1].replace(/\\/g, "/")).href) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   main().catch(() => {
     // Never print DB connection errors or password-containing SQL statements.
     console.error("Development Growth role workflow failed; review preflight or privilege checks.");
