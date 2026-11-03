@@ -11,7 +11,7 @@ export function canonicalSource(input) {
   if (url.protocol !== "https:" || url.username || url.password || url.port ||
       hostname === "localhost" || hostname.endsWith(".localhost") ||
       hostname.endsWith(".local") || hostname.endsWith(".internal") ||
-      /^\\d+\\.\\d+\\.\\d+\\.\\d+$/.test(hostname) ||
+      /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
       hostname.includes(":") || !hostname.includes(".")) {
     throw new Error("A public HTTPS source URL is required");
   }
