@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { migrationChecksumMatches } from "./migration-checksum.mjs";
 
 const { Client } = pg;
 const applicationRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,6 +26,8 @@ export const migrate = async () => {
   await client.connect();
 
   try {
+    const identity = await client.query("SELECT current_database() AS name");
+    const databaseName = identity.rows[0].name;
     await client.query("SELECT pg_advisory_lock($1)", [73012026]);
     await client.query(`
       CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -49,7 +52,7 @@ export const migrate = async () => {
       );
 
       if (existing.rowCount === 1) {
-        if (existing.rows[0].checksum !== digest) {
+        if (!migrationChecksumMatches({ file, content: sql, recorded: existing.rows[0].checksum, databaseName })) {
           throw new Error(`Previously applied migration was modified: ${file}`);
         }
         continue;
