@@ -51,3 +51,20 @@ test("IPL evidence is displayed only in the isolated development dashboard", () 
   assert.match(source, /detail-ipl-source/);
   assert.doesNotMatch(source, /innerHTML\s*=/);
 });
+
+test("development dashboard separates prospect from clickable social source without changing production table", () => {
+  assert.match(source, /<th scope="col">PROSPECT<\/th>/);
+  assert.match(source, /environment === "development" && <th scope="col">SOURCE<\/th>/);
+  assert.match(source, /const platformInfo = value =>/);
+  for (const host of ["instagram.com", "tiktok.com", "youtube.com", "facebook.com", "linkedin.com", "x.com"]) {
+    assert.ok(source.includes("'"+host+"'"));
+  }
+  assert.match(source, /link\.href = info\.href/);
+  assert.match(source, /link\.target = '_blank'/);
+  assert.match(source, /link\.rel = 'noopener noreferrer'/);
+  assert.match(source, /opens in a new tab/);
+  assert.match(source, /source\.append\(el\('span', 'Source unavailable'\)\)/);
+  assert.match(source, /if \(isDevelopment\) \{/);
+  assert.match(source, /name\.append\(el\('small', new URL\(record\.sourceUrl\)\.hostname\)\)/);
+  assert.doesNotMatch(source, /innerHTML\s*=/);
+});
