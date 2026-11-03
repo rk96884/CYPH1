@@ -66,6 +66,9 @@ jobs:
       - name: Test audited read-only IPL research import controls
         run: node --test tools/growth-agent/import-reviewed-ipl-development.test.mjs
 
+      - name: Test source-tiered IPL creator validation
+        run: node --test tools/growth-agent/ipl-creator-validation-round-2.test.mjs
+
       - name: Validate expanded IPL creator research queue
         run: node --test tools/growth-agent/ipl-expansion-review.test.mjs
 
