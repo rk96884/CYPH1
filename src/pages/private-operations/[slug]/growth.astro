@@ -65,7 +65,7 @@ const { apiUrl, environment } = Astro.props;
         <p id="status-message" role="status" aria-live="polite" aria-atomic="true">Connecting to the protected research API…</p>
         <div class="table-scroll">
           <table aria-label="Prospect research results" id="prospect-table">
-            <thead><tr><th scope="col">PROSPECT / SOURCE</th><th scope="col">CHANNEL</th><th scope="col">SCORE</th><th scope="col">CONFIDENCE</th><th scope="col">STATUS</th><th scope="col">REVIEW</th></tr></thead>
+            <thead><tr><th scope="col">PROSPECT / SOURCE</th><th scope="col">CHANNEL</th><th scope="col">SCORE</th><th scope="col">CONFIDENCE</th><th scope="col">IPL EXPERIENCE</th><th scope="col">STATUS</th><th scope="col">REVIEW</th></tr></thead>
             <tbody id="prospect-rows"></tbody>
           </table>
         </div>
@@ -82,6 +82,12 @@ const { apiUrl, environment } = Astro.props;
           <div><p class="detail-label">SELECTED PROSPECT</p><h3 id="detail-name"></h3><p id="detail-meta"></p></div>
           <div><p class="detail-label">QUALIFICATION</p><p id="detail-score" class="detail-number"></p><p id="detail-evidence"></p></div>
           <div><p class="detail-label">SOURCE</p><a id="detail-link" class="source-link" target="_blank" rel="noopener noreferrer">Open research source ↗</a><p id="detail-date"></p></div>
+        </div>
+        <div class="ipl-detail" aria-label="IPL product research">
+          <p class="detail-label">IPL / HAIR-REMOVAL TECHNOLOGY</p>
+          <p id="detail-ipl-status"></p>
+          <p id="detail-ipl-note"></p>
+          <a id="detail-ipl-source" class="source-link" target="_blank" rel="noopener noreferrer" hidden>Read original IPL research source ↗</a>
         </div>
       </section>
       <footer class="growth-footer">
@@ -111,6 +117,7 @@ const { apiUrl, environment } = Astro.props;
     .table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.8rem;text-align:left}th{white-space:nowrap;border-bottom:1px solid var(--cyph-color-alloy);padding:.9rem .8rem;color:var(--cyph-text-secondary);font-size:.62rem;letter-spacing:.1em}td{padding:1.1rem .8rem;border-bottom:1px solid rgb(119 106 128 / .3);color:var(--cyph-text-secondary)}td:first-child{color:var(--cyph-text-primary);font-weight:600}td small{display:block;color:var(--cyph-text-secondary);font-weight:400;margin-top:.25rem}.score{color:var(--cyph-accent-highlight);font-weight:700}.status-pill{display:inline-block;padding:.35rem .55rem;border:1px solid rgb(119 106 128 / .7);font-size:.67rem;text-transform:capitalize}.detail-button{border:1px solid var(--cyph-accent-primary);background:transparent;color:var(--cyph-accent-highlight);padding:.5rem .75rem;cursor:pointer}.detail-button:hover{background:rgb(167 122 244 / .12)}
     .empty{padding:4rem 1rem 4.5rem;text-align:center;border:1px solid rgb(119 106 128 / .38);background:radial-gradient(circle at 50% 35%,rgb(50 27 64 / .35),transparent 55%)}.empty-orbit{position:relative;display:grid;place-items:center;width:7.5rem;height:7.5rem;margin:auto auto 1.75rem;border:1px solid var(--cyph-color-alloy);border-radius:50%;transform:rotate(-25deg)}.empty-orbit::before{content:"";position:absolute;inset:1rem;border:1px solid var(--cyph-accent-primary);border-radius:50%}.empty-orbit span{transform:rotate(25deg);color:var(--cyph-accent-primary);font-family:var(--cyph-font-display);font-size:1.3rem}.empty h3{font-family:var(--cyph-font-display);font-size:clamp(1rem,3vw,1.5rem);font-weight:400}.empty p{max-width:31rem;margin:1rem auto;color:var(--cyph-text-secondary);font-size:.85rem}.empty .empty-footnote{margin-top:2rem;color:var(--cyph-accent-primary);font-size:.67rem;letter-spacing:.13em}
     .detail{margin-top:3rem;padding:1.5rem;border:1px solid rgb(119 106 128 / .55);background:var(--cyph-surface-base)}.detail-layout{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:1.5rem}.detail-label{color:var(--cyph-accent-highlight)}.detail h3{margin:.6rem 0;font-size:1.2rem;font-weight:500}.detail-layout p:not(.detail-label){color:var(--cyph-text-secondary);font-size:.8rem;overflow-wrap:anywhere}.detail-number{font-family:var(--cyph-font-display);font-size:2rem!important;color:var(--cyph-text-primary)!important;margin:.5rem 0}.source-link{display:inline-block;color:var(--cyph-accent-primary);font-size:.83rem;overflow-wrap:anywhere}
+    .ipl-detail{margin-top:1.5rem;border-top:1px solid rgb(119 106 128 / .4);padding-top:1.3rem}.ipl-detail p:not(.detail-label){margin:.6rem 0;color:var(--cyph-text-secondary);font-size:.84rem;line-height:1.6;overflow-wrap:anywhere}
     .growth-footer{display:flex;justify-content:space-between;gap:1rem;margin-top:4rem;padding-top:1.3rem;border-top:1px solid rgb(119 106 128 / .4);color:var(--cyph-text-secondary)}.growth-footer span span{margin:0 .5rem;color:var(--cyph-accent-primary)}
     @media(max-width:900px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-layout{grid-template-columns:1fr 1fr}.controls{grid-template-columns:1fr 1fr}}
     @media(max-width:640px){.growth-header{display:block;padding-bottom:2rem}.header-side{text-align:left;margin-top:1.5rem}.growth-topline{flex-wrap:wrap}.topline-right{font-size:.57rem}.section-heading{flex-direction:column;gap:.5rem}.controls,.detail-layout{grid-template-columns:1fr}.metric{min-height:9rem;padding:1.2rem}.growth-footer{flex-direction:column}.growth-content{padding-top:2.5rem}table{min-width:700px}}
@@ -162,6 +169,18 @@ const { apiUrl, environment } = Astro.props;
       link.hidden = !href;
       link.removeAttribute('href');
       if (href) link.href = href;
+      const ipl = record.iplExperience;
+      const label = ipl ? readable(ipl.classification) : 'IPL evidence not yet recorded';
+      document.querySelector('#detail-ipl-status').textContent = ipl ?
+        label + (ipl.device ? ' · ' + ipl.device : '') +
+        (ipl.publishedAt ? ' · published ' + date(ipl.publishedAt) : '') : label;
+      document.querySelector('#detail-ipl-note').textContent = ipl?.note ||
+        'No IPL-specific evidence has been entered for this prospect.';
+      const iplLink = document.querySelector('#detail-ipl-source');
+      const iplHref = ipl?.sourceUrl ? safeSource(ipl.sourceUrl) : null;
+      iplLink.hidden = !iplHref;
+      iplLink.removeAttribute('href');
+      if (iplHref) iplLink.href = iplHref;
       document.querySelector('#detail-title').focus();
     }
     function render() {
@@ -184,6 +203,7 @@ const { apiUrl, environment } = Astro.props;
         tr.append(name, el('td', record.channel === 'creator' ? 'Creator' : 'Commercial partner'));
         const score = el('td', record.score + ' / 100', 'score'); tr.append(score);
         tr.append(el('td', Math.round(record.confidence * 100) + '%'));
+        tr.append(el('td', record.iplExperience ? readable(record.iplExperience.classification) : 'Not recorded'));
         const state = document.createElement('td'); state.append(el('span', readable(record.status), 'status-pill')); tr.append(state);
         const actionCell = document.createElement('td'), button = el('button', 'Inspect ↗', 'detail-button');
         button.type = 'button'; button.setAttribute('aria-label', 'Inspect ' + record.name);
@@ -221,7 +241,14 @@ const { apiUrl, environment } = Astro.props;
           typeof p.sourceUrl === 'string' && safeSource(p.sourceUrl) &&
           typeof p.score === 'number' && p.score >= 0 && p.score <= 100 &&
           typeof p.confidence === 'number' && p.confidence >= 0 && p.confidence <= 1 &&
-          typeof p.evidenceCount === 'number' && typeof p.status === 'string'
+          typeof p.evidenceCount === 'number' && typeof p.status === 'string' &&
+          (p.iplExperience === null || p.iplExperience === undefined || (
+            typeof p.iplExperience === 'object' &&
+            ['ipl_review_confirmed','ipl_coverage_confirmed','other_hair_removal_tech',
+              'beauty_device_only','no_public_ipl_evidence_found','needs_verification'].includes(p.iplExperience.classification) &&
+            typeof p.iplExperience.note === 'string' && p.iplExperience.note.length <= 750 &&
+            (p.iplExperience.sourceUrl === null || (typeof p.iplExperience.sourceUrl === 'string' && safeSource(p.iplExperience.sourceUrl)))
+          ))
         );
         if (!valid) throw new Error('Unrecognised prospect data; no records displayed.');
         records = payload.prospects;
@@ -257,8 +284,10 @@ const { apiUrl, environment } = Astro.props;
       records = []; hasLoaded = false; failed = false;
       rowsElement.replaceChildren(); detail.hidden = true; empty.hidden = true;
       for (const id of ['#metric-total','#metric-creators','#metric-partners','#metric-review']) setMetric(id, '—');
-      for (const id of ['#detail-name','#detail-meta','#detail-score','#detail-evidence','#detail-date']) document.querySelector(id).textContent = '';
+      for (const id of ['#detail-name','#detail-meta','#detail-score','#detail-evidence','#detail-date','#detail-ipl-status','#detail-ipl-note']) document.querySelector(id).textContent = '';
       document.querySelector('#detail-link').removeAttribute('href');
+      document.querySelector('#detail-ipl-source').removeAttribute('href');
+      document.querySelector('#detail-ipl-source').hidden = true;
       refreshButton.disabled = false;
       say('Development data locked.');
       passwordInput.focus();
