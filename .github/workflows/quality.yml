@@ -42,6 +42,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Test restricted Growth importer connection safeguards
+        run: node --test tools/growth-agent/check-development-import-connection.test.mjs
+
       - name: Test least-privilege Growth role provisioning
         run: node --test apps/commerce-api/scripts/provision-development-growth-role.test.mjs
 
