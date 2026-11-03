@@ -45,16 +45,26 @@ export class GrowthRoleStageError extends Error {
   }
 }
 
+export function quotePostgresPassword(password) {
+  // This SQL command cannot parameterise a CREATE ROLE password.
+  // PostgreSQL string literals escape apostrophes by doubling them.
+  // Keep the literal local and never log the resulting SQL.
+  if (typeof password !== "string" || /[\r\n\0]/.test(password)) {
+    throw new Error("Invalid password literal");
+  }
+  return "'" + password.replaceAll("'", "''") + "'";
+}
+
 export async function provisionGrowthRole(client, password) {
   let stage = "begin";
   try {
     await client.query("BEGIN");
     stage = "prepare_role";
-    // Use PostgreSQL's %L literal quoting for the secret, not string interpolation.
-    // Never log statements or exception objects: they can contain credentials.
-    const quoted = await client.query("SELECT format('CREATE ROLE growth_import_dev LOGIN NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', $1) AS statement", [password]);
+    const passwordLiteral = quotePostgresPassword(password);
     stage = "create_role";
-    await client.query(quoted.rows[0].statement);
+    // CREATE ROLE does not accept bind parameters for password clauses.
+    // Literal is safely quoted, kept in-process and never printed.
+    await client.query("CREATE ROLE growth_import_dev LOGIN NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD " + passwordLiteral);
     stage = "grant_schema";
     await client.query("GRANT USAGE ON SCHEMA growth TO growth_import_dev");
     stage = "grant_research_tables";
