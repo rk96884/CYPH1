@@ -10,7 +10,7 @@ if (!configured) throw new Error("Private operations presentation is not configu
 ---
 <BaseLayout title="CYPH/1 private operations" description="Restricted commerce operations console." robots="noindex, nofollow, noarchive">
   <main id="main" class="ops" data-api={configured.apiUrl}>
-    <div class="ops-bar"><BrandMark/><span>Restricted operations</span></div>
+    <div class="ops-bar"><BrandMark/><span>Restricted operations · <a href={`/private-operations/${configured.slug}/growth/`}>Growth dashboard ↗</a></span></div>
     <header><p class="eyebrow">PRIVATE COMMERCE / OPERATIONS</p><h1>ORDER<br/>CONTROL</h1><p>This presentation route is not authentication. Access must be enforced at the API and hosting edge.</p></header>
     <section aria-labelledby="search-title"><h2 id="search-title">Find an order</h2><form id="search"><label for="query">Order number</label><div class="input-action"><input id="query" name="q" autocomplete="off" enterkeyhint="search" required/><button>Search</button></div></form><p id="message" role="status" aria-live="polite"></p><div id="results" aria-label="Order search results"></div></section>
     <section id="details" hidden aria-labelledby="details-title"><h2 id="details-title" tabindex="-1">Order timeline</h2><div id="summary"></div><ol id="timeline"></ol>
