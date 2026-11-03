@@ -17,22 +17,22 @@ test("five reviewed creators have evidence classifications without scoring or ou
   assert.equal(rows[1].device,"Sensica Sensilight Mini");
 });
 test("identity and batch fields are allowlisted",()=>{
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects.reverse())),/Unexpected creator/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].email="private@example.org"))),/Unexpected IPL evidence field/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects.reverse()),/Unexpected creator/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].email="private@example.org")),/Unexpected IPL evidence field/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].score=100)),/Unexpected IPL evidence field/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].outreachAllowed=true)),/Unexpected IPL evidence field/);
 });
 test("positive IPL claims require dated primary evidence",()=>{
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].sourceUrl="http://localhost/report"))),/Positive IPL claim/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].sourceUrl="https://malicious.example/"))),/Positive IPL claim/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].sourceUrl="https://beautygeekuk.com.evil.example/2025/ipl"))),/Positive IPL claim/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].publishedAt="2030-01-01"))),/Positive IPL claim/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].sourceUrl="http://localhost/report")),/Positive IPL claim/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].sourceUrl="https://malicious.example/")),/Positive IPL claim/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].sourceUrl="https://beautygeekuk.com.evil.example/2025/ipl")),/Positive IPL claim/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].publishedAt="2030-01-01")),/Positive IPL claim/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].device=null)),/Positive IPL claim/);
 });
 test("no ambiguous claims of IPL experience or conflation with laser",()=>{
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[2].classification="ipl_review_confirmed"))),/Positive IPL claim/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[2].device="Unknown IPL"))),/Unverified IPL claim/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].technology="laser"))),/Confirmed IPL test/);
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[1].technology="laser"))),/IPL coverage/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[2].classification="ipl_review_confirmed")),/Positive IPL claim/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[2].device="Unknown IPL")),/Unverified IPL claim/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].technology="laser")),/Confirmed IPL test/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[1].technology="laser")),/IPL coverage/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].firsthandTestConfirmed=false)),/Confirmed IPL test/);
 });
