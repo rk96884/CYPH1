@@ -1,0 +1,70 @@
+name: Development Growth schema migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Plan is read-only; apply is an explicit development-only migration"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+      confirmation:
+        description: "For apply, enter APPLY-DEVELOPMENT-GROWTH"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-growth-migration
+  cancel-in-progress: false
+
+jobs:
+  development-growth-schema:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: development-db
+    env:
+      DATABASE_URL: ${{ secrets.DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: ${{ vars.DEVELOPMENT_DATABASE_SSL || 'true' }}
+    steps:
+      - name: Checkout approved main branch
+        uses: actions/checkout@v7
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate confirmation and prerequisites
+        env:
+          ACTION: ${{ inputs.action }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        shell: bash
+        run: |
+          test -n "$DATABASE_URL" || { echo "::error::development-db environment secret DEVELOPMENT_DATABASE_URL is required"; exit 1; }
+          if [[ "$ACTION" == "apply" && "$CONFIRMATION" != "APPLY-DEVELOPMENT-GROWTH" ]]; then
+            echo "::error::Explicit development migration confirmation required"
+            exit 1
+          fi
+      - name: Verify exact development database and Growth baseline
+        run: node apps/commerce-api/scripts/preflight-development-growth.mjs
+      - name: Report pending migrations and detect drift
+        run: node apps/commerce-api/scripts/plan-migrations.mjs
+      - name: Apply approved pending migration
+        if: inputs.action == 'apply'
+        run: npm run db:migrate
+      - name: Verify commerce schema
+        if: inputs.action == 'apply'
+        run: npm run db:verify
+      - name: Verify six growth tables
+        if: inputs.action == 'apply'
+        run: node apps/commerce-api/scripts/verify-growth-schema.mjs
+      - name: Re-check pending migrations
+        if: inputs.action == 'apply'
+        run: node apps/commerce-api/scripts/plan-migrations.mjs
