@@ -1,0 +1,35 @@
+name: Development Growth importer connection check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-growth-importer-check
+  cancel-in-progress: false
+
+jobs:
+  restricted-connection-check:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: development-db
+    env:
+      ACTION: check
+      DEVELOPMENT_DATABASE_URL: ${{ secrets.DEVELOPMENT_DATABASE_URL }}
+      GROWTH_IMPORT_ROLE_PASSWORD: ${{ secrets.GROWTH_IMPORT_ROLE_PASSWORD }}
+      DATABASE_SSL: ${{ vars.DEVELOPMENT_DATABASE_SSL || 'true' }}
+    steps:
+      - name: Checkout approved main
+        uses: actions/checkout@v7
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Verify importer identity and permissions with read-only SQL
+        run: node tools/growth-agent/check-development-import-connection.mjs
