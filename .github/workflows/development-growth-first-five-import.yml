@@ -1,0 +1,48 @@
+name: Development Growth first-five research import
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Plan validates sources and scoring offline; apply writes research-only records to development"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+      confirmation:
+        description: "For apply, enter IMPORT-FIVE-RESEARCH-ONLY-DEV"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-growth-research-import
+  cancel-in-progress: false
+
+jobs:
+  import-research:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: development-db
+    env:
+      ACTION: ${{ inputs.action }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      DEVELOPMENT_DATABASE_URL: ${{ secrets.DEVELOPMENT_DATABASE_URL }}
+      GROWTH_IMPORT_ROLE_PASSWORD: ${{ secrets.GROWTH_IMPORT_ROLE_PASSWORD }}
+      DATABASE_SSL: ${{ vars.DEVELOPMENT_DATABASE_SSL || 'true' }}
+    steps:
+      - name: Checkout reviewed main
+        uses: actions/checkout@v7
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate research pilot and optionally apply to development
+        run: node tools/growth-agent/import-first-five-development.mjs
