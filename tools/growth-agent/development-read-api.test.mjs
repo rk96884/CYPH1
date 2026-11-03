@@ -2,7 +2,7 @@ import test from "node:test";
 import { scryptSync } from "node:crypto";
 import assert from "node:assert/strict";
 import { validateDevelopmentApiEnvironment, validateReadOnlyDatabase,
-  readDevelopmentProspects, createDevelopmentGrowthHandler, databaseStartupFailureCode } from "./development-read-api.mjs";
+  readDevelopmentProspects, createDevelopmentGrowthHandler, databaseStartupFailureCode, developmentDatabaseConnection, DEVELOPMENT_INTERNAL_DB_HOST } from "./development-read-api.mjs";
 
 test("startup diagnostics classify failures without leaking raw error details",()=>{
   assert.equal(databaseStartupFailureCode({code:"28P01",message:"sensitive database error"}),"DB_AUTHENTICATION_FAILED");
@@ -13,7 +13,7 @@ test("startup diagnostics classify failures without leaking raw error details",(
 
 const env={
   GROWTH_DATA_ENV:"development",
-  GROWTH_DEV_READ_DATABASE_URL:"postgresql://growth_read_dev:placeholder123@db.example.org/cyph1_commerce_development",
+  GROWTH_DEV_READ_DATABASE_URL:"postgresql://growth_read_dev:placeholder123@dpg-da9hpq1srm7s73cdb260-a/cyph1_commerce_development",
   GROWTH_DEV_UI_ORIGIN:"http://localhost:4321",
   GROWTH_DEV_ADMIN_EMAIL:"rishikhosla@hotmail.com",
   GROWTH_DEV_PASSWORD_HASH:"scrypt:"+"07".repeat(16)+":"+scryptSync("a".repeat(64),Buffer.alloc(16,7),64).toString("hex")
@@ -71,4 +71,28 @@ test("growth reader runs select-only bounded query with source evidence counts",
   assert.doesNotMatch(sql,/INSERT|UPDATE|DELETE/i);
   assert.equal(rows[0].evidenceCount,1);
   assert.equal(rows[0].status,"research_only");
+});
+
+test("self-signed TLS exception only applies to exact private Render development database",()=>{
+  const valid=env.GROWTH_DEV_READ_DATABASE_URL;
+  const connection=developmentDatabaseConnection(valid);
+  assert.equal(connection.ssl.rejectUnauthorized,false);
+  assert.equal(connection.max,3);
+  assert.match(connection.options,/default_transaction_read_only=on/);
+  assert.equal(new URL(valid).hostname,DEVELOPMENT_INTERNAL_DB_HOST);
+  for(const invalid of [
+    valid.replace(DEVELOPMENT_INTERNAL_DB_HOST,"db.example.org"),
+    valid.replace(DEVELOPMENT_INTERNAL_DB_HOST,DEVELOPMENT_INTERNAL_DB_HOST+".evil.example"),
+    valid.replace(DEVELOPMENT_INTERNAL_DB_HOST,DEVELOPMENT_INTERNAL_DB_HOST+".frankfurt-postgres.render.com"),
+    valid.replace(DEVELOPMENT_INTERNAL_DB_HOST,"127.0.0.1"),
+    valid.replace("growth_read_dev","growth_import_dev"),
+    valid.replace("cyph1_commerce_development","cyph1_commerce_production"),
+    valid.replace("postgresql:","http:"),
+    valid.replace("/cyph1_commerce_development","/cyph1_commerce_development?sslmode=disable"),
+    valid.replace("/cyph1_commerce_development","/cyph1_commerce_development#fragment"),
+    valid.replace(DEVELOPMENT_INTERNAL_DB_HOST,DEVELOPMENT_INTERNAL_DB_HOST+":5433")
+  ]){
+    assert.throws(()=>developmentDatabaseConnection(invalid),/Dedicated Render internal/);
+  }
+  assert.throws(()=>developmentDatabaseConnection("not-a-url"),/Invalid development database URL/);
 });
