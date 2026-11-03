@@ -19,7 +19,9 @@ export function buildRestrictedUrl(ownerUrl, password) {
   // Reuse only the development database host, port, name and SSL settings;
   // never authenticate as the commerce owner for this connectivity test.
   url.username = "growth_import_dev";
-  // WHATWG URL password setters leave literal percent signs untouched.\n  // Percent-encode first so arbitrary strong passwords round-trip correctly.\n  url.password = encodeURIComponent(password);
+  // WHATWG URL password setters leave literal percent signs untouched.
+  // Percent-encode first so arbitrary strong passwords round-trip correctly.
+  url.password = encodeURIComponent(password);
   url.searchParams.delete("options");
   return url.toString();
 }
