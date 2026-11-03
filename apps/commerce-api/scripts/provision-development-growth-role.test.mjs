@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   validateProvisioningInput, verifyDevelopmentBaseline, provisionGrowthRole,
-  verifyRoleGrants, REQUIRED_TABLES, GrowthRoleStageError
+  verifyRoleGrants, REQUIRED_TABLES, GrowthRoleStageError, quotePostgresPassword
 } from "./provision-development-growth-role.mjs";
 
 const secret = "test-only-" + "x".repeat(48);
@@ -35,7 +35,6 @@ test("provision grants only exact tables and verifies before commit",async()=>{
   const queries=[];
   const client={query:async(sql,args)=>{
     queries.push(sql);
-    if (sql.startsWith("SELECT format(")) { assert.equal(args[0],secret);return {rows:[{statement:"CREATE ROLE growth_import_dev LOGIN PASSWORD '<redacted>'"}]}; }
     if (sql.includes("FROM pg_roles"))return {rows:[attrs]};
     if (sql.includes("has_schema_privilege('growth_import_dev'"))return {rows:[grants]};
     return {rows:[]};
@@ -51,7 +50,6 @@ test("unsafe privileges cause rollback; no committed role",async()=>{
   const queries=[];
   const client={query:async(sql,args)=>{
     queries.push(sql);
-    if(sql.startsWith("SELECT format("))return {rows:[{statement:"CREATE ROLE growth_import_dev LOGIN PASSWORD '<redacted>'"}]};
     if(sql.includes("FROM pg_roles"))return {rows:[attrs]};
     if(sql.includes("has_schema_privilege('growth_import_dev'"))return {rows:[{...grants,orders_any:true}]};
     return {rows:[]};
@@ -68,7 +66,6 @@ test("role creation failure exposes only a safe stage identifier",async()=>{
   const statements=[];
   const client={query:async(sql)=>{
     statements.push(sql);
-    if(sql.startsWith("SELECT format("))return {rows:[{statement:"CREATE ROLE growth_import_dev LOGIN PASSWORD '<redacted>'"}]};
     if(sql.startsWith("CREATE ROLE"))throw new Error("synthetic private credential content");
     return {rows:[]};
   }};
@@ -78,4 +75,23 @@ test("role creation failure exposes only a safe stage identifier",async()=>{
     return true;
   });
   assert.equal(statements.at(-1),"ROLLBACK");
+});
+
+test("SQL password quoting escapes apostrophes and rejects control characters",()=>{
+  assert.equal(quotePostgresPassword("a'b"), "'a''b'");
+  assert.equal(quotePostgresPassword("abc\\def"), "'abc\\def'");
+  assert.throws(()=>quotePostgresPassword("test\nsecret"),/Invalid password/);
+  assert.throws(()=>quotePostgresPassword("test\u0000secret"),/Invalid password/);
+});
+test("creation statement is locally constructed without prepare query",async()=>{
+  const queries=[];
+  const client={query:async sql=>{
+    queries.push(sql);
+    if (sql.includes("FROM pg_roles")) return {rows:[attrs]};
+    if (sql.includes("has_schema_privilege('growth_import_dev'")) return {rows:[grants]};
+    return {rows:[]};
+  }};
+  await provisionGrowthRole(client,"a'b" + "z".repeat(35));
+  assert.ok(queries.some(sql=>sql.includes("PASSWORD 'a''b")));
+  assert.ok(!queries.some(sql=>sql.startsWith("SELECT format(")));
 });
