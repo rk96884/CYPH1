@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import process from "node:process";
 import pg from "pg";
-import { createRemoteJWKSet, jwtVerify } from "jose";
+import { loadDevelopmentAuth, createDevelopmentAuthenticator } from "./development-auth.mjs";
 
 const HEADERS = Object.freeze({
   "Cache-Control": "no-store",
@@ -13,14 +13,51 @@ const HEADERS = Object.freeze({
 });
 const fail = (status, message) => ({ status, body: { message } });
 
+// The Render development database's private hostname. This is deliberately not
+// configurable by the client or the application's environment.
+export const DEVELOPMENT_INTERNAL_DB_HOST = "dpg-da9hpq1srm7s73cdb260-a";
+export function developmentDatabaseConnection(urlString) {
+  if (!urlString) throw Error("Separate development read-only database URL is required");
+  let url;
+  try { url = new URL(urlString); }
+  catch { throw Error("Invalid development database URL"); }
+  if (!["postgresql:", "postgres:"].includes(url.protocol) ||
+      url.hostname !== DEVELOPMENT_INTERNAL_DB_HOST ||
+      (url.port && url.port !== "5432") ||
+      decodeURIComponent(url.pathname.slice(1)) !== "cyph1_commerce_development" ||
+      decodeURIComponent(url.username) !== "growth_read_dev" ||
+      !url.password || url.hash || url.search || url.hostname.includes(":")) {
+    throw Error("Dedicated Render internal development database and growth_read_dev role required");
+  }
+  return Object.freeze({
+    connectionString: urlString,
+    ssl: { rejectUnauthorized: false },
+    max: 3,
+    options: "-c default_transaction_read_only=on",
+  });
+}
+
+// Never log raw connection errors: some include connection strings or secrets.
+export function databaseStartupFailureCode(error) {
+  if (error?.message === "Development read-only account validation failed") return "DB_ROLE_BOUNDARY_INVALID";
+  const codes = {
+    "28P01": "DB_AUTHENTICATION_FAILED", "28000": "DB_AUTHENTICATION_FAILED",
+    "42501": "DB_PERMISSION_DENIED", "3D000": "DB_DATABASE_NOT_FOUND",
+    "42P01": "DB_REQUIRED_TABLE_MISSING", "3F000": "DB_REQUIRED_SCHEMA_MISSING",
+    "ENOTFOUND": "DB_HOST_UNRESOLVED", "ECONNREFUSED": "DB_CONNECTION_REFUSED",
+    "ETIMEDOUT": "DB_CONNECTION_TIMEOUT", "ECONNRESET": "DB_CONNECTION_RESET",
+    "DEPTH_ZERO_SELF_SIGNED_CERT": "DB_TLS_CERTIFICATE_INVALID",
+    "SELF_SIGNED_CERT_IN_CHAIN": "DB_TLS_CERTIFICATE_INVALID",
+    "UNABLE_TO_VERIFY_LEAF_SIGNATURE": "DB_TLS_CERTIFICATE_INVALID",
+    "ERR_TLS_CERT_ALTNAME_INVALID": "DB_TLS_HOSTNAME_INVALID",
+    "CERT_HAS_EXPIRED": "DB_TLS_CERTIFICATE_EXPIRED",
+  };
+  return Object.hasOwn(codes, error?.code) ? codes[error.code] : "DB_CONNECTION_OR_VALIDATION_FAILED";
+}
+
 export function validateDevelopmentApiEnvironment(env) {
   if (env.GROWTH_DATA_ENV !== "development") throw Error("Development-only mode required");
-  if (!env.GROWTH_DEV_READ_DATABASE_URL) throw Error("Separate development read-only database URL is required");
-  const database = new URL(env.GROWTH_DEV_READ_DATABASE_URL);
-  if (!["postgresql:", "postgres:"].includes(database.protocol) ||
-      decodeURIComponent(database.pathname.slice(1)) !== "cyph1_commerce_development" ||
-      decodeURIComponent(database.username) !== "growth_read_dev" ||
-      !database.password) throw Error("Dedicated development growth_read_dev account required");
+  const database = developmentDatabaseConnection(env.GROWTH_DEV_READ_DATABASE_URL);
   const origin = new URL(env.GROWTH_DEV_UI_ORIGIN || "");
   if (!["https:", "http:"].includes(origin.protocol) ||
       (origin.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(origin.hostname)) ||
@@ -30,25 +67,8 @@ export function validateDevelopmentApiEnvironment(env) {
   if (["www.cyph1.co.uk", "cyph1.co.uk"].includes(origin.hostname)) {
     throw Error("Production website origin refused");
   }
-  const team = new URL(env.CLOUDFLARE_ACCESS_TEAM_DOMAIN || "");
-  if (team.protocol !== "https:" || !team.hostname.endsWith(".cloudflareaccess.com") ||
-      team.pathname !== "/" || team.search || team.hash) {
-    throw Error("Invalid Cloudflare Access team origin");
-  }
-  if (!env.CLOUDFLARE_ACCESS_AUDIENCE) throw Error("Access audience required");
-  let grants;
-  try { grants = JSON.parse(env.OPERATIONS_ACCESS_GRANTS || "{}"); }
-  catch { throw Error("Invalid Access grants"); }
-  if (!grants || typeof grants !== "object" || Array.isArray(grants)) throw Error("Invalid Access grants");
-  for (const [email, permissions] of Object.entries(grants)) {
-    if (!email.includes("@") || !Array.isArray(permissions) ||
-        permissions.some(value => value !== "growth:read")) {
-      throw Error("Development endpoint grants must contain only growth:read");
-    }
-  }
-  return { database:env.GROWTH_DEV_READ_DATABASE_URL, uiOrigin:origin.origin,
-    team:team.origin, audience:env.CLOUDFLARE_ACCESS_AUDIENCE,
-    grants:new Set(Object.entries(grants).filter(([,p])=>p.includes("growth:read")).map(([email])=>email.toLowerCase())) };
+  const auth = loadDevelopmentAuth(env);
+  return { database, uiOrigin:origin.origin, auth };
 }
 
 export async function validateReadOnlyDatabase(query) {
@@ -94,33 +114,28 @@ export function createDevelopmentGrowthHandler({ uiOrigin, authenticate, readPro
     }
     if (path !== "/operations/growth/prospects") return fail(404,"Not found");
     if (method !== "GET") return fail(405,"Method not allowed");
-    if (!token) return fail(403,"Access denied");
+    if (!token) return fail(401,"Access denied");
     const permitted = await authenticate(token);
-    if (!permitted) return fail(403,"Access denied");
+    if (!permitted) return fail(401,"Access denied");
     return {status:200, body:{prospects:await readProspects(),readOnly:true,environment:"development"}};
   };
 }
 
 export async function run(env=process.env) {
   const config=validateDevelopmentApiEnvironment(env);
-  const jwks=createRemoteJWKSet(new URL(config.team+"/cdn-cgi/access/certs"));
-  const pool=new pg.Pool({connectionString:config.database,ssl:{rejectUnauthorized:true},max:3,
-    options:"-c default_transaction_read_only=on"});
+
+  const pool=new pg.Pool(config.database);
   try {
     await validateReadOnlyDatabase(pool.query.bind(pool));
-  } catch {
+  } catch (error) {
     await pool.end();
-    throw Error("Restricted development database validation failed");
+    const failure = Error("Restricted development database validation failed");
+    failure.safeStartupCode = databaseStartupFailureCode(error);
+    throw failure;
   }
   const handler=createDevelopmentGrowthHandler({
     uiOrigin:config.uiOrigin,
-    authenticate:async token=>{
-      try {
-        const {payload}=await jwtVerify(token,jwks,{algorithms:["RS256"],issuer:config.team,
-          audience:config.audience,requiredClaims:["exp","iat","email"],clockTolerance:5});
-        return typeof payload.email==="string" && config.grants.has(payload.email.toLowerCase());
-      } catch {return false;}
-    },
+    authenticate:createDevelopmentAuthenticator(config.auth),
     readProspects:()=>readDevelopmentProspects(pool.query.bind(pool))
   });
   const port=Number(env.PORT||"3000");
@@ -131,12 +146,12 @@ export async function run(env=process.env) {
       "Access-Control-Allow-Origin":config.uiOrigin,
       "Access-Control-Allow-Credentials":"true",
       "Access-Control-Allow-Methods":"GET, OPTIONS",
-      "Access-Control-Allow-Headers":"Accept",
+      "Access-Control-Allow-Headers":"Accept, Authorization",
       "Vary":"Origin"}:{};
     let result;
     try {
       result=await handler({method:req.method,path:new URL(req.url||"/","https://local.invalid").pathname,
-        origin,token:req.headers["cf-access-jwt-assertion"]});
+        origin,token:req.headers.authorization});
     } catch {result=fail(503,"Development research unavailable");}
     res.writeHead(result.status,{...HEADERS,...cors});
     res.end(result.body===null?"":JSON.stringify(result.body));
@@ -147,5 +162,8 @@ export async function run(env=process.env) {
 }
 
 if (process.argv[1] && new URL(import.meta.url).pathname===process.argv[1]) {
-  run().catch(()=>{console.error("Development Growth API startup failed; check restricted role, Access and origin configuration.");process.exitCode=1;});
+  run().catch(error=>{
+    console.error("Development Growth API startup failed:", error.safeStartupCode || "CONFIGURATION_INVALID");
+    process.exitCode=1;
+  });
 }
