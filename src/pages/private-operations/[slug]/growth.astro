@@ -7,19 +7,19 @@ import { privateOperationsPresentation } from "../../../config/private-operation
 // Cloudflare Access-authenticated operations API, with growth:read permission.
 export function getStaticPaths() {
   const config = privateOperationsPresentation();
-  return config ? [{ params: { slug: config.slug }, props: { apiUrl: config.apiUrl } }] : [];
+  return config ? [{ params: { slug: config.slug }, props: { apiUrl: config.apiUrl, environment: config.environment } }] : [];
 }
-const { apiUrl } = Astro.props;
+const { apiUrl, environment } = Astro.props;
 ---
 <BaseLayout
   title="Growth Intelligence | CYPH/1 Private Operations"
   description="Restricted CYPH/1 growth research console."
   robots="noindex, nofollow, noarchive"
 >
-  <main id="main" class="growth-shell" data-api={apiUrl}>
+  <main id="main" class="growth-shell" data-api={apiUrl} data-environment={environment}>
     <div class="growth-topline">
       <BrandMark/>
-      <div class="topline-right"><span class="topline-dot" aria-hidden="true"></span> PRIVATE OPERATIONS <span class="topline-divider" aria-hidden="true">/</span> GROWTH INTELLIGENCE</div>
+      <div class="topline-right"><span class="topline-dot" aria-hidden="true"></span> PRIVATE OPERATIONS <span class="topline-divider" aria-hidden="true">/</span> GROWTH INTELLIGENCE {environment === "development" ? " / DEVELOPMENT DATA" : ""}</div>
     </div>
     <div class="growth-content">
       <header class="growth-header">
@@ -29,8 +29,8 @@ const { apiUrl } = Astro.props;
           <p>Research-led acquisition. One source of truth for UK creator and commercial partner opportunities.</p>
         </div>
         <div class="header-side">
-          <div class="mode-label"><span aria-hidden="true">●</span> RESEARCH MODE</div>
-          <p>READ-ONLY CONSOLE</p>
+          <div class="mode-label"><span aria-hidden="true">●</span> {environment === "development" ? "DEVELOPMENT · RESEARCH MODE" : "RESEARCH MODE"}</div>
+          <p>{environment === "development" ? "DEV DATABASE / READ-ONLY CONSOLE" : "READ-ONLY CONSOLE"}</p>
           <button id="refresh" type="button" class="growth-button">Refresh data <span aria-hidden="true">↗</span></button>
         </div>
       </header>
