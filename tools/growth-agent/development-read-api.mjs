@@ -13,6 +13,30 @@ const HEADERS = Object.freeze({
 });
 const fail = (status, message) => ({ status, body: { message } });
 
+// The Render development database's private hostname. This is deliberately not
+// configurable by the client or the application's environment.
+export const DEVELOPMENT_INTERNAL_DB_HOST = "dpg-da9hpq1srm7s73cdb260-a";
+export function developmentDatabaseConnection(urlString) {
+  if (!urlString) throw Error("Separate development read-only database URL is required");
+  let url;
+  try { url = new URL(urlString); }
+  catch { throw Error("Invalid development database URL"); }
+  if (!["postgresql:", "postgres:"].includes(url.protocol) ||
+      url.hostname !== DEVELOPMENT_INTERNAL_DB_HOST ||
+      (url.port && url.port !== "5432") ||
+      decodeURIComponent(url.pathname.slice(1)) !== "cyph1_commerce_development" ||
+      decodeURIComponent(url.username) !== "growth_read_dev" ||
+      !url.password || url.hash || url.search || url.hostname.includes(":")) {
+    throw Error("Dedicated Render internal development database and growth_read_dev role required");
+  }
+  return Object.freeze({
+    connectionString: urlString,
+    ssl: { rejectUnauthorized: false },
+    max: 3,
+    options: "-c default_transaction_read_only=on",
+  });
+}
+
 // Never log raw connection errors: some include connection strings or secrets.
 export function databaseStartupFailureCode(error) {
   if (error?.message === "Development read-only account validation failed") return "DB_ROLE_BOUNDARY_INVALID";
@@ -33,12 +57,7 @@ export function databaseStartupFailureCode(error) {
 
 export function validateDevelopmentApiEnvironment(env) {
   if (env.GROWTH_DATA_ENV !== "development") throw Error("Development-only mode required");
-  if (!env.GROWTH_DEV_READ_DATABASE_URL) throw Error("Separate development read-only database URL is required");
-  const database = new URL(env.GROWTH_DEV_READ_DATABASE_URL);
-  if (!["postgresql:", "postgres:"].includes(database.protocol) ||
-      decodeURIComponent(database.pathname.slice(1)) !== "cyph1_commerce_development" ||
-      decodeURIComponent(database.username) !== "growth_read_dev" ||
-      !database.password) throw Error("Dedicated development growth_read_dev account required");
+  const database = developmentDatabaseConnection(env.GROWTH_DEV_READ_DATABASE_URL);
   const origin = new URL(env.GROWTH_DEV_UI_ORIGIN || "");
   if (!["https:", "http:"].includes(origin.protocol) ||
       (origin.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(origin.hostname)) ||
@@ -49,7 +68,7 @@ export function validateDevelopmentApiEnvironment(env) {
     throw Error("Production website origin refused");
   }
   const auth = loadDevelopmentAuth(env);
-  return { database:env.GROWTH_DEV_READ_DATABASE_URL, uiOrigin:origin.origin, auth };
+  return { database, uiOrigin:origin.origin, auth };
 }
 
 export async function validateReadOnlyDatabase(query) {
@@ -105,8 +124,7 @@ export function createDevelopmentGrowthHandler({ uiOrigin, authenticate, readPro
 export async function run(env=process.env) {
   const config=validateDevelopmentApiEnvironment(env);
 
-  const pool=new pg.Pool({connectionString:config.database,ssl:{rejectUnauthorized:true},max:3,
-    options:"-c default_transaction_read_only=on"});
+  const pool=new pg.Pool(config.database);
   try {
     await validateReadOnlyDatabase(pool.query.bind(pool));
   } catch (error) {
