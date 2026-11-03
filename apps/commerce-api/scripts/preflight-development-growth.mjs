@@ -11,11 +11,11 @@ const client = new pg.Client({
 try {
   await client.connect();
   const identity = await client.query("SELECT current_database() AS database_name, current_user AS role_name");
-  const { database_name: name, role_name: role } = identity.rows[0];
+  const { database_name: name } = identity.rows[0];
   if (name !== "cyph1_commerce_development") {
     throw new Error("Database identity mismatch: refusing to operate outside CYPH/1 development");
   }
-  const migrationFiles = (await readdir(new URL("../db/migrations/", import.meta.url))).filter(file => /^\\d{4}_[a-z0-9_]+\\.sql$/.test(file)).sort();
+  const migrationFiles = (await readdir(new URL("../db/migrations/", import.meta.url))).filter(file => /^\d{4}_[a-z0-9_]+\.sql$/.test(file)).sort();
   if (migrationFiles.length !== 21 || migrationFiles.at(-1) !== "9000_growth_agent_foundation.sql") {
     throw new Error("Unexpected migration files: separate review needed before development rollout");
   }
