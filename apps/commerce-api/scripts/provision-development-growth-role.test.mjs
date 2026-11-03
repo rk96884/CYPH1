@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   validateProvisioningInput, verifyDevelopmentBaseline, provisionGrowthRole,
-  verifyRoleGrants, REQUIRED_TABLES
+  verifyRoleGrants, REQUIRED_TABLES, GrowthRoleStageError
 } from "./provision-development-growth-role.mjs";
 
 const secret = "test-only-" + "x".repeat(48);
@@ -56,10 +56,26 @@ test("unsafe privileges cause rollback; no committed role",async()=>{
     if(sql.includes("has_schema_privilege('growth_import_dev'"))return {rows:[{...grants,orders_any:true}]};
     return {rows:[]};
   }};
-  await assert.rejects(provisionGrowthRole(client,secret),/rolled back/);
+  await assert.rejects(provisionGrowthRole(client,secret),error => error instanceof GrowthRoleStageError && error.stage === "verify_permissions");
   assert.equal(queries.at(-1),"ROLLBACK");
   assert.ok(!queries.includes("COMMIT"));
 });
 test("post-grant privilege verifier rejects missing required rights",async()=>{
   await assert.rejects(verifyRoleGrants(async sql=>sql.includes("FROM pg_roles")?{rows:[attrs]}:{rows:[{...grants,prospects_insert:false}]}),/verification failed/);
+});
+
+test("role creation failure exposes only a safe stage identifier",async()=>{
+  const statements=[];
+  const client={query:async(sql)=>{
+    statements.push(sql);
+    if(sql.startsWith("SELECT format("))return {rows:[{statement:"CREATE ROLE growth_import_dev LOGIN PASSWORD '<redacted>'"}]};
+    if(sql.startsWith("CREATE ROLE"))throw new Error("synthetic private credential content");
+    return {rows:[]};
+  }};
+  await assert.rejects(provisionGrowthRole(client,secret),error=>{
+    assert.equal(error.stage,"create_role");
+    assert.doesNotMatch(error.message,/private credential|PASSWORD|synthetic/);
+    return true;
+  });
+  assert.equal(statements.at(-1),"ROLLBACK");
 });

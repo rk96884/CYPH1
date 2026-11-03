@@ -37,25 +37,43 @@ export async function verifyDevelopmentBaseline(query) {
   if (role.rows.length) throw new Error("Role already exists: review before changing credentials or grants");
 }
 
+export class GrowthRoleStageError extends Error {
+  constructor(stage) {
+    super("Growth role operation failed at stage: " + stage);
+    this.name = "GrowthRoleStageError";
+    this.stage = stage;
+  }
+}
+
 export async function provisionGrowthRole(client, password) {
-  await client.query("BEGIN");
+  let stage = "begin";
   try {
+    await client.query("BEGIN");
+    stage = "prepare_role";
     // Use PostgreSQL's %L literal quoting for the secret, not string interpolation.
     // Never log statements or exception objects: they can contain credentials.
     const quoted = await client.query("SELECT format('CREATE ROLE growth_import_dev LOGIN NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD %L', $1) AS statement", [password]);
+    stage = "create_role";
     await client.query(quoted.rows[0].statement);
+    stage = "grant_schema";
     await client.query("GRANT USAGE ON SCHEMA growth TO growth_import_dev");
+    stage = "grant_research_tables";
     await client.query("GRANT SELECT, INSERT ON growth.research_runs, growth.prospects, growth.prospect_evidence TO growth_import_dev");
+    stage = "grant_research_run_update";
     await client.query("GRANT UPDATE (status, completed_at) ON growth.research_runs TO growth_import_dev");
+    stage = "grant_audit";
     await client.query("GRANT INSERT ON growth.audit_log TO growth_import_dev");
+    stage = "grant_audit_sequence";
     await client.query("GRANT USAGE ON SEQUENCE growth.audit_log_id_seq TO growth_import_dev");
-    // CONNECT may already be available to PUBLIC; this grant expresses required access.
+    stage = "grant_database_connect";
     await client.query("GRANT CONNECT ON DATABASE cyph1_commerce_development TO growth_import_dev");
+    stage = "verify_permissions";
     await verifyRoleGrants(client.query.bind(client));
+    stage = "commit";
     await client.query("COMMIT");
   } catch {
     await client.query("ROLLBACK").catch(() => {});
-    throw new Error("Role provisioning failed; transaction rolled back");
+    throw new GrowthRoleStageError(stage);
   }
 }
 
@@ -100,13 +118,15 @@ export async function main(environment = process.env) {
     ssl: environment.DATABASE_SSL === "true" ? { rejectUnauthorized: true } : false
   });
   try {
-    await client.connect();
+    try { await client.connect(); }
+    catch { throw new GrowthRoleStageError("connect"); }
     if (action === "plan") {
       await verifyDevelopmentBaseline(client.query.bind(client));
       console.log("Development-only role preflight passed. Role absent; six Growth tables verified. No changes made.");
       return;
     }
-    await verifyDevelopmentBaseline(client.query.bind(client));
+    try { await verifyDevelopmentBaseline(client.query.bind(client)); }
+    catch { throw new GrowthRoleStageError("preflight"); }
     await provisionGrowthRole(client, environment.GROWTH_IMPORT_ROLE_PASSWORD);
     console.log("Dedicated growth_import_dev role created with restricted Growth-table access; commerce and outreach grants denied.");
   } finally {
@@ -114,9 +134,11 @@ export async function main(environment = process.env) {
   }
 }
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
-  main().catch(() => {
-    // Never print DB connection errors or password-containing SQL statements.
-    console.error("Development Growth role workflow failed; review preflight or privilege checks.");
+  main().catch(error => {
+    // Strictly allowlisted stage diagnostics only. No SQL, passwords, URLs,
+    // underlying exception messages, or database connection details.
+    const stage = error instanceof GrowthRoleStageError ? error.stage : "configuration";
+    console.error("Development Growth role workflow failed at stage: " + stage);
     process.exitCode = 1;
   });
 }
