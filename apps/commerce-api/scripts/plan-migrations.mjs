@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { migrationChecksumMatches } from "./migration-checksum.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const url = process.env.DATABASE_URL;
@@ -16,8 +17,11 @@ const migrationDir = path.join(root, "db", "migrations");
 const files = (await readdir(migrationDir))
   .filter(name => /^\d{4}_[a-z0-9_]+\.sql$/.test(name)).sort();
 const hashes = new Map();
+const contents = new Map();
 for (const file of files) {
-  hashes.set(file, createHash("sha256").update(await readFile(path.join(migrationDir, file))).digest("hex"));
+  const content = await readFile(path.join(migrationDir, file), "utf8");
+  contents.set(file, content);
+  hashes.set(file, createHash("sha256").update(content).digest("hex"));
 }
 await client.connect();
 try {
@@ -25,12 +29,16 @@ try {
   const applied = table.rows[0]?.name
     ? (await client.query("SELECT version, checksum FROM public.schema_migrations ORDER BY version")).rows
     : [];
+  const identity = await client.query("SELECT current_database() AS name");
+  const databaseName = identity.rows[0].name;
   const unknown = applied.filter(row => !hashes.has(row.version));
-  const modified = applied.filter(row => hashes.has(row.version) && hashes.get(row.version) !== row.checksum);
+  const modified = applied.filter(row => hashes.has(row.version) && !migrationChecksumMatches({ file: row.version, content: contents.get(row.version), recorded: row.checksum, databaseName }));
+  const legacyAccepted = applied.filter(row => hashes.has(row.version) && hashes.get(row.version) !== row.checksum && !modified.includes(row));
   const completed = new Set(applied.map(row => row.version));
   const pending = files.filter(file => !completed.has(file));
   console.log(`Migration files: ${files.length}; applied: ${applied.length}; pending: ${pending.length}`);
   for (const file of pending) console.log(`PENDING ${file}`);
+  for (const row of legacyAccepted) console.log(`VERIFIED HISTORICAL CRLF ${row.version}`);
   for (const row of unknown) console.error(`UNKNOWN APPLIED ${row.version}`);
   for (const row of modified) console.error(`CHECKSUM MISMATCH ${row.version}`);
   const lastApplied = applied.at(-1)?.version;
