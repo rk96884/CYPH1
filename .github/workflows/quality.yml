@@ -42,6 +42,9 @@ jobs:
       - name: Run commerce unit and integration tests
         run: npm run test:commerce
 
+      - name: Validate first-five source-backed research-only import pilot
+        run: node --test tools/growth-agent/import-first-five-development.test.mjs
+
       - name: Test restricted Growth importer connection safeguards
         run: node --test tools/growth-agent/check-development-import-connection.test.mjs
 
