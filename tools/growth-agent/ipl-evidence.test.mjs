@@ -17,7 +17,7 @@ test("five reviewed creators have evidence classifications without scoring or ou
   assert.equal(rows[1].device,"Sensica Sensilight Mini");
 });
 test("identity and batch fields are allowlisted",()=>{
-  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects.reverse()),/Unexpected creator/);
+  assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects.reverse())),/Unexpected creator/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].email="private@example.org")),/Unexpected IPL evidence field/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].score=100)),/Unexpected IPL evidence field/);
   assert.throws(()=>validateIplEvidenceBatch(changed(b=>b.prospects[0].outreachAllowed=true)),/Unexpected IPL evidence field/);
