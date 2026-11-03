@@ -26,10 +26,11 @@ const expectedRow=(id,row)=>({
   checked_at:row.checkedAt,firsthand_test_confirmed:row.firsthandTestConfirmed,
   content_format:row.format,evidence_note:row.note
 });
+const isoDate=value=>value instanceof Date ? value.toISOString().slice(0,10) : String(value).slice(0,10);
 const comparable=(row)=>JSON.stringify({
   classification:row.classification,device:row.device,technology:row.technology,
-  evidence_url:row.evidence_url,published_at:row.published_at ? String(row.published_at).slice(0,10):null,
-  checked_at:String(row.checked_at).slice(0,10),
+  evidence_url:row.evidence_url,published_at:row.published_at ? isoDate(row.published_at):null,
+  checked_at:isoDate(row.checked_at),
   firsthand_test_confirmed:row.firsthand_test_confirmed,content_format:row.content_format,
   evidence_note:row.evidence_note
 });
