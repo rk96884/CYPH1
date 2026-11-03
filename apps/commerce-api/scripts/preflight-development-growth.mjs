@@ -16,7 +16,7 @@ try {
     throw new Error("Database identity mismatch: refusing to operate outside CYPH/1 development");
   }
   const migrationFiles = (await readdir(new URL("../db/migrations/", import.meta.url))).filter(file => /^\d{4}_[a-z0-9_]+\.sql$/.test(file)).sort();
-  if (migrationFiles.length !== 21 || migrationFiles.at(-1) !== "9000_growth_agent_foundation.sql") {
+  if (migrationFiles.length !== 22 || migrationFiles.at(-1) !== "9001_growth_ipl_experience.sql") {
     throw new Error("Unexpected migration files: separate review needed before development rollout");
   }
   const rows = await client.query("SELECT version FROM public.schema_migrations ORDER BY version");
@@ -24,9 +24,12 @@ try {
   const growth = await client.query("SELECT count(*)::integer AS total FROM pg_catalog.pg_tables WHERE schemaname = 'growth'");
   const growthTables = growth.rows[0].total;
   const target = "9000_growth_agent_foundation.sql";
+  const iplTarget = "9001_growth_ipl_experience.sql";
+  if (applied.has(iplTarget) && !applied.has(target)) throw new Error("IPL migration without foundation");
   if (applied.has(target)) {
-    if (growthTables !== 6) throw new Error("Growth migration recorded but table count differs from six");
-    console.log("Development growth migration already applied: all six tables present");
+    const expectedTables = applied.has(iplTarget) ? 7 : 6;
+    if (growthTables !== expectedTables) throw new Error("Growth table count does not match tracked migration history");
+    console.log("Development growth baseline verified: " + expectedTables + " tables");
   } else {
     if (growthTables !== 0) throw new Error("Growth objects exist without migration history; review manually");
     if (applied.size !== 20 || !applied.has("0020_inpost_collection_review.sql")) {
