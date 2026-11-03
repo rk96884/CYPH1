@@ -1,0 +1,48 @@
+name: Development Growth import role
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Plan is read-only; apply provisions a dedicated development role"
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+      confirmation:
+        description: "For apply, enter CREATE-DEVELOPMENT-GROWTH-ROLE"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-growth-import-role
+  cancel-in-progress: false
+
+jobs:
+  provision-development-role:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: development-db
+    env:
+      DATABASE_URL: ${{ secrets.DEVELOPMENT_DATABASE_URL }}
+      DATABASE_SSL: ${{ vars.DEVELOPMENT_DATABASE_SSL || 'true' }}
+      GROWTH_IMPORT_ROLE_PASSWORD: ${{ secrets.GROWTH_IMPORT_ROLE_PASSWORD }}
+      ACTION: ${{ inputs.action }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Checkout approved main
+        uses: actions/checkout@v7
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate preconditions and provision only if approved
+        run: node apps/commerce-api/scripts/provision-development-growth-role.mjs
