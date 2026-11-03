@@ -4,6 +4,7 @@ import type { ReturnService } from "../returns/service.js";
 
 import { FulfilmentError, type FulfilmentService } from "../fulfilment/service.js";
 import { ManualDispatchError } from "../fulfilment/manual-dispatch.js";
+import type { GrowthProspectReader } from "../growth/read-prospects.js";
 
 const securityHeaders = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "Permissions-Policy": "camera=(), microphone=(), geolocation=()" };
 const headers = { "Content-Type": "application/json; charset=utf-8", ...securityHeaders };
@@ -46,11 +47,22 @@ const safeError = (error: unknown): Readonly<{ name: string; message: string }> 
   return Object.freeze({ name: "UnknownError", message: "Non-Error value thrown" });
 };
 
-export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal, returns?: ReturnService, fulfilment?: FulfilmentService): Promise<Response> => {
+export const handleOperationsRequest = async (request: Request, service: OperationsService, principal?: OperationsPrincipal, returns?: ReturnService, fulfilment?: FulfilmentService, growth?: GrowthProspectReader): Promise<Response> => {
   if (!validPrincipal(principal)) return json({ message: "Authentication required." }, 401);
   const url = new URL(request.url); const path = url.pathname.replace(/^\/+|\/+$/g, "").split("/");
   if (path[0] === "operations") path.shift();
   try {
+    if (path[0] === "growth") {
+      if (path.length !== 2 || path[1] !== "prospects") return json({ message: "Not found." }, 404);
+      if (request.method !== "GET") return json({ message: "Method not allowed." }, 405);
+      if (!allowed(principal, "growth:read")) return json({ message: "Permission denied." }, 403);
+      if (!growth) return json({ message: "Growth research unavailable." }, 503);
+      const channel = url.searchParams.get("channel");
+      if (channel !== null && channel !== "creator" && channel !== "partner") {
+        return json({ message: "Invalid channel." }, 400);
+      }
+      return json({ prospects: await growth.list(channel ?? undefined), readOnly: true });
+    }
     if (path[0] === "orders" && path[1] && path.length === 3 && ["packing","dispatch","collection-review"].includes(path[2] ?? "")) {
       const packing = path[2] === "packing";
       if (!allowed(principal, packing ? "fulfilment:read" : "fulfilment:dispatch")) return json({ message: "Permission denied." }, 403);

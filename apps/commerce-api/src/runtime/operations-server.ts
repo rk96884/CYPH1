@@ -15,6 +15,7 @@ import { PostgresFulfilmentRepository } from "../fulfilment/postgres.js";
 import { ManualLiveFulfilmentProvider } from "../fulfilment/manual-live.js";
 import { ManualTestFulfilmentProvider } from "../fulfilment/manual-test.js";
 import { loadCommerceConfig } from "../config.js";
+import { PostgresGrowthProspectReader } from "../growth/read-prospects.js";
 
 const environment = process.env;
 const databaseUrl = environment.DATABASE_URL?.trim();
@@ -36,7 +37,7 @@ const fulfilment = new FulfilmentService(manualEnabled,
   fulfilmentConfig.fulfilmentProvider === "manual-live" ? new ManualLiveFulfilmentProvider() : new ManualTestFulfilmentProvider(),
   new PostgresFulfilmentRepository(pool));
 const runtime = createOperationsRuntime(
-  createProtectedOperationsHandler(service, access, new ReturnService(new PostgresReturnRepository(pool)), fulfilment),
+  createProtectedOperationsHandler(service, access, new ReturnService(new PostgresReturnRepository(pool)), fulfilment, new PostgresGrowthProspectReader(pool)),
   async () => { await pool.query("SELECT 1"); },
 );
 
