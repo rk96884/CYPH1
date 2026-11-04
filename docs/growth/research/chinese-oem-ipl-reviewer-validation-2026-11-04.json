@@ -1,0 +1,122 @@
+{
+  "reviewedAt": "2026-11-04",
+  "status": "research_only_not_imported",
+  "purpose": "Evaluate firsthand reviewers of Chinese-manufacturer IPL devices, prioritising CYPH/1's previously investigated IONKA and Semlamp models. Research and competitor validation; not marketing outreach.",
+  "caveats": [
+    "Country of manufacture is not equivalent to common OEM model identity.",
+    "FDA clearance of a model family does not establish clearance/compliance or results of another model.",
+    "Editorial articles with affiliate links may still contain firsthand use; separate disclosure from claimed independence.",
+    "Unknown UK follower geography and commercial partnership feasibility must stay unknown."
+  ],
+  "manufacturerModelChecks": [
+    {
+      "manufacturer": "Shenzhen IONKA Medical Technology",
+      "relevantModels": [
+        "K-803",
+        "K-902",
+        "K-802"
+      ],
+      "evidenceType": "manufacturer_product_listing",
+      "source": "https://www.tzwm.com/",
+      "exactModelIndependentReviewFound": false,
+      "note": "Manufacturer's product page confirms model catalogue, but targeted searches found no independently attributable hands-on K-803/K-902 review. US FDA listing for FZ-608/FZ-608G/FZ-100/FZ-200 is a DIFFERENT model family and must never be used as clearance evidence for K-803/K-902.",
+      "regulatoryReference": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPMN/pmn.cfm?ID=K230739"
+    },
+    {
+      "manufacturer": "Shenzhen Semlamp Intelligent Technology",
+      "relevantModels": [
+        "K-902 supplier proposal; model attribution must be independently confirmed",
+        "SL-B287",
+        "SL-B329",
+        "SL-B301-1",
+        "SL-B328"
+      ],
+      "evidenceType": "manufacturer_regulatory_record",
+      "source": "https://www.accessdata.fda.gov/scripts/cdrh/cfPMN/pmn.cfm?ID=K260518",
+      "exactModelIndependentReviewFound": false,
+      "note": "Semlamp named for CYPH/1's earlier supplier comparison; regulatory SL-series model names shown in official records must not be conflated with IONKA K-series or with an unverified Semlamp device from our quotation.",
+      "regulatoryReference": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K240969.pdf"
+    }
+  ],
+  "firsthandReviewLeads": [
+    {
+      "reviewer": "Laura Gladman",
+      "type": "UK specialist beauty-device reviewer/editor",
+      "brand": "JOVS",
+      "model": "Venus Pro",
+      "evidenceState": "creator_authored_firsthand_review_confirmed",
+      "originalUrl": "https://www.wearebodybeautiful.com/jovs-venus-pro-review/",
+      "evidence": "Named author explicitly documents her own test procedure, original photographs, usability, cooling, sensor, schedule, and scored pros/cons.",
+      "disclosure": "Affiliate links disclosed; review methodology describes mix of purchased and supplied devices over time, not specific origin of this sample.",
+      "UKContext": "Her review-site disclosure describes UK-based business with multinational readers; actual follower share not known.",
+      "suitability": "Highest priority to investigate as review-methodology expert, not assumed paid influencer or contact approval."
+    },
+    {
+      "reviewer": "Grace Lindsay / Who What Wear UK editorial team",
+      "type": "UK editorial",
+      "brand": "JOVS",
+      "model": "Venus Pro",
+      "evidenceState": "attributable_editorial_first_person_test_confirmed_individual_test_identity_to_verify",
+      "originalUrl": "https://www.whowhatwear.com/beauty/skin/best-at-home-ipl-hair-removal-devices",
+      "evidence": "UK article includes eight-week first-person JOVS use and hair-growth observations; byline identifies Grace Lindsay but the JOVS subsection does not explicitly credit its specific tester.",
+      "disclosure": "Retail affiliate shop links in article; editorial submission rules not established.",
+      "UKContext": "UK editorial publication; UK follower distribution irrelevant/not verified.",
+      "suitability": "Potential editorial comparator; verify which staff tester contributed before individual attribution."
+    },
+    {
+      "reviewer": "Gabrielle Sterin",
+      "type": "Specialist beauty device editorial, non-UK status unverified",
+      "brand": "BoSidin / JOVS",
+      "model": "Venus Pro I",
+      "evidenceState": "creator_authored_firsthand_review_confirmed",
+      "originalUrl": "https://healthybeautiful.com/review/jovs-venus-pro-hair-removal-in-depth-review/",
+      "evidence": "Author identifies possession of Version I and describes device handling, filters, weight, cooling, experience and limitations; Version II comparison is not necessarily directly tested.",
+      "disclosure": "Affiliate commission disclosed.",
+      "UKContext": "No verified UK audience percentage.",
+      "suitability": "Strong hardware insight, lower initial UK-market priority."
+    },
+    {
+      "reviewer": "Daniel Imperiale / Innerbody testing team",
+      "type": "Editorial; US-focused",
+      "brand": "JOVS",
+      "model": "Venus Pro II",
+      "evidenceState": "editorial_team_hands_on_review",
+      "originalUrl": "https://www.innerbody.com/best-ipl-hair-removal",
+      "evidence": "Site publishes identifiable close-up device photographs and reviewer account of balance, air vents and handling; written by Daniel Imperiale, with team-based use attribution.",
+      "disclosure": "Affiliate/commercial site; test team and device acquisition method require review.",
+      "UKContext": "No UK audience evidence.",
+      "suitability": "Useful benchmark for review quality and product ergonomics, not UK influencer prospect."
+    }
+  ],
+  "lowEvidenceLeads": [
+    {
+      "brand": "AMINZER",
+      "type": "UK consumer/retail coverage",
+      "source": "https://www.yours.co.uk/life/beauty/best-laser-hair-removal-device/",
+      "otherSource": "https://www.paidproducttesting.co.uk/product-details/336/aminzer-ipl-laser-hair-removal-device",
+      "status": "customer_quote_or_tester_listing_not_named_qualified_longitudinal_review",
+      "note": "Yours quotes a customer review rather than demonstrating the named journalist tested the device; UK product-testing list names testers but provides no public treatment journal/results. Do not treat these as independently validated firsthand reviews."
+    },
+    {
+      "brand": "INNZA",
+      "type": "Retail/customer review coverage",
+      "source": "https://www.elle.com/beauty/makeup-skin-care/g70885303/best-at-home-ipl-hair-removal-devices/",
+      "status": "customer_review_only_in_this_source",
+      "note": "ELLE highlights an Amazon customer testimonial for INNZA; it does not establish that a named ELLE journalist conducted a longitudinal test of the INNZA model."
+    },
+    {
+      "brand": "BoSidin",
+      "type": "Non-UK first-person specialist",
+      "source": "https://note.com/hidenorikimura/n/n86dee59e68ad",
+      "status": "non_uk_firsthand_claim",
+      "note": "Japanese former salon operator reports firsthand device use; not evidence of UK audience or product equivalence with CYPH/1."
+    }
+  ],
+  "nextSteps": [
+    "Locate reviews tied to exact IONKA K-803/K-902 and Semlamp quotation model; if absent record no verified original found, rather than fabricate a creator.",
+    "Verify exact JOVS publication attribution and original reviewer identity.",
+    "Keep specialist editorial candidates separate from influencer/UGC sourcing.",
+    "Only propose a manually reviewed development research import after identity, primary links, and source classifications are approved.",
+    "No outreach, scores, customer data or production changes."
+  ]
+}
