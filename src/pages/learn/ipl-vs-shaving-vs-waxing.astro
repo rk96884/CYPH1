@@ -1,0 +1,261 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+import { launchProduct } from "../../data/launch-product";
+
+const money = (amount: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(amount);
+// Budget assumptions, not typical spending or a device treatment schedule.
+const months = 12;
+const shavingMonthlyBudget = 3;
+const waxAppointmentPrice = 30;
+const waxAppointments = 12;
+const shavingYear = months * shavingMonthlyBudget;
+const iplYear = launchProduct.intendedPrice.amount + shavingYear;
+const waxingYear = waxAppointmentPrice * waxAppointments;
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "IPL vs shaving vs waxing: methods, suitability and UK costs",
+  description: "Compare at-home IPL, shaving and waxing, with realistic expectations, safety considerations and an illustrative 12-month UK budget.",
+  datePublished: "2026-11-04",
+  dateModified: "2026-11-04",
+  inLanguage: "en-GB",
+  author: { "@type": "Organization", name: "CYPH/1" },
+  publisher: { "@type": "Organization", name: "CYPH/1" },
+};
+---
+<BaseLayout title="IPL vs Shaving vs Waxing: Methods & UK Costs | CYPH/1"
+  description="Compare IPL, shaving and waxing: how they work, regrowth, suitability, safety and an illustrative 12-month UK cost comparison."
+  structuredData={structuredData}>
+  <Header />
+  <main id="main" class="article-page">
+    <article>
+      <header class="article-hero section">
+        <div class="container article-wide">
+          <p class="eyebrow">Know your options · Hair removal</p>
+          <div class="article-hero-intro">
+            <h1 data-reveal><span>IPL vs shaving</span> vs waxing.</h1>
+            <div class="article-hero-summary">
+              <p class="lede">Shaving cuts visible hair. Waxing pulls it out. IPL uses light to target pigment in the hair, aiming to reduce regrowth over repeated treatments. The right choice depends on your skin, hair, routine and budget.</p>
+              <p class="article-meta">Published <time datetime="2026-11-04">4 November 2026</time> · General educational content</p>
+              <a class="comparison-link" href="#comparison-heading">Compare the methods <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
+          <figure class="hero-editorial">
+            <img src={withBase("brand/editorial/cyph1-ipl-shaving-waxing-hero.webp")} width="1400" height="788" fetchpriority="high" loading="eager" decoding="async" alt="Illustrative comparison: a woman using a handheld IPL device at home, shaving a leg with a razor, and a pot of waxing supplies." />
+          </figure>
+        </div>
+      </header>
+
+      <section class="section article-section" aria-labelledby="comparison-heading">
+        <div class="container article-wide article-copy">
+          <p class="section-index">01 / At a glance</p>
+          <h2 id="comparison-heading" data-reveal>Three methods. Different jobs.</h2>
+          <p>Hair removal and hair reduction are different goals. Shaving and waxing remove existing hair; IPL is intended to affect future growth. This is a category comparison, not evidence that one method suits everyone or that CYPH/1 achieves a particular result.</p>
+          <p class="comparison-hint" id="comparison-hint">On smaller screens, scroll horizontally to read all three methods.</p>
+          <div class="comparison-scroll" tabindex="0" role="region" aria-label="IPL, shaving and waxing comparison table" aria-describedby="comparison-hint">
+            <table class="technology-table">
+              <caption>General method comparison; follow individual product instructions</caption>
+              <thead><tr><th scope="col">Consideration</th><th scope="col">At-home IPL</th><th scope="col">Shaving</th><th scope="col">Waxing</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">How it works</th><td>Light energy targets hair pigment, producing heat that can affect the follicle.</td><td>A blade cuts hair at the skin surface.</td><td>Wax grips hairs and pulls them out from the root.</td></tr>
+                <tr><th scope="row">Immediate effect</th><td>Not an instant substitute for removing visible hair.</td><td>Removes visible hair during the shave.</td><td>Removes hairs during the wax, if long enough to grip.</td></tr>
+                <tr><th scope="row">Regrowth and routine</th><td>Repeated use and possible maintenance; timing and results are device-specific.</td><td>Short-lived smoothness; repeat as hair becomes visible.</td><td>Results can last weeks, but regrowth varies.</td></tr>
+                <tr><th scope="row">Suitability</th><td>Skin tone, natural hair colour, body area and contraindications matter.</td><td>No light-based pigment requirement; technique and skin condition still matter.</td><td>No light-based pigment requirement; hair length, skin condition and medicines matter.</td></tr>
+                <tr><th scope="row">Potential drawbacks</th><td>Burns, pigment changes and eye injury with unsuitable or incorrect use.</td><td>Cuts, irritation and ingrown hairs.</td><td>Discomfort, irritation, skin injury and burns from hot wax.</td></tr>
+                <tr><th scope="row">Cost pattern</th><td>Device purchase plus preparation and running costs.</td><td>Repeat purchases of razors or blades and shaving products.</td><td>Home supplies or recurring salon appointments.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-note">Results, skin sensations and comfort vary by method, individual and treatment conditions. The <a href="#sources-heading">sources below</a> explain general mechanisms and risks; they do not establish CYPH/1 product performance.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="routine-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">02 / Your routine</p>
+          <h2 id="routine-heading" data-reveal>Which approach fits your goal?</h2>
+          <p><strong>For removing visible hair now:</strong> shaving offers a straightforward surface-removal option. Waxing removes hair from the root and can leave a longer gap before visible regrowth. Neither is a promise that hair will stop growing.</p>
+          <p><strong>For considering reduction over time:</strong> IPL involves a different commitment. Check compatibility before spending money, and be prepared to follow the particular device's schedule rather than a universal online timetable. More frequent treatment is not a shortcut to a verified result.</p>
+          <p>Do not treat IPL as simply a more expensive razor. Its value depends on suitability, your experience and any results actually achieved. Choosing shaving or waxing, combining permitted methods, or choosing no hair removal are all valid decisions.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="suitability-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">03 / Suitability and preparation</p>
+          <h2 id="suitability-heading" data-reveal>Can everyone use IPL?</h2>
+          <p>No. IPL relies on pigment absorbing light. Suitability depends on the device, natural hair colour, skin tone and health factors. Darker surrounding skin pigment can increase unwanted heating with unsuitable equipment; low-pigment hair may respond poorly. Do not assume that a device works on every skin tone or hair colour.</p>
+          <p>Check the <a href={withBase("ipl-hair-removal/#compatibility-guide")}>CYPH/1 pre-launch compatibility guide</a> and the final device instructions. Recent tanning, medicines that increase light sensitivity and skin conditions require particular care. Seek qualified advice if suitability is uncertain.</p>
+          <h3>Can you shave or wax between IPL sessions?</h3>
+          <p>Follow the device manual's preparation and between-session rules. Shaving leaves hair below the surface; waxing removes it from the root, so they are not interchangeable preparation methods. Do not assume that waxing or plucking is compatible with an IPL course, or copy a preparation interval from another device.</p>
+          <p>The device's instructions must set any shaving interval, patch-test procedure, permitted areas and treatment schedule. This article does not prescribe those values for CYPH/1.</p>
+        </div>
+      </section>
+
+      <section class="section article-section cost-section" aria-labelledby="cost-heading">
+        <div class="container article-wide">
+          <p class="section-index">04 / Illustrative UK costs</p>
+          <div class="article-reading article-copy">
+            <h2 id="cost-heading" data-reveal>What might a year of hair removal cost?</h2>
+            <p>This worked example considers lower-leg hair management for one person. It combines an <strong>assumed shaving budget</strong>, one published salon price and CYPH/1's intended pre-launch price. It is not a UK average, a quotation or a prediction of your spending.</p>
+            <p><strong>Why one year?</strong> Twelve months is a budgeting period, not a recommended IPL treatment schedule. IPL generally involves an initial treatment phase and may require maintenance; frequency and duration depend on the specific device instructions and individual needs.</p>
+          </div>
+          <div class="cost-panels">
+            <section class="cost-panel" aria-labelledby="shaving-cost-heading">
+              <p class="cost-kicker">01 / Shaving</p>
+              <h3 id="shaving-cost-heading">Recurring supplies</h3>
+              <p class="cost-feature">{money(shavingYear)}<span>Illustrative 12-month subtotal</span></p>
+              <p>{money(shavingMonthlyBudget)} a month × {months} months for razors or blades and shaving products. This is a modelling allowance, not a sourced retail price or recommended replacement interval.</p>
+            </section>
+            <section class="cost-panel cost-panel-cyph" aria-labelledby="ipl-cost-heading">
+              <p class="cost-kicker">02 / CYPH/1 IPL</p>
+              <h3 id="ipl-cost-heading">Device plus shaving</h3>
+              <p class="launch-price-label">CYPH/1 intended launch price: <strong>{money(launchProduct.intendedPrice.amount)}</strong></p>
+              <p class="cost-feature">{money(iplYear)}<span>Illustrative first-year subtotal</span></p>
+              <p>For this illustration, we add the same {money(shavingYear)} annual shaving allowance to the {money(launchProduct.intendedPrice.amount)} intended device price. This is a conservative budgeting assumption, not a predicted shaving frequency or an IPL treatment schedule.</p>
+              <p class="cost-foot">Not yet available to buy. Price and availability remain subject to launch confirmation; early access is not a payment or pre-order.</p>
+            </section>
+            <section class="cost-panel" aria-labelledby="waxing-cost-heading">
+              <p class="cost-kicker">03 / Salon waxing</p>
+              <h3 id="waxing-cost-heading">Lower-leg appointments</h3>
+              <p class="cost-feature">{money(waxingYear)}<span>Illustrative 12-month subtotal</span></p>
+              <p>{money(waxAppointmentPrice)} × {waxAppointments} appointments. <a href="https://thecoventgardensalon.com/pricing.html" target="_blank" rel="noopener noreferrer">The Covent Garden Salon</a> lists a ladies' lower half-leg wax at £30. Twelve visits is our budget assumption, not the salon's recommended frequency.</p>
+            </section>
+          </div>
+          <div class="cost-summary article-reading article-copy">
+            <p><strong>Compare costs without assuming equal outcomes.</strong> A device purchase and a salon service are not clinically equivalent. The IPL subtotal is higher than shaving alone in this example. Savings or outcomes cannot be guaranteed.</p>
+            <p>All figures exclude electricity, water, travel, time, extra aftercare, delivery charges and replacement devices. IPL may still require shaving and maintenance. Home waxing costs differ from salon prices; other areas, providers and visit frequencies change the total. Replace these assumptions with your own budget.</p>
+            <p class="cost-date">Price source checked <time datetime="2026-11-04">4 November 2026</time>; the salon page states prices revised 1 September 2026. Shaving spend and appointment count are explicit assumptions. CYPH/1's {money(launchProduct.intendedPrice.amount)} is an intended pre-launch price, not a live offer.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="safety-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">05 / Safety first</p>
+          <h2 id="safety-heading" data-reveal>Choose for your skin, not just your budget.</h2>
+          <p>Shaving can cause cuts and irritation. Waxing can injure skin, particularly with hot wax or certain medicines. Ask a pharmacist or clinician about waxing if you use retinoids or other treatments that affect your skin, and follow product guidance.</p>
+          <p>Light-based treatment can cause burns, pigment changes and eye injury. Follow contraindications, patch-testing and eye-safety instructions; do not improvise around prohibited areas. Stop if you experience an adverse reaction and seek medical advice for an injury.</p>
+          <aside class="science-note"><p><strong>About CYPH/1.</strong> Generic IPL information is not proof of this pre-launch device's efficacy or safety. No clinical comparison with shaving or waxing, specific results timeline or guaranteed reduction is claimed here. This guide is educational and does not replace professional advice or the device manual.</p></aside>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="next-reading-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">06 / Keep learning</p>
+          <h2 id="next-reading-heading" data-reveal>Understand the cycle.</h2>
+          <p>Hair follicles move through anagen (active growth), catagen (transition), telogen (rest) and exogen (shedding). They do not all move together. Understanding the cycle helps put repeated treatment in context; it does not mean a device can identify an individual hair's phase.</p>
+          <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>Explore the four stages of the hair-growth cycle <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Why IPL consistency matters <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/ipl-vs-laser-hair-removal/")}>Compare IPL and professional laser <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("ipl-hair-removal/")}>Explore the CYPH/1 IPL device (pre-launch) <span aria-hidden="true">→</span></a></p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="sources-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">07 / References</p>
+          <h2 id="sources-heading" data-reveal>Evidence and pricing sources.</h2>
+          <p>Checked 4 November 2026. General guidance supports the method descriptions and safety considerations, not claims for a particular CYPH/1 outcome.</p>
+          <ul class="article-sources">
+            <li><a href="https://www.aad.org/public/everyday-care/skin-care-basics/hair/remove-unwanted-hair" target="_blank" rel="noopener noreferrer">American Academy of Dermatology — shaving, waxing and their risks</a></li>
+            <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-0" target="_blank" rel="noopener noreferrer">ARPANSA — consumer guidance on IPL, suitability and risks</a></li>
+            <li><a href="https://www.gov.uk/government/publications/guidance-on-the-safe-use-of-lasers-intense-light-source-systems-and-leds" target="_blank" rel="noopener noreferrer">MHRA — light-system safety guidance for professional practice; not a home-device manual</a></li>
+            <li><a href="https://thecoventgardensalon.com/pricing.html" target="_blank" rel="noopener noreferrer">The Covent Garden Salon — ladies' lower half-leg wax, £30; checked 4 November 2026</a></li>
+            <li><a href={withBase("ipl-hair-removal/")}>CYPH/1 — approved intended pre-launch price and product information</a></li>
+          </ul>
+        </div>
+      </section>
+      <section class="section article-cta">
+        <div class="container article-reading">
+          <p class="eyebrow">Cycle. Phase. One.</p>
+          <h2 data-reveal>Technology, understood.</h2>
+          <p>Follow CYPH/1 as the product moves towards launch. Joining early access is not a pre-order.</p>
+          <a class="button" href={withBase("#early-access")}>Explore CYPH/1</a>
+        </div>
+      </section>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targets = document.querySelectorAll("[data-reveal]");
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    targets.forEach(target => target.classList.add("is-visible"));
+  } else {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.18, rootMargin: "0px 0px -8% 0px" });
+    targets.forEach(target => observer.observe(target));
+  }
+</script>
+<style>
+  /* 1,100px editorial spread; keep long-form copy on the shared reading token. */
+  .article-page { --article-comparison-width: 68.75rem; }
+  .article-wide { max-width: var(--article-comparison-width); }
+  .article-reading { max-width: var(--cyph-layout-reading); }
+  .article-hero { padding-top: clamp(9rem, 12vw, 11rem); padding-bottom: clamp(2rem, 4vw, 3.25rem); }
+  .hero-editorial { margin:var(--cyph-space-8) 0 0; }
+  .hero-editorial img { display:block; width:100%; height:auto; border:1px solid var(--cyph-border-structural); }
+  .hero-editorial figcaption { margin-top:var(--cyph-space-3); font-size:.8rem; line-height:1.5; color:var(--cyph-text-secondary); }
+  .article-hero-intro { display: grid; gap: var(--cyph-layout-cluster); align-items: start; }
+  .article-hero-intro > * { min-width: 0; }
+  .article-hero h1 { max-width: 16ch; margin: 0; font-size: clamp(2.15rem, 4.4vw, 3.5rem); line-height: var(--cyph-leading-heading); }
+  .article-hero h1 span { display: block; color: var(--cyph-accent-highlight); }
+  .article-hero-summary .lede { margin: 0; }
+  .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
+  .comparison-link { display: inline-flex; min-height: 2.75rem; align-items: center; gap: var(--cyph-space-4); color: var(--cyph-accent-highlight); font-size: .875rem; text-underline-offset: var(--cyph-space-1); }
+
+  .cost-kicker { display:block; color:var(--cyph-accent-highlight); font-size:.75rem; letter-spacing:var(--cyph-tracking-label); text-transform:uppercase; margin:0 0 var(--cyph-space-4); }
+  .cost-section { border-block:var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .cost-panels { display:grid; gap:var(--cyph-space-6); margin-top:var(--cyph-space-8); }
+  .cost-panel { min-width:0; padding:var(--cyph-space-6); background:var(--cyph-surface-base); border-top:var(--cyph-line-emphasis) solid var(--cyph-accent-primary); }
+  .cost-panel-cyph { background:var(--cyph-surface-raised); }
+  .cost-panel h3 { font-size:clamp(1.2rem,2vw,1.65rem); }
+  .cost-feature { font-size:clamp(1.6rem,2.6vw,2.15rem); font-weight:var(--cyph-font-weight-semibold); line-height:var(--cyph-leading-heading); margin:var(--cyph-space-6) 0; font-variant-numeric:tabular-nums; }
+  .cost-panel-cyph .cost-feature { color:var(--cyph-accent-highlight); }
+  .launch-price-label { margin-top:var(--cyph-space-4); font-size:.88rem; line-height:1.5; color:var(--cyph-text-secondary); }
+  .launch-price-label strong { color:var(--cyph-accent-highlight); font-size:1.12rem; font-variant-numeric:tabular-nums; }
+  .cost-panel-cyph { border-top-width:3px; }
+
+  .cost-feature span { display:block; margin-top:var(--cyph-space-3); font-size:.85rem; line-height:1.4; font-weight:400; color:var(--cyph-text-secondary); }
+  .cost-panel > p:not(.cost-kicker):not(.cost-feature) { line-height:1.65; }
+  .cost-foot { color:var(--cyph-text-secondary); font-size:.85rem; margin-top:var(--cyph-space-6); }
+  .cost-summary { margin-top:var(--cyph-space-8); }
+  .cost-summary > p + p { margin-top:var(--cyph-space-4); }
+  .cost-date { font-size:.85rem; color:var(--cyph-text-secondary); }
+  .article-section { padding-block: clamp(2.4rem, 4vw, 3.5rem); }
+  .article-page h2 { max-width: 22ch; font-size: clamp(1.6rem, 3.1vw, 2.7rem); line-height: 1.16; }
+  .article-copy > h2 { margin-top: var(--cyph-space-5); }
+  .article-copy > h2 + p, .article-copy > p + p { margin-top: var(--cyph-space-4); }
+  .article-sources { padding-left: 1.25rem; }
+  .article-sources li + li { margin-top: var(--cyph-space-3); }
+  .related-link { margin-top: var(--cyph-space-6); }
+  .article-cta { padding-block: clamp(3rem, 6vw, 5.5rem); border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .comparison-hint { color: var(--cyph-text-secondary); font-size: .85rem; }
+  .comparison-scroll { max-width: 100%; overflow-x: auto; margin-top: var(--cyph-space-6); }
+  .technology-table { border-collapse: collapse; width: 100%; min-width: 48rem; text-align: left; }
+  .technology-table caption { text-align: left; color: var(--cyph-text-secondary); font-size: .85rem; padding-bottom: var(--cyph-space-3); }
+  .technology-table th, .technology-table td { padding: var(--cyph-space-6) var(--cyph-space-4); vertical-align: top; border-bottom: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .technology-table thead th { border-top: var(--cyph-line-emphasis) solid var(--cyph-accent-primary); color: var(--cyph-accent-highlight); background: var(--cyph-surface-raised); }
+  .technology-table tr > :first-child { width: 22%; }
+  .technology-table tr > :not(:first-child) { width: 26%; }
+  .technology-table tbody th { font-weight: var(--cyph-font-weight-semibold); }
+  .table-note { max-width: var(--cyph-layout-reading); font-size: .95rem; color: var(--cyph-text-secondary); }
+  @media(max-width:47.99rem) { .article-hero { padding-top: 10.25rem; padding-bottom: var(--cyph-space-8); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .article-section { padding-block:var(--cyph-space-10); } }
+  @media(min-width:48rem) { .article-hero-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } .cost-panels { grid-template-columns:repeat(2,minmax(0,1fr)); } .cost-panel-cyph { grid-column:1 / -1; } }
+  @media(min-width:64rem) { .cost-panels { grid-template-columns:repeat(3,minmax(0,1fr)); } .cost-panel-cyph { grid-column:auto; } }
+  @media(min-width:68.75rem) { .comparison-hint { display: none; } .comparison-scroll { margin-top: var(--cyph-space-8); } }
+  [data-reveal].is-visible { animation: cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
+  @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
+  @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
+</style>
+
