@@ -70,8 +70,9 @@ test("visual comparison uses the supplied text-free lifestyle image and licensed
  assert.equal((s.match(/loading="lazy" decoding="async"/g)||[]).length,2);
  assert.match(s,/aspect-ratio:1 \/ 1/);
  assert.match(s,/object-fit:contain/);
- assert.match(s,/Final production appearance remains subject to approval/);
- assert.match(s,/Not treatment guidance or evidence of results/);
+ assert.match(s,/These visuals illustrate different treatment settings, not equivalent results/);
+ assert.match(s,/The clinic photograph does not depict a CYPH\/1 device or imply endorsement/);
+ assert.doesNotMatch(s,/Pre-launch lifestyle illustration supplied for CYPH\/1|Stock photograph: Kerim Eveyik/);
  assert.match(s,/alt="A woman holding a white and rose-gold at-home IPL device/);
  assert.match(s,/alt="A gloved practitioner holding a professional laser/);
  assert.ok(s.indexOf('class="technology-visuals"')<s.indexOf('<table class="technology-table">'));
