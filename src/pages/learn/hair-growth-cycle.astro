@@ -10,15 +10,15 @@ const structuredData = {
   "@type": "Article",
   headline: "The four stages of the hair-growth cycle",
   datePublished: "2026-09-14",
-  dateModified: "2026-09-14",
+  dateModified: "2026-11-04",
   inLanguage: "en-GB",
   author: { "@type": "Organization", name: "CYPH/1" },
   publisher: { "@type": "Organization", name: "CYPH/1" }
 };
 ---
 <BaseLayout
-  title="The four stages of the hair-growth cycle | CYPH/1"
-  description="Understand anagen, catagen, telogen and exogen, and why the hair-growth cycle matters in IPL."
+  title="Hair Growth Cycle: Anagen, Catagen, Telogen & Exogen | CYPH/1"
+  description="Explore the hair growth cycle: anagen (growth), catagen (transition), telogen (rest) and exogen (shedding). Learn what the stages mean for IPL."
   structuredData={structuredData}
 >
   <Header />
@@ -28,16 +28,16 @@ const structuredData = {
         <div class="container article-reading">
           <p class="eyebrow">Know the cycle · Hair-growth science</p>
           <h1 data-reveal>The four stages of the hair-growth cycle</h1>
-          <p class="lede">Hair does not grow continuously or all at once. Individual follicles move through a repeating cycle commonly described as anagen, catagen, telogen and exogen.</p>
-          <p class="article-meta">Published 14 September 2026 · General educational content</p>
+          <p class="lede">Hair grows in a repeating cycle. The stages are anagen (active growth), catagen (transition), telogen (rest) and exogen (shedding). Each follicle follows its own timing, which matters when learning about IPL.</p>
+          <p class="article-meta">Published 14 September 2026 · Updated 4 November 2026 · General educational content</p>
         </div>
       </header>
 
       <section class="section article-section" aria-labelledby="cycle-overview">
         <div class="container article-reading">
           <p class="section-index">01 / The cycle</p>
-          <h2 id="cycle-overview" data-reveal>Four phases, different roles.</h2>
-          <p>At any one time, different hairs can be at different points in their cycle. Understanding those phases provides useful context for why light-based hair reduction is approached as a repeated routine rather than a one-off event.</p>
+          <h2 id="cycle-overview" data-reveal>What are the stages of hair growth?</h2>
+          <p>The three core follicle stages are <strong>anagen, catagen and telogen</strong>. Many descriptions also name <strong>exogen</strong>, the shedding process, as a fourth stage. Individual follicles are not synchronised: some are growing while others are resting or shedding.</p><p>Understanding this cycle provides context for why light-based hair reduction is approached as a repeated routine rather than a one-off event.</p>
         </div>
         <ol class="container article-phase-grid">
           {growthPhases.map((phase) => (
@@ -67,9 +67,21 @@ const structuredData = {
         </div>
       </section>
 
+      <section class="section article-section" aria-labelledby="cycle-questions">
+        <div class="container article-reading article-copy">
+          <p class="section-index">03 / Common questions</p>
+          <h2 id="cycle-questions" data-reveal>Three stages or four?</h2>
+          <p>Both descriptions appear in hair-growth education. The traditional three-stage account describes follicle growth (anagen), regression (catagen) and rest (telogen). Exogen names the shedding of an existing hair; it may be shown separately or discussed alongside telogen. This does not mean the underlying biological process is different.</p>
+          <h2 data-reveal>Does every hair grow at the same time?</h2>
+          <p>No. Follicles follow their cycles independently. The proportion of hairs in each phase also varies by body area and between individuals, so a single body-wide timetable would be misleading.</p>
+          <h2 data-reveal>Why do hair-growth phases matter for IPL?</h2>
+          <p>Hair-growth phases help explain why light-based hair reduction is carried out over more than one occasion. An IPL device does not establish the growth phase of any single follicle. Read our <a href="/learn/why-ipl-consistency-matters/">guide to why consistency matters with home IPL</a> for the general principle; always follow the instructions for the specific device you use.</p>
+        </div>
+      </section>
+
       <section class="section article-section">
         <div class="container article-reading article-copy">
-          <p class="section-index">03 / Why it matters for IPL</p>
+          <p class="section-index">04 / Why it matters for IPL</p>
           <h2 data-reveal>A repeated routine, not phase detection.</h2>
           <p>IPL treatment does not identify the growth phase of an individual hair. Different hairs can be at different points in the cycle, so light-based hair reduction is repeated over time to allow treatment to coincide with hairs entering active growth.</p>
           <aside class="science-note">
@@ -80,13 +92,13 @@ const structuredData = {
 
       <section class="section article-section" aria-labelledby="sources">
         <div class="container article-reading article-copy">
-          <p class="section-index">04 / Sources</p>
+          <p class="section-index">05 / Sources</p>
           <h2 id="sources" data-reveal>Evidence behind this article.</h2>
           <p>This article is general hair-cycle and IPL education. It does not make performance, safety or suitability claims about a future CYPH/1 product.</p>
-          <p class="related-link"><a href="/learn/why-ipl-consistency-matters/">Next: why consistency matters with home IPL <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href="/learn/why-ipl-consistency-matters/">Continue learning: why IPL consistency matters <span aria-hidden="true">→</span></a></p><p class="related-link"><a href="/ipl-hair-removal/">Explore the CYPH/1 at-home IPL device (pre-launch) <span aria-hidden="true">→</span></a></p>
           <ul class="article-sources">
             <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK470321/" target="_blank" rel="noopener noreferrer">NCBI Bookshelf — Anatomy, Hair Follicle</a></li>
-            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9917549/" target="_blank" rel="noopener noreferrer">International Journal of Molecular Sciences — Hair Growth Cycle and Hair Loss</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9917549/" target="_blank" rel="noopener noreferrer">Journal of Clinical Medicine — Integrative and Mechanistic Approach to the Hair Growth Cycle and Hair Loss</a></li>
             <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5475414/" target="_blank" rel="noopener noreferrer">Journal of Cutaneous and Aesthetic Surgery — Photoepilation and Skin Photorejuvenation</a></li>
             <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4745852/" target="_blank" rel="noopener noreferrer">Clinical, Cosmetic and Investigational Dermatology — Lasers and Intense Pulsed Light Technology</a></li>
           </ul>
