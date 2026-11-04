@@ -14,7 +14,7 @@ test("article explains distinct mechanisms, limitations and sourced safety",asyn
 
 test("rendered 12-month model includes shaving alongside IPL and explains assumptions",async()=>{
  const html=await read(`dist/${route}index.html`);
- for(const text of ["£36.00","£110.99","£360.00","£74.99","Pre-launch","modelling allowance","not a sourced retail price","not the salon's recommended frequency","not clinically equivalent","Savings or outcomes cannot be guaranteed","exclude electricity","2026-11-04"]) assert.ok(html.includes(text),text);
+ for(const text of ["£36.00","£110.99","£360.00","£74.99","intended pre-launch price","modelling allowance","not a sourced retail price","not the salon's recommended frequency","not clinically equivalent","Savings or outcomes cannot be guaranteed","exclude electricity","2026-11-04"]) assert.ok(html.includes(text),text);
  assert.match(html,/£3\.00 a month/);
  assert.match(html,/£30\.00 × 12 appointments/);
  const s=await read(`src/pages/${route.slice(0,-1)}.astro`);
@@ -35,8 +35,10 @@ test("rendered page has indexable SEO, semantic table, accessible image and inta
  const ids=[...html.matchAll(/\sid="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(new Set(ids).size,ids.length);
  for(const m of html.matchAll(/href="#([^"]+)"/g)) assert.ok(ids.includes(m[1]),m[1]);
- const image=html.match(/<img[^>]+alt="Pre-launch render[^>]+>/)?.[0];
- assert.ok(image); for(const attr of ["srcset=","width=","height=",'loading="lazy"']) assert.ok(image.includes(attr),attr);
+ const image=html.match(/<img[^>]+alt="Illustrative comparison:[^"]+"[^>]*>/)?.[0];
+ assert.ok(image,"Editorial hero image must have meaningful alt text");
+ for(const attr of ['width="1400"','height="788"','loading="eager"','decoding="async"']) assert.ok(image.includes(attr),attr);
+ assert.ok(image.includes("cyph1-ipl-shaving-waxing-hero.webp"),"Approved editorial WebP must be used");
 });
 
 test("article links to the education cluster and is linked contextually",async()=>{
