@@ -61,24 +61,25 @@ test("CYPH/1 price reuses approved product data and is explicitly pre-launch",as
  assert.match(s,/Not yet available to buy/);
 });
 
-test("visual comparison reuses the approved device render and licensed clinic photo",async()=>{
+test("visual comparison uses the supplied text-free lifestyle image and licensed clinic photo",async()=>{
  const [s,provenance]=await Promise.all([read("src/pages/learn/ipl-vs-laser-hair-removal.astro"),read("src/assets/editorial/ipl-vs-laser/README.md")]);
- assert.match(s,/import cyphIplRender from "\.\.\/\.\.\/assets\/products\/ipl\/cyph1-ipl-hero-v1\.webp"/);
- assert.match(s,/<Image src=\{cyphIplRender\} format="webp"/);
+ assert.match(s,/import homeIplLifestyle from "\.\.\/\.\.\/assets\/editorial\/ipl-vs-laser\/device-in-use\.webp"/);
+ assert.match(s,/<Image src=\{homeIplLifestyle\} format="webp"/);
  assert.match(s,/<Image src=\{clinicLaserPhoto\} format="webp"/);
  assert.equal((s.match(/widths=\{\[320, 480, 640, 960, 1200\]\} sizes=\{comparisonImageSizes\}/g)||[]).length,2);
  assert.equal((s.match(/loading="lazy" decoding="async"/g)||[]).length,2);
  assert.match(s,/aspect-ratio:4 \/ 3/);
  assert.match(s,/object-fit:contain/);
  assert.match(s,/Final production appearance remains subject to approval/);
- assert.match(s,/alt="Pre-launch render of the white and rose-gold CYPH\/1/);
+ assert.match(s,/Not treatment guidance or evidence of results/);
+ assert.match(s,/alt="A woman holding a white and rose-gold at-home IPL device/);
  assert.match(s,/alt="A gloved practitioner holding a professional laser/);
  assert.ok(s.indexOf('class="technology-visuals"')<s.indexOf('<table class="technology-table">'));
  assert.doesNotMatch(s,/ipl-treatment-editorial\.webp|<svg\b/);
  assert.match(provenance,/https:\/\/www\.pexels\.com\/license\//);
  assert.match(provenance,/Kerim Eveyik/);
  const [product,clinic]=await Promise.all([
-   sharp(fileURLToPath(new URL("src/assets/products/ipl/cyph1-ipl-hero-v1.webp",root))).metadata(),
+   sharp(fileURLToPath(new URL("src/assets/editorial/ipl-vs-laser/device-in-use.webp",root))).metadata(),
    sharp(fileURLToPath(new URL("src/assets/editorial/ipl-vs-laser/laser-treatment.webp",root))).metadata()
  ]);
  assert.equal(product.format,"webp"); assert.equal(clinic.format,"webp");

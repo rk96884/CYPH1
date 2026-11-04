@@ -4,7 +4,7 @@ import Header from "../../components/Header.astro";
 import Footer from "../../components/Footer.astro";
 import { withBase } from "../../utils/base-path";
 import { Image } from "astro:assets";
-import cyphIplRender from "../../assets/products/ipl/cyph1-ipl-hero-v1.webp";
+import homeIplLifestyle from "../../assets/editorial/ipl-vs-laser/device-in-use.webp";
 import clinicLaserPhoto from "../../assets/editorial/ipl-vs-laser/laser-treatment.webp";
 import { launchProduct } from "../../data/launch-product";
 
@@ -63,16 +63,16 @@ const structuredData = {
           <div class="technology-visuals" role="group" aria-label="At-home CYPH/1 IPL and professional laser comparison" aria-describedby="visual-comparison-note">
             <figure class="technology-visual">
               <div class="comparison-image comparison-image-product">
-                <Image src={cyphIplRender} format="webp" quality={58}
+                <Image src={homeIplLifestyle} format="webp" quality={58}
                   widths={[320, 480, 640, 960, 1200]} sizes={comparisonImageSizes}
-                  alt="Pre-launch render of the white and rose-gold CYPH/1 at-home IPL device with its branded packaging and accessories."
+                  alt="A woman holding a white and rose-gold at-home IPL device against her leg in a bedroom."
                   loading="lazy" decoding="async" />
               </div>
               <figcaption>
                 <p class="comparison-intro-label">01 / At-home IPL</p>
                 <h3>CYPH/1. Your own routine.</h3>
                 <p>Device-specific guidance. A purchase for use over time.</p>
-                <small>Pre-launch product render. Final production appearance remains subject to approval.</small>
+                <small>Pre-launch lifestyle illustration supplied for CYPH/1. Not treatment guidance or evidence of results. Final production appearance remains subject to approval.</small>
               </figcaption>
             </figure>
             <figure class="technology-visual">
