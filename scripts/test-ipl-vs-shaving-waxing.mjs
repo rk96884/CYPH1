@@ -44,3 +44,16 @@ test("article links to the education cluster and is linked contextually",async()
  for(const target of ["hair-growth-cycle/","why-ipl-consistency-matters/","ipl-vs-laser-hair-removal/","ipl-hair-removal/"]) assert.ok(s.includes(target));
  for(const file of ["ipl-vs-laser-hair-removal","why-ipl-consistency-matters"]) assert.ok((await read(`src/pages/learn/${file}.astro`)).includes(route));
 });
+
+test("article heading reveals reuse progressive enhancement and respect reduced motion",async()=>{
+ const s=await read(`src/pages/${route.slice(0,-1)}.astro`);
+ const headings=[...s.matchAll(/<h[12]\b[^>]*>/g)].map(m=>m[0]);
+ assert.ok(headings.length>1);
+ assert.ok(headings.every(h=>h.includes("data-reveal")));
+ assert.match(s,/prefers-reduced-motion: reduce/);
+ assert.match(s,/!\("IntersectionObserver" in window\)/);
+ assert.match(s,/observer\.unobserve\(entry\.target\)/);
+ assert.match(s,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.match(s,/animation:none!important/);
+ assert.doesNotMatch(s,/\[data-reveal\]\s*\{[^}]*opacity:\s*0\s*[;}]/);
+});
