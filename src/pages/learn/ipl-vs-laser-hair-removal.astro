@@ -35,35 +35,10 @@ const structuredData = {
               <a class="comparison-link" href="#comparison-heading">Compare the technologies <span aria-hidden="true">↓</span></a>
             </div>
           </div>
-          <div class="technology-visuals" role="group" aria-label="Photographic comparison of professional IPL and laser treatments" aria-describedby="photography-note">
-            <figure class="technology-visual">
-              <img
-                src={withBase("brand/editorial/ipl-vs-laser/ipl-treatment-editorial.webp")}
-                width="1200" height="900"
-                alt="A gloved practitioner applying a professional IPL handpiece to a person's gel-covered forearm."
-                loading="eager" fetchpriority="high" decoding="async"
-              />
-              <figcaption>
-                <p class="technology-label">01 / IPL</p>
-                <h2>Intense pulsed light.</h2>
-                <p>Filtered, broad-spectrum flashes.</p>
-              </figcaption>
-            </figure>
-            <figure class="technology-visual">
-              <img
-                src={withBase("brand/editorial/ipl-vs-laser/laser-treatment-editorial.webp")}
-                width="1200" height="900"
-                alt="A gloved practitioner holding a laser treatment handpiece against a person's leg."
-                loading="lazy" decoding="async"
-              />
-              <figcaption>
-                <p class="technology-label">02 / Laser</p>
-                <h2>Laser hair reduction.</h2>
-                <p>Light in a narrower wavelength band.</p>
-              </figcaption>
-            </figure>
+          <div class="comparison-intro" aria-label="Comparison overview">
+            <div><span class="comparison-intro-label">01 / IPL</span><strong>At-home flexibility</strong><p>Device-specific guidance. A purchase for use over time.</p></div>
+            <div><span class="comparison-intro-label">02 / Laser</span><strong>Professional treatment</strong><p>Clinic-led assessment. Typically priced by area and treatment course.</p></div>
           </div>
-          <p id="photography-note" class="photography-note">Stock photographs show professional treatments, not CYPH/1 devices or at-home use. Images illustrate treatment settings, not comparative results or suitability.</p>
         </div>
       </header>
 
@@ -119,9 +94,39 @@ const structuredData = {
         </div>
       </section>
 
+      <section class="section article-section cost-section" aria-labelledby="cost-heading">
+        <div class="container article-wide">
+          <p class="section-index">05 / UK costs</p>
+          <div class="cost-intro article-reading article-copy">
+            <h2 id="cost-heading" data-reveal>How much does at-home IPL cost compared with clinic laser?</h2>
+            <p>An at-home IPL device usually involves a single upfront purchase, while professional laser treatment is generally charged per session or course. Neither pricing model guarantees a particular outcome, and the same treatment areas, suitability or results cannot be assumed.</p>
+          </div>
+          <div class="cost-panels">
+            <section class="cost-panel" aria-labelledby="home-cost-heading">
+              <p class="cost-kicker">01 / At-home IPL</p>
+              <h3 id="home-cost-heading">One device purchase</h3>
+              <p class="cost-feature">£199.99–£349.99 <span>Published examples</span></p>
+              <p>Illustrative UK retail prices: Ulike Air 3 (£199.99), Philips Lumea S9000 (£275) and Braun Silk-expert Pro 5 (£349.99). These are different products, not prices for CYPH/1.</p>
+              <p class="cost-foot">Additional costs may include consumables or eventual device replacement. Suitability and instructions differ by model.</p>
+            </section>
+            <section class="cost-panel" aria-labelledby="clinic-cost-heading">
+              <p class="cost-kicker">02 / Clinic laser</p>
+              <h3 id="clinic-cost-heading">Price by treatment course</h3>
+              <p class="cost-feature">£100–£369 <span>Six underarm sessions: two UK examples</span></p>
+              <p>Laser Skin lists six underarm sessions for £100; Pulse Light Clinic lists a six-session underarm course for £369. Laser Skin also lists a six-session full-body course for £1,100.</p>
+              <p class="cost-foot">Course prices, treatment areas, promotional eligibility, consultation charges and maintenance needs vary by provider.</p>
+            </section>
+          </div>
+          <div class="cost-summary article-reading">
+            <p><strong>What does this mean?</strong> Compare the whole cost of your intended treatment areas and course, not just one session against a device. A home IPL device may be used across multiple approved areas, but a clinic may offer equipment and practitioner-led assessment that a home product does not. These are <strong>price examples, not evidence of equivalent clinical results or guaranteed savings.</strong></p>
+            <p class="cost-date">Prices observed 4 November 2026; offers and availability can change. The CYPH/1 device remains pre-launch and its intended price is not used in this comparison.</p>
+          </div>
+        </div>
+      </section>
+
       <section class="section article-section" aria-labelledby="expectations-heading">
         <div class="container article-reading article-copy">
-          <p class="section-index">05 / Expectations and safety</p>
+          <p class="section-index">06 / Expectations and safety</p>
           <h2 id="expectations-heading" data-reveal>Is IPL or laser permanent and painless?</h2>
           <p><strong>Do not assume permanent, complete or pain-free results.</strong> Hair reduction can vary by person and treatment. More than one session may be required and regrowth or maintenance treatments may occur.</p>
           <p>Both IPL and laser can cause adverse effects, including burns, pigment changes and eye injuries if used incorrectly or on unsuitable areas. Follow the specific device instructions and contraindications; for professional treatments, seek an appropriately trained practitioner. If you are unsure whether light-based treatment is suitable for your skin or health circumstances, obtain professional advice first.</p>
@@ -131,7 +136,7 @@ const structuredData = {
 
       <section class="section article-section" aria-labelledby="next-reading-heading">
         <div class="container article-reading article-copy">
-          <p class="section-index">06 / Keep learning</p>
+          <p class="section-index">07 / Keep learning</p>
           <h2 id="next-reading-heading" data-reveal>Why the hair cycle matters.</h2>
           <p>Hair follicles do not all grow at the same time. Understanding this helps explain why light-based hair reduction is generally approached as repeated treatment rather than a single session.</p>
           <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>Explore anagen, catagen, telogen and exogen <span aria-hidden="true">→</span></a></p>
@@ -142,10 +147,14 @@ const structuredData = {
 
       <section class="section article-section" aria-labelledby="sources-heading">
         <div class="container article-reading article-copy">
-          <p class="section-index">07 / References</p>
+          <p class="section-index">08 / References</p>
           <h2 id="sources-heading" data-reveal>Evidence and further reading.</h2>
           <p>This article is general educational information. The following independent authorities explain the technological distinction, risks and evidence standards; none proves results for CYPH/1's specific product.</p>
           <ul class="article-sources">
+            <li><a href="https://www.argos.co.uk/browse/health-and-beauty/womens-hair-removal/ipl-hair-removal/c%3A29244/" target="_blank" rel="noopener noreferrer">Argos — IPL device retail prices (Philips and Braun)</a></li>
+            <li><a href="https://www.independent.co.uk/extras/indybest/fashion-beauty/beauty/best-ipl-machines-laser-hair-removal-devices-home-b2313633.html" target="_blank" rel="noopener noreferrer">The Independent — Ulike Air 3 UK retail price example</a></li>
+            <li><a href="https://www.laser-skin.co.uk/pricing/" target="_blank" rel="noopener noreferrer">Laser Skin — published treatment and six-session prices</a></li>
+            <li><a href="https://www.pulselightclinic.co.uk/laser-hair-removal-prices" target="_blank" rel="noopener noreferrer">Pulse Light Clinic — published laser course prices</a></li>
             <li><a href="https://www.gov.uk/government/publications/guidance-on-the-safe-use-of-lasers-intense-light-source-systems-and-leds" target="_blank" rel="noopener noreferrer">MHRA — Guidance on the safe use of lasers and intense light sources</a></li>
             <li><a href="https://www.asa.org.uk/advice-online/hair-hair-removal.html" target="_blank" rel="noopener noreferrer">Advertising Standards Authority — Hair removal advertising claims</a></li>
             <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-0" target="_blank" rel="noopener noreferrer">ARPANSA — Consumer advice on lasers and IPL</a></li>
@@ -196,14 +205,29 @@ const structuredData = {
   .article-hero-summary .lede { margin: 0; }
   .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
   .comparison-link { display: inline-flex; min-height: 2.75rem; align-items: center; gap: var(--cyph-space-4); color: var(--cyph-accent-highlight); font-size: .875rem; text-underline-offset: var(--cyph-space-1); }
-  .technology-visuals { display: grid; gap: var(--cyph-space-8); margin-top: var(--cyph-space-12); }
-  .technology-visual { min-width: 0; margin: 0; }
-  .technology-visual img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; background: var(--cyph-surface-raised); }
-  .technology-visual figcaption { padding-block: var(--cyph-space-6); border-bottom: var(--cyph-line-structural) solid var(--cyph-border-structural); }
-  .technology-label { margin: 0 0 var(--cyph-space-3); color: var(--cyph-accent-primary); font-size: .75rem; font-weight: var(--cyph-font-weight-semibold); letter-spacing: var(--cyph-tracking-label); text-transform: uppercase; }
-  .technology-visual figcaption h2 { font-size: clamp(1.05rem, 1.7vw, 1.4rem); line-height: var(--cyph-leading-heading); }
-  .technology-visual figcaption > p:last-child { margin: var(--cyph-space-3) 0 0; color: var(--cyph-text-secondary); font-size: .95rem; }
-  .photography-note { max-width: var(--cyph-layout-reading); margin: var(--cyph-space-6) 0 0; color: var(--cyph-text-secondary); font-size: .8rem; }
+
+
+
+
+
+
+
+
+  .comparison-intro { display: grid; gap: var(--cyph-space-6); grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: var(--cyph-space-12); }
+  .comparison-intro > div { min-width:0; border-top: 2px solid var(--cyph-accent-primary); padding-top: var(--cyph-space-6); }
+  .comparison-intro-label, .cost-kicker { display:block; color:var(--cyph-accent-highlight); font-size:.75rem; letter-spacing:.1em; text-transform:uppercase; margin-bottom:var(--cyph-space-4); }
+  .comparison-intro strong { display:block; font-size:clamp(1.3rem,2vw,1.7rem); }
+  .comparison-intro p { margin-top:var(--cyph-space-3); color:var(--cyph-text-secondary); max-width:31ch; }
+  .cost-section { border-block: 1px solid var(--cyph-border-structural); }
+  .cost-panels { display:grid; gap:var(--cyph-space-6); grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:var(--cyph-space-10); }
+  .cost-panel { min-width:0; padding:clamp(1.25rem,3vw,2rem); background:var(--cyph-surface-raised); border-top:2px solid var(--cyph-accent-primary); }
+  .cost-panel h3 { font-size:clamp(1.2rem,2vw,1.65rem); }
+  .cost-feature { font-size:clamp(1.7rem,3vw,2.5rem); font-weight:700; line-height:1.15; margin:var(--cyph-space-6) 0; }
+  .cost-feature span { display:block; margin-top:var(--cyph-space-3); font-size:.85rem; line-height:1.4; font-weight:400; color:var(--cyph-text-secondary); }
+  .cost-panel > p:not(.cost-kicker):not(.cost-feature) { line-height:1.65; }
+  .cost-foot { color:var(--cyph-text-secondary); font-size:.9rem; margin-top:var(--cyph-space-5); }
+  .cost-summary { margin-top:var(--cyph-space-8); }
+  .cost-date { font-size:.85rem; color:var(--cyph-text-secondary); margin-top:var(--cyph-space-5); }
   .article-section { padding-block: clamp(2.75rem, 5.5vw, 4.75rem); }
   .article-page h2 { max-width: 22ch; font-size: clamp(1.6rem, 3.1vw, 2.7rem); line-height: 1.16; }
   .article-copy > h2 { margin-top: var(--cyph-space-8); }
@@ -224,8 +248,8 @@ const structuredData = {
   .table-note { max-width: var(--cyph-layout-reading); font-size: .95rem; color: var(--cyph-text-secondary); }
   [data-reveal].is-visible { animation: cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
   @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
-  @media(max-width:47.99rem) { .article-hero { padding-top: 10.75rem; padding-bottom: var(--cyph-space-12); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .article-section { padding-block: var(--cyph-space-12); } }
-  @media(min-width:48rem) { .article-hero-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } .technology-visuals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media(max-width:47.99rem) { .comparison-intro, .cost-panels { grid-template-columns:1fr; } .article-hero { padding-top: 10.75rem; padding-bottom: var(--cyph-space-12); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .article-section { padding-block: var(--cyph-space-12); } }
+  @media(min-width:48rem) { .article-hero-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }  }
   @media(min-width:68.75rem) { .comparison-hint { display: none; } .comparison-scroll { margin-top: var(--cyph-space-8); } }
   @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
 </style>
