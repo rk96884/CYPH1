@@ -210,7 +210,8 @@ const structuredData = {
   .cooling-section .feature-block { background:rgb(10 8 20 / .42); }
   .cyph-section { background:radial-gradient(circle at 12% 45%,rgb(167 122 244 / .12),transparent 42%),var(--cyph-surface-emphasis); }
   .faq-section { background:linear-gradient(140deg,#17101e,#100b17); }
-  .article-disclaimer { margin-top:var(--cyph-space-6); padding:var(--cyph-space-5) var(--cyph-space-6); background:var(--cyph-surface-raised); border-left:2px solid var(--cyph-accent-primary); }
+  .article-page .article-copy aside.article-disclaimer { box-sizing:border-box; margin-top:var(--cyph-space-6); padding:1.25rem 1.5rem; background:var(--cyph-surface-raised); border-left:2px solid var(--cyph-accent-primary); }
+  @media(max-width:47.99rem) { .article-page .article-copy aside.article-disclaimer { padding:1rem 1.25rem; } }
   .article-disclaimer p { width:100%; margin:0; padding:0; border:0; color:var(--cyph-text-secondary); font-size:.9rem; line-height:1.65; }
   .article-disclaimer strong { color:var(--cyph-text-primary); }
   .safety-section { border-block:1px solid var(--cyph-border-structural); }
