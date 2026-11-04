@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
-const root=new URL("../../",import.meta.url);
+const root=new URL("../",import.meta.url);
 const read=(path)=>readFile(new URL(path,root),"utf8");
 test("hair growth article answers measured UK queries without unapproved claims",async()=>{
  const s=await read("src/pages/learn/hair-growth-cycle.astro");
