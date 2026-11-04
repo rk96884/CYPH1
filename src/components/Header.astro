@@ -1,5 +1,89 @@
 ---
 import BrandMark from "./BrandMark.astro";
 import { withBase } from "../utils/base-path";
+import { learningArticles } from "../data/learning-articles";
 ---
-<header class="site-header"><div class="container header-inner"><BrandMark/><nav aria-label="Primary navigation"><a class="product-nav-link" href={withBase("ipl-hair-removal/")}>IPL Device</a><a href={withBase("#cycle")}>The cycle</a><a href={withBase("#principles")}>Our approach</a><a class="button button-small" href={withBase("#early-access")}>Join early access</a></nav></div></header>
+<header class="site-header">
+  <div class="container header-inner">
+    <BrandMark/>
+    <nav class="header-nav" aria-label="Primary navigation">
+      <a class="product-nav-link" href={withBase("ipl-hair-removal/")}>IPL Device</a>
+      <a href={withBase("#cycle")}>The cycle</a>
+      <a href={withBase("#principles")}>Our approach</a>
+      <button type="button" class="learn-trigger" data-open-learn aria-haspopup="dialog" aria-controls="learn-drawer">Learn <span aria-hidden="true">↗</span></button>
+      <a class="button button-small" href={withBase("#early-access")}>Join early access</a>
+      <button type="button" class="menu-trigger" data-open-learn aria-haspopup="dialog" aria-controls="learn-drawer" aria-label="Open site menu"><span aria-hidden="true">☰</span><span class="menu-label">Menu</span></button>
+    </nav>
+  </div>
+</header>
+<dialog id="learn-drawer" class="learn-drawer" aria-labelledby="learn-drawer-title">
+  <div class="drawer-inner">
+    <div class="drawer-top">
+      <span class="drawer-eyebrow">CYPH/1 · Knowledge hub</span>
+      <form method="dialog"><button class="drawer-close" aria-label="Close navigation" type="submit">✕</button></form>
+    </div>
+    <nav class="drawer-mobile-links" aria-label="Site links">
+      <a href={withBase("ipl-hair-removal/")}>IPL Device</a>
+      <a href={withBase("#cycle")}>The cycle</a>
+      <a href={withBase("#principles")}>Our approach</a>
+      <a href={withBase("#early-access")}>Join early access</a>
+    </nav>
+    <h2 id="learn-drawer-title">Explore IPL.</h2>
+    <p class="drawer-intro">Clear, evidence-led guidance on the hair cycle, at-home IPL and treatment choices.</p>
+    <nav class="drawer-articles" aria-label="Educational guides">
+      {learningArticles.map((article) => (
+        <a href={withBase(article.href)}>
+          <span class="drawer-number" aria-hidden="true">{article.number}</span>
+          <span class="drawer-entry"><strong>{article.title}</strong><small>{article.category}</small></span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      ))}
+    </nav>
+    <a class="drawer-all" href={withBase("learn/")}>Explore all articles <span aria-hidden="true">→</span></a>
+  </div>
+</dialog>
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>("#learn-drawer");
+  if (dialog) {
+    document.querySelectorAll<HTMLButtonElement>("[data-open-learn]").forEach(button => {
+      button.addEventListener("click", () => {
+        if (!dialog.open) dialog.showModal();
+      });
+    });
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
+  }
+</script>
+<style>
+  .header-nav .learn-trigger,.header-nav .menu-trigger { display:inline-flex; align-items:center; justify-content:center; gap:.45rem; background:none; border:0; min-height:2.75rem; padding:.3rem .15rem; color:var(--cyph-text-secondary); cursor:pointer; font-size:.75rem; font-weight:500; letter-spacing:.04em; }
+  .header-nav .learn-trigger:hover,.header-nav .menu-trigger:hover { color:var(--cyph-text-primary); }
+  .header-nav .menu-trigger { display:none; }
+  .learn-drawer { position:fixed; inset:0 0 0 auto; width:min(27.5rem,100%); height:100dvh; max-height:100dvh; margin:0; padding:0; border:0; border-left:1px solid var(--cyph-border-structural); color:var(--cyph-text-primary); background:#17101f; box-shadow:-1rem 0 3rem rgb(0 0 0 / .32); overflow-y:auto; }
+  .learn-drawer::backdrop { background:rgb(6 4 12 / .75); }
+  .drawer-inner { padding:clamp(1.25rem,4vw,2rem); }
+  .drawer-top { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+  .drawer-eyebrow,.drawer-number { color:var(--cyph-accent-highlight); font-size:.72rem; letter-spacing:.09em; text-transform:uppercase; }
+  .drawer-close { min-height:2.75rem; min-width:2.75rem; border:1px solid var(--cyph-border-structural); color:var(--cyph-text-primary); background:transparent; cursor:pointer; }
+  .learn-drawer h2 { font-size:clamp(1.8rem,4vw,2.4rem); margin:1.5rem 0 .5rem; }
+  .drawer-intro { color:var(--cyph-text-secondary); margin:0 0 1.5rem; line-height:1.6; }
+  .site-header ~ .learn-drawer nav.drawer-articles, .learn-drawer nav.drawer-articles { display:flex; flex-direction:column; gap:0; }
+  .drawer-articles a { display:grid; grid-template-columns:2rem minmax(0,1fr) 1rem; gap:1rem; align-items:center; min-height:4.5rem; border-top:1px solid var(--cyph-border-structural); text-decoration:none; }
+  .drawer-articles a:last-child { border-bottom:1px solid var(--cyph-border-structural); }
+  .drawer-entry { display:grid; gap:.25rem; }
+  .drawer-entry strong { font-size:.94rem; font-weight:600; }
+  .drawer-entry small { font-size:.75rem; color:var(--cyph-text-secondary); }
+  .drawer-articles a:hover .drawer-entry strong { color:var(--cyph-accent-highlight); }
+  .drawer-all { display:flex; align-items:center; justify-content:space-between; gap:1rem; min-height:3rem; margin-top:1.5rem; padding:.8rem 1rem; background:var(--cyph-accent-primary); color:var(--cyph-text-on-light); text-decoration:none; font-weight:600; }
+  .drawer-mobile-links { display:none; }
+  @media(max-width:760px) {
+    .header-nav .learn-trigger { display:none; }
+    .header-nav .menu-trigger { display:inline-flex; }
+    .menu-label { font-size:.68rem; }
+    .drawer-mobile-links { display:flex; flex-direction:column; gap:0; margin-top:1rem; border-bottom:1px solid var(--cyph-border-structural); }
+    .drawer-mobile-links a { display:flex; align-items:center; min-height:2.75rem; text-decoration:none; color:var(--cyph-text-primary); }
+    .learn-drawer h2 { margin-top:1.5rem; }
+  }
+  @media(max-width:390px) { .header-nav .menu-trigger { gap:.2rem; } .menu-label { display:none; } }
+  @media(prefers-reduced-motion:no-preference) { .learn-drawer[open] { animation:drawer-enter 220ms ease-out both; } @keyframes drawer-enter { from { opacity:.6; transform:translateX(1.5rem); } to { opacity:1; transform:translateX(0); } } }
+</style>
