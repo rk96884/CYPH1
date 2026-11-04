@@ -60,6 +60,9 @@ jobs:
       - name: Verify historical development CRLF migration checksums
         run: node --test apps/commerce-api/scripts/migration-checksum.test.mjs
 
+      - name: Test Agent A IPL versus laser guide and navigation
+        run: node --test scripts/test-agent-a-ipl-vs-laser.mjs
+
       - name: Test Agent A hair-cycle SEO copy and internal links
         run: node --test scripts/test-agent-a-hair-cycle-seo.mjs
 
