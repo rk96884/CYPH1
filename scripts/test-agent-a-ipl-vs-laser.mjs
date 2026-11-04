@@ -20,6 +20,19 @@ test("IPL vs laser is educational, indexable and explicit about differences and 
  assert.match(s,/datePublished: "2026-11-04"/);
 });
 
+test("UK price examples are dated, sourced, and not equivalent efficacy promises",async()=>{
+ const s=await read("src/pages/learn/ipl-vs-laser-hair-removal.astro");
+ assert.match(s,/How much does at-home IPL cost compared with clinic laser/);
+ assert.match(s,/£199\.99–£349\.99/);
+ assert.match(s,/£100–£369/);
+ assert.match(s,/£1,100/);
+ assert.match(s,/Prices observed 4 November 2026/);
+ assert.match(s,/not evidence of equivalent clinical results or guaranteed savings/);
+ assert.match(s,/https:\/\/www\.laser-skin\.co\.uk\/pricing\//);
+ assert.match(s,/https:\/\/www\.pulselightclinic\.co\.uk\/laser-hair-removal-prices/);
+ assert.doesNotMatch(s,/technology-visuals|photography-note|ipl-treatment-editorial\.webp|laser-treatment-editorial\.webp/);
+});
+
 test("product and educational pillars link to the comparison guide",async()=>{
  const [product,cycle,consistency]=await Promise.all([
    read("src/pages/ipl-hair-removal.astro"),
