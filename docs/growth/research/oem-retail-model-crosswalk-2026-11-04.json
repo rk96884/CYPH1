@@ -1,0 +1,164 @@
+{
+  "reviewedAt": "2026-11-04",
+  "scope": "Exact model / retail alias trace for CYPH/1 previously evaluated IONKA and Semlamp devices",
+  "status": "research_only_not_imported",
+  "manufacturerTrace": [
+    {
+      "manufacturer": "Shenzhen Semlamp Intelligent Technology Co., Ltd",
+      "quotedModel": "SL-B329",
+      "retailBrand": "Emmié by HappySkin",
+      "retailProduct": "EM448 Pro ICE Infinite Glide",
+      "country": "Vietnam",
+      "confidence": "confirmed_documentary_model_manufacturer_retail_crosswalk",
+      "evidence": [
+        {
+          "type": "Vietnam Ministry of Health advertising disclosure",
+          "url": "https://imda.moh.gov.vn/cong-khai-nd-ht-quang-cao-ttbyt?_congkhaiquangcaottbyt_WAR_lienthongdvcportlet_congKhaiQuangCaoId=204906&_congkhaiquangcaottbyt_WAR_lienthongdvcportlet_jspPage=%2Fhtml%2Fportlet%2Fvanbancongkhaiqc%2Fadd_congbo.jsp&_congkhaiquangcaottbyt_WAR_lienthongdvcportlet_view=true&_congkhaiquangcaottbyt_WAR_lienthongdvcportlet_viewCongKhaiDaCongBo=true&p_p_col_count=1&p_p_col_id=column-1&p_p_id=congkhaiquangcaottbyt&p_p_lifecycle=0&p_p_mode=view",
+          "finding": "Product code EM448, type SL-B329, manufacturer explicitly Shenzhen Semlamp, market authorisation number 250003620/PCBB-HCM"
+        },
+        {
+          "type": "Brand's own retail product page",
+          "url": "https://www.happyskin.vn/may-triet-long-ipl-therapy-device-for-hair-removal-em448-pro-ice-infinite-glide",
+          "finding": "Emmié EM448+ Pro ICE product page explicitly identifies Semlamp as production organisation and lists authorisation"
+        },
+        {
+          "type": "Manufacturer Alibaba OEM listing",
+          "url": "https://www.alibaba.com/product-detail/OEM-Home-Use-Skin-Rejuvenation-Portable_1601079970172.html",
+          "finding": "Semlamp SL-B329 with cooling and OEM options"
+        }
+      ],
+      "verificationIssues": [
+        "Brand page contains potentially variable EM448 and EM448+ naming: confirm UPC/labels if comparing exact production revision",
+        "Emmié retail colour, control settings and power specifications may differ from Semlamp factory base; OEM variants can differ",
+        "No named independent multiweek reviewer of this exact variant validated; brand-site customer testimonials are not independent technical trials"
+      ]
+    },
+    {
+      "manufacturer": "Shenzhen Semlamp Intelligent Technology Co., Ltd",
+      "quotedModel": "SL-B352-2",
+      "retailBrand": "KXP / Yete",
+      "retailProduct": "Yete IPL Sapphire Cooling SHR",
+      "country": "Japan",
+      "confidence": "strong_explicit_exact_model_with_manufacturer_attributed_by_retail_aggregator",
+      "evidence": [
+        {
+          "type": "Japanese retailer",
+          "url": "https://item.rakuten.co.jp/chance-k/ylpkk20260530/",
+          "finding": "KXP branded Yete product declares model SL-B352-2"
+        },
+        {
+          "type": "Japan retail aggregator",
+          "url": "https://shoply.co.jp/%E3%82%B9%E3%83%A0%E3%83%BC%E3%82%BA%E3%82%B9%E3%82%AD%E3%83%B3%20%E5%AE%B6%E5%BA%AD%E7%94%A8%20%E8%84%B1%E6%AF%9B%20%E8%84%B1%E6%AF%9B%E5%99%A8%20bare%20%E3%83%96%E3%83%A9%E3%83%83%E3%82%AF%E3%81%AE%E4%BE%A1%E6%A0%BC%E3%81%A8%E6%9C%80%E5%AE%89%E5%80%A4",
+          "finding": "Manufacturer reported Shenzhen Semlamp; KXP brand and SL-B352-2 component number"
+        },
+        {
+          "type": "UK import listing of Japanese retail product",
+          "url": "https://www.u-buy.co.uk/productjp/QQ67G6MIU-yet-hair-removal-device-ipl-light-hair-removal-device-sapphire-cooling-continuous-irradiation-equipped-with-skin-sensor-6-levels",
+          "finding": "KXP SL-B352-2 explicitly listed, Japan origin field reflects distribution and is NOT evidence of Japanese manufacture"
+        },
+        {
+          "type": "FDA public listing",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfPMN/pmn.cfm?ID=K260518",
+          "finding": "Semlamp SL-B352-2 appears in FDA K260518 family. Not UK compliance certification."
+        }
+      ],
+      "verificationIssues": [
+        "Manufacturer attribution via aggregator rather than regulator naming the KXP retail brand; label photograph best additional proof",
+        "No independently named long-term KXP/Yete reviewer confirmed",
+        "Multiple 'Yete' devices made by different manufacturers exist: do not equate brand alone with model"
+      ]
+    },
+    {
+      "manufacturer": "Shenzhen IONKA Medical Technology Co., Ltd",
+      "quotedModel": "K-902",
+      "retailBrand": "SkinRevolve",
+      "retailProduct": "IPL Hair Removal Device 21J PRO 3-in-1 HR/DPL/MG",
+      "country": "UK-origin retail listing",
+      "confidence": "probable_same_model_identifier_unverified_oem_relationship",
+      "evidence": [
+        {
+          "type": "Retail aggregator product record",
+          "url": "https://www.ubuy.mg/en/productuk/TSA2LFQ1W-ipl-hair-removal-device-21j",
+          "finding": "SkinRevolve brand, China, manufacturer field SkinRevolve, model K-902, 21J and HR/DPL/MG heads"
+        },
+        {
+          "type": "IONKA manufacturer website",
+          "url": "https://www.tzwm.com/",
+          "finding": "IONKA catalogues K-902 IPL with DPL/MG multi-function modes"
+        },
+        {
+          "type": "UK marketplace seller",
+          "url": "https://www.ebay.co.uk/itm/168788283766",
+          "finding": "SkinRevolve IPL seller listing; model is '21j' rather than K-902 and lacks documentary IONKA identification"
+        }
+      ],
+      "verificationIssues": [
+        "No original packaging label or supplier invoice identifies IONKA on SkinRevolve item",
+        "Matching model number/specifications can still be reused or misreported; not a confirmed original-equipment manufacturer relationship",
+        "No named independent SkinRevolve K-902 reviewer validated"
+      ]
+    },
+    {
+      "manufacturer": "Shenzhen IONKA Medical Technology Co., Ltd",
+      "quotedModel": "K-803",
+      "retailBrand": null,
+      "retailProduct": null,
+      "country": null,
+      "confidence": "no_confirmed_retail_alias",
+      "evidence": [
+        {
+          "type": "Manufacturer specification",
+          "url": "https://tzwm.com/ProDetail.aspx?Proid=29",
+          "finding": "K-803 48W / 238g / 143x87x48mm / 999,999 flashes / 5 levels / double flash"
+        },
+        {
+          "type": "Manufacturer Alibaba model listing",
+          "url": "https://www.alibaba.com/product-detail/Factory-Wholesale-IPL-Hair-Removal-Device_1601516157138.html",
+          "finding": "IONKA direct OEM/ODM K-803 listing; brand 'OEM/ODM' rather than identifiable independent retailer"
+        }
+      ],
+      "verificationIssues": [
+        "No independently named retail brand listing verified",
+        "No exact-model first-person creator video/review verified"
+      ]
+    }
+  ],
+  "relatedOriginalQuotation": {
+    "filename": "Quotation- Semlamp-Rishi Khosla 20261010.pdf",
+    "date": "2026-10-10",
+    "models": [
+      "SL-B352-2",
+      "SL-B329"
+    ],
+    "note": "Source from user-provided October quote; corrects previous round-3 memo that left exact Semlamp model to reconcile. Quote says SL-B352-2 one-tube skin tone sensing sapphire fast flash (purple/beige); SL-B329 one-tube ice cooling (blue)."
+  },
+  "researchReview": {
+    "emmié": {
+      "url": "https://www.happyskin.vn/testimonial",
+      "status": "consumer_reviews_on_retail_brand_site_only",
+      "note": "Some customers describe 3-4 treatments; unverified identity, provenance and no credible longitudinal method, not independent UK creator reviews"
+    },
+    "kxp": {
+      "url": "https://jisaku.com/products/103740",
+      "status": "retail_reviews_unattributed",
+      "note": "Price/review aggregator only; no reliable independent named long-term reviewer"
+    },
+    "skinrevolve": {
+      "url": "https://www.ubuy.cy/en/productuk/TSA2LFQ1W-ipl-hair-removal-device-21j",
+      "status": "no_editorial_reviews_indexed",
+      "note": "Retail aggregator says none found; this is not proof that all reviews are absent"
+    }
+  },
+  "constraints": [
+    "Do not claim FDA clearance for IONKA K-803 or Semlamp UKCA by analogy; separate legal products and jurisdictions",
+    "No score changes, growth DB writes, creator classifications, automated contact, or production deployment",
+    "Retail model match and manufacturer confirmation have different confidence grades",
+    "No exact-rebrand viewer qualifies as UK firsthand influencer at this stage"
+  ],
+  "nextSteps": [
+    "For KXP SL-B352-2 obtain model label identifying Shenzhen Semlamp from seller/manual, then review Japan-based long-term creator posts",
+    "For Emmié EM448+ review creator-authored Viet-language YouTube/TikTok treatment diaries; filter away marketing scripted and brand testimonials; non-UK audience evidence labelled",
+    "For SkinRevolve K-902 seek packaging/manufacturer/importer identification, GTIN or certification for IONKA linkage",
+    "For IONKA K-803 use exact dimensions and manufacturer ID to research European marketplace safety labelling and manual PDFs; no equivalence from external shape only"
+  ]
+}
