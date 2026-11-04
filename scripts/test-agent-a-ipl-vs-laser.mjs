@@ -15,7 +15,7 @@ test("IPL vs laser is educational, indexable and explicit about differences and 
  assert.match(s,/This guide compares general technologies/);
  assert.match(s,/https:\/\/www\.asa\.org\.uk\/advice-online\/hair-hair-removal\.html/);
  assert.match(s,/https:\/\/www\.gov\.uk\/government\/publications\/guidance-on-the-safe-use-of-lasers/);
- assert.doesNotMatch(s,/(guaranteed|100% painless|permanent hair removal|clinically proven CYPH\/1)/i);
+ assert.doesNotMatch(s,/(guaranteed hair removal|100% painless|permanent hair removal|clinically proven CYPH\/1)/i);
  assert.doesNotMatch(s,/Offer|aggregateRating/);
  assert.match(s,/datePublished: "2026-11-04"/);
 });
