@@ -1,0 +1,84 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+import { learningArticles } from "../../data/learning-articles";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "IPL Education & Hair Removal Guides",
+  description: "Explore the CYPH/1 educational library covering hair growth, IPL technology, comparisons and treatment comfort.",
+  url: "https://www.cyph1.co.uk/learn/",
+  inLanguage: "en-GB",
+};
+---
+<BaseLayout
+  title="Learn About IPL: Hair Growth, Comparisons & Cooling | CYPH/1"
+  description="Explore five evidence-led CYPH/1 education guides covering the hair-growth cycle, IPL consistency, laser, shaving, waxing and treatment comfort."
+  structuredData={structuredData}
+>
+  <Header />
+  <main id="main" class="learn-page">
+    <section class="learn-hero section" aria-labelledby="learn-heading">
+      <div class="container learn-container">
+        <p class="eyebrow">CYPH/1 · Education</p>
+        <h1 id="learn-heading">Know the <span>technology.</span></h1>
+        <p class="learn-lede">Explore how hair grows, understand light-based hair reduction, and compare treatment approaches. Clear information to help you make your own informed choices.</p>
+        <p class="learn-count">05 / Educational guides</p>
+      </div>
+    </section>
+    <section class="section learn-library" aria-labelledby="library-heading">
+      <div class="container learn-container">
+        <div class="library-intro">
+          <p class="section-index">01 / The library</p>
+          <h2 id="library-heading">Choose what to explore.</h2>
+        </div>
+        <div class="article-grid">
+          {learningArticles.map(article => (
+            <article class="article-card">
+              <p class="article-number">{article.number} / {article.category}</p>
+              <h3><a href={withBase(article.href)}>{article.title} <span aria-hidden="true">↗</span></a></h3>
+              <p>{article.description}</p>
+              <a class="read-link" href={withBase(article.href)} aria-label={`Read ${article.title}`}>Read guide <span aria-hidden="true">→</span></a>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+    <section class="section learn-bottom" aria-labelledby="learn-product-heading">
+      <div class="container learn-container">
+        <p class="section-index">02 / Discover CYPH/1</p>
+        <h2 id="learn-product-heading">Learning comes first.</h2>
+        <p>These guides explain general technologies and considerations. They are not a promise of results or a substitute for the instructions supplied with a particular IPL device.</p>
+        <a class="button" href={withBase("ipl-hair-removal/")}>Explore the CYPH/1 IPL device</a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+<style>
+  .learn-container { max-width:68.75rem; }
+  .learn-hero { padding-top:clamp(10rem,15vw,13rem); padding-bottom:clamp(3rem,6vw,5rem); background:radial-gradient(circle at 82% 18%,rgb(138 85 178 / .16),transparent 43%); }
+  .learn-hero h1 { max-width:15ch; font-size:clamp(2.7rem,6.5vw,5.5rem); line-height:1.12; margin:1rem 0 1.5rem; }
+  .learn-hero h1 span { color:var(--cyph-accent-highlight); }
+  .learn-lede { max-width:45rem; color:var(--cyph-text-secondary); font-size:clamp(1rem,1.8vw,1.25rem); line-height:1.7; }
+  .learn-count { margin-top:2rem; font-size:.72rem; letter-spacing:.13em; color:var(--cyph-accent-highlight); text-transform:uppercase; }
+  .learn-library { padding-top:clamp(3rem,6vw,5rem); }
+  .library-intro h2 { font-size:clamp(1.65rem,3.2vw,2.7rem); margin:1rem 0 2rem; }
+  .article-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+  .article-card { min-width:0; padding:clamp(1.5rem,3vw,2rem); display:flex; flex-direction:column; border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); }
+  .article-number { color:var(--cyph-accent-highlight); font-size:.7rem; letter-spacing:.09em; text-transform:uppercase; margin:0 0 1.25rem; }
+  .article-card h3 { margin:0 0 1rem; font-size:clamp(1.2rem,2vw,1.65rem); line-height:1.35; }
+  .article-card h3 a { text-decoration:none; }
+  .article-card h3 a:hover { color:var(--cyph-accent-highlight); }
+  .article-card h3 span { color:var(--cyph-accent-highlight); }
+  .article-card > p:not(.article-number) { color:var(--cyph-text-secondary); line-height:1.65; margin:0 0 1.5rem; }
+  .read-link { margin-top:auto; align-self:start; text-underline-offset:.22em; color:var(--cyph-accent-highlight); min-height:2.75rem; display:inline-flex; align-items:center; gap:.75rem; }
+  .learn-bottom { border-top:1px solid var(--cyph-border-structural); background:radial-gradient(circle at 12% 45%,rgb(167 122 244 / .1),transparent 50%); }
+  .learn-bottom h2 { font-size:clamp(1.6rem,3.2vw,2.7rem); margin:1rem 0; }
+  .learn-bottom p:not(.section-index) { max-width:44rem; line-height:1.7; color:var(--cyph-text-secondary); }
+  .learn-bottom .button { margin-top:1.5rem; }
+  @media(max-width:640px) { .article-grid { grid-template-columns:1fr; } .learn-hero { padding-top:11rem; } }
+</style>
