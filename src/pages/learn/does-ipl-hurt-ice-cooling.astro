@@ -1,0 +1,229 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "Does IPL hurt? Hair-removal sensations and ice cooling explained",
+  description: "An evidence-led guide to IPL treatment sensations, cooling technology, what affects comfort and safe expectations for at-home devices.",
+  datePublished: "2026-11-04",
+  dateModified: "2026-11-04",
+  inLanguage: "en-GB",
+  author: { "@type": "Organization", name: "CYPH/1" },
+  publisher: { "@type": "Organization", name: "CYPH/1" },
+};
+---
+<BaseLayout
+  title="Does IPL Hurt? Ice Cooling Explained | CYPH/1"
+  description="Does at-home IPL hurt? Learn what IPL can feel like, how ice-contact cooling is intended to support comfort, and why experiences differ."
+  structuredData={structuredData}
+>
+  <Header />
+  <main id="main" class="article-page">
+    <article>
+      <header class="article-hero section">
+        <div class="container article-wide">
+          <p class="eyebrow">Know the technology · Treatment comfort</p>
+          <div class="hero-intro">
+            <h1 data-reveal><span>Does IPL</span> hurt?</h1>
+            <div class="hero-summary">
+              <p class="lede">A warm sensation, a brief snap or very little sensation at all: light-based hair removal can feel different from person to person. Here is what affects comfort — and where cooling fits in.</p>
+              <p class="article-meta">Published <time datetime="2026-11-04">4 November 2026</time> · General educational content</p>
+              <a class="jump-link" href="#cooling-heading">Understand ice cooling <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
+          <figure class="hero-editorial">
+            <img
+              src={withBase("brand/editorial/cyph1-ice-cooling-hero.webp")}
+              width="1600"
+              height="800"
+              fetchpriority="high"
+              loading="eager"
+              decoding="async"
+              alt="Close-up illustration of a white and rose-gold IPL device with blue cooling light above ice crystals, displaying five energy levels and a separate turbo setting."
+            />
+          </figure>
+        </div>
+      </header>
+
+      <section class="section article-section" aria-labelledby="feel-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">01 / Sensation</p>
+          <h2 id="feel-heading" data-reveal>What does IPL feel like?</h2>
+          <p>Intense pulsed light (IPL) delivers short flashes of filtered light. Energy absorbed by pigment in a hair can turn into heat. During light-based hair reduction, people may notice warmth, a quick flicking or snapping feeling, or mild temporary discomfort. Other users may experience very little sensation.</p>
+          <p>These descriptions are not a discomfort rating for CYPH/1. Skin response and perceived sensation vary with treatment area, equipment, settings and the individual. Discomfort alone is not a reliable sign of effectiveness, and stronger settings are not automatically better.</p>
+        </div>
+      </section>
+
+      <section class="section article-section cooling-section" aria-labelledby="cooling-heading">
+        <div class="container article-wide">
+          <p class="section-index">02 / Cooling technology</p>
+          <h2 id="cooling-heading" data-reveal>Why add cooling to IPL?</h2>
+          <div class="feature-grid">
+            <div class="feature-block"><span class="feature-index">01</span><h3>Light creates heat.</h3><p>The principle of IPL hair reduction involves selective absorption of light and conversion into heat. This is why some warmth may be felt.</p></div>
+            <div class="feature-block"><span class="feature-index">02</span><h3>Cooling addresses the skin surface.</h3><p>Contact cooling is used with some light-based treatments to support comfort at the skin surface. Cooling does not remove the need for correct settings and device-specific instructions.</p></div>
+            <div class="feature-block"><span class="feature-index">03</span><h3>Experiences still differ.</h3><p>Cooling can help make a treatment more tolerable without promising that every flash, body area or intensity will feel the same.</p></div>
+          </div>
+          <div class="study-note article-reading">
+            <h3>What has research found?</h3>
+            <p>A 2024 randomised split-face study of 60 patients receiving professional IPL for facial photoageing reported lower measured pain scores on the side that received thermal-shock cooling. This is evidence about that clinical cooling method and setting — <strong>not a test of CYPH/1 or its integrated cooling window</strong>.</p>
+            <p>A separate study comparing professional IPL and diode laser hair removal also measured treatment discomfort. Different professional systems cannot be assumed to predict the experience of a home-use device.</p>
+            <p><a href="#sources-heading">Read the independent research <span aria-hidden="true">→</span></a></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="experience-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">03 / What influences comfort</p>
+          <h2 id="experience-heading" data-reveal>Why one session may feel different from another.</h2>
+          <ul class="detail-list">
+            <li><strong>Energy setting:</strong> use only settings appropriate for your skin and the manufacturer's instructions; a higher setting is not automatically more effective or suitable.</li>
+            <li><strong>Treatment area:</strong> skin sensitivity and hair characteristics vary across the body.</li>
+            <li><strong>Skin condition:</strong> recent tanning, irritation, sunburn and some medicines or skin conditions can affect suitability and risk.</li>
+            <li><strong>Device design:</strong> different home and clinic devices have different power levels, contact surfaces, cooling arrangements and contraindications.</li>
+          </ul>
+          <p>Always check the specific product's instructions and suitability criteria rather than following a generic online setting or treatment schedule.</p>
+        </div>
+      </section>
+
+      <section class="section article-section cyph-section" aria-labelledby="cyph-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">04 / The CYPH/1 approach</p>
+          <h2 id="cyph-heading" data-reveal>Always-on cooling, built into the routine.</h2>
+          <p>The pre-launch CYPH/1 IPL device features a cooling treatment window that stays active during treatment; there is no separate cooling switch to activate. This is a product feature description, not a claim that treatment will be painless or that cooling has been clinically demonstrated to reduce discomfort with this particular device.</p>
+          <p>Product suitability, permitted areas, energy levels, patch testing and the treatment routine must follow the final K-803 user instructions. We are not assigning a numerical cooling temperature or a universal treatment schedule in this guide.</p>
+          <p class="related-link"><a href={withBase("ipl-hair-removal/")}>Explore the CYPH/1 device and its cooling features <span aria-hidden="true">→</span></a></p>
+        </div>
+      </section>
+
+      <section class="section article-section safety-section" aria-labelledby="safe-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">05 / Safety first</p>
+          <h2 id="safe-heading" data-reveal>Comfort is not the same as safety.</h2>
+          <p>Even with cooling, light-based hair reduction can cause burns, pigment changes or eye injury if equipment is unsuitable or incorrectly used. A cool feeling does not mean excessive light exposure is impossible.</p>
+          <p>Follow all manufacturer contraindications and patch-test and eye-safety instructions. Do not use IPL on prohibited areas, irritated or sunburned skin, tattoos or other excluded sites. If a reaction occurs, stop and seek appropriate medical advice.</p>
+          <aside class="article-disclaimer"><p><strong>About CYPH/1.</strong> This article offers general education and describes a stated device feature. It is not evidence that CYPH/1 has been clinically compared with non-cooled IPL devices, and it does not guarantee a pain-free experience, specific outcome or safety profile.</p></aside>
+        </div>
+      </section>
+
+      <section class="section article-section faq-section" aria-labelledby="faq-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">06 / Common questions</p>
+          <h2 id="faq-heading" data-reveal>Answers before you begin.</h2>
+          <h3>Is IPL supposed to feel hot?</h3>
+          <p>Some warmth or a quick snapping sensation can occur. Unusually intense pain, burning or a concerning skin reaction is not a cue to continue: stop using the device and follow its safety guidance.</p>
+          <h3>Does cooling make IPL painless?</h3>
+          <p>Not necessarily. Cooling can support comfort, but different people and treatment conditions produce different sensations. A universal painless claim would need device-specific substantiation.</p>
+          <h3>Can I increase the IPL setting if it feels comfortable?</h3>
+          <p>Do not use comfort as the only guide. Follow the device's energy-setting and skin-compatibility instructions, even if the treatment feels mild.</p>
+          <h3>Can everyone use a home IPL device?</h3>
+          <p>No. Skin tone, natural hair colour, health factors and contraindications matter. Check the <a href={withBase("ipl-hair-removal/#compatibility-guide")}>CYPH/1 compatibility guide</a> and the complete device instructions.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="next-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">07 / Keep learning</p>
+          <h2 id="next-heading" data-reveal>Understand the treatment choices.</h2>
+          <p class="related-link"><a href={withBase("learn/ipl-vs-laser-hair-removal/")}>IPL versus laser hair removal <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/ipl-vs-shaving-vs-waxing/")}>IPL versus shaving and waxing <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Why IPL consistency matters <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>Understand the hair-growth cycle <span aria-hidden="true">→</span></a></p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="sources-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">08 / References</p>
+          <h2 id="sources-heading" data-reveal>Evidence and further reading.</h2>
+          <p>The sources below concern general light-based technology, cooling and precautions. They do not verify a CYPH/1 device-specific comfort outcome.</p>
+          <ul class="article-sources">
+            <li><a href="https://pubmed.ncbi.nlm.nih.gov/38497418/" target="_blank" rel="noopener noreferrer">Journal of Cosmetic Dermatology (2024) — Randomised study of thermal-shock cooling during professional IPL for photoageing</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13242373/" target="_blank" rel="noopener noreferrer">Lasers in Medical Science (2026) — Randomised study comparing professional IPL and diode laser hair removal</a></li>
+            <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-0" target="_blank" rel="noopener noreferrer">ARPANSA — IPL and laser consumer safety advice</a></li>
+            <li><a href="https://www.asa.org.uk/advice-online/hair-hair-removal.html" target="_blank" rel="noopener noreferrer">Advertising Standards Authority — Hair-removal advertising claims</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section article-cta">
+        <div class="container article-reading">
+          <p class="eyebrow">Cycle. Phase. One.</p>
+          <h2 data-reveal>Comfort, considered.</h2>
+          <p>Discover our at-home IPL approach and follow CYPH/1 towards launch. Early access is not a pre-order.</p>
+          <a class="button" href={withBase("#early-access")}>Explore CYPH/1</a>
+        </div>
+      </section>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targets = document.querySelectorAll("[data-reveal]");
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    targets.forEach(target => target.classList.add("is-visible"));
+  } else {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.18, rootMargin: "0px 0px -8% 0px" });
+    targets.forEach(target => observer.observe(target));
+  }
+</script>
+<style>
+  .article-page { --article-width:68.75rem; }
+  .article-wide { max-width:var(--article-width); }
+  .article-reading { max-width:var(--cyph-layout-reading); }
+  .article-hero { padding-top:clamp(9rem,13vw,11.5rem); padding-bottom:clamp(2.5rem,5vw,4.5rem); }
+  .hero-intro { display:grid; gap:var(--cyph-layout-cluster); align-items:start; }
+  .hero-intro > * { min-width:0; }
+  .article-hero h1 { font-size:clamp(2.65rem,5vw,4.5rem); line-height:var(--cyph-leading-heading); max-width:12ch; margin:0; }
+  .article-hero h1 span { display:block; color:var(--cyph-accent-highlight); }
+  .hero-summary .lede { margin:0; }
+  .article-meta { color:var(--cyph-text-secondary); font-size:.85rem; margin-top:var(--cyph-space-5); }
+  .jump-link { display:inline-flex; align-items:center; min-height:2.75rem; color:var(--cyph-accent-highlight); text-underline-offset:.22em; }
+  .hero-editorial { margin:clamp(3rem,5vw,4.25rem) 0 0; }
+  .hero-editorial img { display:block; width:100%; height:auto; }
+  .article-section { padding-block:clamp(2.5rem,4.8vw,4rem); }
+  .article-page h2 { max-width:23ch; font-size:clamp(1.6rem,3.1vw,2.7rem); line-height:1.16; }
+  .article-copy > h2 { margin-top:var(--cyph-space-6); }
+  .article-copy > h2 + p, .article-copy > p + p { margin-top:var(--cyph-space-4); }
+  .feature-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--cyph-space-6); margin-top:var(--cyph-space-8); }
+  .feature-block { padding:var(--cyph-space-6); border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); }
+  .feature-index { color:var(--cyph-accent-highlight); font-size:.75rem; letter-spacing:.13em; }
+  .feature-block h3 { margin:var(--cyph-space-5) 0 var(--cyph-space-3); font-size:clamp(1.05rem,1.35vw,1.2rem); line-height:1.35; }
+  .feature-block p { font-size:1rem; line-height:1.7; color:var(--cyph-text-secondary); }
+  .study-note { border-left:2px solid var(--cyph-accent-primary); padding-left:var(--cyph-space-6); margin-top:var(--cyph-space-10); }
+  .study-note > p + p { margin-top:var(--cyph-space-4); }
+  .detail-list { padding-left:1.25rem; }
+  .detail-list li { line-height:1.7; }
+  .detail-list li + li { margin-top:var(--cyph-space-4); }
+  .cooling-section { background:radial-gradient(circle at 85% 10%,rgb(167 122 244 / .16),transparent 44%),linear-gradient(135deg,#17101f,#21142c 64%,#120d1a); }
+  .cooling-section .feature-block { background:rgb(10 8 20 / .42); }
+  .cyph-section { background:radial-gradient(circle at 12% 45%,rgb(167 122 244 / .12),transparent 42%),var(--cyph-surface-emphasis); }
+  .faq-section { background:linear-gradient(140deg,#17101e,#100b17); }
+  .article-page .article-copy aside.article-disclaimer { box-sizing:border-box; margin-top:var(--cyph-space-6); padding:1.25rem 1.5rem; background:var(--cyph-surface-raised); border-left:2px solid var(--cyph-accent-primary); }
+  @media(max-width:47.99rem) { .article-page .article-copy aside.article-disclaimer { padding:1rem 1.25rem; } }
+  .article-disclaimer p { width:100%; margin:0; padding:0; border:0; color:var(--cyph-text-secondary); font-size:.9rem; line-height:1.65; }
+  .article-disclaimer strong { color:var(--cyph-text-primary); }
+  .safety-section { border-block:1px solid var(--cyph-border-structural); }
+
+  .related-link { margin-top:var(--cyph-space-5); }
+  .article-sources { padding-left:1.25rem; }
+  .article-sources li + li { margin-top:var(--cyph-space-3); }
+  .article-cta { padding-block:clamp(3rem,6vw,5.5rem); border-top:1px solid var(--cyph-border-structural); }
+  [data-reveal].is-visible { animation:cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
+  @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
+  @media(min-width:48rem) { .hero-intro { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); } }
+  @media(min-width:80rem) { .article-hero .hero-editorial { margin-inline:-2rem; } }
+  @media(max-width:47.99rem) { .article-hero { padding-top:10.5rem; } .feature-grid { grid-template-columns:1fr; } }
+  @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
+</style>
