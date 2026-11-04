@@ -99,8 +99,9 @@ const structuredData = {
         <div class="container article-wide">
           <p class="section-index">04 / Illustrative UK costs</p>
           <div class="article-reading article-copy">
-            <h2 id="cost-heading" data-reveal>What could 12 months cost?</h2>
+            <h2 id="cost-heading" data-reveal>What might a year of hair removal cost?</h2>
             <p>This worked example considers lower-leg hair management for one person. It combines an <strong>assumed shaving budget</strong>, one published salon price and CYPH/1's intended pre-launch price. It is not a UK average, a quotation or a prediction of your spending.</p>
+            <p><strong>Why one year?</strong> Twelve months is a budgeting period, not a recommended IPL treatment schedule. IPL generally involves an initial treatment phase and may require maintenance; frequency and duration depend on the specific device instructions and individual needs.</p>
           </div>
           <div class="cost-panels">
             <section class="cost-panel" aria-labelledby="shaving-cost-heading">
@@ -114,7 +115,7 @@ const structuredData = {
               <h3 id="ipl-cost-heading">Device plus shaving</h3>
               <p class="launch-price-label">CYPH/1 intended launch price: <strong>{money(launchProduct.intendedPrice.amount)}</strong></p>
               <p class="cost-feature">{money(iplYear)}<span>Illustrative first-year subtotal</span></p>
-              <p>{money(launchProduct.intendedPrice.amount)} intended launch price · <strong>Pre-launch</strong>, plus the same {money(shavingYear)} annual shaving allowance. We retain the full allowance rather than assume successful reduction or fewer shaves.</p>
+              <p>For this illustration, we add the same {money(shavingYear)} annual shaving allowance to the {money(launchProduct.intendedPrice.amount)} intended device price. This is a conservative budgeting assumption, not a predicted shaving frequency or an IPL treatment schedule.</p>
               <p class="cost-foot">Not yet available to buy. Price and availability remain subject to launch confirmation; early access is not a payment or pre-order.</p>
             </section>
             <section class="cost-panel" aria-labelledby="waxing-cost-heading">
