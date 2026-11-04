@@ -1,0 +1,262 @@
+{
+  "reviewDate": "2026-11-04",
+  "agent": "Agent A — Consumer Demand & SEO Development",
+  "phase": "Phase 1 evidence and site baseline",
+  "status": "research_only_not_published",
+  "constraints": [
+    "No automated website publishing, no customer-data access, no production changes, no sales or efficacy claims without review.",
+    "No fabricated Google search volumes, CPC, keyword difficulty, rankings, indexed-page counts or Search Console performance.",
+    "No brand-specific Philips/Braun treatment schedule presented as CYPH/1 device instructions."
+  ],
+  "siteEvidence": {
+    "source": "GitHub rk96884/CYPH1 main (2026-11-04)",
+    "codeOnly": true,
+    "webLiveFetchStatus": "Live website fetch not accessible in research interface; indexing, HTTP response and current Google presence not verified",
+    "pages": [
+      {
+        "path": "/",
+        "role": "brand and early access",
+        "title": "CYPH/1 — Target the growth",
+        "schema": [
+          "Organization",
+          "WebSite"
+        ],
+        "decision": "retain; reinforce links into product and learning content"
+      },
+      {
+        "path": "/ipl-hair-removal/",
+        "role": "commercial product pre-launch",
+        "title": "IPL Hair Removal Device — Coming soon | CYPH/1",
+        "schema": [
+          "Product without Offer"
+        ],
+        "decision": "primary generic purchase-intent landing page; validate current £74.99 intended price before changing metadata"
+      },
+      {
+        "path": "/learn/hair-growth-cycle/",
+        "role": "educational pillar",
+        "title": "The four stages of the hair-growth cycle | CYPH/1",
+        "schema": [
+          "Article"
+        ],
+        "decision": "retain and strengthen contextual links"
+      },
+      {
+        "path": "/learn/why-ipl-consistency-matters/",
+        "role": "educational pillar",
+        "title": "Why consistency matters with home IPL | CYPH/1",
+        "schema": [
+          "Article"
+        ],
+        "decision": "retain; never prescribe CYPH/1 schedule before approved instructions"
+      },
+      {
+        "path": "/press/",
+        "role": "press and citation page",
+        "decision": "retain, no completed outreach implied"
+      },
+      {
+        "path": "/early-access/confirmed/",
+        "role": "conversion confirmation",
+        "robots": "noindex, nofollow",
+        "decision": "exclude from sitemap as implemented"
+      }
+    ],
+    "technical": {
+      "canonical": "BaseLayout derives canonical URL from Astro.site",
+      "titlesDescriptions": "BaseLayout properties",
+      "robotsFile": "public/robots.txt references sitemap-index.xml",
+      "sitemap": "@astrojs/sitemap with exclusions for privacy, terms, private-commerce, private-operations and confirmation",
+      "schema": "Organization, WebSite, prelaunch Product and Article",
+      "sitemapCaveat": "Privacy/terms excluded from sitemap but not necessarily noindexed; inclusion is not a requirement",
+      "noLiveIndexingProof": true
+    },
+    "productPriceCode": {
+      "path": "src/data/launch-product.ts",
+      "intendedPriceGBP": 74.99,
+      "productMeta": "/ipl-hair-removal/ page description references £74.99",
+      "approvalStatus": "needs owner revalidation before price-focused SEO"
+    }
+  },
+  "marketSignals": [
+    {
+      "source": "https://www.merchantwords.com/search/uk/ipl%20hair%20removal",
+      "kind": "Amazon UK marketplace keyword estimate",
+      "dateAccessed": "2026-11-04",
+      "exampleTerms": [
+        "ipl hair removal device",
+        "ipl hair removal for men",
+        "ipl hair removal face",
+        "braun ipl hair removal",
+        "ipl hair removal philips",
+        "ulike air 10 ipl hair removal device"
+      ],
+      "interpretation": "Shows product/category and use-area shopping intent on Amazon, not Google searches. Do not use the numeric Amazon volume as a Google keyword demand estimate."
+    },
+    {
+      "source": "https://gobrandwave.com/demand/global-en/categories/hair-removal-brands",
+      "kind": "Third-party worldwide English-language Google branded search estimate",
+      "period": "September 2026",
+      "brands": [
+        "Philips Lumea",
+        "Braun",
+        "Ulike"
+      ],
+      "interpretation": "Confirms competitive branded interest globally only; not UK market demand and not unbranded CYPH/1 opportunity."
+    },
+    {
+      "source": "https://www.philips.co.uk/c-f/XC000003471/how-often-should-i-use-my-philips-lumea",
+      "kind": "Official device support / query topic",
+      "exampleTopic": "how often IPL and hair regrowth cycle",
+      "interpretation": "Shows consumer informational need and Philips-specific product instructions, not generic CYPH/1 instructions."
+    },
+    {
+      "source": "https://uk.braun.com/en-gb/female-hair-removal/hair-removal-for-women/how-to-ipl",
+      "kind": "Official device guidance",
+      "exampleTopic": "IPL preparation, aftercare, safe usage and how often",
+      "interpretation": "Confirms competitors serve educational intent; differing Braun schedules show why our pages must not copy a competitor schedule."
+    }
+  ],
+  "contentOpportunities": [
+    {
+      "id": "A-01",
+      "workingTitle": "IPL vs laser hair removal: what's the difference?",
+      "intent": "comparison consideration",
+      "targetTerms": [
+        "ipl vs laser hair removal",
+        "is ipl the same as laser"
+      ],
+      "priority": "P1",
+      "currentCoverage": "not dedicated",
+      "destination": "/learn/ipl-vs-laser-hair-removal/",
+      "evidenceSources": [
+        "https://www.philips.co.uk/c-e/womens-beauty-blog/hair-removal/ipl-hair-removal-safety-suitability-results"
+      ],
+      "risk": "Requires medically/technically accurate comparison, avoid unsupported superiority statements; build only after scientific review"
+    },
+    {
+      "id": "A-02",
+      "workingTitle": "Who can use home IPL? Skin tones, hair colours and limitations",
+      "intent": "suitability and pre-purchase",
+      "targetTerms": [
+        "ipl skin tone chart",
+        "does ipl work on blonde hair",
+        "ipl hair colour suitability"
+      ],
+      "priority": "P1",
+      "currentCoverage": "product page compatibility swatches",
+      "destination": "/learn/ipl-skin-tone-hair-colour-suitability/",
+      "evidenceSources": [
+        "https://uk.braun.com/en-gb/female-hair-removal/silk-expert-pro-ipl"
+      ],
+      "risk": "Must use CYPH/1 approved device-specific skin/hair compatibility documentation; no broad claim about dark skin or photo-type suitability"
+    },
+    {
+      "id": "A-03",
+      "workingTitle": "How often should you use IPL? Understanding treatment schedules",
+      "intent": "usage and routine",
+      "targetTerms": [
+        "how often use ipl",
+        "ipl every day",
+        "how long between ipl sessions"
+      ],
+      "priority": "P1",
+      "currentCoverage": "consistency article exists but avoids schedule as unapproved",
+      "destination": "/learn/ipl-treatment-frequency/",
+      "evidenceSources": [
+        "https://www.philips.co.uk/c-f/XC000003471/how-often-should-i-use-my-philips-lumea",
+        "https://uk.braun.com/en-gb/female-hair-removal/hair-removal-for-women/how-to-ipl"
+      ],
+      "risk": "Device-specific schedules differ even between Braun pages. Don't publish CYPH/1 instructions until instructions/manufacturer approved; meanwhile enrich existing consistency article with general distinctions."
+    },
+    {
+      "id": "A-04",
+      "workingTitle": "When does IPL hair reduction become noticeable?",
+      "intent": "expectations and conversion reassurance",
+      "targetTerms": [
+        "how long for ipl to work",
+        "ipl hair shedding after treatment",
+        "ipl results timeline"
+      ],
+      "priority": "P1",
+      "currentCoverage": "educational consistency article is broadly related",
+      "destination": "/learn/ipl-results-timeline/",
+      "evidenceSources": [
+        "https://www.philips.co.uk/c-e/womens-beauty-blog/hair-removal/ipl-hair-removal-results-timeline"
+      ],
+      "risk": "Do not apply competitor clinical results or timelines to CYPH/1 without product evidence"
+    },
+    {
+      "id": "A-05",
+      "workingTitle": "What should you do before and after IPL?",
+      "intent": "safe usage and support",
+      "targetTerms": [
+        "should i shave before ipl",
+        "ipl aftercare",
+        "ipl skin test"
+      ],
+      "priority": "P2",
+      "currentCoverage": "product page general overview",
+      "destination": "/learn/ipl-preparation-aftercare/",
+      "evidenceSources": [
+        "https://www.philips.co.uk/c-e/womens-beauty-blog/hair-removal/the-ultimate-hair-removal-routine"
+      ],
+      "risk": "Safety-critical, follow only approved instructions and contraindications for CYPH/1; no medical advice"
+    },
+    {
+      "id": "A-06",
+      "workingTitle": "How much does at-home IPL cost compared with clinic treatments?",
+      "intent": "commercial consideration",
+      "targetTerms": [
+        "at home ipl vs clinic cost uk",
+        "ipl device vs salon cost",
+        "ipl hair removal cost"
+      ],
+      "priority": "P2",
+      "currentCoverage": "none dedicated",
+      "destination": "/learn/at-home-ipl-vs-clinic-cost/",
+      "evidenceSources": [],
+      "risk": "Need dated real UK clinic price quotes and approved CYPH/1 device price; no fabricated savings"
+    },
+    {
+      "id": "A-07",
+      "workingTitle": "Can men use an at-home IPL device?",
+      "intent": "use-area suitability",
+      "targetTerms": [
+        "ipl hair removal for men",
+        "men ipl body hair"
+      ],
+      "priority": "P2",
+      "currentCoverage": "product page has a for-men section",
+      "destination": "expand /ipl-hair-removal/ FAQ",
+      "evidenceSources": [
+        "https://www.merchantwords.com/search/uk/ipl%20hair%20removal"
+      ],
+      "risk": "Body/face areas and contraindications must be device-specific; Amazon marketplace signals only"
+    },
+    {
+      "id": "A-08",
+      "workingTitle": "IPL safety, contraindications and skin patch tests",
+      "intent": "safety research",
+      "targetTerms": [
+        "is home ipl safe",
+        "ipl patch test",
+        "ipl side effects"
+      ],
+      "priority": "P1_review_gate",
+      "currentCoverage": "product safety/compatibility overview",
+      "destination": "/learn/home-ipl-safety/",
+      "evidenceSources": [
+        "https://www.philips.co.uk/c-e/onboarding-my-ipl/ipl-all-series/ipl-step-5-plan-your-treatments"
+      ],
+      "risk": "Do not publish until verified IEC/UK compliance, approved manual and reviewed contraindications are aligned. Avoid inventing sensor functionality and claims."
+    }
+  ],
+  "measurementsNeeded": [
+    "Google Search Console query/page impressions, clicks, CTR, average position, date period and UK country dimension if authorised",
+    "Indexed vs submitted pages from GSC and URL Inspection (no invented counts)",
+    "GA4 consent-compliant landing-page engagement/conversion data if connected",
+    "Google Keyword Planner UK Google Search volumes / ranges, keyword dates and competition if available; alternative qualitative gap analysis only"
+  ],
+  "firstImplementationGate": "Require product pricing/claim approval, Search Console confirmation and human approval of content plan before publishing."
+}
