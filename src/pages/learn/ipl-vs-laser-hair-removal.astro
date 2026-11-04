@@ -275,7 +275,7 @@ const structuredData = {
   .technology-visual figcaption > p:not(.comparison-intro-label) { margin:var(--cyph-space-3) 0; color:var(--cyph-text-secondary); }
   .technology-visual small, .visual-comparison-note { color:var(--cyph-text-secondary); font-size:.8rem; }
   .visual-comparison-note { max-width:var(--cyph-layout-reading); margin-block:var(--cyph-space-6) var(--cyph-space-8); }
-  .cost-section { border-block:var(--cyph-line-structural) solid var(--cyph-border-structural); padding-top:clamp(2.75rem,6vw,4rem); }
+  .cost-section { border-block:var(--cyph-line-structural) solid var(--cyph-border-structural); }
   .cost-panels { display:grid; gap:var(--cyph-space-6); margin-top:var(--cyph-space-8); }
   .cost-panel { min-width:0; padding:var(--cyph-space-6); background:var(--cyph-surface-base); border-top:var(--cyph-line-emphasis) solid var(--cyph-accent-primary); }
   .cost-panel-cyph { background:var(--cyph-surface-raised); }
@@ -324,4 +324,7 @@ const structuredData = {
     .article-page h2 { max-width:100%; min-width:0; font-size:clamp(1.4rem,5.8vw,1.95rem); line-height:1.22; overflow-wrap:anywhere; }
     .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
   }
+
+  /* Separate bordered section labels from the divider on all viewports. */
+  .article-page section.cost-section { padding-top:clamp(2.75rem,6vw,4rem); }
 </style>
