@@ -68,7 +68,7 @@ test("visual comparison uses the supplied text-free lifestyle image and licensed
  assert.match(s,/<Image src=\{clinicLaserPhoto\} format="webp"/);
  assert.equal((s.match(/widths=\{\[320, 480, 640, 960, 1200\]\} sizes=\{comparisonImageSizes\}/g)||[]).length,2);
  assert.equal((s.match(/loading="lazy" decoding="async"/g)||[]).length,2);
- assert.match(s,/aspect-ratio:4 \/ 3/);
+ assert.match(s,/aspect-ratio:1 \/ 1/);
  assert.match(s,/object-fit:contain/);
  assert.match(s,/Final production appearance remains subject to approval/);
  assert.match(s,/Not treatment guidance or evidence of results/);
