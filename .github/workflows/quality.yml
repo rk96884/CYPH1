@@ -60,6 +60,9 @@ jobs:
       - name: Verify historical development CRLF migration checksums
         run: node --test apps/commerce-api/scripts/migration-checksum.test.mjs
 
+      - name: Validate Agent A UK Search Console metric provenance
+        run: node --test tools/growth-agent/agent-a-gsc-uk-baseline.test.mjs
+
       - name: Validate Agent A SEO demand baseline research safeguards
         run: node --test tools/growth-agent/agent-a-seo-baseline.test.mjs
 

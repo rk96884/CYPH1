@@ -1,0 +1,190 @@
+{
+  "report": "Agent A: 90-day CYPH/1 Search Console UK performance",
+  "capturedOn": "2026-11-04",
+  "connector": "Windsor.ai / Google Search Console",
+  "account": "sc-domain:cyph1.co.uk",
+  "requestedPeriod": {
+    "start": "2026-08-06",
+    "end": "2026-11-03",
+    "inclusiveDays": 90,
+    "includeFreshData": false
+  },
+  "status": "read_only_research_not_published",
+  "ukSummary": {
+    "country": "United Kingdom",
+    "clicks": 0,
+    "impressions": 56,
+    "ctr": 0,
+    "position": 70.4821
+  },
+  "ukAttributable": {
+    "queryPageImpressions": 44,
+    "pageImpressions": 44,
+    "unattributedImpressions": 12,
+    "note": "GSC dimensioned results can omit anonymized or low-volume query/page data; missing impression rows are not zeros or invented page visits."
+  },
+  "ukPages": [
+    {
+      "country": "United Kingdom",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 44,
+      "ctr": 0,
+      "position": 88.5227
+    }
+  ],
+  "ukQueries": [
+    {
+      "country": "United Kingdom",
+      "query": "hair growth cycle",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 27,
+      "position": 87.6296
+    },
+    {
+      "country": "United Kingdom",
+      "query": "hair cycle",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 4,
+      "position": 88
+    },
+    {
+      "country": "United Kingdom",
+      "query": "anagen catagen telogen",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 3,
+      "position": 87.6667
+    },
+    {
+      "country": "United Kingdom",
+      "query": "hair growth stages",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 3,
+      "position": 92.3333
+    },
+    {
+      "country": "United Kingdom",
+      "query": "3 stages of hair growth",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 98
+    },
+    {
+      "country": "United Kingdom",
+      "query": "anagen telogen catagen",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 78
+    },
+    {
+      "country": "United Kingdom",
+      "query": "facial hair cycle",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 99
+    },
+    {
+      "country": "United Kingdom",
+      "query": "growth cycle of hair",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 85
+    },
+    {
+      "country": "United Kingdom",
+      "query": "hair cycle phases",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 91
+    },
+    {
+      "country": "United Kingdom",
+      "query": "stages of hair growth",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 95
+    },
+    {
+      "country": "United Kingdom",
+      "query": "the hair growth cycle",
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 1,
+      "position": 91
+    }
+  ],
+  "allCountryLandingPages": [
+    {
+      "page": "https://www.cyph1.co.uk/",
+      "clicks": 2,
+      "impressions": 39,
+      "ctr": 0.0513,
+      "position": 15.4615
+    },
+    {
+      "page": "https://www.cyph1.co.uk/accessibility/",
+      "clicks": 0,
+      "impressions": 11,
+      "ctr": 0,
+      "position": 2.0909
+    },
+    {
+      "page": "https://www.cyph1.co.uk/ipl-hair-removal/",
+      "clicks": 0,
+      "impressions": 2,
+      "ctr": 0,
+      "position": 5.5
+    },
+    {
+      "page": "https://www.cyph1.co.uk/learn/hair-growth-cycle/",
+      "clicks": 0,
+      "impressions": 92,
+      "ctr": 0,
+      "position": 81.2065
+    },
+    {
+      "page": "https://www.cyph1.co.uk/learn/why-ipl-consistency-matters/",
+      "clicks": 0,
+      "impressions": 11,
+      "ctr": 0,
+      "position": 6.3636
+    },
+    {
+      "page": "https://www.cyph1.co.uk/returns/",
+      "clicks": 0,
+      "impressions": 1,
+      "ctr": 0,
+      "position": 4
+    }
+  ],
+  "sitemap": [
+    {
+      "path": "https://www.cyph1.co.uk/sitemap-index.xml",
+      "submitted": 7,
+      "errors": 0,
+      "warnings": 0,
+      "last_submitted": "2026-08-22T12:52:32.383Z",
+      "last_downloaded": "2026-10-30T10:42:50.653Z",
+      "is_sitemaps_index": "True"
+    }
+  ],
+  "notes": [
+    "Country-only totals are the authoritative selected metric for UK impressions; do not sum country+query rows to infer total.",
+    "Average position is impression-weighted and unstable at low volume; not keyword rank guarantee.",
+    "These are organic search impressions and clicks, not Google keyword search volumes.",
+    "Public site indexing status per URL, index coverage, and canonical Google-selected status are not available via this connector; sitemap-submitted count is not indexed count.",
+    "Query-level anonymization may omit branded queries and other landing pages from detailed rows.",
+    "Worldwide page metrics are a separate cut and must not be labelled UK.",
+    "No automated content publishing, no product claims, no database updates."
+  ]
+}
