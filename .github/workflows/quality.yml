@@ -66,6 +66,9 @@ jobs:
       - name: Test audited read-only IPL research import controls
         run: node --test tools/growth-agent/import-reviewed-ipl-development.test.mjs
 
+      - name: Validate OEM and retail brand identity research crosswalk
+        run: node --test tools/growth-agent/oem-retail-model-crosswalk.test.mjs
+
       - name: Test source-tiered IPL creator validation
         run: node --test tools/growth-agent/ipl-creator-validation-round-2.test.mjs
 
