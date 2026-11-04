@@ -318,4 +318,10 @@ const structuredData = {
   @media(min-width:64rem) { .cost-panels { grid-template-columns:repeat(3,minmax(0,1fr)); } .cost-panel-cyph { grid-column:auto; } }
   @media(min-width:68.75rem) { .comparison-hint { display: none; } .comparison-scroll { margin-top: var(--cyph-space-8); } }
   @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
+
+  /* Keep long editorial section titles within the mobile reading column. */
+  @media (max-width: 47.99rem) {
+    .article-page h2 { max-width:100%; min-width:0; font-size:clamp(1.4rem,5.8vw,1.95rem); line-height:1.22; overflow-wrap:anywhere; }
+    .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
+  }
 </style>
