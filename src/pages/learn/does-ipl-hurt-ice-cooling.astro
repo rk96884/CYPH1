@@ -39,14 +39,14 @@ const structuredData = {
           </div>
           <div class="hero-media">
             <div class="hero-product">
-              <Image src={productRender} format="webp" quality={65} widths={[400, 640, 960, 1200]} sizes="(min-width: 768px) 52vw, 94vw" alt="White and rose-gold CYPH/1 IPL device, with product packaging and accessories, shown as a pre-launch render." loading="eager" decoding="async" />
+              <span class="cooling-halo" aria-hidden="true">❄</span>
+              <Image src={productRender} format="webp" quality={65} widths={[400, 640, 960, 1200]} sizes="(min-width: 768px) 52vw, 94vw" alt="Close-up of the CYPH/1 white and rose-gold IPL device and its cooling treatment window." loading="eager" decoding="async" />
             </div>
             <div class="hero-feature">
               <div class="cooling-mark" aria-hidden="true">❄</div>
               <p class="feature-label">Integrated ice cooling</p>
               <h2>Comfort, considered.</h2>
               <p>The CYPH/1 device includes an integrated cooling treatment window that remains active during use. Cooling and IPL light delivery are distinct functions.</p>
-              <p class="hero-foot">Approved CYPH/1 product render; the snowflake is an editorial feature symbol, not a claim about the device display or a measured temperature.</p>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@ const structuredData = {
         </div>
       </section>
 
-      <section class="section article-section" aria-labelledby="cooling-heading">
+      <section class="section article-section cooling-section" aria-labelledby="cooling-heading">
         <div class="container article-wide">
           <p class="section-index">02 / Cooling technology</p>
           <h2 id="cooling-heading" data-reveal>Why add cooling to IPL?</h2>
@@ -93,7 +93,7 @@ const structuredData = {
         </div>
       </section>
 
-      <section class="section article-section" aria-labelledby="cyph-heading">
+      <section class="section article-section cyph-section" aria-labelledby="cyph-heading">
         <div class="container article-reading article-copy">
           <p class="section-index">04 / The CYPH/1 approach</p>
           <h2 id="cyph-heading" data-reveal>Always-on cooling, built into the routine.</h2>
@@ -109,11 +109,11 @@ const structuredData = {
           <h2 id="safe-heading" data-reveal>Comfort is not the same as safety.</h2>
           <p>Even with cooling, light-based hair reduction can cause burns, pigment changes or eye injury if equipment is unsuitable or incorrectly used. A cool feeling does not mean excessive light exposure is impossible.</p>
           <p>Follow all manufacturer contraindications and patch-test and eye-safety instructions. Do not use IPL on prohibited areas, irritated or sunburned skin, tattoos or other excluded sites. If a reaction occurs, stop and seek appropriate medical advice.</p>
-          <aside class="science-note"><p><strong>About CYPH/1.</strong> This article offers general education and describes a stated device feature. It is not evidence that CYPH/1 has been clinically compared with non-cooled IPL devices, and it does not guarantee a pain-free experience, specific outcome or safety profile.</p></aside>
+          <aside class="article-disclaimer"><p><strong>About CYPH/1.</strong> This article offers general education and describes a stated device feature. It is not evidence that CYPH/1 has been clinically compared with non-cooled IPL devices, and it does not guarantee a pain-free experience, specific outcome or safety profile.</p></aside>
         </div>
       </section>
 
-      <section class="section article-section" aria-labelledby="faq-heading">
+      <section class="section article-section faq-section" aria-labelledby="faq-heading">
         <div class="container article-reading article-copy">
           <p class="section-index">06 / Common questions</p>
           <h2 id="faq-heading" data-reveal>Answers before you begin.</h2>
@@ -194,14 +194,15 @@ const structuredData = {
   .article-meta { color:var(--cyph-text-secondary); font-size:.85rem; margin-top:var(--cyph-space-5); }
   .jump-link { display:inline-flex; align-items:center; min-height:2.75rem; color:var(--cyph-accent-highlight); text-underline-offset:.22em; }
   .hero-media { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:var(--cyph-space-6); margin-top:var(--cyph-space-10); }
-  .hero-product { background:var(--cyph-surface-raised); display:flex; justify-content:center; align-items:center; padding:var(--cyph-space-4); min-width:0; }
-  .hero-product :global(img) { display:block; width:100%; height:auto; max-height:25rem; object-fit:contain; }
-  .hero-feature { border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); padding:clamp(1.25rem,3vw,2.25rem); display:flex; flex-direction:column; justify-content:center; }
+  .hero-product { position:relative; min-width:0; aspect-ratio: 1.35; overflow:hidden; background:radial-gradient(circle at 45% 65%,rgb(82 146 195 / .16),transparent 42%),var(--cyph-surface-raised); }
+  .hero-product :global(img) { display:block; width:100%; height:100%; object-fit:cover; object-position:52% 76%; transform:scale(1.28); transform-origin:50% 75%; }
+  .cooling-halo { position:absolute; z-index:1; left:var(--cyph-space-6); bottom:var(--cyph-space-6); display:grid; place-items:center; width:3rem; aspect-ratio:1; border:1px solid rgb(166 221 255 / .55); border-radius:50%; color:#b5e3ff; background:rgb(20 26 49 / .65); font-size:1.55rem; box-shadow:0 0 1.6rem rgb(115 202 255 / .18); pointer-events:none; }
+
+  .hero-feature { min-width:0; border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); padding:clamp(1.6rem,3vw,2.7rem); display:flex; flex-direction:column; justify-content:center; }
   .cooling-mark { font-size:clamp(2.1rem,5vw,3.5rem); line-height:1; color:#a5dbff; margin-bottom:var(--cyph-space-6); }
   .feature-label { text-transform:uppercase; letter-spacing:var(--cyph-tracking-label); font-size:.75rem; color:var(--cyph-accent-highlight); }
-  .hero-feature h2 { margin-top:var(--cyph-space-4); font-size:clamp(1.5rem,3vw,2.4rem); line-height:1.1; }
+  .article-page .hero-feature h2 { max-width:100%; margin-top:var(--cyph-space-4); font-size:clamp(1.45rem,2.2vw,2rem); line-height:1.15; overflow-wrap:break-word; }
   .hero-feature > p:not(.feature-label) { margin-top:var(--cyph-space-4); line-height:1.6; }
-  .hero-feature .hero-foot { color:var(--cyph-text-secondary); font-size:.75rem; }
   .article-section { padding-block:clamp(2.5rem,4.8vw,4rem); }
   .article-page h2 { max-width:23ch; font-size:clamp(1.6rem,3.1vw,2.7rem); line-height:1.16; }
   .article-copy > h2 { margin-top:var(--cyph-space-6); }
@@ -216,8 +217,15 @@ const structuredData = {
   .detail-list { padding-left:1.25rem; }
   .detail-list li { line-height:1.7; }
   .detail-list li + li { margin-top:var(--cyph-space-4); }
-  .science-note { border-left:2px solid var(--cyph-accent-primary); padding:var(--cyph-space-5); background:var(--cyph-surface-raised); }
+  .cooling-section { background:radial-gradient(circle at 85% 10%,rgb(167 122 244 / .16),transparent 44%),linear-gradient(135deg,#17101f,#21142c 64%,#120d1a); }
+  .cooling-section .feature-block { background:rgb(10 8 20 / .42); }
+  .cyph-section { background:radial-gradient(circle at 12% 45%,rgb(167 122 244 / .12),transparent 42%),var(--cyph-surface-emphasis); }
+  .faq-section { background:linear-gradient(140deg,#17101e,#100b17); }
+  .article-disclaimer { margin-top:var(--cyph-space-6); padding:var(--cyph-space-5) var(--cyph-space-6); background:var(--cyph-surface-raised); border-left:2px solid var(--cyph-accent-primary); }
+  .article-disclaimer p { width:100%; margin:0; padding:0; border:0; color:var(--cyph-text-secondary); font-size:.9rem; line-height:1.65; }
+  .article-disclaimer strong { color:var(--cyph-text-primary); }
   .safety-section { border-block:1px solid var(--cyph-border-structural); }
+
   .related-link { margin-top:var(--cyph-space-5); }
   .article-sources { padding-left:1.25rem; }
   .article-sources li + li { margin-top:var(--cyph-space-3); }
@@ -225,6 +233,6 @@ const structuredData = {
   [data-reveal].is-visible { animation:cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
   @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
   @media(min-width:48rem) { .hero-intro { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); } }
-  @media(max-width:47.99rem) { .article-hero { padding-top:10.5rem; } .hero-media,.feature-grid { grid-template-columns:1fr; } .hero-product :global(img) { max-height:18rem; } }
+  @media(max-width:47.99rem) { .article-hero { padding-top:10.5rem; } .hero-media,.feature-grid { grid-template-columns:1fr; } .hero-product { aspect-ratio:1.4; } .hero-product :global(img) { height:100%; } }
   @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
 </style>
