@@ -45,6 +45,16 @@ const structuredData = {
               <a class="comparison-link" href="#comparison-heading">Compare the methods <span aria-hidden="true">↓</span></a>
             </div>
           </div>
+          <div class="method-overview" aria-label="Hair removal methods at a glance">
+            <figure class="method-feature">
+              <Image src={productRender} format="webp" quality={58} widths={[320, 480, 640, 800]} sizes="(min-width: 768px) 48vw, 92vw" loading="eager" decoding="async" alt="Pre-launch render of the white and rose-gold CYPH/1 IPL device with branded packaging and accessories." />
+              <figcaption>At-home IPL · Approved pre-launch CYPH/1 render; not evidence of treatment results.</figcaption>
+            </figure>
+            <div class="method-alternatives">
+              <div><span class="method-number">02 / Shaving</span><strong>Remove visible hair.</strong><p>A razor cuts hair at the skin surface.</p></div>
+              <div><span class="method-number">03 / Waxing</span><strong>Remove hair from the root.</strong><p>Wax grips and removes hair; regrowth varies.</p></div>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -111,6 +121,7 @@ const structuredData = {
             <section class="cost-panel cost-panel-cyph" aria-labelledby="ipl-cost-heading">
               <p class="cost-kicker">02 / CYPH/1 IPL</p>
               <h3 id="ipl-cost-heading">Device plus shaving</h3>
+              <p class="launch-price-label">CYPH/1 intended launch price: <strong>{money(launchProduct.intendedPrice.amount)}</strong></p>
               <p class="cost-feature">{money(iplYear)}<span>Illustrative first-year subtotal</span></p>
               <p>{money(launchProduct.intendedPrice.amount)} intended launch price · <strong>Pre-launch</strong>, plus the same {money(shavingYear)} annual shaving allowance. We retain the full allowance rather than assume successful reduction or fewer shaves.</p>
               <p class="cost-foot">Not yet available to buy. Price and availability remain subject to launch confirmation; early access is not a payment or pre-order.</p>
@@ -148,10 +159,6 @@ const structuredData = {
           <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>Explore the four stages of the hair-growth cycle <span aria-hidden="true">→</span></a></p>
           <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Why IPL consistency matters <span aria-hidden="true">→</span></a></p>
           <p class="related-link"><a href={withBase("learn/ipl-vs-laser-hair-removal/")}>Compare IPL and professional laser <span aria-hidden="true">→</span></a></p>
-          <figure class="product-figure">
-            <Image src={productRender} format="webp" quality={58} widths={[320, 480, 640]} sizes="(min-width: 768px) 400px, 85vw" loading="lazy" decoding="async" alt="Pre-launch render of the white and rose-gold CYPH/1 IPL device with branded packaging and accessories." />
-            <figcaption>Approved pre-launch product render. Final production appearance remains subject to approval; imagery is not evidence of results.</figcaption>
-          </figure>
           <p class="related-link"><a href={withBase("ipl-hair-removal/")}>Explore the CYPH/1 IPL device (pre-launch) <span aria-hidden="true">→</span></a></p>
         </div>
       </section>
@@ -203,7 +210,17 @@ const structuredData = {
   .article-page { --article-comparison-width: 68.75rem; }
   .article-wide { max-width: var(--article-comparison-width); }
   .article-reading { max-width: var(--cyph-layout-reading); }
-  .article-hero { padding-top: clamp(10rem, 14vw, 12rem); padding-bottom: var(--cyph-layout-section-compact); }
+  .article-hero { padding-top: clamp(9rem, 12vw, 11rem); padding-bottom: clamp(2rem, 4vw, 3.25rem); }
+  .method-overview { display:grid; gap:var(--cyph-space-6); grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); align-items:stretch; margin-top:var(--cyph-space-8); }
+  .method-feature { min-width:0; margin:0; background:var(--cyph-surface-raised); }
+  .method-feature :global(img) { display:block; width:100%; height:auto; max-height:19rem; object-fit:contain; }
+  .method-feature figcaption { padding:var(--cyph-space-3) var(--cyph-space-4); font-size:.78rem; line-height:1.5; color:var(--cyph-text-secondary); }
+  .method-alternatives { display:grid; grid-template-rows:repeat(2,minmax(0,1fr)); gap:var(--cyph-space-4); }
+  .method-alternatives > div { padding:var(--cyph-space-5); border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); }
+  .method-number { display:block; color:var(--cyph-accent-highlight); letter-spacing:var(--cyph-tracking-label); text-transform:uppercase; font-size:.72rem; margin-bottom:var(--cyph-space-3); }
+  .method-alternatives strong { display:block; font-size:clamp(1rem,1.7vw,1.35rem); }
+  .method-alternatives p { margin-top:var(--cyph-space-2); color:var(--cyph-text-secondary); line-height:1.55; }
+
   .article-hero-intro { display: grid; gap: var(--cyph-layout-cluster); align-items: start; }
   .article-hero-intro > * { min-width: 0; }
   .article-hero h1 { max-width: 16ch; margin: 0; font-size: clamp(2.15rem, 4.4vw, 3.5rem); line-height: var(--cyph-leading-heading); }
@@ -220,15 +237,19 @@ const structuredData = {
   .cost-panel h3 { font-size:clamp(1.2rem,2vw,1.65rem); }
   .cost-feature { font-size:clamp(1.6rem,2.6vw,2.15rem); font-weight:var(--cyph-font-weight-semibold); line-height:var(--cyph-leading-heading); margin:var(--cyph-space-6) 0; font-variant-numeric:tabular-nums; }
   .cost-panel-cyph .cost-feature { color:var(--cyph-accent-highlight); }
+  .launch-price-label { margin-top:var(--cyph-space-4); font-size:.88rem; line-height:1.5; color:var(--cyph-text-secondary); }
+  .launch-price-label strong { color:var(--cyph-accent-highlight); font-size:1.12rem; font-variant-numeric:tabular-nums; }
+  .cost-panel-cyph { border-top-width:3px; }
+
   .cost-feature span { display:block; margin-top:var(--cyph-space-3); font-size:.85rem; line-height:1.4; font-weight:400; color:var(--cyph-text-secondary); }
   .cost-panel > p:not(.cost-kicker):not(.cost-feature) { line-height:1.65; }
   .cost-foot { color:var(--cyph-text-secondary); font-size:.85rem; margin-top:var(--cyph-space-6); }
   .cost-summary { margin-top:var(--cyph-space-8); }
   .cost-summary > p + p { margin-top:var(--cyph-space-4); }
   .cost-date { font-size:.85rem; color:var(--cyph-text-secondary); }
-  .article-section { padding-block: clamp(2.75rem, 5.5vw, 4.75rem); }
+  .article-section { padding-block: clamp(2.4rem, 4vw, 3.5rem); }
   .article-page h2 { max-width: 22ch; font-size: clamp(1.6rem, 3.1vw, 2.7rem); line-height: 1.16; }
-  .article-copy > h2 { margin-top: var(--cyph-space-8); }
+  .article-copy > h2 { margin-top: var(--cyph-space-5); }
   .article-copy > h2 + p, .article-copy > p + p { margin-top: var(--cyph-space-4); }
   .article-sources { padding-left: 1.25rem; }
   .article-sources li + li { margin-top: var(--cyph-space-3); }
@@ -244,13 +265,10 @@ const structuredData = {
   .technology-table tr > :not(:first-child) { width: 26%; }
   .technology-table tbody th { font-weight: var(--cyph-font-weight-semibold); }
   .table-note { max-width: var(--cyph-layout-reading); font-size: .95rem; color: var(--cyph-text-secondary); }
-  @media(max-width:47.99rem) { .article-hero { padding-top: 10.75rem; padding-bottom: var(--cyph-space-12); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .article-section { padding-block: var(--cyph-space-12); } }
+  @media(max-width:47.99rem) { .article-hero { padding-top: 10.25rem; padding-bottom: var(--cyph-space-8); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .method-overview { grid-template-columns:1fr; } .method-alternatives { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:auto; } .method-alternatives > div { padding:var(--cyph-space-4); } .article-section { padding-block:var(--cyph-space-10); } }
   @media(min-width:48rem) { .article-hero-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } .cost-panels { grid-template-columns:repeat(2,minmax(0,1fr)); } .cost-panel-cyph { grid-column:1 / -1; } }
   @media(min-width:64rem) { .cost-panels { grid-template-columns:repeat(3,minmax(0,1fr)); } .cost-panel-cyph { grid-column:auto; } }
   @media(min-width:68.75rem) { .comparison-hint { display: none; } .comparison-scroll { margin-top: var(--cyph-space-8); } }
-  .product-figure { max-width:25rem; margin:var(--cyph-space-8) auto; }
-  .product-figure :global(img) { display:block; width:100%; height:auto; }
-  .product-figure figcaption { margin-top:var(--cyph-space-3); color:var(--cyph-text-secondary); font-size:.8rem; }
   [data-reveal].is-visible { animation: cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
   @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
   @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
