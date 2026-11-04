@@ -224,6 +224,15 @@ const structuredData = {
   @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
   @media(min-width:48rem) { .hero-intro { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); } }
   @media(min-width:80rem) { .article-hero .hero-editorial { margin-inline:-2rem; } }
-  @media(max-width:47.99rem) { .article-hero { padding-top:10.5rem; } .feature-grid { grid-template-columns:1fr; } }
+  @media(max-width:47.99rem) { .article-hero { padding-top:10.5rem; } .article-hero h1 { max-width:100%; font-size:clamp(1.85rem,7.8vw,2.65rem); overflow-wrap:anywhere; } .feature-grid { grid-template-columns:1fr; } }
   @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
+
+  /* Keep long editorial section titles within the mobile reading column. */
+  @media (max-width: 47.99rem) {
+    .article-page h2 { max-width:100%; min-width:0; font-size:clamp(1.4rem,5.8vw,1.95rem); line-height:1.22; overflow-wrap:anywhere; }
+    .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
+  }
+
+  /* Separate bordered section labels from the divider on all viewports. */
+  .article-page section.safety-section { padding-top:clamp(2.75rem,6vw,4rem); }
 </style>
