@@ -1,0 +1,175 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "IPL vs laser hair removal: what is the difference?",
+  description: "An independent, evidence-led explanation of IPL and laser hair reduction, their light sources, practical considerations and limitations.",
+  datePublished: "2026-11-04",
+  dateModified: "2026-11-04",
+  inLanguage: "en-GB",
+  author: { "@type": "Organization", name: "CYPH/1" },
+  publisher: { "@type": "Organization", name: "CYPH/1" }
+};
+---
+<BaseLayout
+  title="IPL vs Laser Hair Removal: Key Differences | CYPH/1"
+  description="IPL vs laser hair removal explained: light technology, treatment settings, skin and hair suitability, safety and realistic expectations."
+  structuredData={structuredData}
+>
+  <Header />
+  <main id="main" class="article-page">
+    <article>
+      <header class="article-hero section">
+        <div class="container article-reading">
+          <p class="eyebrow">Know the technology · Hair reduction</p>
+          <h1 data-reveal>IPL vs laser hair removal.</h1>
+          <p class="lede">Both IPL and laser use light to reduce unwanted hair growth. The key difference is the light they produce: IPL delivers a broad range of wavelengths, whereas a laser produces a much narrower, more targeted beam.</p>
+          <p class="article-meta">Published 4 November 2026 · General educational content</p>
+        </div>
+      </header>
+
+      <section class="section article-section" aria-labelledby="difference-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">01 / The difference</p>
+          <h2 id="difference-heading" data-reveal>Is IPL the same as laser?</h2>
+          <p>No. <strong>IPL stands for intense pulsed light</strong>. It uses a filtered, broad-spectrum flash of light. A <strong>laser</strong> emits light in a narrower wavelength band and directs energy more selectively. Both approaches can use pigment in the hair as a target for light energy, which is converted into heat.</p>
+          <p>Some online retailers call IPL devices “laser hair removal devices”. That wording can be confusing: <strong>IPL is not a laser</strong>. The distinction is important when researching devices, checking instructions and comparing evidence.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="comparison-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">02 / At a glance</p>
+          <h2 id="comparison-heading" data-reveal>How do the technologies compare?</h2>
+          <div class="comparison-scroll" tabindex="0" role="region" aria-label="IPL and laser technology comparison table">
+            <table class="technology-table">
+              <caption>General technology comparison, not a CYPH/1 performance claim</caption>
+              <thead><tr><th scope="col">Question</th><th scope="col">IPL</th><th scope="col">Laser</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Light source</th><td>Filtered pulses covering a range of wavelengths.</td><td>A concentrated beam using a specific wavelength or narrow band.</td></tr>
+                <tr><th scope="row">Hair-reduction principle</th><td>Light absorbed by hair pigment produces heat that can affect the follicle.</td><td>Targeted light energy is absorbed by pigment and converted to heat.</td></tr>
+                <tr><th scope="row">Typical setting</th><td>Available in some home-use devices and professional systems.</td><td>Commonly provided through specialist professional equipment; home-use laser products also exist.</td></tr>
+                <tr><th scope="row">Treatment course</th><td>Usually requires repeated sessions; any schedule is device-specific.</td><td>Usually requires repeated sessions; schedules depend on equipment and professional advice.</td></tr>
+                <tr><th scope="row">Suitability</th><td>Depends on the particular device, hair colour, skin tone and health factors.</td><td>Depends on laser type, settings, hair colour, skin tone and trained assessment.</td></tr>
+                <tr><th scope="row">Results</th><td>Hair reduction varies; complete permanent removal cannot be assumed.</td><td>Hair reduction varies; complete permanent removal cannot be assumed.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="table-note">Neither technology should be treated as universally better. A professional laser system and a home IPL device are different types of equipment; results cannot be compared fairly without considering the specific devices, user and treatment conditions.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="suitability-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">03 / Suitability</p>
+          <h2 id="suitability-heading" data-reveal>What about skin tone and hair colour?</h2>
+          <p>Light-based hair reduction commonly relies on the hair's pigment absorbing energy. Natural hair colour and surrounding skin pigment can therefore affect both suitability and risk. Some hair colours respond poorly to certain light-based devices; higher skin pigmentation can increase the risk of unwanted skin heating with unsuitable equipment or settings.</p>
+          <p>It would be incorrect to say that all IPL devices work for all skin tones, or that every laser works on every complexion. Different professional laser types and home-use IPL devices have different indications, controls and limitations.</p>
+          <p>For any product, consult its specific compatibility guidance, contraindications and instructions. See the <a href={withBase("ipl-hair-removal/#compatibility-guide")}>CYPH/1 pre-launch skin-tone and natural hair-colour guide</a>; full device instructions must be checked before use.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="home-clinic-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">04 / Choosing an approach</p>
+          <h2 id="home-clinic-heading" data-reveal>At-home IPL or professional laser?</h2>
+          <p><strong>At-home IPL</strong> may appeal to people who value a home-based routine and prefer to follow a device's approved instructions independently. That convenience does not establish the same settings, outcomes or suitability as a professional treatment.</p>
+          <p><strong>Professional laser hair reduction</strong> can provide an assessment, equipment selection and treatment by a practitioner. Ask about the laser type, practitioner training, skin-tone suitability, contraindications, total course and aftercare before deciding.</p>
+          <p>Whichever route you consider, compare like with like: device specifications, documented evidence, ongoing sessions, maintenance needs and risks matter more than a broad claim that one technology is always faster, cheaper or more effective.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="expectations-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">05 / Expectations and safety</p>
+          <h2 id="expectations-heading" data-reveal>Is IPL or laser permanent and painless?</h2>
+          <p><strong>Do not assume permanent, complete or pain-free results.</strong> Hair reduction can vary by person and treatment. More than one session may be required and regrowth or maintenance treatments may occur.</p>
+          <p>Both IPL and laser can cause adverse effects, including burns, pigment changes and eye injuries if used incorrectly or on unsuitable areas. Follow the specific device instructions and contraindications; for professional treatments, seek an appropriately trained practitioner. If you are unsure whether light-based treatment is suitable for your skin or health circumstances, obtain professional advice first.</p>
+          <aside class="science-note"><p><strong>About CYPH/1.</strong> This guide compares general technologies. It is not a statement that CYPH/1's pre-launch device has been clinically compared with a professional laser, or a promise of a particular outcome, treatment schedule or safety profile.</p></aside>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="next-reading-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">06 / Keep learning</p>
+          <h2 id="next-reading-heading" data-reveal>Why the hair cycle matters.</h2>
+          <p>Hair follicles do not all grow at the same time. Understanding this helps explain why light-based hair reduction is generally approached as repeated treatment rather than a single session.</p>
+          <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>Explore anagen, catagen, telogen and exogen <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Understand why IPL consistency matters <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("ipl-hair-removal/")}>See the CYPH/1 IPL device (pre-launch) <span aria-hidden="true">→</span></a></p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="sources-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">07 / References</p>
+          <h2 id="sources-heading" data-reveal>Evidence and further reading.</h2>
+          <p>This article is general educational information. The following independent authorities explain the technological distinction, risks and evidence standards; none proves results for CYPH/1's specific product.</p>
+          <ul class="article-sources">
+            <li><a href="https://www.gov.uk/government/publications/guidance-on-the-safe-use-of-lasers-intense-light-source-systems-and-leds" target="_blank" rel="noopener noreferrer">MHRA — Guidance on the safe use of lasers and intense light sources</a></li>
+            <li><a href="https://www.asa.org.uk/advice-online/hair-hair-removal.html" target="_blank" rel="noopener noreferrer">Advertising Standards Authority — Hair removal advertising claims</a></li>
+            <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-0" target="_blank" rel="noopener noreferrer">ARPANSA — Consumer advice on lasers and IPL</a></li>
+            <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-1" target="_blank" rel="noopener noreferrer">ARPANSA — Light source differences and practitioner safety considerations</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13242373/" target="_blank" rel="noopener noreferrer">Lasers in Medical Science (2026) — IPL versus diode laser randomised comparison; specific clinical settings, not a home-use product test</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section article-cta">
+        <div class="container article-reading">
+          <p class="eyebrow">Cycle. Phase. One.</p>
+          <h2 data-reveal>Technology, understood.</h2>
+          <p>Learn about our approach to at-home IPL and follow CYPH/1 as the product moves towards launch. Joining early access is not a pre-order.</p>
+          <a class="button" href={withBase("#early-access")}>Explore CYPH/1</a>
+        </div>
+      </section>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+<script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targets = document.querySelectorAll("[data-reveal]");
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    targets.forEach(target => target.classList.add("is-visible"));
+  } else {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.18, rootMargin: "0px 0px -8% 0px" });
+    targets.forEach(target => observer.observe(target));
+  }
+</script>
+<style>
+  .article-reading { max-width: var(--cyph-layout-reading); }
+  .article-hero { padding-top: clamp(10rem, 14vw, 12rem); padding-bottom: var(--cyph-layout-section-compact); }
+  .article-hero h1 { max-width: 15ch; margin: var(--cyph-space-4) 0 var(--cyph-space-6); font-size: clamp(2.4rem, 5.7vw, 4.9rem); line-height: 1.08; }
+  .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
+  .article-section { padding-block: clamp(2.75rem, 5.5vw, 4.75rem); }
+  .article-page h2 { max-width: 22ch; font-size: clamp(1.6rem, 3.1vw, 2.7rem); line-height: 1.16; }
+  .article-copy > h2 { margin-top: var(--cyph-space-8); }
+  .article-copy > h2 + p, .article-copy > p + p { margin-top: var(--cyph-space-4); }
+  .article-sources { padding-left: 1.25rem; }
+  .article-sources li + li { margin-top: var(--cyph-space-3); }
+  .related-link { margin-top: var(--cyph-space-5); }
+  .article-cta { padding-block: clamp(3rem, 6vw, 5.5rem); border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .comparison-scroll { max-width: 100%; overflow-x: auto; margin-top: var(--cyph-space-8); }
+  .technology-table { border-collapse: collapse; width: 100%; min-width: 32rem; text-align: left; }
+  .technology-table caption { text-align: left; color: var(--cyph-text-secondary); font-size: .85rem; padding-bottom: var(--cyph-space-3); }
+  .technology-table th, .technology-table td { padding: var(--cyph-space-4); vertical-align: top; border-bottom: 1px solid var(--cyph-border-structural); }
+  .technology-table thead th { border-top: 1px solid var(--cyph-accent-primary); color: var(--cyph-accent-highlight); }
+  .technology-table tbody th { font-weight: 600; }
+  .table-note { font-size: .95rem; color: var(--cyph-text-secondary); }
+  [data-reveal].is-visible { animation: cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
+  @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
+  @media(max-width:47.99rem) { .article-hero { padding-top: 10.75rem; padding-bottom: var(--cyph-space-12); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .article-section { padding-block: var(--cyph-space-12); } }
+  @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
+</style>
