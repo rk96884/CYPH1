@@ -281,4 +281,10 @@ const structuredData = {
     :global(.article-phase-grid .phase-illustration *) { animation: none !important; }
     :global(.article-phase-grid .ipl-effect) { display: none; }
   }
+
+  /* Keep long editorial section titles within the mobile reading column. */
+  @media (max-width: 47.99rem) {
+    .article-page h2 { max-width:100%; min-width:0; font-size:clamp(1.4rem,5.8vw,1.95rem); line-height:1.22; overflow-wrap:anywhere; }
+    .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
+  }
 </style>
