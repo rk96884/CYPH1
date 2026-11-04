@@ -1,0 +1,70 @@
+{
+  "stockLicense": "Pexels License: https://www.pexels.com/license/",
+  "images": [
+    {
+      "id": "10822318",
+      "filename": "ipl-treatment-editorial.webp",
+      "photo_page": "https://www.pexels.com/photo/a-person-getting-ipl-treatment-on-her-arm-10822318/",
+      "photographer": "Orhun Rüzgar ÖZ",
+      "subject": "Professional IPL device treating arm — NOT at-home IPL",
+      "size": [
+        1200,
+        900
+      ],
+      "position": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "36930637",
+      "filename": "laser-treatment-editorial.webp",
+      "photo_page": "https://www.pexels.com/photo/professional-laser-hair-removal-procedure-in-clinic-36930637/",
+      "photographer": "Kerim Eveyik",
+      "subject": "Professional laser hair-removal session on leg",
+      "size": [
+        1200,
+        900
+      ],
+      "position": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "35103916",
+      "filename": "laser-clinic-editorial.webp",
+      "photo_page": "https://www.pexels.com/photo/laser-hair-removal-procedure-in-clinic-35103916/",
+      "photographer": "Larysa Stratiichuk",
+      "subject": "Laser hair-removal professional in clinic",
+      "size": [
+        1200,
+        800
+      ],
+      "position": [
+        0.5,
+        0.5
+      ]
+    }
+  ],
+  "processed": [
+    {
+      "name": "ipl-treatment-editorial.webp",
+      "width": 1200,
+      "height": 900,
+      "bytes": 36840
+    },
+    {
+      "name": "laser-treatment-editorial.webp",
+      "width": 1200,
+      "height": 900,
+      "bytes": 25890
+    },
+    {
+      "name": "laser-clinic-editorial.webp",
+      "width": 1200,
+      "height": 800,
+      "bytes": 38636
+    }
+  ]
+}

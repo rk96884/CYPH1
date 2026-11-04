@@ -25,11 +25,45 @@ const structuredData = {
   <main id="main" class="article-page">
     <article>
       <header class="article-hero section">
-        <div class="container article-reading">
+        <div class="container article-wide">
           <p class="eyebrow">Know the technology · Hair reduction</p>
-          <h1 data-reveal>IPL vs laser hair removal.</h1>
-          <p class="lede">Both IPL and laser use light to reduce unwanted hair growth. The key difference is the light they produce: IPL delivers a broad range of wavelengths, whereas a laser produces a much narrower, more targeted beam.</p>
-          <p class="article-meta">Published 4 November 2026 · General educational content</p>
+          <div class="article-hero-intro">
+            <h1 data-reveal><span>IPL vs laser</span> hair removal.</h1>
+            <div class="article-hero-summary">
+              <p class="lede">Both IPL and laser use light to reduce unwanted hair growth. The key difference is the light they produce: IPL delivers a broad range of wavelengths, whereas a laser produces a much narrower, more targeted beam.</p>
+              <p class="article-meta">Published 4 November 2026 · General educational content</p>
+              <a class="comparison-link" href="#comparison-heading">Compare the technologies <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
+          <div class="technology-visuals" role="group" aria-label="Photographic comparison of professional IPL and laser treatments" aria-describedby="photography-note">
+            <figure class="technology-visual">
+              <img
+                src={withBase("brand/editorial/ipl-vs-laser/ipl-treatment-editorial.webp")}
+                width="1200" height="900"
+                alt="A gloved practitioner applying a professional IPL handpiece to a person's gel-covered forearm."
+                loading="eager" fetchpriority="high" decoding="async"
+              />
+              <figcaption>
+                <p class="technology-label">01 / IPL</p>
+                <h2>Intense pulsed light.</h2>
+                <p>Filtered, broad-spectrum flashes.</p>
+              </figcaption>
+            </figure>
+            <figure class="technology-visual">
+              <img
+                src={withBase("brand/editorial/ipl-vs-laser/laser-treatment-editorial.webp")}
+                width="1200" height="900"
+                alt="A gloved practitioner holding a laser treatment handpiece against a person's leg."
+                loading="lazy" decoding="async"
+              />
+              <figcaption>
+                <p class="technology-label">02 / Laser</p>
+                <h2>Laser hair reduction.</h2>
+                <p>Light in a narrower wavelength band.</p>
+              </figcaption>
+            </figure>
+          </div>
+          <p id="photography-note" class="photography-note">Stock photographs show professional treatments, not CYPH/1 devices or at-home use. Images illustrate treatment settings, not comparative results or suitability.</p>
         </div>
       </header>
 
@@ -43,10 +77,11 @@ const structuredData = {
       </section>
 
       <section class="section article-section" aria-labelledby="comparison-heading">
-        <div class="container article-reading article-copy">
+        <div class="container article-wide article-copy">
           <p class="section-index">02 / At a glance</p>
           <h2 id="comparison-heading" data-reveal>How do the technologies compare?</h2>
-          <div class="comparison-scroll" tabindex="0" role="region" aria-label="IPL and laser technology comparison table">
+          <p class="comparison-hint" id="comparison-hint">On smaller screens, scroll the table horizontally to compare both technologies.</p>
+          <div class="comparison-scroll" tabindex="0" role="region" aria-label="IPL and laser technology comparison table" aria-describedby="comparison-hint">
             <table class="technology-table">
               <caption>General technology comparison, not a CYPH/1 performance claim</caption>
               <thead><tr><th scope="col">Question</th><th scope="col">IPL</th><th scope="col">Laser</th></tr></thead>
@@ -149,10 +184,26 @@ const structuredData = {
   }
 </script>
 <style>
+  /* 1,100px editorial spread; keep long-form copy on the shared reading token. */
+  .article-page { --article-comparison-width: 68.75rem; }
+  .article-wide { max-width: var(--article-comparison-width); }
   .article-reading { max-width: var(--cyph-layout-reading); }
   .article-hero { padding-top: clamp(10rem, 14vw, 12rem); padding-bottom: var(--cyph-layout-section-compact); }
-  .article-hero h1 { max-width: 15ch; margin: var(--cyph-space-4) 0 var(--cyph-space-6); font-size: clamp(2.4rem, 5.7vw, 4.9rem); line-height: 1.08; }
+  .article-hero-intro { display: grid; gap: var(--cyph-layout-cluster); align-items: start; }
+  .article-hero-intro > * { min-width: 0; }
+  .article-hero h1 { max-width: 16ch; margin: 0; font-size: clamp(2.15rem, 4.4vw, 3.5rem); line-height: var(--cyph-leading-heading); }
+  .article-hero h1 span { display: block; color: var(--cyph-accent-highlight); }
+  .article-hero-summary .lede { margin: 0; }
   .article-meta { margin-top: var(--cyph-space-6); color: var(--cyph-text-secondary); font-size: .875rem; }
+  .comparison-link { display: inline-flex; min-height: 2.75rem; align-items: center; gap: var(--cyph-space-4); color: var(--cyph-accent-highlight); font-size: .875rem; text-underline-offset: var(--cyph-space-1); }
+  .technology-visuals { display: grid; gap: var(--cyph-space-8); margin-top: var(--cyph-space-12); }
+  .technology-visual { min-width: 0; margin: 0; }
+  .technology-visual img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; background: var(--cyph-surface-raised); }
+  .technology-visual figcaption { padding-block: var(--cyph-space-6); border-bottom: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .technology-label { margin: 0 0 var(--cyph-space-3); color: var(--cyph-accent-primary); font-size: .75rem; font-weight: var(--cyph-font-weight-semibold); letter-spacing: var(--cyph-tracking-label); text-transform: uppercase; }
+  .technology-visual figcaption h2 { font-size: clamp(1.05rem, 1.7vw, 1.4rem); line-height: var(--cyph-leading-heading); }
+  .technology-visual figcaption > p:last-child { margin: var(--cyph-space-3) 0 0; color: var(--cyph-text-secondary); font-size: .95rem; }
+  .photography-note { max-width: var(--cyph-layout-reading); margin: var(--cyph-space-6) 0 0; color: var(--cyph-text-secondary); font-size: .8rem; }
   .article-section { padding-block: clamp(2.75rem, 5.5vw, 4.75rem); }
   .article-page h2 { max-width: 22ch; font-size: clamp(1.6rem, 3.1vw, 2.7rem); line-height: 1.16; }
   .article-copy > h2 { margin-top: var(--cyph-space-8); }
@@ -161,15 +212,20 @@ const structuredData = {
   .article-sources li + li { margin-top: var(--cyph-space-3); }
   .related-link { margin-top: var(--cyph-space-5); }
   .article-cta { padding-block: clamp(3rem, 6vw, 5.5rem); border-top: var(--cyph-line-structural) solid var(--cyph-border-structural); }
-  .comparison-scroll { max-width: 100%; overflow-x: auto; margin-top: var(--cyph-space-8); }
-  .technology-table { border-collapse: collapse; width: 100%; min-width: 32rem; text-align: left; }
+  .comparison-hint { color: var(--cyph-text-secondary); font-size: .85rem; }
+  .comparison-scroll { max-width: 100%; overflow-x: auto; margin-top: var(--cyph-space-6); }
+  .technology-table { border-collapse: collapse; width: 100%; min-width: 38rem; text-align: left; }
   .technology-table caption { text-align: left; color: var(--cyph-text-secondary); font-size: .85rem; padding-bottom: var(--cyph-space-3); }
-  .technology-table th, .technology-table td { padding: var(--cyph-space-4); vertical-align: top; border-bottom: 1px solid var(--cyph-border-structural); }
-  .technology-table thead th { border-top: 1px solid var(--cyph-accent-primary); color: var(--cyph-accent-highlight); }
-  .technology-table tbody th { font-weight: 600; }
-  .table-note { font-size: .95rem; color: var(--cyph-text-secondary); }
+  .technology-table th, .technology-table td { padding: var(--cyph-space-6) var(--cyph-space-4); vertical-align: top; border-bottom: var(--cyph-line-structural) solid var(--cyph-border-structural); }
+  .technology-table thead th { border-top: var(--cyph-line-emphasis) solid var(--cyph-accent-primary); color: var(--cyph-accent-highlight); background: var(--cyph-surface-raised); }
+  .technology-table tr > :first-child { width: 24%; }
+  .technology-table tr > :not(:first-child) { width: 38%; }
+  .technology-table tbody th { font-weight: var(--cyph-font-weight-semibold); }
+  .table-note { max-width: var(--cyph-layout-reading); font-size: .95rem; color: var(--cyph-text-secondary); }
   [data-reveal].is-visible { animation: cyph-heading-reveal 680ms var(--cyph-ease-standard) both; }
   @keyframes cyph-heading-reveal { from {opacity:.12;transform:translateY(.34em);filter:blur(3px)} to {opacity:1;transform:translateY(0);filter:blur(0)} }
   @media(max-width:47.99rem) { .article-hero { padding-top: 10.75rem; padding-bottom: var(--cyph-space-12); } .article-hero h1 { font-size: clamp(2.15rem, 11vw, 3.25rem); } .article-section { padding-block: var(--cyph-space-12); } }
+  @media(min-width:48rem) { .article-hero-intro { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } .technology-visuals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media(min-width:68.75rem) { .comparison-hint { display: none; } .comparison-scroll { margin-top: var(--cyph-space-8); } }
   @media(prefers-reduced-motion:reduce) { [data-reveal] { opacity:1;transform:none;animation:none!important;filter:none; } }
 </style>
