@@ -189,6 +189,9 @@ jobs:
       - name: Build proposed site
         run: npm run build
 
+      - name: Test IPL, shaving and waxing guide
+        run: node --test scripts/test-ipl-vs-shaving-waxing.mjs
+
       - name: Run accessibility audit
         run: node scripts/audit-accessibility.mjs
 
