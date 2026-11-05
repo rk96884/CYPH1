@@ -1,0 +1,223 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "How to prepare for at-home IPL and care for your skin afterwards",
+  description: "General guidance for preparing skin for home IPL, patch testing, sun exposure, aftercare and checking skin-tone compatibility.",
+  datePublished: "2026-11-05",
+  dateModified: "2026-11-05",
+  inLanguage: "en-GB",
+  author: { "@type": "Organization", name: "CYPH/1" },
+  publisher: { "@type": "Organization", name: "CYPH/1" },
+};
+---
+<BaseLayout
+  title="How to Prepare for IPL & Aftercare | CYPH/1"
+  description="A practical guide to at-home IPL preparation and aftercare, including shaving, patch tests, sun exposure and skin-tone compatibility."
+  structuredData={structuredData}
+>
+  <Header />
+  <main id="main" class="article-page">
+    <article>
+      <header class="article-hero section">
+        <div class="container article-wide">
+          <p class="eyebrow">Know the technology · Before &amp; after IPL</p>
+          <div class="hero-intro">
+            <h1>Prepare your skin.<br/><span>Care for it afterwards.</span></h1>
+            <div class="hero-lede">
+              <p class="lede">Thoughtful preparation and aftercare are part of an informed IPL routine. Understand the essentials before using a home device, then know what to watch for afterwards.</p>
+              <p class="article-meta">Published <time datetime="2026-11-05">5 November 2026</time> · General educational content</p>
+              <a class="jump-link" href="#before-heading">Start with preparation <span aria-hidden="true">↓</span></a>
+            </div>
+          </div>
+          <div class="guide-route" aria-label="Guide sections">
+            <a href="#before-heading"><span>01</span> Before treatment</a>
+            <a href="#during-heading"><span>02</span> During treatment</a>
+            <a href="#after-heading"><span>03</span> Aftercare</a>
+            <a href="#compatibility-heading"><span>04</span> Suitability</a>
+          </div>
+        </div>
+      </header>
+
+      <section class="section article-section" aria-labelledby="before-heading">
+        <div class="container article-wide">
+          <p class="section-index">01 / Before treatment</p>
+          <h2 id="before-heading">Prepare before you flash.</h2>
+          <div class="step-grid">
+            <article class="step-card"><span class="step-number">01</span><h3>Check suitability first.</h3><p>Confirm that your natural hair colour, current skin tone, treatment area and health circumstances are compatible with your particular IPL device. A tan can change suitability. Check the device's full contraindications.</p></article>
+            <article class="step-card"><span class="step-number">02</span><h3>Follow the patch-test instructions.</h3><p>Before first use on an area, follow the manufacturer's skin-test process and the specified observation period. Do not copy the settings or waiting times from a different IPL brand.</p></article>
+            <article class="step-card"><span class="step-number">03</span><h3>Remove visible surface hair.</h3><p>Shaving is a common preparation step for home IPL. Use the method and timing specified for your device, allowing any shaving irritation to settle. Waxing and plucking rules differ between devices; do not assume they are suitable preparation for CYPH/1.</p></article>
+            <article class="step-card"><span class="step-number">04</span><h3>Start with clean, dry skin.</h3><p>Ensure the area is dry and free from products such as oils, creams, deodorant and make-up, unless the device's instructions say otherwise. Avoid numbing creams and do not treat broken, irritated or sunburned skin.</p></article>
+          </div>
+          <div class="article-note"><strong>Plan around sun exposure.</strong> Recently tanned skin can absorb IPL energy differently. Avoid tanning and follow the exact sun-exposure and self-tanning restrictions in your device's instructions; there is no universal waiting period for every home IPL product.</div>
+        </div>
+      </section>
+
+      <section class="section article-section contrast-section" aria-labelledby="during-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">02 / During treatment</p>
+          <h2 id="during-heading">Use the device as intended.</h2>
+          <p>Follow the supplied instructions for safe treatment areas, settings, skin contact, flash technique, eye protection and treatment frequency. Avoid repeated flashes over the same spot unless the manufacturer specifically directs otherwise. Never infer that a higher setting or a stronger sensation means better results.</p>
+          <p>CYPH/1's selected K-803 device has an integrated cooling contact window, but cooling does not remove the need to follow the appropriate safety settings. <a href={withBase("learn/does-ipl-hurt-ice-cooling/")}>Learn how IPL sensation and cooling relate</a>.</p>
+          <p>Stop if you experience unusual burning, significant pain or a concerning reaction. Do not continue simply because the area feels cool.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="after-heading">
+        <div class="container article-wide">
+          <p class="section-index">03 / After treatment</p>
+          <div class="aftercare-intro">
+            <div>
+              <h2 id="after-heading">Give your skin time to settle.</h2>
+              <p>Aftercare should be gentle and guided by your device instructions and your skin's response.</p>
+            </div>
+            <figure class="aftercare-photo">
+              <img src={withBase("brand/editorial/soothing-aloe-post-ipl-man.webp")} width="1280" height="1920" loading="lazy" decoding="async" alt="Man gently applying soothing skincare to his skin in a bright, relaxed setting." />
+            </figure>
+          </div>
+          <div class="after-grid">
+            <div><h3>Be gentle with the treated area.</h3><p>Mild, short-lived warmth, redness or prickling can occur. Avoid scratching or vigorous friction. If your skin is sensitive, pause harsh exfoliants, strongly fragranced products, very hot baths or saunas until it has recovered, and follow the manufacturer's aftercare directions.</p></div>
+            <div><h3>Protect against sun exposure.</h3><p>Treated skin may be more sensitive to sunlight. Limit direct sun exposure and use protective clothing and appropriate broad-spectrum sunscreen when outdoors. Follow your device's specific before-and-after sun precautions, rather than adopting another brand's fixed number of days.</p></div>
+            <div><h3>Know when to stop and seek advice.</h3><p>Persistent or worsening redness, blistering, burns, marked swelling or pigmentation changes are not expected routine effects. Stop treatment and consult a healthcare professional. Get urgent medical assessment for serious burns or eye symptoms.</p></div>
+          </div>
+          <aside class="article-note safety-note"><strong>Important.</strong> This page is educational, not a substitute for the final CYPH/1 K-803 user manual or personalised medical advice. No treatment interval, patch-test duration or tanning wait time is specified here as a CYPH/1 instruction.</aside>
+        </div>
+      </section>
+
+      <section class="section article-section compatibility-section" aria-labelledby="compatibility-heading">
+        <div class="container article-wide">
+          <p class="section-index">04 / Skin tone &amp; hair colour</p>
+          <div class="compatibility-layout">
+            <div>
+              <h2 id="compatibility-heading">Is IPL suitable for your skin?</h2>
+              <p>IPL relies on how light is absorbed by pigment. Both <strong>skin tone and natural hair colour</strong> matter. Darker skin can absorb more light energy, while very light, red, grey or white hair may respond differently because it contains less of the target pigment.</p>
+              <p>Skin-type scales, including the Fitzpatrick classification, are useful background information — but a generic skin-type chart cannot replace the specific device's compatibility and safety instructions. Assess the skin tone of the area at the time you intend to treat it.</p>
+              <a class="compatibility-link" href={withBase("ipl-hair-removal/#compatibility-guide")}>View the CYPH/1 skin-tone &amp; hair-colour chart <span aria-hidden="true">→</span></a>
+            </div>
+            <aside class="compatibility-aside">
+              <span class="aside-symbol" aria-hidden="true">◌</span>
+              <p class="aside-heading">Your skin can change.</p>
+              <p>Tanning, sun exposure, irritation and some medicines can affect suitability. Always recheck the manufacturer's guidance if anything changes.</p>
+              <p class="aside-small">The chart uses illustrative swatches and labelled colour categories, not a diagnosis of your Fitzpatrick type.</p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="section article-section faq-section" aria-labelledby="faq-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">05 / Common questions</p>
+          <h2 id="faq-heading">Questions before you begin.</h2>
+          <h3>Should I shave before IPL?</h3>
+          <p>Removing visible hair at the skin surface is a common preparation step. Follow the device-specific advice and avoid treating freshly irritated skin.</p>
+          <h3>Can I apply moisturiser immediately afterwards?</h3>
+          <p>Aftercare depends on how your skin responds and on the product used. Let sensitive skin settle, avoid irritating ingredients, and follow the IPL manufacturer and skincare product instructions.</p>
+          <h3>Can I use IPL on recently tanned skin?</h3>
+          <p>Do not assume so. Tanning may change your skin tone and IPL suitability. Check the manufacturer's restrictions and repeat any required skin test before resuming.</p>
+          <h3>Does cooling mean I can skip aftercare?</h3>
+          <p>No. Cooling is a comfort feature, not a substitute for safe settings, suitable skin and hair types, sun precautions or aftercare.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="reading-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">06 / Keep learning</p>
+          <h2 id="reading-heading">Make an informed choice.</h2>
+          <p class="related-link"><a href={withBase("learn/does-ipl-hurt-ice-cooling/")}>Does IPL hurt? Ice cooling explained <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/ipl-vs-shaving-vs-waxing/")}>IPL vs shaving and waxing <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Why IPL consistency matters <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("ipl-hair-removal/")}>Explore the CYPH/1 device (pre-launch) <span aria-hidden="true">→</span></a></p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="sources-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">07 / Sources</p>
+          <h2 id="sources-heading">Further reading.</h2>
+          <p>The manufacturer links below describe other home IPL devices, not verified K-803 treatment instructions. They support the general preparation and aftercare principles explained above.</p>
+          <ul class="article-sources">
+            <li><a href="https://acc.philips.co.uk/c-f/XC000021834/how-do-i-prepare-for-a-philips-lumea-treatment" target="_blank" rel="noopener noreferrer">Philips — Preparing for a Lumea treatment</a></li>
+            <li><a href="https://www.philips.co.uk/c-e/pe/lumea-try-and-buy/post-treatment-advisor.html.nohf" target="_blank" rel="noopener noreferrer">Philips — Post-Lumea care</a></li>
+            <li><a href="https://uk.braun.com/en-gb/female-hair-removal/hair-removal-for-women/right-hair-removal-device-for-your-skin-tone" target="_blank" rel="noopener noreferrer">Braun — Skin-tone and hair-colour compatibility</a></li>
+            <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-0" target="_blank" rel="noopener noreferrer">ARPANSA — IPL and laser safety</a></li>
+          </ul>
+        </div>
+      </section>
+      <section class="section article-cta">
+        <div class="container article-reading">
+          <p class="eyebrow">Cycle. Phase. One.</p>
+          <h2>Know the technology. Prepare with care.</h2>
+          <p>Discover the CYPH/1 device and follow our launch journey. Early access is not a pre-order.</p>
+          <a class="button" href={withBase("ipl-hair-removal/")}>Explore CYPH/1</a>
+        </div>
+      </section>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+<style>
+  .article-wide { max-width:68.75rem; }
+  .article-reading { max-width:var(--cyph-layout-reading); }
+  .article-hero { padding-top:clamp(10rem,14vw,12rem); padding-bottom:clamp(2.75rem,6vw,5rem); background:radial-gradient(circle at 82% 20%,rgb(167 122 244 / .13),transparent 43%); }
+  .hero-intro { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr); gap:clamp(1.5rem,4vw,4rem); align-items:start; }
+  .hero-intro > * { min-width:0; }
+  .article-hero h1 { margin:0; font-size:clamp(2.1rem,4.2vw,3.5rem); line-height:1.14; max-width:20ch; overflow-wrap:anywhere; }
+  .article-hero h1 span { color:var(--cyph-accent-highlight); }
+  .hero-lede .lede { margin:0; }
+  .article-meta { margin-top:var(--cyph-space-6); font-size:.85rem; color:var(--cyph-text-secondary); }
+  .jump-link { display:inline-flex; align-items:center; min-height:2.75rem; color:var(--cyph-accent-highlight); text-underline-offset:.22em; }
+  .guide-route { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.6rem; margin-top:clamp(2.5rem,6vw,4.5rem); }
+  .guide-route a { display:flex; gap:.7rem; align-items:center; min-width:0; padding:1rem; border-top:2px solid var(--cyph-border-structural); background:var(--cyph-surface-raised); color:var(--cyph-text-primary); font-size:.85rem; text-decoration:none; }
+  .guide-route a span { color:var(--cyph-accent-highlight); }
+  .guide-route a:hover { border-top-color:var(--cyph-accent-primary); }
+  .article-section { padding-block:clamp(2.75rem,5vw,4.5rem); }
+  .article-page h2 { max-width:24ch; font-size:clamp(1.6rem,3vw,2.6rem); line-height:1.2; overflow-wrap:anywhere; }
+  .article-copy > h2 { margin-top:var(--cyph-space-5); }
+  .article-copy > h2 + p,.article-copy > p + p { margin-top:var(--cyph-space-4); }
+  .step-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--cyph-space-6); margin-top:var(--cyph-space-8); }
+  .step-card { min-width:0; border-top:2px solid var(--cyph-accent-primary); padding:clamp(1.25rem,3vw,2rem); background:var(--cyph-surface-raised); }
+  .step-number { color:var(--cyph-accent-highlight); font-size:.76rem; }
+  .step-card h3 { font-size:clamp(1.15rem,2vw,1.4rem); margin:var(--cyph-space-5) 0 var(--cyph-space-3); }
+  .step-card p,.after-grid p { line-height:1.7; color:var(--cyph-text-secondary); }
+  .article-note { margin-top:var(--cyph-space-8); padding:1.35rem 1.5rem; border-left:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); line-height:1.7; color:var(--cyph-text-secondary); }
+  .article-note strong { color:var(--cyph-text-primary); }
+  .contrast-section { background:linear-gradient(135deg,#17101f,#23162d 63%,#130e1b); }
+  .aftercare-intro { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.65fr); gap:clamp(1.5rem,4vw,3.5rem); align-items:center; margin-top:var(--cyph-space-5); }
+  .aftercare-intro > div p { max-width:40ch; margin-top:var(--cyph-space-4); line-height:1.7; color:var(--cyph-text-secondary); }
+  .aftercare-photo { margin:0; max-width:16rem; justify-self:end; overflow:hidden; border:1px solid var(--cyph-border-structural); }
+  .aftercare-photo img { display:block; width:100%; height:auto; }
+  .after-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--cyph-space-6); margin-top:var(--cyph-space-8); }
+  .after-grid > div { min-width:0; padding-top:var(--cyph-space-5); border-top:1px solid var(--cyph-border-structural); }
+  .after-grid h3 { font-size:1.2rem; line-height:1.3; overflow-wrap:anywhere; }
+  .compatibility-section { background:radial-gradient(circle at 10% 25%,rgb(167 122 244 / .14),transparent 46%),var(--cyph-surface-emphasis); }
+  .compatibility-layout { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr); gap:clamp(1.5rem,4vw,3.5rem); align-items:start; }
+  .compatibility-layout > * { min-width:0; }
+  .compatibility-layout p { line-height:1.7; }
+  .compatibility-link { display:inline-flex; align-items:center; gap:.8rem; min-height:3rem; margin-top:1rem; color:var(--cyph-accent-highlight); font-weight:600; text-underline-offset:.23em; }
+  .compatibility-aside { padding:clamp(1.35rem,3vw,2rem); border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); }
+  .aside-symbol { font-size:3rem; line-height:1; color:var(--cyph-accent-highlight); }
+  .aside-heading { font-size:1.2rem; font-weight:600; color:var(--cyph-text-primary); }
+  .aside-small { font-size:.83rem; color:var(--cyph-text-secondary); }
+  .faq-section { background:linear-gradient(135deg,#17101f,#100b17); }
+  .faq-section h3 { font-size:1.12rem; margin-top:1.75rem; }
+  .related-link { margin-top:var(--cyph-space-5); }
+  .article-sources { padding-left:1.25rem; }
+  .article-sources li + li { margin-top:var(--cyph-space-3); }
+  .article-cta { padding-block:clamp(3rem,6vw,5.5rem); border-top:1px solid var(--cyph-border-structural); }
+  @media(max-width:47.99rem) {
+    .article-hero { padding-top:10.75rem; }
+    .hero-intro,.compatibility-layout,.step-grid,.after-grid,.aftercare-intro { grid-template-columns:1fr; }
+    .aftercare-photo { max-width:14rem; justify-self:start; }
+    .article-hero h1 { font-size:clamp(1.7rem,7.2vw,2.65rem); max-width:100%; }
+    .article-page h2 { font-size:clamp(1.4rem,5.8vw,1.95rem); max-width:100%; }
+    .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
+    .guide-route { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media(max-width:360px) { .guide-route { grid-template-columns:1fr; } }
+  @media(prefers-reduced-motion:reduce) { .guide-route a { transition:none; } }
+</style>
