@@ -68,10 +68,10 @@ import { learningArticles } from "../data/learning-articles";
   .learn-drawer h2 { font-size:clamp(1.8rem,4vw,2.4rem); margin:1.5rem 0 .5rem; }
   .drawer-intro { color:var(--cyph-text-secondary); margin:0 0 1.5rem; line-height:1.6; }
   .site-header ~ .learn-drawer nav.drawer-articles, .learn-drawer nav.drawer-articles { display:flex; flex-direction:column; gap:0; }
-  .drawer-articles a { display:grid; grid-template-columns:2rem minmax(0,1fr) 1rem; gap:1rem; align-items:center; min-height:4.5rem; border-top:1px solid var(--cyph-border-structural); text-decoration:none; }
+  .drawer-articles a { display:grid; grid-template-columns:2rem minmax(0,1fr) 1rem; gap:1rem; align-items:center; min-height:4.5rem; padding-block:.85rem; border-top:1px solid var(--cyph-border-structural); text-decoration:none; }
   .drawer-articles a:last-child { border-bottom:1px solid var(--cyph-border-structural); }
   .drawer-entry { display:grid; gap:.25rem; }
-  .drawer-entry strong { font-size:.94rem; font-weight:600; }
+  .drawer-entry strong { font-size:.94rem; font-weight:600; line-height:1.35; }
   .drawer-entry small { font-size:.75rem; color:var(--cyph-text-secondary); }
   .drawer-articles a:hover .drawer-entry strong { color:var(--cyph-accent-highlight); }
   .drawer-all { display:flex; align-items:center; justify-content:space-between; gap:1rem; min-height:3rem; margin-top:1.5rem; padding:.8rem 1rem; background:var(--cyph-accent-primary); color:var(--cyph-text-on-light); text-decoration:none; font-weight:600; }
