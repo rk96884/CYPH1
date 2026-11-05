@@ -71,7 +71,15 @@ const structuredData = {
       <section class="section article-section" aria-labelledby="after-heading">
         <div class="container article-wide">
           <p class="section-index">03 / After treatment</p>
-          <h2 id="after-heading">Give your skin time to settle.</h2>
+          <div class="aftercare-intro">
+            <div>
+              <h2 id="after-heading">Give your skin time to settle.</h2>
+              <p>Aftercare should be gentle and guided by your device instructions and your skin's response.</p>
+            </div>
+            <figure class="aftercare-photo">
+              <img src={withBase("brand/editorial/soothing-aloe-post-ipl-man.webp")} width="1280" height="1920" loading="lazy" decoding="async" alt="Man gently applying soothing skincare to his skin in a bright, relaxed setting." />
+            </figure>
+          </div>
           <div class="after-grid">
             <div><h3>Be gentle with the treated area.</h3><p>Mild, short-lived warmth, redness or prickling can occur. Avoid scratching or vigorous friction. If your skin is sensitive, pause harsh exfoliants, strongly fragranced products, very hot baths or saunas until it has recovered, and follow the manufacturer's aftercare directions.</p></div>
             <div><h3>Protect against sun exposure.</h3><p>Treated skin may be more sensitive to sunlight. Limit direct sun exposure and use protective clothing and appropriate broad-spectrum sunscreen when outdoors. Follow your device's specific before-and-after sun precautions, rather than adopting another brand's fixed number of days.</p></div>
@@ -179,6 +187,10 @@ const structuredData = {
   .article-note { margin-top:var(--cyph-space-8); padding:1.35rem 1.5rem; border-left:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); line-height:1.7; color:var(--cyph-text-secondary); }
   .article-note strong { color:var(--cyph-text-primary); }
   .contrast-section { background:linear-gradient(135deg,#17101f,#23162d 63%,#130e1b); }
+  .aftercare-intro { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.65fr); gap:clamp(1.5rem,4vw,3.5rem); align-items:center; margin-top:var(--cyph-space-5); }
+  .aftercare-intro > div p { max-width:40ch; margin-top:var(--cyph-space-4); line-height:1.7; color:var(--cyph-text-secondary); }
+  .aftercare-photo { margin:0; max-width:16rem; justify-self:end; overflow:hidden; border:1px solid var(--cyph-border-structural); }
+  .aftercare-photo img { display:block; width:100%; height:auto; }
   .after-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--cyph-space-6); margin-top:var(--cyph-space-8); }
   .after-grid > div { min-width:0; padding-top:var(--cyph-space-5); border-top:1px solid var(--cyph-border-structural); }
   .after-grid h3 { font-size:1.2rem; line-height:1.3; overflow-wrap:anywhere; }
@@ -199,7 +211,8 @@ const structuredData = {
   .article-cta { padding-block:clamp(3rem,6vw,5.5rem); border-top:1px solid var(--cyph-border-structural); }
   @media(max-width:47.99rem) {
     .article-hero { padding-top:10.75rem; }
-    .hero-intro,.compatibility-layout,.step-grid,.after-grid { grid-template-columns:1fr; }
+    .hero-intro,.compatibility-layout,.step-grid,.after-grid,.aftercare-intro { grid-template-columns:1fr; }
+    .aftercare-photo { max-width:14rem; justify-self:start; }
     .article-hero h1 { font-size:clamp(1.7rem,7.2vw,2.65rem); max-width:100%; }
     .article-page h2 { font-size:clamp(1.4rem,5.8vw,1.95rem); max-width:100%; }
     .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
