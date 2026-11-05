@@ -21,11 +21,27 @@ The existing creator-oriented Growth Intelligence score must **not** be silently
 | **Capital Hair & Beauty** | Major independent trade distributor to professional hair/beauty customers with more than 60 UK/Ireland stores. | [Corporate and trade site](https://www.capitalhairandbeauty.co.uk/) | **Conditional.** No verified new-brand application for home-use IPL; likely a slower wholesale/pro-trade prospect. |
 | **WaxStore UK** | Hair-removal supply distributor to salons and home users, specialising in ItalWax depilation products. | [About WaxStore](https://waxstore.co.uk/about-us/) | **Lower priority.** Category adjacency is clear but competing waxing focus may weaken fit. [Wholesaler registration](https://waxstore.co.uk/wholesaler-registration/) is for resellers of *its* brands, not a supplier intake for CYPH/1. |
 
+## IONKA K-803 landed-cost evidence and modelling baseline
+
+The previous CYPH/1 purchase discussion and cost tracker `CYPH1_K803_Shipping_and_Cost_Tracker_2026-10-12.xlsx` recorded the following. These are historic purchase/quotation values, **not fresh supplier offers**.
+
+| Basis | Cost per K-803 | Evidence status |
+| --- | ---: | --- |
+| Alibaba 20-unit order, before coupon | **£24.78** | Underlying landed acquisition baseline |
+| Alibaba 20-unit order, £477.21 paid after coupon | **£23.86** | Actual discounted cash cost / unit |
+| 36-unit quote, DDP sea | £22.61 | Proposed, not placed |
+| 36-unit quote, DDP truck | £24.29 | Proposed, not placed |
+| 36-unit quote, DDP air | £26.91 | Proposed, not placed |
+
+The actual 20-unit order included shipping, engraving and processing charges; the buyer previously confirmed import VAT was included in the Alibaba order and is an unrecovered cost for the business while not VAT-registered. DDP quoted costs are estimates with their original exchange-rate assumptions and should be reconfirmed before ordering.
+
+**Modelling baseline: £24.78 per unit** until a new landed supplier invoice/quote replaces it. At the intended £74.99 retail price, product-price less acquisition baseline is **£50.21 per unit before selling fees, fulfilment, delivery subsidies, returns, warranty, marketing, tax and other costs**. At an illustrative 12% partner commission (£9.00, rounded), the balance becomes **£41.21 before those costs**. These figures are not net margin or net profit, and partner contracts/VAT treatment may change the calculation.
+
 ## Readiness and economics
 
 **Product gate:** Before any retailer onboarding or commercial claims, confirm UK conformity evidence applicable to the final K-803 configuration, approved user instructions, labels, warranty/returns, insured responsibilities, available stock, product imagery, fulfilment reliability and final pricing. Supplier interest is not a substitute for these checks.
 
-**Margin gate:** Model on the intended £74.99 retail price with VAT position, verified landed cost, postage and fulfilment, payment fees, refunds/warranty reserve, marketing/affiliate commission and seller fees. Do not invent wholesale margin or forecast sales. A small direct-fulfilment/referral pilot could be operationally more practical than wholesale, but still requires economics and explicit acceptance.
+**Margin gate:** Model on the intended £74.99 retail price using the conservative £24.78 historical landed baseline, reconfirmed VAT position, postage and fulfilment, payment fees, refunds/warranty reserve, marketing/affiliate commission and seller fees. Do not invent wholesale margin or forecast sales. A small direct-fulfilment/referral pilot could be operationally more practical than wholesale, but still requires economics and explicit acceptance.
 
 **Illustrative commission only:** Dripscan's published 12% applied to £74.99 is £9.00 per order (rounded), *before* considering tax treatment, any other fees, fulfilment, returns or settlement rules. It is not confirmed net cost or profitability.
 
