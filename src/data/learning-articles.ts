@@ -34,4 +34,11 @@ export const learningArticles = [
     description: "What IPL may feel like and the purpose of cooling technology.",
     number: "05",
   },
+  {
+    href: "learn/how-to-prepare-for-ipl-aftercare/",
+    title: "How to Prepare for IPL & Aftercare",
+    category: "Before & after",
+    description: "Skin preparation, patch testing, aftercare and when to check skin-tone suitability.",
+    number: "06",
+  },
 ] as const;
