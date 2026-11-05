@@ -53,6 +53,38 @@ The actual 20-unit order included shipping, engraving and processing charges; th
 - Professional laser providers and wax suppliers may perceive at-home IPL as competitive. Do not assume they will refer buyers.
 - Do not load candidates into development Growth storage until an Agent C-specific schema/approval workflow and deduplication are reviewed.
 
+## Phase 2A — Cost-to-serve evidence audit (5 November 2026)
+
+This audit distinguishes published/configured **customer charges** from actual costs CYPH/1 pays. The available evidence does **not** yet support a complete net-profit figure or a maximum affordable partner commission.
+
+| Component | Recorded figure or policy | Evidence/qualification | Status for Agent C |
+| --- | --- | --- | --- |
+| K-803 purchase | £24.78 conservative historical landed per-device cost; £23.86 after one-off coupon | Earlier 20-unit Alibaba cost tracker and order discussion, as recorded above | Use £24.78 conservative baseline; reconfirm new-order pricing |
+| Single-device UK InPost locker/shop **customer charge** | £2.59 | 14 October 2026 read-only shipping-config export, `Pasted text(20261014-095139).txt`; rates were **disabled** at inspection | Customer revenue assumption only, **not verified purchased postage cost** |
+| Single-device UK tracked postage **customer charge** | £3.99 | Same shipping-config export; rates were **disabled** at inspection | Customer revenue assumption only, **not carrier cost** |
+| UK multi-unit shipping customer charges | InPost £3.99 for 3 devices; tracked £7.99 for 2–3 devices in staged shipping plans | Earlier launch shipping configuration/discussion; confirm currently configured quantity bands and carrier invoice | Not relevant to one-device model; not verified carrier expense |
+| Packaging | Packaging/weight safeguards exist in commerce tests | No receipt, per-order packaging purchase cost or approved packed unit cost established in available evidence | **Unknown**; do not assume £0 |
+| Mollie processing fee | Live Mollie account/integration exists | No verified signed/current merchant rate per applicable UK payment method or captured fee statement located in searched materials | **Unknown**; use transaction export or Mollie merchant fee schedule before modelling |
+| Warranty | Published **12-month manufacturer's warranty**, additional to statutory rights | `src/pages/returns.astro`; manufacturer quality faults may be replaced; no evidenced rate or £ reserve | Policy verified; **financial reserve unknown** |
+| Returns and refunds | Published cancellation/refund policy, including statutory standard-delivery reimbursement where required | `src/pages/returns.astro` | Policy verified; cost incidence/return rate/return carrier expense **unknown** |
+| VAT | Earlier buyer statement: company is not VAT registered and imported VAT included in Alibaba cost; product's commerce draft tax code was `PENDING_TAX_CLASSIFICATION` | Historical discussion and `cyph1_k803_draft_product.sql` | **Reconfirm registration and final tax/pricing treatment** before launch or partner deal |
+
+### Calculation framework, rather than invented net profit
+
+**Scenario A — CYPH/1 remains merchant of record, collects £74.99 plus separately charged shipping:**
+
+`Contribution before overheads = £74.99 + customer shipping collected − £24.78 − partner commission − actual carrier label − packaging − Mollie fee − expected refunds/returns/warranty cost − other per-order costs.`
+
+If commission is 12% of **product price only**, it is £9.00 rounded, leaving **£41.21 + collected shipping** before all unverified carrier, packing, payment and support costs. For the recorded single-device UK shipping tiers:
+- InPost locker/shop: £43.80 *before* actual carriage, packaging, payment processing, returns, warranties and taxes;
+- Tracked postage: £45.20 *before* those same costs.
+
+Neither amount is profit. **Do not subtract the £2.59 or £3.99 customer shipping rate as if it were a verified carrier invoice**. InPost eligibility and booking service readiness must be checked before using its rate operationally.
+
+**Scenario B — retail partner is merchant of record:** Partner may collect the entire retail and shipping payment, remit a negotiated wholesale or settlement amount to CYPH/1 and incur payment fees instead. The CYPH/1 formula above does **not** apply without the agreement's exact money flow, VAT and returns responsibilities. This is particularly relevant to Belantti's retailer/partner-fulfilled model.
+
+**Commission decision:** 10–15% is a *negotiation hypothesis*, not an approved ceiling. Do not set an actual maximum commission before a priced carrier label, packaging receipt/cost, applicable Mollie fee and an explicit warranty/returns reserve have been confirmed.
+
 ## Phase 2 — Verified partner qualification (5 November 2026)
 
 ### Finding 1: Belantti — strongest first pilot candidate (conditional)
