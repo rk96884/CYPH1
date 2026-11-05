@@ -110,6 +110,35 @@ Price £74.99; landed device £24.78; packaging £0.30; **1.3% variable Mollie f
 
 **Important corrections:** Earlier scenario tables above show the balance *before* packaging and payment fees. They are superseded by this working model for owner planning. Any real partner commission cap still requires exact Mollie tariff, actual delivery-label cost, return and warranty provision, VAT position and agreed money flow. No figures here constitute guaranteed profit.
 
+## Phase 2C — Mollie UK online payment fees verified against public pricing (5 November 2026)
+
+**Primary source:** https://www.mollie.com/gb/pricing (checked 5 November 2026). These are standard public **online** payment fees, not CYPH/1 account-specific negotiated rates. Mollie's terms say fees shown in the merchant dashboard take priority where applicable.
+
+| Payment method | Published standard rate |
+| --- | --- |
+| UK domestic consumer Visa/Mastercard | **1.20% of total payment + £0.20** |
+| UK domestic commercial and European Visa/Mastercard | **2.90% + £0.20** |
+| Other Visa/Mastercard | **3.25% + £0.20** |
+| UK domestic American Express | **2.50% + £0.20** |
+| Apple Pay / Google Pay | Rate of underlying card |
+| Klarna UK/Ireland | **4.99% + £0.30** |
+
+**Important VAT assumption:** Mollie states that its published rates are exclusive of VAT and that 20% VAT applies to applicable fees for UK customers contracted with Mollie UK. Check the CYPH/1 Mollie account's invoices and actual fee breakdown to confirm whether it applies to the relevant method and account. For a non-VAT-registered merchant, VAT actually charged on fees would be an unrecoverable cost. Sources: https://help.mollie.com/hc/en-gb/articles/20392408185234-What-are-the-costs-on-my-Invoice and https://help.mollie.com/hc/en-us/articles/9240965652114-What-is-VAT-and-how-does-it-affect-my-transactions .
+
+### Revised 12% partner commission scenario — UK consumer Visa/Mastercard
+
+Assume one device sold for £74.99, historical landed acquisition £24.78, packaging £0.30, 12% product-price commission (£9.00 rounded), customer pays checkout shipping, carrier/label expense exactly equals collected delivery charge, and the standard Mollie rate applies to the **entire captured total** including shipping. The illustrative model includes 20% VAT on Mollie's fee as a conservative assumption. No warranty/returns reserve or other overheads is included.
+
+| Scenario | Amount captured | Mollie 1.2% + £0.20 before fee VAT | Mollie with assumed 20% fee VAT | Remaining after device, packaging, 12% commission and Mollie, before other costs |
+| --- | ---: | ---: | ---: | ---: |
+| Product only, for reference | £74.99 | £1.10 | £1.32 | **£39.59** |
+| InPost, £2.59 customer delivery | £77.58 | £1.13 | £1.36 | **£39.55** |
+| Tracked, £3.99 customer delivery | £78.98 | £1.15 | £1.38 | **£39.53** |
+
+**Payment method sensitivity, InPost £77.58 captured (assuming 20% fee VAT):** UK domestic commercial/European card about £2.94 payment fee and £37.97 contribution; other international card £3.27 / £37.65; UK Amex £2.57 / £38.34; UK Klarna £5.01 / £35.91. Actual enabled payment methods must be checked.
+
+**Supersession:** The earlier 1.3%-only illustration in Phase 2B is now **superseded** by the verified published 1.2% + £0.20 UK consumer card rate and the VAT sensitivity above. Merchant-specific contract terms, the customer's card type, VAT applicability and possible additional charges remain to be confirmed in the Mollie dashboard. None of the balances are net profit or a guaranteed partner margin; in particular the retailer may be merchant of record for an eventual partnership.
+
 ## Phase 2 — Verified partner qualification (5 November 2026)
 
 ### Finding 1: Belantti — strongest first pilot candidate (conditional)
