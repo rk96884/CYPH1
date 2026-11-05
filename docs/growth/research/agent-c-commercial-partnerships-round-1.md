@@ -268,6 +268,62 @@ With affiliate referrals, the partner publishes or shares an authorised tracked 
 
 **Next qualification actions:** Check recent editorial activity and relevant device articles for shortlisted publishers, identify measured UK audience evidence where possible, and create draft-only partner-fit proposals for user approval. Belantti remains conditional until free-delivery funding and the merchant-of-record question are resolved. **No contact, outreach, product samples, data imports or live configuration changes have occurred.**
 
+## Phase 4 — Editorial relevance verification and evidence-led shortlist (5 November 2026)
+
+**Scope:** Public webpages and published contact/partnership policies only; checked 5 November 2026. All contact drafts below are **internal and unsent**. No third-party analytics account, publisher media kit, direct audience report, live conversion rate or genuine programme acceptance was available. **Do not infer UK audience share from a UK business address, UK prices, British authors or UK-focused articles.**
+
+### Publisher re-ranking based on original, dated content
+
+| Rank | Prospect | Publicly verifiable evidence and source | Interpretation | Unknowns / next gate |
+| --- | --- | --- | --- | --- |
+| **1** | **Live That Glow** | [First-person Ulike Air 10 IPL review](https://www.livethatglow.com/ulike-air-10-review/) by Sally Underwood, 31 Jan 2026, with affiliate disclosure; [ViQure S-LD hands-on review](https://www.livethatglow.com/viqure-sl-d-hair-removal-device-review/) by same author, 31 July 2026, clearly marked sponsored and with a reader promo code; [commercial contact](https://www.livethatglow.com/contact/) for advertising and partnerships; [about](https://www.livethatglow.com/about-us/) describes identifiable journalists. | **Strongest IPL category proof**, historical publisher experience with commercial device campaigns and affiliate links. Credible option for independent product consideration. Existing relationships with competing device brands may constrain interest; nothing proves willingness to accept only 10–15% on sales. | No independently measured UK traffic, audience geography, qualified referral sessions or historic conversions. Do not imply a favourable review, buy a review or borrow Ulike's outcomes for K-803 claims. |
+| **2** | **The Beauty Question** | [Site](https://thebeautyquestion.com/) includes dated Oct 2026 beauty-claims examinations (e.g. Clinique PDRN claims); [editorial policy](https://thebeautyquestion.com/editorial-policy) distinguishes untested products, explains fictional recurring named voices; [contact](https://thebeautyquestion.com/contact) expressly allows commercial/affiliate enquiries. | Strong **evidence-based editorial positioning**, suitable to explain safety, value and limits of claims. **No firsthand home-IPL review confirmed in this search**, and the site's fictional personae are not independent identifiable reviewers. | Reach, organic traffic, audience UK share, real responsible human, IPL interest and commission-only acceptance unverified. Avoid pitching hands-on device testing through a fictitious editorial persona. |
+| **3** | **BelleFound** | [Beauty-device guides](https://bellefound.com/beauty/), [product-discovery site](https://bellefound.com/), [affiliate disclosure](https://bellefound.com/affiliate-disclosure/), [contact](https://bellefound.com/contact-us/). Its [about page](https://bellefound.com/about-us/) says research-based analysis is distinguished from firsthand tests. | Compatible with trackable offsite referrals and buying guides, but category proof is **beauty devices generally, not independently verified IPL reviews**. | UK reach, recent publishing cadence, content traffic, named editorial responsibility and IPL acceptance unverified. Require provenance/quality review. |
+| **4** | **The Glow Atlas** | [Site archive](https://theglowatlas.com/) shows beauty/skincare articles dated Sep/Oct 2026; [contact page](https://theglowatlas.com/contact-us/) expressly welcomes affiliate, content, advertising and brand proposals. | Commercial enquiry route verified; **no identifiable home-IPL review found** in searches. Bodycare relevance is adjacent rather than category-specific. | UK audience, actual traffic, article authority, product trials and rates unverified. Lower priority until direct IPL relevance. |
+
+**Caution:** Live That Glow's July ViQure article concerns **S-LD**, which the publisher distinguishes from IPL; count it as *other hair-removal technology*, not a second IPL trial. Its January Ulike piece is an explicit first-person **IPL** review. Do not transfer test conclusions from either product to CYPH/1. In contrast, The Beauty Question's named recurring voices are openly described as fictional personas; this prevents assuming independent individual author credentials.
+
+### Evidence confidence and decision
+
+- **Content/category evidence:** Live That Glow **high** (dated first-person IPL and separate sponsored hair-removal reviews); The Beauty Question **medium** (dated editorial + affiliate channel, no IPL test); BelleFound **medium-low** (general beauty-device and affiliate model); The Glow Atlas **low-medium** (collaboration route and bodycare content, no IPL test found).
+- **Commercial-channel evidence:** Publisher contact/affiliate routes verified for all four, but **no acceptance of CYPH/1**, no contract, no 10–15% concession and no confirmed performance-only placement.
+- **UK audience suitability:** **UNKNOWN for all four**. UK authorship, currency or address alone is not a UK audience breakdown.
+- **Conversion/traffic:** **UNKNOWN for all four**. Do not invent percentages, clicks, monthly visitors or cost per acquisition.
+- **Readiness:** Research-qualified for initial human review, **not outreach-approved**. Product compliance/stock/insurance/claims and affiliate disclosure must be approved first.
+
+### Proposed research-stage outreach drafts (NOT SENT; require owner approval)
+
+**A. Live That Glow — subject: CYPH/1 at-home IPL: potential performance-led partnership**
+
+> Hello Live That Glow commercial team,  
+> We are preparing the UK launch of CYPH/1, an at-home IPL hair-removal device with an emphasis on clear, evidence-based consumer education and responsible product claims. Your published firsthand Ulike Air 10 review suggests that your readers may be interested in thoughtful comparisons of this category.  
+> We are exploring a small, clearly disclosed referral arrangement, ideally with a 10–15% commission on eligible attributable product sales through our UK checkout, subject to agreed tracking and terms. Would your team consider a performance-based programme, or do you work only with fixed-fee campaigns? We respect your editorial independence; no recommendation or coverage would be expected in exchange for this enquiry.  
+> If relevant after our final product/compliance sign-off, we could provide a concise product fact sheet and approved images.  
+> CYPH/1
+
+**B. The Beauty Question — subject: Evidence-led UK IPL education and potential affiliate collaboration**
+
+> Hello,  
+> We are preparing CYPH/1, a £74.99 intended-price at-home IPL device for the UK, alongside educational guides covering the hair cycle, skin-tone suitability, treatment expectations and safety. Your editorial approach to examining beauty claims appears aligned with that focus.  
+> We are researching whether a transparent, performance-based affiliate partnership might be relevant to your publication. Our initial proposal would be 10–15% commission on eligible tracked product purchases, with no requirement for favourable editorial coverage or a claimed hands-on review. Would that model be of interest, subject to product launch approval?  
+> CYPH/1
+
+**C. BelleFound — subject: CYPH/1 beauty-device discovery collaboration**
+
+> Hello BelleFound team,  
+> We are researching carefully disclosed affiliate partnerships for the upcoming CYPH/1 UK at-home IPL device, with an intended £74.99 retail price and public educational material on expectations and suitability. We noticed your research-led beauty-device buying guides and disclosed affiliate relationships.  
+> Would you be open to discussing a simple tracked referral arrangement with a proposed 10–15% commission on qualifying sales, rather than a guaranteed paid placement? We would provide claims and technical information for review only after final launch approvals.  
+> CYPH/1
+
+**D. The Glow Atlas — subject: CYPH/1 bodycare education and potential affiliate partnership**
+
+> Hello,  
+> We are preparing a UK at-home IPL device brand, CYPH/1, alongside balanced hair-removal education. Your beauty/bodycare articles and open affiliate-enquiry route prompted us to explore whether this category might be relevant to your readers.  
+> We are considering a modest, transparent performance-only referral pilot, proposing 10–15% commission on qualifying direct sales with no editorial promises. Is IPL a product category you would consider covering or referring to, if the device and supporting evidence meet your standards?  
+> CYPH/1
+
+**Approval/operational notes:** All drafts are for internal assessment. Do not send emails, submit forms or offer samples. Before approval: confirm product compliance file and final claims, UK checkout/returns readiness, fulfilment costs and stock; settle attribution/privacy/consent, ASA/CAP and influencer/affiliate disclosure approach; define commission base (product excl. shipping, refunded/chargeback orders), timing, payment, fraud/returns treatment and publisher editorial independence. Outreach to a publisher that requests paid features must be evaluated separately and not mislabelled affiliate-only.
+
 ## Proposed research-only next phase
 
 1. Confirm buyer category eligibility and commercial terms directly only after explicit outreach approval; public routes, published models and category proxies are now documented in Phase 2.
