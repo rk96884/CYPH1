@@ -234,6 +234,40 @@ Belantti's [published partner criteria](https://www.belantti.co.uk/pages/partner
 
 Next, perform a product-readiness and full cost-to-serve assessment before drafting an approved contact plan. No outreach has occurred and these candidates have not been imported into the Growth database.
 
+## Phase 3 — Commission-first partner expansion (5 November 2026)
+
+### Important Belantti deal-breaker to resolve: free delivery / merchant of record
+
+Belantti's [delivery page](https://www.belantti.co.uk/pages/delivery) publicly advertises **automatic free UK delivery on qualifying orders of £35 or more where the selected eligible delivery rate is £5.00 or less**. At £74.99, a CYPH/1 order would exceed the value threshold; applicability to this specific product, checkout method and shipping configuration is **not guaranteed**, but the promotion is a real negotiation risk. Its [shipping policy](https://www.belantti.co.uk/policies/shipping-policy) and [terms](https://www.belantti.co.uk/policies/terms-of-service) also establish that Belantti is ordinarily the customer-facing retailer for orders placed on its own website, even if suppliers fulfil.
+
+**Correction to economics:** Do **not** simply apply CYPH/1's own customer-paid £2.59/£3.99 shipping assumption or Mollie tariffs to Belantti orders. It may collect the payment, pay its own processor, fund any free-delivery promotion, and remit a settlement amount. If CYPH/1 bears actual shipment costs without reimbursement, subtract them from brand contribution. Belantti's commission/margin could be calculated on a different base from the £74.99 list price. Confirm in any eventual approved conversation: final customer price; who covers any free delivery; carrier label/packaging; retailer payment fees; commission basis; discounts; payout timing; responsibility for cancellations, returns, chargebacks, warranty and consumer-rights support; order-data handoff for CYPH/1's non-Shopify stack.
+
+**Opportunity status:** Priority A **conditional only**. A clear published partner application and selective non-Shopify direct-fulfilment route exist, but home-IPL product acceptance and sustainable 10–15% settlement terms remain unknown. No independent sales, traffic or buyer-conversion metrics verified.
+
+### A new route: publisher-led affiliate referrals to CYPH/1 checkout
+
+With affiliate referrals, the partner publishes or shares an authorised tracked link and **CYPH/1 remains merchant of record** on its own storefront. This can preserve existing shipping charges, Mollie payment control and returns processes. A 10–15% commission would apply only to approved, attributable, non-refunded product sales, subject to a written agreement, attribution tooling, disclosure and fraud/returns controls. An editorial partnership enquiry does **not** mean a publisher accepts pay-per-sale terms; many may instead require sponsored content, samples or fixed fees.
+
+| Prospect | Primary evidence | Commercial fit and qualification | Research status |
+| --- | --- | --- | --- |
+| **The Glow Atlas** | [Public partnership page](https://theglowatlas.com/contact-us/) explicitly lists affiliate partnerships, brand collaborations, product features, paid content and beauty product introductions. | **High structural fit** for a discussion about performance-only referrals and factual IPL education; no evidence of UK audience size, actual engagement, specific IPL coverage or acceptance of 10–15%. | A — research-only; audience/quality check pending |
+| **The Beauty Question** | [Public contact route](https://thebeautyquestion.com/contact) explicitly accepts commercial and affiliate enquiries and separates advertising from editorial decisions. | **High structural fit** for an evidence-first device; may preserve editorial independence and only consider collaborations under disclosure rules. No guaranteed coverage, audience or commercial terms. | A — research-only; audience/quality check pending |
+| **Live That Glow** | [Public contact page](https://www.livethatglow.com/contact/) distinguishes editorial/product submissions from commercial partnerships and sponsored editorial. | **Medium**, plausible quality beauty publisher, but no public commitment to cost-per-sale referrals; could primarily require a fixed advertising budget. | B — research-only; affiliate interest unverified |
+| **BelleFound** | [Public partnerships page](https://bellefound.com/contact-us/) describes affiliate partnerships, sponsored content, product launches and brand collaborations. | **Conditional** source retrieved in search, but direct page fetch was unavailable on recheck. Revalidate page and publication activity before prioritising. | Verification required |
+
+**Not suitable as direct inbound partners:** Retailers' *own* affiliate recruitment pages (e.g. Beauty Base, Estée Lauder, Care to Beauty) recruit **publishers to promote their inventory**; they do not demonstrate willingness to promote CYPH/1 or buy our stock. Also, a competing IPL brand's published **10% creator affiliate programme** is only a category reference, *not* evidence another publisher would accept CYPH/1's price/terms.
+
+### Preliminary referral pilot terms to investigate — not authorised or offered
+
+- CYPH/1 retains checkout, payment collection, inventory and fulfilment; an independent partner refers customers with a measured, consent-compliant referral link/code.
+- **Proposed range:** 10–15% of **product subtotal excluding separately charged delivery**, discounts, refunds and returns; calculate only on settled eligible sales.
+- Proposed attribution window, repeat/referral rules, commission reversals, payout minimum and payout cadence must be defined and checked for consumer/privacy/advertising compliance. No commission promises before written agreement.
+- **Commercial constraint:** At 12% and one device, domestic card processing and product/packaging costs leave roughly £39.78 before possible fee VAT, warranty, returns and overhead, **only if actual delivery is exactly paid for by collected shipping**. This is a planning contribution, not net profit.
+- **Compliance gate:** Product approval, compliant advertising/claims, affiliate disclosures and appropriate tracking privacy controls must precede any actual programme. Do not promise a review outcome or seek editorial coverage in exchange for a positive article.
+- **Evidence gaps:** Public traffic, search visibility, real UK audience, historical affiliate conversion, rate cards and device-category eligibility not independently verified. Unverified entries should not be promoted into a scored dashboard as confirmed opportunities.
+
+**Next qualification actions:** Check recent editorial activity and relevant device articles for shortlisted publishers, identify measured UK audience evidence where possible, and create draft-only partner-fit proposals for user approval. Belantti remains conditional until free-delivery funding and the merchant-of-record question are resolved. **No contact, outreach, product samples, data imports or live configuration changes have occurred.**
+
 ## Proposed research-only next phase
 
 1. Confirm buyer category eligibility and commercial terms directly only after explicit outreach approval; public routes, published models and category proxies are now documented in Phase 2.
