@@ -32,7 +32,7 @@ const structuredData = {
   <Header />
   <main id="main" class="article-page">
     <article>
-      <header class="article-hero section">
+      <header class="article-hero section editorial-hero">
         <div class="container article-wide">
           <p class="eyebrow">Know your options · Hair removal</p>
           <div class="article-hero-intro">
@@ -73,7 +73,7 @@ const structuredData = {
         </div>
       </section>
 
-      <section class="section article-section" aria-labelledby="routine-heading">
+      <section class="section article-section editorial-tint" aria-labelledby="routine-heading">
         <div class="container article-reading article-copy">
           <p class="section-index">02 / Your routine</p>
           <h2 id="routine-heading" data-reveal>Which approach fits your goal?</h2>
@@ -133,7 +133,7 @@ const structuredData = {
         </div>
       </section>
 
-      <section class="section article-section" aria-labelledby="safety-heading">
+      <section class="section article-section editorial-deep" aria-labelledby="safety-heading">
         <div class="container article-reading article-copy">
           <p class="section-index">05 / Safety first</p>
           <h2 id="safety-heading" data-reveal>Choose for your skin, not just your budget.</h2>
@@ -143,7 +143,7 @@ const structuredData = {
         </div>
       </section>
 
-      <section class="section article-section" aria-labelledby="next-reading-heading">
+      <section class="section article-section editorial-tint" aria-labelledby="next-reading-heading">
         <div class="container article-reading article-copy">
           <p class="section-index">06 / Keep learning</p>
           <h2 id="next-reading-heading" data-reveal>Understand the cycle.</h2>
@@ -267,5 +267,10 @@ const structuredData = {
 
   /* Separate bordered section labels from the divider on all viewports. */
   .article-page section.cost-section { padding-top:clamp(2.75rem,6vw,4rem); }
+
+  /* Alternating editorial section backgrounds, aligned with the newer CYPH/1 Learn guides. */
+  .article-page .editorial-hero { background:radial-gradient(circle at 82% 18%,rgb(167 122 244 / .13),transparent 43%); }
+  .article-page .editorial-tint { background:radial-gradient(circle at 12% 30%,rgb(167 122 244 / .12),transparent 46%),var(--cyph-surface-emphasis); }
+  .article-page .editorial-deep { background:linear-gradient(135deg,#17101f,#23162d 63%,#130e1b); }
 </style>
 
