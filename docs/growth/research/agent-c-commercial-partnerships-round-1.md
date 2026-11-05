@@ -53,9 +53,60 @@ The actual 20-unit order included shipping, engraving and processing charges; th
 - Professional laser providers and wax suppliers may perceive at-home IPL as competitive. Do not assume they will refer buyers.
 - Do not load candidates into development Growth storage until an Agent C-specific schema/approval workflow and deduplication are reviewed.
 
+## Phase 2 — Verified partner qualification (5 November 2026)
+
+### Finding 1: Belantti — strongest first pilot candidate (conditional)
+
+Belantti's [published partner criteria](https://www.belantti.co.uk/pages/partner-with-belantti) explicitly confirm:
+
+- Emerging brands can apply; **no upfront listing fees** are advertised.
+- Current preferred arrangement is **brand-held inventory and direct fulfilment**, with Shopify Collective preferred where available but **selected non-Shopify integrations considered**.
+- **Commission/retailer margin is negotiated individually**; no supplier commission percentage is public.
+- Tracked dispatch, timely order handling, reliable inventory updates, returns support, claims and UK compliance evidence are onboarding requirements.
+- Affiliate/campaign opportunities may be available but do not imply guaranteed demand or affiliate participation. Belantti's separate consumer-facing affiliate rate of 15–20% is **not** an established rate charged to supplying brands.
+- The retailer already lists [an electrically powered hair styling device](https://www.belantti.co.uk/products/rucha-ultrasonic-infrared-hair-iron), showing electrical beauty-tool category adjacency, **not confirmation that home IPL is permitted**.
+- Its [terms of service](https://www.belantti.co.uk/policies/terms-of-service) describe Belantti as the customer-facing retailer for orders from its website, with partner shipment possible. Returns, cancellations and settlement allocations require a written agreement.
+
+**Assessment:** Priority A for *research and later consideration* of a narrowly scoped, non-Shopify, brand-fulfilled pilot. We currently use Astro/Cloudflare/Render rather than Shopify; order handoff, permitted use of customer data, tracking, refunds and settlement would need design and approval. **Do not apply yet.**
+
+**Unanswered questions for an eventual approved enquiry:** Does Belantti accept UK-compliant, mains-powered IPL hair-removal devices; what retailer commission/margin would it require; how can a non-Shopify supplier securely exchange orders/tracking; is the £74.99 customer price acceptable; who bears shipping, refunds/chargebacks, warranty and promotions; how many verified UK customers currently buy comparable beauty tools?
+
+### Finding 2: Sol Beauty / Sol Retail — wholesale-led, not a commission-first fit
+
+[Sol Beauty's supplier page](https://www.solbeauty.co.uk/pages/become-a-supplier) requests a brand deck sent to its Head of New Brands. Its parent [Sol Retail](https://www.solretail.com/how-it-works-1) explains the operating model: **it buys partner inventory, receives that stock into its warehouses, and manages marketplace listing, advertising and distribution**. It operates multiple channels, including Amazon and its own Sol Beauty store; [published eligibility guidance](https://www.solretail.com/our-partners) expects market-ready, compliant brands with marketing plans. Its [contact page](https://www.solretail.com/contact) accepts decks and RangeMe submissions, but no commission/wholesale margin percentages are published. Sol Beauty carries [hair-removal products](https://www.solbeauty.co.uk/collections/body-care), predominantly topical/waxing examples in observed listings; **specific electrical IPL acceptance is unverified**.
+
+**Assessment:** Priority B, **defer until wholesale readiness**. This could eventually offer broader marketplace distribution, but requires a negotiated wholesale buying price, acceptable margins, inventory replenishment and sufficient stock. Do not mistake a brand deck request for product-category approval.
+
+**Unanswered questions:** IPL product eligibility across intended channels; first order size, wholesale purchase price, payment terms, return/warranty liability, advertised-pricing control, marketplace exclusivity and commercial-claim approval.
+
+### Agent C scenario model — per device, GBP
+
+**Inputs:** £74.99 intended retail price and £24.78 conservative historical K-803 landed acquisition cost. Commission examples below are *hypotheses*, not offers or agreed partner terms. Assumes no VAT adjustment, discounts or shipping collected separately; actual tax treatment requires confirmation.
+
+| Model | Hypothetical commission | Commission £ | Retail less landed cost and commission £ |
+| --- | ---: | ---: | ---: |
+| Referral / direct fulfilment | 10% | 7.50 | 42.71 |
+| Referral / direct fulfilment | 12% | 9.00 | 41.21 |
+| Referral / direct fulfilment | 15% | 11.25 | 38.96 |
+| Referral / direct fulfilment | 20% | 15.00 | 35.21 |
+| Referral / direct fulfilment | 25% | 18.75 | 31.46 |
+
+**Important:** The final column is contribution **before** outbound postage/packaging, payment-processing fees, seller/platform charges, VAT/tax treatment, refunds, returns, warranty and customer service, marketing, and overheads; **it is not profit**. If a retailer buys wholesale, the retailer's selling price and settlement model must instead be modelled using a proposed wholesale unit price — do not apply the commission table automatically.
+
+**Suggested negotiation starting range (not a validated market rate):** Explore 10–15% commission for a low-risk pilot, but set the true ceiling only after verifying chargeable shipping, processor fees, returns reserve and tax. Belantti publishes **no fixed supplier commission**.
+
+### Qualification status and next decision
+
+| Candidate | Model evidence | Category acceptance | Commercial terms | Suggested status |
+| --- | --- | --- | --- | --- |
+| Belantti | Direct fulfilment publicly documented; non-Shopify route considered | Electrical hair tool observed, IPL unverified | Individually agreed; unknown | **Priority A — research-ready, not contact-approved** |
+| Sol Beauty / Sol Retail | Distributor buys inventory and manages marketplaces | Hair-removal adjacent; IPL unverified | Wholesale price, MOQ and risk allocation unknown | **Priority B — wholesale watchlist** |
+
+Next, perform a product-readiness and full cost-to-serve assessment before drafting an approved contact plan. No outreach has occurred and these candidates have not been imported into the Growth database.
+
 ## Proposed research-only next phase
 
-1. Verify buyer category eligibility, official application routes, public activity and terms for first-priority candidates.
+1. Confirm buyer category eligibility and commercial terms directly only after explicit outreach approval; public routes, published models and category proxies are now documented in Phase 2.
 2. Add a second shortlist of UK salons, independent beauty ecommerce businesses and complementary skincare retailers; reject those without a credible commercial or audience fit.
 3. Build a separate, documented Agent C scoring/confidence matrix; keep unknowns distinct from negative findings.
 4. Complete a scenario model for referral, direct fulfilment and stocked wholesale at £74.99 once landed costs are verified.
