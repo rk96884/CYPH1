@@ -19,7 +19,7 @@ const structuredData = {
 <BaseLayout title="Why consistency matters with home IPL | CYPH/1" description="Learn why light-based hair reduction is approached as a repeated routine across the natural hair-growth cycle." structuredData={structuredData}>
 <Header />
 <main id="main" class="article-page"><article>
-<header class="article-hero section"><div class="container article-reading">
+<header class="article-hero section editorial-hero"><div class="container article-reading">
 <p class="eyebrow">Know the cycle · IPL education</p>
 <h1 data-reveal>Why consistency matters with home IPL</h1>
 <p class="lede">IPL is not a one-off interaction with every hair at once. Hair follicles can be at different points in their natural cycle, which is why light-based hair reduction is approached as a repeated routine over time.</p>
@@ -36,7 +36,7 @@ const structuredData = {
 {growthPhases.map((phase) => (<li class:list={{ active: phase.active }} data-phase-card><div class="phase-card-meta"><span>{phase.number}</span>{phase.active && <small>Active growth</small>}</div><HairPhaseIllustration phase={phase.name} /><h3>{phase.name}</h3><p class="phase-label">{phase.label}</p></li>))}
 </ol></section>
 
-<section class="section article-section"><div class="container article-reading article-copy">
+<section class="section article-section editorial-tint"><div class="container article-reading article-copy">
 <p class="section-index">02 / Active growth</p><h2 data-reveal>Why anagen matters.</h2>
 <p>Anagen is the active-growth phase, when the follicle is producing the hair shaft. General evidence about light-based hair reduction associates treatment with active growth.</p>
 <aside class="science-note"><p><strong>The important distinction.</strong> This is general IPL education. It is not a performance claim about a future CYPH/1 device.</p></aside>
@@ -49,7 +49,7 @@ const structuredData = {
 <p>Consistency therefore describes the principle of returning to a routine across the natural cycle. It does not mean treating continuously, and it does not establish a universal treatment interval.</p>
 </div></section>
 
-<section class="section article-section"><div class="container article-reading article-copy">
+<section class="section article-section editorial-deep"><div class="container article-reading article-copy">
 <p class="section-index">04 / What IPL does not do</p><h2 data-reveal>IPL does not read an individual hair’s phase.</h2>
 <p>An IPL device does not identify whether an individual hair is in anagen, catagen, telogen or exogen. Repeated treatment is used because hairs cycle asynchronously—not because the device detects and selects hairs by phase.</p>
 <aside class="science-note"><p><strong>“Target the growth”</strong> describes the CYPH/1 treatment principle and our educational focus on the cycle. It is not a claim of phase-detection technology.</p></aside>
@@ -99,4 +99,9 @@ if(reduceMotion||!("IntersectionObserver" in window)){targets.forEach(t=>t.class
     .article-page h2 { max-width:100%; min-width:0; font-size:clamp(1.4rem,5.8vw,1.95rem); line-height:1.22; overflow-wrap:anywhere; }
     .article-page h3 { max-width:100%; overflow-wrap:anywhere; }
   }
+
+  /* Alternating editorial section backgrounds, aligned with the newer CYPH/1 Learn guides. */
+  .article-page .editorial-hero { background:radial-gradient(circle at 82% 18%,rgb(167 122 244 / .13),transparent 43%); }
+  .article-page .editorial-tint { background:radial-gradient(circle at 12% 30%,rgb(167 122 244 / .12),transparent 46%),var(--cyph-surface-emphasis); }
+  .article-page .editorial-deep { background:linear-gradient(135deg,#17101f,#23162d 63%,#130e1b); }
 </style>
