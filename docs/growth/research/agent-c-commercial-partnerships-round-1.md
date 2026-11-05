@@ -139,6 +139,50 @@ Assume one device sold for £74.99, historical landed acquisition £24.78, packa
 
 **Supersession:** The earlier 1.3%-only illustration in Phase 2B is now **superseded** by the verified published 1.2% + £0.20 UK consumer card rate and the VAT sensitivity above. Merchant-specific contract terms, the customer's card type, VAT applicability and possible additional charges remain to be confirmed in the Mollie dashboard. None of the balances are net profit or a guaranteed partner margin; in particular the retailer may be merchant of record for an eventual partnership.
 
+## Phase 2D — Mollie account-configured fee schedule (5 November 2026)
+
+**Source:** CYPH/1 owner-supplied Mollie Cards screenshot and Klarna account rate listing, 5 November 2026. No live transactions yet. Rates below are account-displayed tariffs, not fee statements from completed payments.
+
+| Cards | Fee |
+| --- | --- |
+| Visa and Mastercard domestic | **£0.20 + 1.20%** |
+| Visa and Mastercard EU consumer / intra-EEA commercial | £0.20 + 2.90% |
+| Visa and Mastercard commercial & non-EU | £0.20 + 3.25% |
+| American Express EEA | 2.50% (no fixed amount displayed on supplied screenshot) |
+| American Express non-EEA | £0.20 + 2.60% |
+| PostePay / Cartes Bancaires | £0.20 + 2.90% |
+
+| Klarna UK method | Fee |
+| --- | --- |
+| Pay Now / Pay Later / Pay in 3 / Financing | **£0.30 + 4.99%** |
+| Zero-percent Financing 6 months | £0.30 + 6.99% |
+| Zero-percent Financing 12 months | £0.30 + 8.49% |
+| Zero-percent Financing 18 months | £0.30 + 12.99% |
+| Zero-percent Financing 24 months | £0.30 + 15.99% |
+
+Additional supplied fee entries: **refund £0.20**, **chargeback £25.00**. The wider Klarna table includes country-specific rates, and a Pay in Full Non Guaranteed listing at £0.20 + 0.90%; applicability to a UK CYPH/1 checkout is not confirmed. Do not substitute these for the named UK rates. Card-wallet fees (Apple Pay / Google Pay) should be verified against underlying card treatment. Tax treatment and fees on refunds/chargebacks must be confirmed against account invoices or Mollie terms.
+
+### One-unit contribution scenarios using these account rates
+
+Assumptions: retail £74.99; historical conservative landed cost £24.78; packaging £0.30 (owner estimate); partner commission 12% of product price (£9.00 rounded); customer charged £2.59 InPost and actual postage exactly equals that charge; Mollie transaction total **£77.58**; no additional fixed charges beyond listed tariff. Warranty, refunds, fees VAT if applicable, operating costs and tax excluded.
+
+| Payment method | Mollie fee (excluding any fee VAT) | Contribution before fee VAT, warranty/returns and overhead |
+| --- | ---: | ---: |
+| Domestic Visa / Mastercard | £1.13 | **£39.78** |
+| EU consumer card | £2.45 | £38.46 |
+| Commercial & non-EU card | £2.72 | £38.19 |
+| Klarna UK standard (Pay Now, Later, in 3, Financing) | £4.17 | **£36.74** |
+| Klarna UK 6-month zero-interest | £5.72 | £35.19 |
+| Klarna UK 12-month zero-interest | £6.89 | £34.02 |
+| Klarna UK 18-month zero-interest | £10.38 | £30.53 |
+| Klarna UK 24-month zero-interest | £12.71 | £28.21 |
+
+If 20% VAT is charged on payment fees and cannot be recovered, the UK domestic card illustration becomes about **£39.55** and the standard UK Klarna one about **£35.91**. This fee-VAT assumption is not yet verified from a Mollie account invoice. The customer-paid postage is only cost-neutral if the actual outbound postage equals the customer charge.
+
+**Owner-approved preference:** Keep standard domestic cards and, where eligible, consider ordinary UK Klarna methods; **do not prioritise extended zero-interest 6–24 month financing** for the £74.99 device. Commercial discovery continues with a tentative 10–15% commission range, not an approved contractual ceiling. No live Mollie method settings or production checkout configuration changed.
+
+**Supersession:** This account-specific schedule replaces Phase 2B's flat 1.3% planning fee and takes priority over generic public Mollie tariffs shown in Phase 2C whenever they differ.
+
 ## Phase 2 — Verified partner qualification (5 November 2026)
 
 ### Finding 1: Belantti — strongest first pilot candidate (conditional)
