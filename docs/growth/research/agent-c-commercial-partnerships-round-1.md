@@ -85,6 +85,31 @@ Neither amount is profit. **Do not subtract the £2.59 or £3.99 customer shippi
 
 **Commission decision:** 10–15% is a *negotiation hypothesis*, not an approved ceiling. Do not set an actual maximum commission before a priced carrier label, packaging receipt/cost, applicable Mollie fee and an explicit warranty/returns reserve have been confirmed.
 
+## Phase 2B — Owner-approved planning assumptions (5 November 2026)
+
+The CYPH/1 owner provided updated planning assumptions (not independently verified provider pricing):
+
+- **Packaging:** **£0.30 per device**, assumed; not yet supported by a supplier receipt.
+- **Mollie:** **1.3% of the total amount charged**, approximate planning allowance; actual rate may vary by payment method and could include fixed/per-transaction fees. No live transactions yet to confirm the effective rate.
+- **Customer shipping:** The customer pays the configured delivery charge. Model shipping as **cost-neutral only to the extent that the amount collected actually equals or exceeds the label/dispatch cost**. Customer-funded postage does not necessarily mean zero margin impact: rate gaps, packaging, insurance, refunds and payment fees on the delivery charge may matter.
+- **Retail/partner arrangements:** Commission assumed on product subtotal only; confirm actual contractual commission base and merchant-of-record payment flows.
+
+### Updated indicative per-device economics (single device, CYPH/1 merchant of record)
+
+Price £74.99; landed device £24.78; packaging £0.30; **1.3% variable Mollie fee on £74.99 plus any delivery charge**; illustrative partner commission on **£74.99 product subtotal**. Assume no extra fixed Mollie fee and postage is exactly offset by collected shipping; this is an illustration, not confirmed profit.
+
+| Hypothetical commission | Partner fee | Remaining after acquisition, packaging, 1.3% payment fee on product and commission, **before shipping-fee drag, warranty, returns, taxes and overhead** |
+| --- | ---: | ---: |
+| 10% | £7.50 | **£41.44** |
+| 12% | £9.00 | **£39.94** |
+| 15% | £11.25 | **£37.69** |
+| 20% | £15.00 | **£33.94** |
+| 25% | £18.75 | **£30.19** |
+
+**Payment-fee-on-shipping adjustment:** if customer pays £2.59 for InPost, at 1.3% add about £0.03 fee, reducing the 12% example to **£39.91**; if customer pays £3.99 for tracked postage, add £0.05 fee, reducing it to **£39.89**. These cases assume the actual carrier cost equals the customer delivery charge, no extra payment fixed fee, and shipping is fully received by CYPH/1 rather than a partner. If the shipping charge differs from actual postage, add the surplus or subtract the shortfall.
+
+**Important corrections:** Earlier scenario tables above show the balance *before* packaging and payment fees. They are superseded by this working model for owner planning. Any real partner commission cap still requires exact Mollie tariff, actual delivery-label cost, return and warranty provision, VAT position and agreed money flow. No figures here constitute guaranteed profit.
+
 ## Phase 2 — Verified partner qualification (5 November 2026)
 
 ### Finding 1: Belantti — strongest first pilot candidate (conditional)
