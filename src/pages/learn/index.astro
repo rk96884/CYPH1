@@ -39,7 +39,7 @@ const structuredData = {
           {learningArticles.map(article => (
             <article class="article-card">
               <p class="article-number">{article.number} / {article.category}</p>
-              <h3><a href={withBase(article.href)}>{article.title} <span aria-hidden="true">↗</span></a></h3>
+              <h3><a href={withBase(article.href)}>{article.title}</a></h3>
               <p>{article.description}</p>
               <a class="read-link" href={withBase(article.href)} aria-label={`Read ${article.title}`}>Read guide <span aria-hidden="true">→</span></a>
             </article>
@@ -73,7 +73,6 @@ const structuredData = {
   .article-card h3 { margin:0 0 1rem; font-size:clamp(1.2rem,2vw,1.65rem); line-height:1.35; }
   .article-card h3 a { text-decoration:none; }
   .article-card h3 a:hover { color:var(--cyph-accent-highlight); }
-  .article-card h3 span { color:var(--cyph-accent-highlight); }
   .article-card > p:not(.article-number) { color:var(--cyph-text-secondary); line-height:1.65; margin:0 0 1.5rem; }
   .read-link { margin-top:auto; align-self:start; text-underline-offset:.22em; color:var(--cyph-accent-highlight); min-height:2.75rem; display:inline-flex; align-items:center; gap:.75rem; }
   .learn-bottom { border-top:1px solid var(--cyph-border-structural); background:radial-gradient(circle at 12% 45%,rgb(167 122 244 / .1),transparent 50%); }
