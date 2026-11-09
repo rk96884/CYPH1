@@ -1,0 +1,285 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+import { withBase } from "../../utils/base-path";
+
+const signs = [
+  { title: "Regrowth seems slower", detail: "You notice more days passing before new hair becomes visible after shaving." },
+  { title: "Hair coverage looks less dense", detail: "Comparisons at the same point after shaving may show fewer visible hairs, sometimes unevenly across the area." },
+  { title: "Some hairs look finer", detail: "Regrowth may appear less coarse in some treated areas, although hair texture alone is not a reliable measure." },
+  { title: "You shave less often", detail: "Keeping a record of your usual shaving frequency can make subtle changes easier to notice." },
+  { title: "Smoothness lasts longer", detail: "You may have more time between the return of noticeable stubble." },
+  { title: "Some treated hairs shed", detail: "Hair may appear to push out or shed after treatment; this is not a guarantee that every follicle has responded." },
+  { title: "Repeat photographs show a difference", detail: "Photos captured under the same conditions can show changes that are difficult to judge from memory." },
+];
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: "How to tell if IPL hair removal is working: seven signs to look for",
+  description: "Learn how to track slower regrowth, reduced hair density and other possible signs of IPL progress, with realistic expectations and a simple tracker.",
+  datePublished: "2026-11-09",
+  dateModified: "2026-11-09",
+  inLanguage: "en-GB",
+  author: { "@type": "Organization", name: "CYPH/1" },
+  publisher: { "@type": "Organization", name: "CYPH/1" }
+};
+---
+<BaseLayout
+  title="How to Tell If IPL Is Working: 7 Signs | CYPH/1"
+  description="Is your IPL working? Discover seven possible signs of progress, how to take consistent comparison photos and use a simple hair-regrowth tracker."
+  structuredData={structuredData}
+>
+  <Header />
+  <main class="article-page" id="main">
+    <article>
+      <header class="section article-hero editorial-hero">
+        <div class="container article-wide hero-grid">
+          <div>
+            <p class="eyebrow">Know your progress · IPL education</p>
+            <h1>How to tell if <span>IPL is working.</span></h1>
+          </div>
+          <div class="hero-summary">
+            <p class="lede">Hair reduction rarely happens all at once. Discover what gradual progress can look like, how to compare regrowth fairly, and when to reassess your routine.</p>
+            <p class="article-meta">Published 9 November 2026 · General educational content</p>
+            <a href="#signs">Explore the seven signs <span aria-hidden="true">↓</span></a>
+          </div>
+        </div>
+      </header>
+
+      <section class="section article-section" aria-labelledby="working">
+        <div class="container article-reading article-copy">
+          <p class="section-index">01 / Understanding results</p>
+          <h2 id="working">Does IPL really work?</h2>
+          <p>Intense pulsed light (IPL) delivers flashes of light that can be absorbed by pigment in the hair and converted into heat. With suitable equipment and repeated use, this can reduce hair regrowth. But a result for one device, hair type or person does not prove the same result for another.</p>
+          <p><strong>What to look for is a trend over time:</strong> slower return of hair after shaving, fewer visible hairs, or less frequent shaving. No method guarantees permanent, complete or pain-free hair removal.</p>
+          <aside class="science-note"><p><strong>Important:</strong> A single photograph, a smooth day after shaving, or skin that merely feels warm is not proof that an IPL treatment has worked. The most useful evidence is consistent, repeatable comparison over multiple weeks.</p></aside>
+        </div>
+      </section>
+
+      <section class="section article-section editorial-tint" id="signs" aria-labelledby="signs-heading">
+        <div class="container article-wide">
+          <p class="section-index">02 / What to notice</p>
+          <h2 id="signs-heading">Seven signs your IPL routine may be making a difference.</h2>
+          <p class="section-lede">Not everyone experiences all seven signs, and some overlap. None confirms effectiveness on its own.</p>
+          <ol class="signs-grid">
+            {signs.map((sign, index) => (
+              <li class="sign-card">
+                <span class="sign-number">{String(index + 1).padStart(2, "0")}</span>
+                <h3>{sign.title}</h3>
+                <p>{sign.detail}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="timeline">
+        <div class="container article-reading article-copy">
+          <p class="section-index">03 / Timing</p>
+          <h2 id="timeline">When should you notice a difference?</h2>
+          <p>There is no universal number of days or sessions. Results depend on the device, settings, treatment area, natural hair colour, skin tone, hair-growth cycle and consistency of use. Treat dramatic timelines in advertising with caution unless they are supported by evidence for that specific product.</p>
+          <p>Still seeing some hair three or four weeks after a treatment is not, by itself, proof of failure. Equally, sparse-looking growth in one image cannot establish that IPL caused it. Compare against your own baseline under similar conditions rather than against someone else's results.</p>
+          <p>Follow your device's stated treatment schedule. Do not increase treatment frequency or intensity beyond its instructions to chase faster changes.</p>
+        </div>
+      </section>
+
+      <section class="section article-section example-section" aria-labelledby="example-heading">
+        <div class="container article-wide example-grid">
+          <div class="example-photo">
+            <figure>
+              <img src={withBase("brand/editorial/ipl-progress-example.webp")}
+                width="640" height="480" loading="lazy" decoding="async"
+                alt="Real close-up photograph of skin with scattered visible hairs and follicles, shared approximately three to four weeks after an IPL session."
+                onerror="this.closest('figure')?.classList.add('image-unavailable')" />
+              <figcaption>Real-world observation · Approximately 3–4 weeks after the most recent IPL session</figcaption>
+            </figure>
+          </div>
+          <div class="example-copy article-copy">
+            <p class="section-index">04 / A real-world example</p>
+            <h2 id="example-heading">What visible regrowth can look like.</h2>
+            <p>Here is a real photograph shared by someone using IPL at home, taken about three to four weeks after their most recent session. It shows scattered visible hairs, short stubble and visible follicular openings.</p>
+            <p><strong>What this image can tell us:</strong> there is still visible hair on the photographed area. <strong>What it cannot tell us:</strong> whether there has been a measurable reduction in density, whether IPL caused the visible pattern, or how much hair may return later.</p>
+            <p>Without a same-area, same-lighting baseline and the time since the last shave, even a detailed close-up should be treated as an observation rather than a verified before-and-after result.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section article-section editorial-deep" aria-labelledby="photo-heading">
+        <div class="container article-reading article-copy">
+          <p class="section-index">05 / Compare fairly</p>
+          <h2 id="photo-heading">A more reliable way to photograph regrowth.</h2>
+          <p>Use a repeatable setup, not just an attractive photo. Choose a small, clearly defined area and take a baseline image before beginning the course.</p>
+          <ol class="steps">
+            <li><strong>Choose one area.</strong> Use the same patch of skin each time, away from identifying marks if you plan to share an image.</li>
+            <li><strong>Match the timing.</strong> Take comparison photographs at the same number of days after shaving; otherwise different hair lengths can be misleading.</li>
+            <li><strong>Match the setup.</strong> Keep camera distance, angle, lighting and focus as consistent as possible. Avoid changing flash conditions.</li>
+            <li><strong>Record the context.</strong> Note the date, treatment area, time since last shave and the number of sessions completed. You do not need to photograph after every flash.</li>
+            <li><strong>Look for trends.</strong> Compare several observations rather than judging a single image.</li>
+          </ol>
+          <p>Dark dots, visible follicles and scattered hairs may have several explanations, including normal regrowth. Photographs cannot tell you whether a specific follicle has permanently stopped producing hair.</p>
+        </div>
+      </section>
+
+      <section class="section article-section editorial-tint" aria-labelledby="tracker-heading">
+        <div class="container article-reading">
+          <p class="section-index">06 / Your progress tracker</p>
+          <h2 id="tracker-heading">Track changes without guessing.</h2>
+          <p>Enter your approximate observations below. This simple tool runs in your browser, does not upload photographs, and does not save data to CYPH/1. Copy the summary if you want to retain it.</p>
+          <div class="tracker" id="ipl-progress-tracker">
+            <div class="tracker-grid">
+              <div class="field"><label for="before-days">Days until noticeable regrowth before IPL</label><select id="before-days"><option value="">Select an interval</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="4">4 days</option><option value="5+">5 or more days</option><option value="unknown">Not sure</option></select></div>
+              <div class="field"><label for="now-days">Days until noticeable regrowth now</label><select id="now-days"><option value="">Select an interval</option><option value="1">1 day</option><option value="2">2 days</option><option value="3">3 days</option><option value="4">4 days</option><option value="5+">5 or more days</option><option value="unknown">Not sure</option></select></div>
+              <div class="field"><label for="density">Hair density compared with before</label><select id="density"><option value="">Select your observation</option><option value="similar">About the same</option><option value="slightly lower">Slightly less dense</option><option value="noticeably lower">Noticeably less dense</option><option value="uncertain">Not sure</option></select></div>
+              <div class="field"><label for="session-count">Number of IPL sessions completed (optional)</label><input id="session-count" type="number" min="0" max="999" step="1" inputmode="numeric" placeholder="For example, 6" /></div>
+            </div>
+            <div class="tracker-results" aria-live="polite">
+              <h3>Your observations</h3>
+              <p id="tracker-summary">Choose your observations to generate a simple progress summary. This is not a diagnostic test.</p>
+              <button class="button tracker-copy" id="copy-progress" type="button" disabled>Copy summary</button>
+              <p class="tracker-feedback" id="copy-feedback" role="status"></p>
+            </div>
+          </div>
+          <p class="tracker-note">The “5 or more days” choice is a range, not a precise measurement. The tracker intentionally makes no percentage-improvement or effectiveness claim.</p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="not-working">
+        <div class="container article-reading article-copy">
+          <p class="section-index">07 / Troubleshooting</p>
+          <h2 id="not-working">What if you're not seeing results?</h2>
+          <p>First, check whether your natural hair colour and skin tone are within the permitted range for your particular device. IPL may be unsuitable or ineffective for certain combinations, and using it on unsuitable skin can cause injury. Review the manual's contraindications and patch-test advice.</p>
+          <p>Next, consider whether you're comparing like with like: same body area, similar time after shaving, consistent observations, and the full course recommended in the instructions. Differences between body areas and hair-growth cycles can make results look uneven.</p>
+          <p>If you remain unsure after following the product's recommended course, consult the manufacturer's guidance or an appropriately qualified professional. Do not treat irritated, injured or otherwise contraindicated skin, and seek medical advice for a burn or persistent adverse reaction.</p>
+        </div>
+      </section>
+
+      <section class="section article-section editorial-tint" aria-labelledby="next">
+        <div class="container article-reading article-copy">
+          <p class="section-index">08 / Continue learning</p>
+          <h2 id="next">Understand the routine behind the results.</h2>
+          <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>How the hair-growth cycle works <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Why consistency matters with IPL <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/how-to-prepare-for-ipl-aftercare/")}>How to prepare for IPL and aftercare <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/ipl-vs-laser-hair-removal/")}>IPL vs laser hair removal <span aria-hidden="true">→</span></a></p>
+          <p class="related-link"><a href={withBase("learn/ipl-vs-shaving-vs-waxing/")}>IPL vs shaving and waxing <span aria-hidden="true">→</span></a></p>
+        </div>
+      </section>
+
+      <section class="section article-section" aria-labelledby="sources">
+        <div class="container article-reading article-copy">
+          <p class="section-index">09 / Sources</p>
+          <h2 id="sources">Evidence and safety guidance.</h2>
+          <p>These references provide general background on IPL, hair cycles and appropriate advertising claims. They are not clinical test results for the CYPH/1 device.</p>
+          <ul class="article-sources">
+            <li><a href="https://www.asa.org.uk/advice-online/hair-hair-removal.html" target="_blank" rel="noopener noreferrer">Advertising Standards Authority — Hair removal claims</a></li>
+            <li><a href="https://www.arpansa.gov.au/understanding-radiation/sources-radiation/more-radiation-sources/lasers-and-intense-pulsed-light-0" target="_blank" rel="noopener noreferrer">ARPANSA — Lasers and intense pulsed light</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC4745852/" target="_blank" rel="noopener noreferrer">Clinical, Cosmetic and Investigational Dermatology — Lasers and intense pulsed light technology</a></li>
+            <li><a href="https://www.ncbi.nlm.nih.gov/books/NBK470321/" target="_blank" rel="noopener noreferrer">NCBI Bookshelf — Anatomy, Hair Follicle</a></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section article-cta">
+        <div class="container article-reading">
+          <p class="eyebrow">Cycle. Phase. One.</p>
+          <h2>Progress starts with understanding.</h2>
+          <p>Explore CYPH/1's approach to at-home IPL. This educational article does not promise outcomes for a particular device.</p>
+          <a class="button" href={withBase("ipl-hair-removal/")}>Explore CYPH/1</a>
+        </div>
+      </section>
+    </article>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<script>
+  const before = document.querySelector<HTMLSelectElement>("#before-days");
+  const now = document.querySelector<HTMLSelectElement>("#now-days");
+  const density = document.querySelector<HTMLSelectElement>("#density");
+  const sessions = document.querySelector<HTMLInputElement>("#session-count");
+  const summary = document.querySelector<HTMLElement>("#tracker-summary");
+  const copyButton = document.querySelector<HTMLButtonElement>("#copy-progress");
+  const feedback = document.querySelector<HTMLElement>("#copy-feedback");
+  const formatDays = (value: string) => value === "unknown" ? "unknown" : value === "5+" ? "5 or more days" : value + (value === "1" ? " day" : " days");
+  const makeSummary = () => {
+    if (!before || !now || !density || !summary || !copyButton) return;
+    if (!before.value && !now.value && !density.value) {
+      summary.textContent = "Choose your observations to generate a simple progress summary. This is not a diagnostic test.";
+      copyButton.disabled = true;
+      return;
+    }
+    const fragments = [];
+    if (before.value) fragments.push("Before IPL, noticeable regrowth: " + formatDays(before.value) + ".");
+    if (now.value) fragments.push("Currently, noticeable regrowth: " + formatDays(now.value) + ".");
+    if (density.value) fragments.push("Perceived hair density: " + (density.value === "similar" ? "about the same" : density.value === "uncertain" ? "uncertain" : density.value) + ".");
+    if (sessions?.value) fragments.push("Sessions completed: " + sessions.value + ".");
+    fragments.push("Self-reported observations only; not evidence of device effectiveness.");
+    summary.textContent = fragments.join(" ");
+    copyButton.disabled = false;
+    if (feedback) feedback.textContent = "";
+  };
+  [before, now, density, sessions].forEach((input) => input?.addEventListener("input", makeSummary));
+  copyButton?.addEventListener("click", async () => {
+    if (!summary?.textContent || !feedback) return;
+    try {
+      await navigator.clipboard.writeText(summary.textContent);
+      feedback.textContent = "Summary copied.";
+    } catch {
+      feedback.textContent = "Copy unavailable in this browser. Select and copy the summary above.";
+    }
+  });
+</script>
+
+<style>
+  .article-wide { max-width:68.75rem; }
+  .article-reading { max-width:var(--cyph-layout-reading); }
+  .article-hero { padding-top:clamp(10rem,14vw,12rem); padding-bottom:var(--cyph-layout-section-compact); }
+  .article-hero h1 { max-width:14ch; font-size:clamp(2.3rem,5vw,4.7rem); line-height:1.1; margin:var(--cyph-space-6) 0; overflow-wrap:anywhere; }
+  .article-hero h1 span { display:block; color:var(--cyph-accent-highlight); }
+  .hero-grid { display:grid; gap:var(--cyph-space-8); }
+  .hero-summary { align-self:end; }
+  .hero-summary a { display:inline-flex; min-height:2.75rem; align-items:center; color:var(--cyph-accent-highlight); text-underline-offset:.2em; }
+  .article-meta { margin-top:var(--cyph-space-6); font-size:.875rem; color:var(--cyph-text-secondary); }
+  .article-section { padding-block:clamp(2.75rem,5.5vw,4.75rem); }
+  .article-page h2 { max-width:24ch; font-size:clamp(1.65rem,3.1vw,2.7rem); line-height:1.18; overflow-wrap:anywhere; }
+  .article-copy > h2 { margin-top:var(--cyph-space-8); }
+  .article-copy > p + p { margin-top:var(--cyph-space-4); }
+  .section-lede { max-width:40rem; color:var(--cyph-text-secondary); margin-top:var(--cyph-space-4); }
+  .signs-grid { list-style:none; padding:0; margin:var(--cyph-space-12) 0 0; display:grid; gap:var(--cyph-space-4); }
+  .sign-card { padding:var(--cyph-space-6); border-top:2px solid var(--cyph-accent-primary); background:var(--cyph-surface-raised); }
+  .sign-number { font-size:.75rem; letter-spacing:.12em; color:var(--cyph-accent-highlight); }
+  .sign-card h3 { font-size:clamp(1.1rem,1.8vw,1.5rem); margin:var(--cyph-space-5) 0 var(--cyph-space-3); }
+  .sign-card p { color:var(--cyph-text-secondary); line-height:1.65; }
+  .example-section { border-block:1px solid var(--cyph-border-structural); }
+  .example-grid { display:grid; gap:var(--cyph-space-8); align-items:center; }
+  .example-photo figure { margin:0; }
+  .example-photo img { display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; border:1px solid var(--cyph-border-structural); }
+  .example-photo figcaption { margin-top:var(--cyph-space-3); color:var(--cyph-text-secondary); font-size:.82rem; line-height:1.6; }
+  .example-photo figure.image-unavailable img { display:none; }
+  .example-photo figure.image-unavailable::before { content:"Progress photograph: image asset awaiting addition"; display:grid; min-height:16rem; place-items:center; padding:2rem; text-align:center; color:var(--cyph-text-secondary); background:var(--cyph-surface-raised); }
+  .steps { padding-left:1.5rem; }
+  .steps li { padding-left:.4rem; margin-bottom:var(--cyph-space-5); line-height:1.75; }
+  .tracker { margin-top:var(--cyph-space-8); padding:clamp(1.25rem,3vw,2rem); border:1px solid var(--cyph-border-structural); background:var(--cyph-surface-raised); }
+  .tracker-grid { display:grid; gap:var(--cyph-space-6); }
+  .field { display:flex; flex-direction:column; gap:var(--cyph-space-3); }
+  .field label { font-size:.9rem; font-weight:600; }
+  .field select, .field input { color:inherit; background:var(--cyph-surface-base); border:1px solid var(--cyph-border-structural); border-radius:4px; font:inherit; min-height:2.9rem; max-width:100%; padding:.65rem; }
+  .field :is(select,input):focus-visible, .tracker-copy:focus-visible { outline:3px solid var(--cyph-accent-highlight); outline-offset:2px; }
+  .tracker-results { margin-top:var(--cyph-space-8); padding-top:var(--cyph-space-6); border-top:1px solid var(--cyph-border-structural); }
+  .tracker-results h3 { font-size:1.2rem; }
+  .tracker-results p { line-height:1.65; }
+  .tracker-copy { margin-top:var(--cyph-space-6); cursor:pointer; }
+  .tracker-copy:disabled { opacity:.55; cursor:not-allowed; }
+  .tracker-feedback, .tracker-note { font-size:.84rem; color:var(--cyph-text-secondary); }
+  .related-link { margin-top:var(--cyph-space-5); }
+  .article-sources { padding-left:1.25rem; }
+  .article-sources li + li { margin-top:var(--cyph-space-3); }
+  .article-cta { padding-block:clamp(3rem,6vw,5.5rem); border-top:1px solid var(--cyph-border-structural); }
+  .editorial-hero { background:radial-gradient(circle at 82% 18%,rgb(167 122 244 / .13),transparent 43%); }
+  .editorial-tint { background:radial-gradient(circle at 12% 30%,rgb(167 122 244 / .12),transparent 46%),var(--cyph-surface-emphasis); }
+  .editorial-deep { background:linear-gradient(135deg,#17101f,#23162d 63%,#130e1b); }
+  @media(min-width:48rem) { .example-grid { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } .hero-grid { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); } .signs-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .tracker-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(min-width:64rem) { .signs-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media(max-width:47.99rem) { .article-hero { padding-top:10.75rem; } .article-hero h1 { max-width:100%; font-size:clamp(1.85rem,7.4vw,2.7rem); } .article-page h2 { max-width:100%; font-size:clamp(1.4rem,5.8vw,1.95rem); } .article-section { padding-block:var(--cyph-space-12); } }
+</style>
