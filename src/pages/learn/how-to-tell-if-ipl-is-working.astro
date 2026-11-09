@@ -84,9 +84,30 @@ const structuredData = {
         </div>
       </section>
 
+      <section class="section article-section example-section" aria-labelledby="example-heading">
+        <div class="container article-wide example-grid">
+          <div class="example-photo">
+            <figure>
+              <img src={withBase("brand/editorial/ipl-progress-example.webp")}
+                width="640" height="480" loading="lazy" decoding="async"
+                alt="Real close-up photograph of skin with scattered visible hairs and follicles, shared approximately three to four weeks after an IPL session."
+                onerror="this.closest('figure')?.classList.add('image-unavailable')" />
+              <figcaption>Real-world observation · Approximately 3–4 weeks after the most recent IPL session · Unretouched personal photo</figcaption>
+            </figure>
+          </div>
+          <div class="example-copy article-copy">
+            <p class="section-index">04 / A real-world example</p>
+            <h2 id="example-heading">What visible regrowth can look like.</h2>
+            <p>Here is a real photograph shared by someone using IPL at home, taken about three to four weeks after their most recent session. It shows scattered visible hairs, short stubble and visible follicular openings.</p>
+            <p><strong>What this image can tell us:</strong> there is still visible hair on the photographed area. <strong>What it cannot tell us:</strong> whether there has been a measurable reduction in density, whether IPL caused the visible pattern, or how much hair may return later.</p>
+            <p>Without a same-area, same-lighting baseline and the time since the last shave, even a detailed close-up should be treated as an observation rather than a verified before-and-after result.</p>
+          </div>
+        </div>
+      </section>
+
       <section class="section article-section editorial-deep" aria-labelledby="photo-heading">
         <div class="container article-reading article-copy">
-          <p class="section-index">04 / Compare fairly</p>
+          <p class="section-index">05 / Compare fairly</p>
           <h2 id="photo-heading">A more reliable way to photograph regrowth.</h2>
           <p>Use a repeatable setup, not just an attractive photo. Choose a small, clearly defined area and take a baseline image before beginning the course.</p>
           <ol class="steps">
@@ -102,7 +123,7 @@ const structuredData = {
 
       <section class="section article-section editorial-tint" aria-labelledby="tracker-heading">
         <div class="container article-reading">
-          <p class="section-index">05 / Your progress tracker</p>
+          <p class="section-index">06 / Your progress tracker</p>
           <h2 id="tracker-heading">Track changes without guessing.</h2>
           <p>Enter your approximate observations below. This simple tool runs in your browser, does not upload photographs, and does not save data to CYPH/1. Copy the summary if you want to retain it.</p>
           <div class="tracker" id="ipl-progress-tracker">
@@ -125,7 +146,7 @@ const structuredData = {
 
       <section class="section article-section" aria-labelledby="not-working">
         <div class="container article-reading article-copy">
-          <p class="section-index">06 / Troubleshooting</p>
+          <p class="section-index">07 / Troubleshooting</p>
           <h2 id="not-working">What if you're not seeing results?</h2>
           <p>First, check whether your natural hair colour and skin tone are within the permitted range for your particular device. IPL may be unsuitable or ineffective for certain combinations, and using it on unsuitable skin can cause injury. Review the manual's contraindications and patch-test advice.</p>
           <p>Next, consider whether you're comparing like with like: same body area, similar time after shaving, consistent observations, and the full course recommended in the instructions. Differences between body areas and hair-growth cycles can make results look uneven.</p>
@@ -135,7 +156,7 @@ const structuredData = {
 
       <section class="section article-section editorial-tint" aria-labelledby="next">
         <div class="container article-reading article-copy">
-          <p class="section-index">07 / Continue learning</p>
+          <p class="section-index">08 / Continue learning</p>
           <h2 id="next">Understand the routine behind the results.</h2>
           <p class="related-link"><a href={withBase("learn/hair-growth-cycle/")}>How the hair-growth cycle works <span aria-hidden="true">→</span></a></p>
           <p class="related-link"><a href={withBase("learn/why-ipl-consistency-matters/")}>Why consistency matters with IPL <span aria-hidden="true">→</span></a></p>
@@ -147,7 +168,7 @@ const structuredData = {
 
       <section class="section article-section" aria-labelledby="sources">
         <div class="container article-reading article-copy">
-          <p class="section-index">08 / Sources</p>
+          <p class="section-index">09 / Sources</p>
           <h2 id="sources">Evidence and safety guidance.</h2>
           <p>These references provide general background on IPL, hair cycles and appropriate advertising claims. They are not clinical test results for the CYPH/1 device.</p>
           <ul class="article-sources">
@@ -230,6 +251,13 @@ const structuredData = {
   .sign-number { font-size:.75rem; letter-spacing:.12em; color:var(--cyph-accent-highlight); }
   .sign-card h3 { font-size:clamp(1.1rem,1.8vw,1.5rem); margin:var(--cyph-space-5) 0 var(--cyph-space-3); }
   .sign-card p { color:var(--cyph-text-secondary); line-height:1.65; }
+  .example-section { border-block:1px solid var(--cyph-border-structural); }
+  .example-grid { display:grid; gap:var(--cyph-space-8); align-items:center; }
+  .example-photo figure { margin:0; }
+  .example-photo img { display:block; width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; border:1px solid var(--cyph-border-structural); }
+  .example-photo figcaption { margin-top:var(--cyph-space-3); color:var(--cyph-text-secondary); font-size:.82rem; line-height:1.6; }
+  .example-photo figure.image-unavailable img { display:none; }
+  .example-photo figure.image-unavailable::before { content:"Progress photograph: image asset awaiting addition"; display:grid; min-height:16rem; place-items:center; padding:2rem; text-align:center; color:var(--cyph-text-secondary); background:var(--cyph-surface-raised); }
   .steps { padding-left:1.5rem; }
   .steps li { padding-left:.4rem; margin-bottom:var(--cyph-space-5); line-height:1.75; }
   .tracker { margin-top:var(--cyph-space-8); padding:clamp(1.25rem,3vw,2rem); border:1px solid var(--cyph-border-structural); background:var(--cyph-surface-raised); }
@@ -251,7 +279,7 @@ const structuredData = {
   .editorial-hero { background:radial-gradient(circle at 82% 18%,rgb(167 122 244 / .13),transparent 43%); }
   .editorial-tint { background:radial-gradient(circle at 12% 30%,rgb(167 122 244 / .12),transparent 46%),var(--cyph-surface-emphasis); }
   .editorial-deep { background:linear-gradient(135deg,#17101f,#23162d 63%,#130e1b); }
-  @media(min-width:48rem) { .hero-grid { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); } .signs-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .tracker-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  @media(min-width:48rem) { .example-grid { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } .hero-grid { grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); } .signs-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .tracker-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
   @media(min-width:64rem) { .signs-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
   @media(max-width:47.99rem) { .article-hero { padding-top:10.75rem; } .article-hero h1 { max-width:100%; font-size:clamp(1.85rem,7.4vw,2.7rem); } .article-page h2 { max-width:100%; font-size:clamp(1.4rem,5.8vw,1.95rem); } .article-section { padding-block:var(--cyph-space-12); } }
 </style>
