@@ -41,4 +41,11 @@ export const learningArticles = [
     description: "Skin preparation, patch testing, aftercare and when to check skin-tone suitability.",
     number: "06",
   },
+  {
+    href: "learn/how-to-tell-if-ipl-is-working/",
+    title: "How to Tell If IPL Is Working",
+    category: "Tracking progress",
+    description: "Seven possible signs of progress, realistic expectations and a simple regrowth tracker.",
+    number: "07",
+  },
 ] as const;
