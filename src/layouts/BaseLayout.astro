@@ -22,4 +22,57 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
   <link rel="icon" href={favicon} type="image/svg+xml"/><link rel="preload" href={michromaFont} as="font" type="font/woff2" crossorigin/><link rel="preload" href={manropeFont} as="font" type="font/woff2" crossorigin/><style is:global set:html={fontFaces}/>
   <link rel="canonical" href={canonical}/><meta property="og:type" content="website"/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><meta property="og:site_name" content={brand.name}/><meta property="og:locale" content="en_GB"/><meta property="og:image" content={socialImage}/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta property="og:image:alt" content="CYPH/1 — Target the growth. At-home IPL, informed by the hair-growth cycle."/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content={title}/><meta name="twitter:description" content={description}/><meta name="twitter:image" content={socialImage}/><meta name="twitter:image:alt" content="CYPH/1 — Target the growth. At-home IPL, informed by the hair-growth cycle."/><title>{title}</title>
   {structuredData && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)}/>} 
-</head><body><a class="skip-link" href="#main">Skip to content</a><slot/></body></html>
+</head><body><a class="skip-link" href="#main">Skip to content</a><slot/>
+  <style is:global>
+    .cyph-analytics-consent{position:fixed;bottom:1rem;left:1rem;right:1rem;z-index:9999;max-width:34rem;margin-inline:auto;padding:1rem 1.25rem;background:#171323;color:#fff;border:1px solid #827b9a;border-radius:12px;box-shadow:0 8px 32px #0008;font:inherit}
+    .cyph-analytics-consent p{margin:0 0 .75rem;line-height:1.5}
+    .cyph-analytics-consent a{color:#d8c4ff;text-decoration:underline}
+    .cyph-analytics-consent .actions{display:flex;gap:.75rem;flex-wrap:wrap}
+    .cyph-analytics-consent button,.cyph-analytics-settings{cursor:pointer;border:1px solid #a99aca;border-radius:6px;padding:.55rem .9rem;background:#332b49;color:#fff;font:inherit}
+    .cyph-analytics-consent button:first-child{background:#e3c9ff;color:#171323}
+    .cyph-analytics-settings{position:fixed;bottom:1rem;left:1rem;z-index:9998;font-size:.75rem;padding:.4rem .65rem}
+  </style>
+  <div class="cyph-analytics-consent" id="cyph-analytics-consent" role="region" aria-label="Analytics cookie choices" hidden>
+    <p>Can we use optional Google Analytics cookies to understand which pages visitors find useful? You can change your choice at any time. See our <a href={withBase("privacy/")}>Privacy Notice</a>.</p>
+    <div class="actions"><button type="button" data-analytics-choice="accept">Accept analytics</button><button type="button" data-analytics-choice="reject">Reject analytics</button></div>
+  </div>
+  <button class="cyph-analytics-settings" id="cyph-analytics-settings" type="button" hidden>Analytics settings</button>
+  <script is:inline define:vars={{ measurementId: "G-SVG4X321T9" }}>
+    (() => {
+      const banner = document.getElementById("cyph-analytics-consent");
+      const settings = document.getElementById("cyph-analytics-settings");
+      if (!banner || !settings) return;
+      const key = "cyph1_analytics_consent_v1";
+      const isProduction = location.hostname === "www.cyph1.co.uk" || location.hostname === "cyph1.co.uk";
+      let choice = null;
+      try { choice = localStorage.getItem(key); } catch (_) { /* storage may be unavailable */ }
+      let started = false;
+      function startAnalytics() {
+        if (started || !isProduction) return;
+        started = true;
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){ window.dataLayer.push(arguments); };
+        window.gtag("js", new Date());
+        window.gtag("config", measurementId, { send_page_view: true });
+        const tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(measurementId);
+        document.head.appendChild(tag);
+      }
+      function update(value) {
+        choice = value;
+        try { localStorage.setItem(key, value); } catch (_) { /* session-only choice */ }
+        banner.hidden = true;
+        settings.hidden = false;
+        if (value === "accept") startAnalytics();
+      }
+      if (choice === "accept") startAnalytics();
+      else if (choice !== "reject") banner.hidden = false;
+      settings.hidden = false;
+      banner.querySelectorAll("[data-analytics-choice]").forEach((button) => {
+        button.addEventListener("click", () => update(button.getAttribute("data-analytics-choice")));
+      });
+      settings.addEventListener("click", () => { banner.hidden = false; banner.querySelector("button")?.focus(); });
+    })();
+  </script>
+</body></html>
