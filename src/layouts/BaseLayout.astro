@@ -65,6 +65,7 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
         banner.hidden = true;
         settings.hidden = false;
         if (value === "accept") startAnalytics();
+        else if (started) location.reload();
       }
       if (choice === "accept") startAnalytics();
       else if (choice !== "reject") banner.hidden = false;
