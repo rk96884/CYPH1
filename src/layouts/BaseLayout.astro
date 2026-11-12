@@ -28,20 +28,18 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
     .cyph-analytics-consent p{margin:0 0 .75rem;line-height:1.5}
     .cyph-analytics-consent a{color:#d8c4ff;text-decoration:underline}
     .cyph-analytics-consent .actions{display:flex;gap:.75rem;flex-wrap:wrap}
-    .cyph-analytics-consent button,.cyph-analytics-settings{cursor:pointer;border:1px solid #a99aca;border-radius:6px;padding:.55rem .9rem;background:#332b49;color:#fff;font:inherit}
+    .cyph-analytics-consent button{cursor:pointer;border:1px solid #a99aca;border-radius:6px;padding:.55rem .9rem;background:#332b49;color:#fff;font:inherit}
     .cyph-analytics-consent button:first-child{background:#e3c9ff;color:#171323}
-    .cyph-analytics-settings{position:fixed;bottom:1rem;left:1rem;z-index:9998;font-size:.75rem;padding:.4rem .65rem}
   </style>
   <div class="cyph-analytics-consent" id="cyph-analytics-consent" role="region" aria-label="Analytics cookie choices" hidden>
     <p>Can we use optional Google Analytics cookies to understand which pages visitors find useful? You can change your choice at any time. See our <a href={withBase("privacy/")}>Privacy Notice</a>.</p>
     <div class="actions"><button type="button" data-analytics-choice="accept">Accept analytics</button><button type="button" data-analytics-choice="reject">Reject analytics</button></div>
   </div>
-  <button class="cyph-analytics-settings" id="cyph-analytics-settings" type="button" hidden>Analytics settings</button>
   <script is:inline define:vars={{ measurementId: "G-SVG4X321T9" }}>
     (() => {
       const banner = document.getElementById("cyph-analytics-consent");
       const settings = document.getElementById("cyph-analytics-settings");
-      if (!banner || !settings) return;
+      if (!banner) return;
       const key = "cyph1_analytics_consent_v1";
       const isProduction = location.hostname === "www.cyph1.co.uk" || location.hostname === "cyph1.co.uk";
       let choice = null;
@@ -63,17 +61,15 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
         choice = value;
         try { localStorage.setItem(key, value); } catch (_) { /* session-only choice */ }
         banner.hidden = true;
-        settings.hidden = false;
         if (value === "accept") startAnalytics();
         else if (started) location.reload();
       }
       if (choice === "accept") startAnalytics();
       else if (choice !== "reject") banner.hidden = false;
-      settings.hidden = false;
       banner.querySelectorAll("[data-analytics-choice]").forEach((button) => {
         button.addEventListener("click", () => update(button.getAttribute("data-analytics-choice")));
       });
-      settings.addEventListener("click", () => { banner.hidden = false; banner.querySelector("button")?.focus(); });
+      settings?.addEventListener("click", () => { banner.hidden = false; banner.querySelector("button")?.focus(); });
     })();
   </script>
 </body></html>
