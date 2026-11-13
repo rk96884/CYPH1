@@ -41,12 +41,25 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
       const settings = document.getElementById("cyph-analytics-settings");
       if (!banner) return;
       const key = "cyph1_analytics_consent_v1";
+      const exclusionKey = "cyph1_analytics_excluded_v1";
+      const url = new URL(location.href);
+      const exclusionCommand = url.searchParams.get("internal_analytics");
+      if (exclusionCommand === "off" || exclusionCommand === "on") {
+        try {
+          if (exclusionCommand === "off") localStorage.setItem(exclusionKey, "true");
+          else localStorage.removeItem(exclusionKey);
+        } catch (_) { /* storage may be unavailable */ }
+        url.searchParams.delete("internal_analytics");
+        history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+      }
+      let excluded = false;
+      try { excluded = localStorage.getItem(exclusionKey) === "true"; } catch (_) { /* storage unavailable */ }
       const isProduction = location.hostname === "www.cyph1.co.uk" || location.hostname === "cyph1.co.uk";
       let choice = null;
       try { choice = localStorage.getItem(key); } catch (_) { /* storage may be unavailable */ }
       let started = false;
       function startAnalytics() {
-        if (started || !isProduction) return;
+        if (started || !isProduction || excluded) return;
         started = true;
         window.dataLayer = window.dataLayer || [];
         window.gtag = function(){ window.dataLayer.push(arguments); };
@@ -65,7 +78,7 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
         else if (started) location.reload();
       }
       if (choice === "accept") startAnalytics();
-      else if (choice !== "reject") banner.hidden = false;
+      else if (choice !== "reject" && !excluded) banner.hidden = false;
       banner.querySelectorAll("[data-analytics-choice]").forEach((button) => {
         button.addEventListener("click", () => update(button.getAttribute("data-analytics-choice")));
       });
