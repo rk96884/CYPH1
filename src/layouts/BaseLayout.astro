@@ -22,7 +22,7 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
   <link rel="icon" href={favicon} type="image/svg+xml"/><link rel="preload" href={michromaFont} as="font" type="font/woff2" crossorigin/><link rel="preload" href={manropeFont} as="font" type="font/woff2" crossorigin/><style is:global set:html={fontFaces}/>
   <link rel="canonical" href={canonical}/><meta property="og:type" content="website"/><meta property="og:title" content={title}/><meta property="og:description" content={description}/><meta property="og:url" content={canonical}/><meta property="og:site_name" content={brand.name}/><meta property="og:locale" content="en_GB"/><meta property="og:image" content={socialImage}/><meta property="og:image:width" content="1200"/><meta property="og:image:height" content="630"/><meta property="og:image:alt" content="CYPH/1 — Target the growth. At-home IPL, informed by the hair-growth cycle."/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content={title}/><meta name="twitter:description" content={description}/><meta name="twitter:image" content={socialImage}/><meta name="twitter:image:alt" content="CYPH/1 — Target the growth. At-home IPL, informed by the hair-growth cycle."/><title>{title}</title>
   {structuredData && <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)}/>} 
-</head><body><a class="skip-link" href="#main">Skip to content</a><slot/>
+</head><body id="top"><a class="skip-link" href="#main">Skip to content</a><slot/><a class="back-to-top" href="#top" aria-label="Back to top"><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="m6 14 6-6 6 6"/></svg></a>
   <style is:global>
     .cyph-analytics-consent{position:fixed;bottom:1rem;left:1rem;right:1rem;z-index:9999;max-width:34rem;margin-inline:auto;padding:1rem 1.25rem;background:#171323;color:#fff;border:1px solid #827b9a;border-radius:12px;box-shadow:0 8px 32px #0008;font:inherit}
     .cyph-analytics-consent p{margin:0 0 .75rem;line-height:1.5}
@@ -83,6 +83,17 @@ const fontFaces = `@font-face{font-family:Michroma;src:url("${michromaFont}") fo
         button.addEventListener("click", () => update(button.getAttribute("data-analytics-choice")));
       });
       settings?.addEventListener("click", () => { banner.hidden = false; banner.querySelector("button")?.focus(); });
+    })();
+  </script>
+  <script is:inline>
+    (() => {
+      const control = document.querySelector(".back-to-top");
+      if (!control) return;
+      const updateVisibility = () => {
+        control.toggleAttribute("data-visible", window.scrollY > 400);
+      };
+      window.addEventListener("scroll", updateVisibility, { passive: true });
+      updateVisibility();
     })();
   </script>
 </body></html>
