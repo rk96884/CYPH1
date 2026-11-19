@@ -47,3 +47,8 @@ h1,h2{margin:0;font-family:var(--cyph-font-display);font-weight:400;letter-spaci
 .product-discovery .button{margin-top:var(--cyph-space-6)}
 .product-discovery .form-note{font-size:.72rem}
 @media(max-width:760px){.site-header{padding-block:var(--cyph-space-4)}.header-inner{flex-wrap:wrap;gap:var(--cyph-space-2)}.site-header nav{flex:1 0 100%;justify-content:space-between;gap:var(--cyph-space-4)}.site-header nav>a.product-nav-link{display:inline-flex}}
+
+.back-to-top{position:fixed;z-index:20;right:var(--cyph-layout-gutter);bottom:var(--cyph-layout-gutter);display:grid;width:2.75rem;height:2.75rem;place-items:center;border:1px solid var(--cyph-border-structural);border-radius:var(--cyph-radius-control);color:var(--cyph-text-primary);background:var(--cyph-surface-raised);opacity:0;pointer-events:none;transform:translateY(var(--cyph-space-2));transition:opacity var(--cyph-motion-standard) var(--cyph-ease-standard),transform var(--cyph-motion-standard) var(--cyph-ease-standard),border-color var(--cyph-motion-standard) var(--cyph-ease-standard)}
+.back-to-top[data-visible],.back-to-top:focus-visible{opacity:1;pointer-events:auto;transform:none}
+.back-to-top:hover{border-color:var(--cyph-accent-primary)}
+.back-to-top svg{width:1.25rem;height:1.25rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
